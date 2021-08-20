@@ -60,7 +60,8 @@ public:
     void renderString(
             const std::string& str,
             FontStyle style=FontStyle::Regular,
-            const RGBColor& rolor={1.0f, 1.0f, 1.0f});
+            const RGBColor& rolor={1.0f, 1.0f, 1.0f},
+            bool shouldWrap=true);
 
     ~FontRenderer();
 };

@@ -110,7 +110,8 @@ FontRenderer::FontRenderer(
 void FontRenderer::renderString(
         const std::string& str,
         FontStyle style/*=FontStyle::Regular*/,
-        const RGBColor& color/*={1.0f, 1.0f, 1.0f}*/)
+        const RGBColor& color/*={1.0f, 1.0f, 1.0f}*/,
+        bool shouldWrap/*=true*/)
 {
     static constexpr float scale = 1.0f;
     std::map<char, Glyph>* glyphs{};
@@ -127,7 +128,7 @@ void FontRenderer::renderString(
 
     m_glyphShader.use();
 
-    glUniform3f(glGetUniformLocation(m_glyphShader.getId(), "textColor"), color.r, color.g, color.b);
+    glUniform3f(glGetUniformLocation(m_glyphShader.getId(), "textColor"), UNPACK_RGB_COLOR(color));
 
     const auto matrix = glm::ortho(0.0f, (float)m_windowWidth, (float)m_windowHeight, 0.0f);
     glUniformMatrix4fv(
@@ -142,8 +143,36 @@ void FontRenderer::renderString(
 
     for (char c : str)
     {
-        if (!isprint(c))
+        switch (c)
+        {
+        case '\n': // New line
+            textX = 0;
+            textY -= FONT_SIZE_PX * scale;
             continue;
+
+        case '\r': // Carriage return
+            textX = 0;
+            continue;
+
+        case '\t': // Tab
+            textX += FONT_SIZE_PX*4;
+            continue;
+
+        case '\v': // Vertical tab
+            textX = 0;
+            textY -= FONT_SIZE_PX * scale * 4;
+            continue;
+        }
+
+        if (shouldWrap && textX+FONT_SIZE_PX > m_windowWidth)
+        {
+            textX = 0;
+            textY -= FONT_SIZE_PX * scale;
+        }
+        if (textY < -m_windowHeight)
+        {
+            return;
+        }
 
         const auto& glyph = glyphs->find(c)->second;
         const float charX = textX + glyph.bearing.x * scale;

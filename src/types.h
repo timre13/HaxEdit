@@ -10,4 +10,4 @@ struct RGBColor
     float g;
     float b;
 };
-
+#define UNPACK_RGB_COLOR(x) x.r, x.g, x.b
