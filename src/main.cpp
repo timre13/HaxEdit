@@ -29,8 +29,21 @@ void windowRefreshCB(GLFWwindow*)
     g_isRedrawNeeded = true;
 }
 
-static std::string loadFile(const std::string& filePath)
+static size_t countLines(const std::string& str)
 {
+    size_t lines{};
+    for (auto it=str.begin(); it != str.end(); ++it)
+    {
+        if (*it == '\n')
+            ++lines;
+    }
+
+    return lines;
+}
+
+static int loadFile(const std::string& filePath, std::string* output)
+{
+    Logger::dbg << "Opening file: " << filePath << Logger::End;
     try
     {
         std::fstream file;
@@ -41,19 +54,33 @@ static std::string loadFile(const std::string& filePath)
         }
         std::stringstream ss;
         ss << file.rdbuf();
-        return ss.str();
+        *output = ss.str();
+        Logger::dbg << "Read " << output->length() << " characters (" << countLines(*output) << " lines) from file" << Logger::End;
+        return 0;
     }
     catch (std::exception& e)
     {
-        Logger::fatal << "Failed to open file: " << filePath << e.what() << Logger::End;
-        return "";
+        Logger::err << "Failed to open file: \"" << filePath << "\": " << e.what() << Logger::End;
+        return 1;
     }
 }
 
 
-int main()
+int main(int argc, char** argv)
 {
     Logger::setLoggerVerbosity(Logger::LoggerVerbosity::Debug);
+
+    std::string fileToOpen;
+    if (argc < 2)
+    {
+        fileToOpen = __FILE__;
+        //fileToOpen = "/home/mike/projects/http_server/tags";
+        //fileToOpen = "/home/mike/programming/cpp/Chip-8_emulator/Chip-8.cpp";
+    }
+    else
+    {
+        fileToOpen = argv[1];
+    }
 
     if (!glfwInit())
     {
@@ -68,6 +95,8 @@ int main()
     {
         Logger::fatal << "Failed to create window" << Logger::End;
     }
+    glfwSetWindowSizeCallback(window, windowResizeCB);
+    glfwSetWindowRefreshCallback(window, windowRefreshCB);
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
     Logger::dbg << "Created GLFW window" << Logger::End;
@@ -101,12 +130,12 @@ int main()
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    //std::string str = loadFile(__FILE__);
-    //std::string str = loadFile("/home/mike/projects/http_server/tags");
-    std::string str = loadFile("/home/mike/programming/cpp/Chip-8_emulator/Chip-8.cpp");
+    std::string str;
+    if (loadFile(fileToOpen, &str))
+    {
+        // TODO: Show an error dialog or something
+    }
 
-    glfwSetWindowSizeCallback(window, windowResizeCB);
-    glfwSetWindowRefreshCallback(window, windowRefreshCB);
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
