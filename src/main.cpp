@@ -1,15 +1,15 @@
 #include <iostream>
 #include <cassert>
-#include <fstream>
-#include <sstream>
+#include <vector>
 #include <GL/glew.h>
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
-#include "config.h"
 #include "Logger.h"
+#include "config.h"
 #include "os.h"
 #include "Shader.h"
 #include "FontRenderer.h"
+#include "Buffer.h"
 
 #define DEF_WIN_W 1500
 #define DEF_WIN_H 1000
@@ -29,57 +29,20 @@ void windowRefreshCB(GLFWwindow*)
     g_isRedrawNeeded = true;
 }
 
-static size_t countLines(const std::string& str)
-{
-    size_t lines{};
-    for (auto it=str.begin(); it != str.end(); ++it)
-    {
-        if (*it == '\n')
-            ++lines;
-    }
-
-    return lines;
-}
-
-static int loadFile(const std::string& filePath, std::string* output)
-{
-    Logger::dbg << "Opening file: " << filePath << Logger::End;
-    try
-    {
-        std::fstream file;
-        file.open(filePath, std::ios::in);
-        if (file.fail())
-        {
-            throw std::runtime_error{"Open failed"};
-        }
-        std::stringstream ss;
-        ss << file.rdbuf();
-        *output = ss.str();
-        Logger::dbg << "Read " << output->length() << " characters (" << countLines(*output) << " lines) from file" << Logger::End;
-        return 0;
-    }
-    catch (std::exception& e)
-    {
-        Logger::err << "Failed to open file: \"" << filePath << "\": " << e.what() << Logger::End;
-        return 1;
-    }
-}
-
 
 int main(int argc, char** argv)
 {
     Logger::setLoggerVerbosity(Logger::LoggerVerbosity::Debug);
 
-    std::string fileToOpen;
-    if (argc < 2)
+    std::vector<Buffer> buffers;
+    size_t currentBufferI{};
+    for (int i{1}; i < argc; ++i)
     {
-        fileToOpen = __FILE__;
-        //fileToOpen = "/home/mike/projects/http_server/tags";
-        //fileToOpen = "/home/mike/programming/cpp/Chip-8_emulator/Chip-8.cpp";
-    }
-    else
-    {
-        fileToOpen = argv[1];
+        buffers.push_back(Buffer{});
+        if (buffers.back().open(argv[i]))
+        {
+            // TODO: Show an error dialog or something
+        }
     }
 
     if (!glfwInit())
@@ -130,11 +93,16 @@ int main(int argc, char** argv)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    std::string str;
-    if (loadFile(fileToOpen, &str))
-    {
-        // TODO: Show an error dialog or something
-    }
+    auto genTitle{
+        [&](){
+            if (buffers.empty())
+                return std::string{"HaxorEdit"};
+            return buffers[currentBufferI].getFileName()
+                + std::string{" - ["} + std::to_string(currentBufferI+1) + '/' + std::to_string(buffers.size()) + "]";
+        }
+    };
+
+    glfwSetWindowTitle(window, genTitle().c_str());
 
     while (!glfwWindowShouldClose(window))
     {
@@ -146,8 +114,10 @@ int main(int argc, char** argv)
             glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
             glfwSwapBuffers(window);
 
-            //fontRenderer.renderString("Hello world", FontStyle::Regular, {1.0f, 0.0f, 0.0f});
-            fontRenderer.renderString(str, FontStyle::Regular, {1.0f, 1.0f, 1.0f});
+            if (!buffers.empty())
+            {
+                fontRenderer.renderString(buffers[currentBufferI].getContent());
+            }
 
             g_isRedrawNeeded = false;
         }
