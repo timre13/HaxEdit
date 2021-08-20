@@ -1,14 +1,33 @@
 #pragma once
 
-#include "common.h"
+#include "types.h"
 #include "Shader.h"
 #include <string>
 #include <map>
 #include <glm/glm.hpp>
 
+enum class FontStyle
+{
+    Regular,
+    Bold,
+    Italic,
+    BoldItalic,
+};
+
+inline std::string fontStyleToStr(FontStyle style)
+{
+    switch (style)
+    {
+    case FontStyle::Regular: return "Regular";
+    case FontStyle::Bold: return "Bold";
+    case FontStyle::Italic: return "Oblique";
+    case FontStyle::BoldItalic: return "Bold Oblique";
+    }
+}
+
 class FontRenderer
 {
-private:
+public:
     struct Glyph
     {
         uint textureId;
@@ -16,7 +35,12 @@ private:
         glm::ivec2 bearing;
         uint advance;
     };
-    std::map<char, Glyph> m_glyphs;
+
+private:
+    std::map<char, Glyph> m_regularGlyphs;
+    std::map<char, Glyph> m_boldGlyphs;
+    std::map<char, Glyph> m_italicGlyphs;
+    std::map<char, Glyph> m_boldItalicGlyphs;
     uint m_fontVao;
     uint m_fontVbo;
 
@@ -26,10 +50,17 @@ private:
     int m_windowHeight;
 
 public:
-    FontRenderer(const std::string& fontPath);
+    FontRenderer(
+            const std::string& regularFontPath,
+            const std::string& boldFontPath,
+            const std::string& italicFontPath,
+            const std::string& boldItalicFontPath);
 
     inline void onWindowResized(int width, int height) { m_windowWidth = width; m_windowHeight = height; }
-    void renderString(const std::string& str);
+    void renderString(
+            const std::string& str,
+            FontStyle style=FontStyle::Regular,
+            const RGBColor& rolor={1.0f, 1.0f, 1.0f});
 
     ~FontRenderer();
 };

@@ -3,6 +3,7 @@
 #include <GL/glew.h>
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
+#include "config.h"
 #include "Logger.h"
 #include "os.h"
 #include "Shader.h"
@@ -49,9 +50,18 @@ int main()
     }
     Logger::dbg << "Initialized GLEW" << Logger::End;
 
-    auto fontPath = OS::getFontFilePath("FreeMono");
-    assert(fontPath.length());
-    FontRenderer fontRenderer = {fontPath};
+    auto regularFontPath    = OS::getFontFilePath(FONT_FAMILY_REGULAR, FontStyle::Regular);
+    auto boldFontPath       = OS::getFontFilePath(FONT_FAMILY_BOLD, FontStyle::Bold);
+    auto italicFontPath     = OS::getFontFilePath(FONT_FAMILY_ITALIC, FontStyle::Italic);
+    auto boldItalicFontPath = OS::getFontFilePath(FONT_FAMILY_BOLDITALIC, FontStyle::BoldItalic);
+    Logger::dbg
+        << "Regular font: " << regularFontPath
+        << "\n       Bold font: " << boldFontPath
+        << "\n       Italic font: " << italicFontPath
+        << "\n       Bold italic font: " << boldItalicFontPath
+        << Logger::End;
+    assert(regularFontPath.length() && boldFontPath.length() && italicFontPath.length() && boldItalicFontPath.length());
+    FontRenderer fontRenderer = {regularFontPath, boldFontPath, italicFontPath, boldItalicFontPath};
     g_fontRendererPtr = &fontRenderer;
 
     glEnable(GL_BLEND);
@@ -63,9 +73,10 @@ int main()
         glfwPollEvents();
 
         glClear(GL_COLOR_BUFFER_BIT);
-        glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
-        fontRenderer.renderString("Hello world");
+        fontRenderer.renderString("Hello world", FontStyle::Regular, {1.0f, 0.0f, 0.0f});
+        //fontRenderer.renderString(testStr);
 
         glfwSwapBuffers(window);
     }

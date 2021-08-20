@@ -1,4 +1,5 @@
 #include "os.h"
+#include "Logger.h"
 #ifdef OS_LINUX
 #include <stdio.h>
 #endif
@@ -8,6 +9,7 @@ namespace OS
 
 std::string runExternalCommand(const std::string& command)
 {
+    Logger::dbg << "Running command: " << command << Logger::End;
 #ifdef OS_LINUX
     FILE* pipe = popen(command.c_str(), "r");
     if (!pipe) return "";
@@ -20,10 +22,10 @@ std::string runExternalCommand(const std::string& command)
 #endif
 }
 
-std::string getFontFilePath(const std::string& fontName)
+std::string getFontFilePath(const std::string& fontName, FontStyle style)
 {
 #ifdef OS_LINUX
-    return runExternalCommand("fc-match --format=%{file} "+fontName);
+    return runExternalCommand("fc-match --format=%{file} \""+fontName+":style="+fontStyleToStr(style)+'"');
 #else
 #error "TODO: Unimplemented"
 #endif

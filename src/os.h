@@ -1,6 +1,8 @@
 #pragma once
 
 #include <string>
+#include "types.h"
+#include "FontRenderer.h"
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
 #define OS_WIN
@@ -15,7 +17,7 @@ namespace OS
 {
 
 std::string runExternalCommand(const std::string& command);
-std::string getFontFilePath(const std::string& fontName);
+std::string getFontFilePath(const std::string& fontName, FontStyle style);
 
 };
 

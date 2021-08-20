@@ -26,5 +26,6 @@ add_executable(haxed
     src/os.cpp
     src/FontRenderer.h
     src/FontRenderer.cpp
+    src/types.h
 )
 

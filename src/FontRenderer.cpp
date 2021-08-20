@@ -8,22 +8,13 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#define FONT_SIZE_PX 30
+#define FONT_SIZE_PX 18
 
-FontRenderer::FontRenderer(const std::string& fontPath)
-    : m_glyphShader{"../shaders/glyph.vert.glsl", "../shaders/glyph.frag.glsl"}
+static void loadGlyphs(FT_Library* library, std::map<char, FontRenderer::Glyph>* glyphs, const std::string& fontPath)
 {
-    Logger::dbg << "Initializing FreeType" << Logger::End;
-    FT_Library library;
-    if (FT_Error error = FT_Init_FreeType(&library))
-    {
-        Logger::fatal << "Failed to initialize FreeType: " << FT_Error_String(error)
-            << Logger::End;
-    }
-
     Logger::dbg << "Loading font: " << fontPath << Logger::End;
     FT_Face face;
-    if (FT_Error error = FT_New_Face(library, fontPath.c_str(), 0, &face))
+    if (FT_Error error = FT_New_Face(*library, fontPath.c_str(), 0, &face))
     {
         Logger::fatal << "Failed to load font: " << fontPath << ": " << FT_Error_String(error)
             << Logger::End;
@@ -63,7 +54,7 @@ FontRenderer::FontRenderer(const std::string& fontPath)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        m_glyphs.insert({c,
+        glyphs->insert({c,
                 {
                     texId,
                     {face->glyph->bitmap.width, face->glyph->bitmap.rows}, // Size
@@ -73,6 +64,30 @@ FontRenderer::FontRenderer(const std::string& fontPath)
         });
     }
     FT_Done_Face(face);
+}
+
+FontRenderer::FontRenderer(
+        const std::string& regularFontPath,
+        const std::string& boldFontPath,
+        const std::string& italicFontPath,
+        const std::string& boldItalicFontPath)
+    : m_glyphShader{"../shaders/glyph.vert.glsl", "../shaders/glyph.frag.glsl"}
+{
+    auto fontPath = regularFontPath;
+
+    Logger::dbg << "Initializing FreeType" << Logger::End;
+    FT_Library library;
+    if (FT_Error error = FT_Init_FreeType(&library))
+    {
+        Logger::fatal << "Failed to initialize FreeType: " << FT_Error_String(error)
+            << Logger::End;
+    }
+
+    loadGlyphs(&library, &m_regularGlyphs,    regularFontPath);
+    loadGlyphs(&library, &m_boldGlyphs,       boldFontPath);
+    loadGlyphs(&library, &m_italicGlyphs,     italicFontPath);
+    loadGlyphs(&library, &m_boldItalicGlyphs, boldItalicFontPath);
+
     FT_Done_FreeType(library);
 
 
@@ -92,21 +107,27 @@ FontRenderer::FontRenderer(const std::string& fontPath)
     Logger::dbg << "Font renderer setup done" << Logger::End;
 }
 
-void FontRenderer::renderString(const std::string& str)
+void FontRenderer::renderString(
+        const std::string& str,
+        FontStyle style/*=FontStyle::Regular*/,
+        const RGBColor& color/*={1.0f, 1.0f, 1.0f}*/)
 {
     static constexpr float scale = 1.0f;
-    static constexpr struct TextColor
+    std::map<char, Glyph>* glyphs{};
+    switch (style)
     {
-        uint r = 255;
-        uint g = 255;
-        uint b = 255;
-    } textColor;
+    case FontStyle::Regular: glyphs = &m_regularGlyphs; break;
+    case FontStyle::Bold: glyphs = &m_boldGlyphs; break;
+    case FontStyle::Italic: glyphs = &m_italicGlyphs; break;
+    case FontStyle::BoldItalic: glyphs = &m_boldItalicGlyphs; break;
+    }
+
     float textX = 0;
     float textY = -FONT_SIZE_PX*scale;
 
     m_glyphShader.use();
 
-    glUniform3f(glGetUniformLocation(m_glyphShader.getId(), "textColor"), textColor.r, textColor.g, textColor.b);
+    glUniform3f(glGetUniformLocation(m_glyphShader.getId(), "textColor"), color.r, color.g, color.b);
 
     const auto matrix = glm::ortho(0.0f, (float)m_windowWidth, (float)m_windowHeight, 0.0f);
     glUniformMatrix4fv(
@@ -124,7 +145,7 @@ void FontRenderer::renderString(const std::string& str)
         if (!isprint(c))
             continue;
 
-        const auto& glyph = m_glyphs.find(c)->second;
+        const auto& glyph = glyphs->find(c)->second;
         const float charX = textX + glyph.bearing.x * scale;
         const float charY = textY - (glyph.dimensions.y - glyph.bearing.y) * scale;
         const float charW = glyph.dimensions.x * scale;
@@ -158,10 +179,10 @@ void FontRenderer::renderString(const std::string& str)
 
 FontRenderer::~FontRenderer()
 {
-    for (auto& glyph : m_glyphs)
-    {
-        glDeleteTextures(1, &glyph.second.textureId);
-    }
+    for (auto& glyph : m_regularGlyphs) { glDeleteTextures(1, &glyph.second.textureId); }
+    for (auto& glyph : m_boldGlyphs) { glDeleteTextures(1, &glyph.second.textureId); }
+    for (auto& glyph : m_italicGlyphs) { glDeleteTextures(1, &glyph.second.textureId); }
+    for (auto& glyph : m_boldItalicGlyphs) { glDeleteTextures(1, &glyph.second.textureId); }
     Logger::dbg << "Cleaned up glyphs" << Logger::End;
 }
 
