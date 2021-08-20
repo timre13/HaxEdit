@@ -55,6 +55,7 @@ int main()
     g_fontRendererPtr = &fontRenderer;
 
     glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     glfwSetWindowSizeCallback(window, windowResizeCB);
     while (!glfwWindowShouldClose(window))
