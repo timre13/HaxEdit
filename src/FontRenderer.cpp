@@ -32,7 +32,7 @@ static void loadGlyphs(FT_Library* library, std::map<char, FontRenderer::Glyph>*
 
     Logger::dbg << "Caching glyphs" << Logger::End;
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    for (int c{}; c < 256; ++c)
+    for (int c{}; c < 128; ++c)
     {
         //Logger::dbg << "Caching: " << c << Logger::End;
 
@@ -174,7 +174,12 @@ void FontRenderer::renderString(
             return;
         }
 
-        const auto& glyph = glyphs->find(c)->second;
+        const auto& glyphIt = glyphs->find(c);
+        if (glyphIt == glyphs->end())
+        {
+            continue; // No such glyph, skip :(
+        }
+        const auto& glyph = glyphIt->second;
         const float charX = textX + glyph.bearing.x * scale;
         const float charY = textY - (glyph.dimensions.y - glyph.bearing.y) * scale;
         const float charW = glyph.dimensions.x * scale;
