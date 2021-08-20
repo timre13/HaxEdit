@@ -1,5 +1,7 @@
 #include <iostream>
 #include <cassert>
+#include <fstream>
+#include <sstream>
 #include <GL/glew.h>
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
@@ -14,12 +16,40 @@
 
 
 FontRenderer* g_fontRendererPtr{};
+bool g_isRedrawNeeded = false;
 
 void windowResizeCB(GLFWwindow*, int width, int height)
 {
     glViewport(0, 0, width, height);
     g_fontRendererPtr->onWindowResized(width, height);
 }
+
+void windowRefreshCB(GLFWwindow*)
+{
+    g_isRedrawNeeded = true;
+}
+
+static std::string loadFile(const std::string& filePath)
+{
+    try
+    {
+        std::fstream file;
+        file.open(filePath, std::ios::in);
+        if (file.fail())
+        {
+            throw std::runtime_error{"Open failed"};
+        }
+        std::stringstream ss;
+        ss << file.rdbuf();
+        return ss.str();
+    }
+    catch (std::exception& e)
+    {
+        Logger::fatal << "Failed to open file: " << filePath << e.what() << Logger::End;
+        return "";
+    }
+}
+
 
 int main()
 {
@@ -50,6 +80,10 @@ int main()
     }
     Logger::dbg << "Initialized GLEW" << Logger::End;
 
+    glClear(GL_COLOR_BUFFER_BIT);
+    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+    glfwSwapBuffers(window);
+
     auto regularFontPath    = OS::getFontFilePath(FONT_FAMILY_REGULAR, FontStyle::Regular);
     auto boldFontPath       = OS::getFontFilePath(FONT_FAMILY_BOLD, FontStyle::Bold);
     auto italicFontPath     = OS::getFontFilePath(FONT_FAMILY_ITALIC, FontStyle::Italic);
@@ -67,16 +101,27 @@ int main()
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+    //std::string str = loadFile(__FILE__);
+    //std::string str = loadFile("/home/mike/projects/http_server/tags");
+    std::string str = loadFile("/home/mike/programming/cpp/Chip-8_emulator/Chip-8.cpp");
+
     glfwSetWindowSizeCallback(window, windowResizeCB);
+    glfwSetWindowRefreshCallback(window, windowRefreshCB);
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
 
-        glClear(GL_COLOR_BUFFER_BIT);
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        if (g_isRedrawNeeded)
+        {
+            glClear(GL_COLOR_BUFFER_BIT);
+            glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+            glfwSwapBuffers(window);
 
-        fontRenderer.renderString("Hello world", FontStyle::Regular, {1.0f, 0.0f, 0.0f});
-        //fontRenderer.renderString(testStr);
+            //fontRenderer.renderString("Hello world", FontStyle::Regular, {1.0f, 0.0f, 0.0f});
+            fontRenderer.renderString(str, FontStyle::Regular, {1.0f, 1.0f, 1.0f});
+
+            g_isRedrawNeeded = false;
+        }
 
         glfwSwapBuffers(window);
     }
