@@ -102,13 +102,13 @@ void FontRenderer::renderString(const std::string& str)
         uint b = 255;
     } textColor;
     float textX = 0;
-    float textY = 0;
+    float textY = -FONT_SIZE_PX*scale;
 
     m_glyphShader.use();
 
     glUniform3f(glGetUniformLocation(m_glyphShader.getId(), "textColor"), textColor.r, textColor.g, textColor.b);
 
-    const auto matrix = glm::ortho(0.0f, (float)m_windowWidth, 0.0f, (float)m_windowHeight);
+    const auto matrix = glm::ortho(0.0f, (float)m_windowWidth, (float)m_windowHeight, 0.0f);
     glUniformMatrix4fv(
             glGetUniformLocation(m_glyphShader.getId(), "projectionMat"),
             1,

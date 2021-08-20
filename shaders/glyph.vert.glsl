@@ -8,7 +8,7 @@ uniform mat4 projectionMat;
 
 void main()
 {
-    gl_Position = projectionMat * vec4(inData.xy, 0.0f, 1.0f);
+    gl_Position = projectionMat * vec4(inData.x, -inData.y, 0.0f, 1.0f);
     texCoords = inData.zw;
 }
 
