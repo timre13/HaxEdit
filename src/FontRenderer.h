@@ -62,7 +62,9 @@ public:
             const glm::ivec2& position,
             FontStyle style=FontStyle::Regular,
             const RGBColor& color={1.0f, 1.0f, 1.0f},
-            bool shouldWrap=true);
+            bool shouldWrap=true,
+            bool shouldDrawLineNums=false
+    );
 
     ~FontRenderer();
 };

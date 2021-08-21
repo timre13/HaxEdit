@@ -11,10 +11,6 @@
 #include "FontRenderer.h"
 #include "Buffer.h"
 
-#define DEF_WIN_W 1500
-#define DEF_WIN_H 1000
-
-
 FontRenderer* g_fontRendererPtr{};
 bool g_isRedrawNeeded = false;
 
@@ -116,7 +112,7 @@ int main(int argc, char** argv)
 
             if (!buffers.empty())
             {
-                fontRenderer.renderString(buffers[currentBufferI].getContent(), {10, 0});
+                fontRenderer.renderString(buffers[currentBufferI].getContent(), {0, 0}, FontStyle::Regular, {1.0f, 1.0f, 1.0f}, true, true);
             }
 
             g_isRedrawNeeded = false;

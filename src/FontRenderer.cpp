@@ -1,5 +1,6 @@
 #include "FontRenderer.h"
 #include "Logger.h"
+#include "config.h"
 #include <GL/glew.h>
 #include <GL/gl.h>
 #include <ft2build.h>
@@ -7,8 +8,6 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
-#define FONT_SIZE_PX 18
 
 static void loadGlyphs(FT_Library* library, std::map<char, FontRenderer::Glyph>* glyphs, const std::string& fontPath)
 {
@@ -107,12 +106,44 @@ FontRenderer::FontRenderer(
     Logger::dbg << "Font renderer setup done" << Logger::End;
 }
 
+static inline void renderGlyph(
+        const FontRenderer::Glyph& glyph,
+        float textX, float textY, float scale,
+        uint fontVbo)
+{
+    const float charX = textX + glyph.bearing.x * scale;
+    const float charY = textY - (glyph.dimensions.y - glyph.bearing.y) * scale;
+    const float charW = glyph.dimensions.x * scale;
+    const float charH = glyph.dimensions.y * scale;
+
+    const float vertexData[6][4] = {
+        {charX,         charY + charH, 0.0f, 0.0f},
+        {charX,         charY,         0.0f, 1.0f},
+        {charX + charW, charY,         1.0f, 1.0f},
+
+        {charX,         charY + charH, 0.0f, 0.0f},
+        {charX + charW, charY,         1.0f, 1.0f},
+        {charX + charW, charY + charH, 1.0f, 0.0f},
+    };
+
+    glBindTexture(GL_TEXTURE_2D, glyph.textureId);
+
+
+    glBindBuffer(GL_ARRAY_BUFFER, fontVbo);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertexData), vertexData);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+}
+
 void FontRenderer::renderString(
         const std::string& str,
         const glm::ivec2& position,
         FontStyle style/*=FontStyle::Regular*/,
         const RGBColor& color/*={1.0f, 1.0f, 1.0f}*/,
-        bool shouldWrap/*=true*/)
+        bool shouldWrap/*=true*/,
+        bool shouldDrawLineNums/*=false*/
+    )
 {
     static constexpr float scale = 1.0f;
     std::map<char, Glyph>* glyphs{};
@@ -124,13 +155,20 @@ void FontRenderer::renderString(
     case FontStyle::BoldItalic: glyphs = &m_boldItalicGlyphs; break;
     }
 
-    float textX = position.x;
-    float textY = position.y-FONT_SIZE_PX*scale;
+    const float initTextX = position.x+FONT_SIZE_PX*LINEN_BAR_WIDTH;
+    const float initTextY = position.y-FONT_SIZE_PX*scale;
+    float textX = initTextX;
+    float textY = initTextY;
 
     m_glyphShader.use();
 
-    glUniform3f(glGetUniformLocation(m_glyphShader.getId(), "textColor"), UNPACK_RGB_COLOR(color));
+    auto setTextColorUniform{
+        [&](const RGBColor& c){
+            glUniform3f(glGetUniformLocation(m_glyphShader.getId(), "textColor"), UNPACK_RGB_COLOR(c));
+        }
+    };
 
+    setTextColorUniform(color);
     const auto matrix = glm::ortho(0.0f, (float)m_windowWidth, (float)m_windowHeight, 0.0f);
     glUniformMatrix4fv(
             glGetUniformLocation(m_glyphShader.getId(), "projectionMat"),
@@ -142,17 +180,36 @@ void FontRenderer::renderString(
 
     glBindVertexArray(m_fontVao);
 
+    char isLineBeginning = true;
+    size_t lineI{1};
     for (char c : str)
     {
+        if (shouldDrawLineNums && isLineBeginning)
+        {
+            setTextColorUniform(LINEN_FONT_COLOR);
+
+            float digitX = position.x;
+            for (char digit : std::to_string(lineI))
+            {
+                auto& glyph = m_italicGlyphs.find(digit)->second;
+                renderGlyph(glyph, digitX, textY, scale, m_fontVbo);
+                digitX += (glyph.advance/64.0f) * scale;
+            }
+            ++lineI;
+
+            setTextColorUniform(color);
+        }
+
         switch (c)
         {
         case '\n': // New line
-            textX = position.x;
+            textX = initTextX;
             textY -= FONT_SIZE_PX * scale;
+            isLineBeginning = true;
             continue;
 
         case '\r': // Carriage return
-            textX = position.x;
+            textX = initTextX;
             continue;
 
         case '\t': // Tab
@@ -160,14 +217,14 @@ void FontRenderer::renderString(
             continue;
 
         case '\v': // Vertical tab
-            textX = 0;
+            textX = initTextX;
             textY -= FONT_SIZE_PX * scale * 4;
             continue;
         }
 
         if (shouldWrap && textX+FONT_SIZE_PX > m_windowWidth)
         {
-            textX = position.x;
+            textX = initTextX;
             textY -= FONT_SIZE_PX * scale;
         }
         if (textY < -m_windowHeight)
@@ -180,32 +237,11 @@ void FontRenderer::renderString(
         {
             continue; // No such glyph, skip :(
         }
-        const auto& glyph = glyphIt->second;
-        const float charX = textX + glyph.bearing.x * scale;
-        const float charY = textY - (glyph.dimensions.y - glyph.bearing.y) * scale;
-        const float charW = glyph.dimensions.x * scale;
-        const float charH = glyph.dimensions.y * scale;
+        renderGlyph(glyphIt->second, textX, textY, scale, m_fontVbo);
 
-        const float vertexData[6][4] = {
-            {charX,         charY + charH, 0.0f, 0.0f},
-            {charX,         charY,         0.0f, 1.0f},
-            {charX + charW, charY,         1.0f, 1.0f},
+        textX += (glyphIt->second.advance/64.0f) * scale;
 
-            {charX,         charY + charH, 0.0f, 0.0f},
-            {charX + charW, charY,         1.0f, 1.0f},
-            {charX + charW, charY + charH, 1.0f, 0.0f},
-        };
-
-        glBindTexture(GL_TEXTURE_2D, glyph.textureId);
-
-
-        glBindBuffer(GL_ARRAY_BUFFER, m_fontVbo);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertexData), vertexData);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-
-        textX += (glyph.advance/64.0f) * scale;
+        isLineBeginning = false;
     }
 
     glBindVertexArray(0);
