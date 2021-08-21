@@ -1,4 +1,4 @@
-#include "FontRenderer.h"
+#include "TextRenderer.h"
 #include "Logger.h"
 #include "config.h"
 #include <GL/glew.h>

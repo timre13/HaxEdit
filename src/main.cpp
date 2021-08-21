@@ -8,7 +8,7 @@
 #include "config.h"
 #include "os.h"
 #include "Shader.h"
-#include "FontRenderer.h"
+#include "TextRenderer.h"
 #include "Buffer.h"
 
 FontRenderer* g_fontRendererPtr{};
