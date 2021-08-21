@@ -116,7 +116,7 @@ int main(int argc, char** argv)
 
             if (!buffers.empty())
             {
-                fontRenderer.renderString(buffers[currentBufferI].getContent());
+                fontRenderer.renderString(buffers[currentBufferI].getContent(), {10, 0});
             }
 
             g_isRedrawNeeded = false;

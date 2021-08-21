@@ -109,6 +109,7 @@ FontRenderer::FontRenderer(
 
 void FontRenderer::renderString(
         const std::string& str,
+        const glm::ivec2& position,
         FontStyle style/*=FontStyle::Regular*/,
         const RGBColor& color/*={1.0f, 1.0f, 1.0f}*/,
         bool shouldWrap/*=true*/)
@@ -123,8 +124,8 @@ void FontRenderer::renderString(
     case FontStyle::BoldItalic: glyphs = &m_boldItalicGlyphs; break;
     }
 
-    float textX = 0;
-    float textY = -FONT_SIZE_PX*scale;
+    float textX = position.x;
+    float textY = position.y-FONT_SIZE_PX*scale;
 
     m_glyphShader.use();
 
@@ -146,12 +147,12 @@ void FontRenderer::renderString(
         switch (c)
         {
         case '\n': // New line
-            textX = 0;
+            textX = position.x;
             textY -= FONT_SIZE_PX * scale;
             continue;
 
         case '\r': // Carriage return
-            textX = 0;
+            textX = position.x;
             continue;
 
         case '\t': // Tab
@@ -166,7 +167,7 @@ void FontRenderer::renderString(
 
         if (shouldWrap && textX+FONT_SIZE_PX > m_windowWidth)
         {
-            textX = 0;
+            textX = position.x;
             textY -= FONT_SIZE_PX * scale;
         }
         if (textY < -m_windowHeight)

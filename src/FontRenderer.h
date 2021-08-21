@@ -59,8 +59,9 @@ public:
     inline void onWindowResized(int width, int height) { m_windowWidth = width; m_windowHeight = height; }
     void renderString(
             const std::string& str,
+            const glm::ivec2& position,
             FontStyle style=FontStyle::Regular,
-            const RGBColor& rolor={1.0f, 1.0f, 1.0f},
+            const RGBColor& color={1.0f, 1.0f, 1.0f},
             bool shouldWrap=true);
 
     ~FontRenderer();
