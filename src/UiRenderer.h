@@ -19,12 +19,23 @@ public:
     UiRenderer();
 
     inline void onWindowResized(int width, int height)
-        { m_windowWidth = width; m_windowHeight = height; }
+    {
+        m_windowWidth = width;
+        m_windowHeight = height;
+    }
 
-    void renderRectangle(
+    void renderFilledRectangle(
         const glm::ivec2& position1,
         const glm::ivec2& position2,
-        const RGBColor& fillColor/*={1.0f, 1.0f, 1.0f}*/);
+        const RGBColor& fillColor
+        );
+
+    void renderRectangleOutline(
+        const glm::ivec2& position1,
+        const glm::ivec2& position2,
+        const RGBColor& color,
+        uint borderThickness
+        );
 
     ~UiRenderer();
 };

@@ -56,7 +56,12 @@ public:
             const std::string& italicFontPath,
             const std::string& boldItalicFontPath);
 
-    inline void onWindowResized(int width, int height) { m_windowWidth = width; m_windowHeight = height; }
+    inline void onWindowResized(int width, int height)
+    {
+        m_windowWidth = width;
+        m_windowHeight = height;
+    }
+
     void renderString(
             const std::string& str,
             const glm::ivec2& position,

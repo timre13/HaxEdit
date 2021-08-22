@@ -168,7 +168,8 @@ int main(int argc, char** argv)
             glClearColor(UNPACK_RGB_COLOR(BG_COLOR), 1.0f);
             glfwSwapBuffers(window);
 
-            uiRenderer.renderRectangle({0, 0}, {FONT_SIZE_PX*LINEN_BAR_WIDTH, g_windowHeight}, LINEN_BG_COLOR);
+            // Draw line number background
+            uiRenderer.renderFilledRectangle({0, 0}, {FONT_SIZE_PX*LINEN_BAR_WIDTH, g_windowHeight}, LINEN_BG_COLOR);
             if (!buffers.empty())
             {
                 fontRenderer.renderString(buffers[currentBufferI].getContent(), {0, 0}, FontStyle::Regular, {1.0f, 1.0f, 1.0f}, true, true);
