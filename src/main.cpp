@@ -13,7 +13,7 @@
 #include "Buffer.h"
 #include "types.h"
 
-FontRenderer* g_fontRendererPtr{};
+TextRenderer* g_fontRendererPtr{};
 UiRenderer* g_uiRendererPtr{};
 bool g_isRedrawNeeded = false;
 int g_windowWidth = 0;
@@ -91,7 +91,7 @@ int main(int argc, char** argv)
         << "\n       Bold italic font: " << boldItalicFontPath
         << Logger::End;
     assert(regularFontPath.length() && boldFontPath.length() && italicFontPath.length() && boldItalicFontPath.length());
-    FontRenderer fontRenderer = {regularFontPath, boldFontPath, italicFontPath, boldItalicFontPath};
+    TextRenderer fontRenderer = {regularFontPath, boldFontPath, italicFontPath, boldItalicFontPath};
     g_fontRendererPtr = &fontRenderer;
 
     UiRenderer uiRenderer;

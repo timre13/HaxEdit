@@ -9,7 +9,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-static void loadGlyphs(FT_Library* library, std::map<char, FontRenderer::Glyph>* glyphs, const std::string& fontPath)
+static void loadGlyphs(FT_Library* library, std::map<char, TextRenderer::Glyph>* glyphs, const std::string& fontPath)
 {
     Logger::dbg << "Loading font: " << fontPath << Logger::End;
     FT_Face face;
@@ -65,7 +65,7 @@ static void loadGlyphs(FT_Library* library, std::map<char, FontRenderer::Glyph>*
     FT_Done_Face(face);
 }
 
-FontRenderer::FontRenderer(
+TextRenderer::TextRenderer(
         const std::string& regularFontPath,
         const std::string& boldFontPath,
         const std::string& italicFontPath,
@@ -107,7 +107,7 @@ FontRenderer::FontRenderer(
 }
 
 static inline void renderGlyph(
-        const FontRenderer::Glyph& glyph,
+        const TextRenderer::Glyph& glyph,
         float textX, float textY, float scale,
         uint fontVbo)
 {
@@ -136,7 +136,7 @@ static inline void renderGlyph(
     glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
-void FontRenderer::renderString(
+void TextRenderer::renderString(
         const std::string& str,
         const glm::ivec2& position,
         FontStyle style/*=FontStyle::Regular*/,
@@ -248,7 +248,7 @@ void FontRenderer::renderString(
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-FontRenderer::~FontRenderer()
+TextRenderer::~TextRenderer()
 {
     for (auto& glyph : m_regularGlyphs) { glDeleteTextures(1, &glyph.second.textureId); }
     for (auto& glyph : m_boldGlyphs) { glDeleteTextures(1, &glyph.second.textureId); }

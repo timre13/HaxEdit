@@ -25,7 +25,7 @@ inline std::string fontStyleToStr(FontStyle style)
     }
 }
 
-class FontRenderer
+class TextRenderer
 {
 public:
     struct Glyph
@@ -50,7 +50,7 @@ private:
     int m_windowHeight;
 
 public:
-    FontRenderer(
+    TextRenderer(
             const std::string& regularFontPath,
             const std::string& boldFontPath,
             const std::string& italicFontPath,
@@ -66,5 +66,5 @@ public:
             bool shouldDrawLineNums=false
     );
 
-    ~FontRenderer();
+    ~TextRenderer();
 };
