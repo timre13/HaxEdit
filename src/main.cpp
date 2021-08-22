@@ -77,7 +77,7 @@ int main(int argc, char** argv)
     Logger::dbg << "Initialized GLEW" << Logger::End;
 
     glClear(GL_COLOR_BUFFER_BIT);
-    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+    glClearColor(UNPACK_RGB_COLOR(BG_COLOR), 1.0f);
     glfwSwapBuffers(window);
 
     auto regularFontPath    = OS::getFontFilePath(FONT_FAMILY_REGULAR, FontStyle::Regular);
@@ -118,7 +118,7 @@ int main(int argc, char** argv)
         if (g_isRedrawNeeded)
         {
             glClear(GL_COLOR_BUFFER_BIT);
-            glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+            glClearColor(UNPACK_RGB_COLOR(BG_COLOR), 1.0f);
             glfwSwapBuffers(window);
 
             uiRenderer.renderRectangle({0, 0}, {FONT_SIZE_PX*LINEN_BAR_WIDTH, g_windowHeight}, LINEN_BG_COLOR);

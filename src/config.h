@@ -9,6 +9,8 @@
 #define FONT_FAMILY_BOLDITALIC  "FreeMono"
 #define FONT_SIZE_PX 18
 
+#define BG_COLOR RGBColor{0.2f, 0.2f, 0.2f}
+
 // Line number bar width in characters
 #define LINEN_BAR_WIDTH 4
 #define LINEN_FONT_COLOR RGBColor{0.56f, 0.71f, 0.07f}
