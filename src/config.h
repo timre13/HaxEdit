@@ -12,3 +12,4 @@
 // Line number bar width in characters
 #define LINEN_BAR_WIDTH 4
 #define LINEN_FONT_COLOR RGBColor{0.56f, 0.71f, 0.07f}
+#define LINEN_BG_COLOR RGBColor{0.25f, 0.25f, 0.25f}
