@@ -62,8 +62,9 @@ UiRenderer* g_uiRendererPtr{};
 bool g_isRedrawNeeded = false;
 int g_windowWidth = 0;
 int g_windowHeight = 0;
+bool g_isDebugDrawMode = false;
 
-void windowResizeCB(GLFWwindow*, int width, int height)
+static void windowResizeCB(GLFWwindow*, int width, int height)
 {
     glViewport(0, 0, width, height);
     g_windowWidth = width;
@@ -72,11 +73,32 @@ void windowResizeCB(GLFWwindow*, int width, int height)
     g_uiRendererPtr->onWindowResized(width, height);
 }
 
-void windowRefreshCB(GLFWwindow*)
+static void windowRefreshCB(GLFWwindow*)
 {
     g_isRedrawNeeded = true;
 }
 
+static void toggleDebugDraw()
+{
+    g_isDebugDrawMode = !g_isDebugDrawMode;
+    glPolygonMode(GL_FRONT_AND_BACK, g_isDebugDrawMode ? GL_LINE : GL_FILL);
+    g_isRedrawNeeded = true;
+}
+
+static void windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods)
+{
+    (void)mods; (void)scancode;
+
+    if (action == GLFW_RELEASE)
+    {
+        switch (key)
+        {
+        case GLFW_KEY_F3:
+            toggleDebugDraw();
+            break;
+        }
+    }
+}
 
 int main(int argc, char** argv)
 {
@@ -108,6 +130,7 @@ int main(int argc, char** argv)
     }
     glfwSetWindowSizeCallback(window, windowResizeCB);
     glfwSetWindowRefreshCallback(window, windowRefreshCB);
+    glfwSetKeyCallback(window, windowKeyCB);
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
     Logger::dbg << "Created GLFW window" << Logger::End;
@@ -181,6 +204,7 @@ int main(int argc, char** argv)
         glfwSwapBuffers(window);
     }
 
+    Logger::log << "Shutting down!" << Logger::End;
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
