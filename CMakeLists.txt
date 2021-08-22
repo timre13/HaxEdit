@@ -29,5 +29,7 @@ add_executable(haxed
     src/Buffer.h
     src/Buffer.cpp
     src/types.h
+    src/UiRenderer.h
+    src/UiRenderer.cpp
 )
 
