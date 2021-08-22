@@ -13,6 +13,50 @@
 #include "Buffer.h"
 #include "types.h"
 
+static void GLAPIENTRY glDebugMsgCB(
+        GLenum source, GLenum type, GLuint, GLenum severity,
+        GLsizei, const GLchar* message, const void*)
+{
+    std::cout << "\033[93m[OpenGL]\033[0m: " << "Message: type=\"";
+    switch (type)
+    {
+    case GL_DEBUG_TYPE_ERROR: std::cout << "other"; break;
+    case GL_DEBUG_TYPE_PERFORMANCE: std::cout << "performance"; break;
+    case GL_DEBUG_TYPE_PORTABILITY: std::cout << "portability"; break;
+    case GL_DEBUG_TYPE_POP_GROUP: std::cout << "pop group"; break;
+    case GL_DEBUG_TYPE_PUSH_GROUP: std::cout << "push group"; break;
+    case GL_DEBUG_TYPE_MARKER: std::cout << "marker"; break;
+    case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR: std::cout << "undefined behavior"; break;
+    case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: std::cout << "deprecated behavior"; break;
+    default: std::cout << "unknown"; break;
+    }
+
+    std::cout << "\", source=\"";
+    switch (source)
+    {
+    case GL_DEBUG_SOURCE_API: std::cout << "API"; break;
+    case GL_DEBUG_SOURCE_WINDOW_SYSTEM: std::cout << "window system"; break;
+    case GL_DEBUG_SOURCE_SHADER_COMPILER: std::cout << "shader compiler"; break;
+    case GL_DEBUG_SOURCE_THIRD_PARTY: std::cout << "third party"; break;
+    case GL_DEBUG_SOURCE_APPLICATION: std::cout << "API"; break;
+    case GL_DEBUG_SOURCE_OTHER: std::cout << "API"; break;
+    default: std::cout << "unknown"; break;
+    }
+
+    std::cout << "\", severity=\"";
+    switch (severity)
+    {
+    case GL_DEBUG_SEVERITY_HIGH: std::cout << "high"; break;
+    case GL_DEBUG_SEVERITY_MEDIUM: std::cout << "medium"; break;
+    case GL_DEBUG_SEVERITY_LOW: std::cout << "low"; break;
+    case GL_DEBUG_SEVERITY_NOTIFICATION: std::cout << "notification"; break;
+    default: std::cout << "unknown"; break;
+    }
+
+    std::cout << "\" : " << message << '\n';
+    std::cout.flush();
+}
+
 TextRenderer* g_fontRendererPtr{};
 UiRenderer* g_uiRendererPtr{};
 bool g_isRedrawNeeded = false;
@@ -75,6 +119,9 @@ int main(int argc, char** argv)
         Logger::fatal << "Failed to initialize GLEW: " << glewGetErrorString(initStatus) << Logger::End;
     }
     Logger::dbg << "Initialized GLEW" << Logger::End;
+
+    glEnable(GL_DEBUG_OUTPUT);
+    glDebugMessageCallback(glDebugMsgCB, 0);
 
     glClear(GL_COLOR_BUFFER_BIT);
     glClearColor(UNPACK_RGB_COLOR(BG_COLOR), 1.0f);
