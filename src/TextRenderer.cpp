@@ -255,5 +255,9 @@ FontRenderer::~FontRenderer()
     for (auto& glyph : m_italicGlyphs) { glDeleteTextures(1, &glyph.second.textureId); }
     for (auto& glyph : m_boldItalicGlyphs) { glDeleteTextures(1, &glyph.second.textureId); }
     Logger::dbg << "Cleaned up glyphs" << Logger::End;
+
+    glDeleteBuffers(1, &m_fontVbo);
+    glDeleteVertexArrays(1, &m_fontVao);
+    Logger::dbg << "Cleaned up font vertex data" << Logger::End;
 }
 
