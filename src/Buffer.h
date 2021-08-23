@@ -2,6 +2,9 @@
 
 #include <filesystem>
 #include <string>
+#include <glm/glm.hpp>
+#include "TextRenderer.h"
+#include "UiRenderer.h"
 
 namespace std_fs = std::filesystem;
 
@@ -14,8 +17,17 @@ private:
     std::string m_content;
     size_t m_numOfLines{};
 
+    glm::ivec2 m_position{};
+
+    TextRenderer* m_textRenderer{};
+    UiRenderer* m_uiRenderer{};
+
 public:
+    Buffer(TextRenderer* textRenderer, UiRenderer* uiRenderer);
+
     int open(const std::string& filePath);
+
+    void render();
 
     inline const std::string& getContent() const { return m_content; }
     inline const std::string& getFilePath() const { return m_filePath; }

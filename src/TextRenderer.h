@@ -36,6 +36,13 @@ public:
         uint advance;
     };
 
+    struct GlyphDimensions
+    {
+        glm::ivec2 position;
+        glm::ivec2 bearing;
+        uint advance;
+    };
+
 private:
     std::map<char, Glyph> m_regularGlyphs;
     std::map<char, Glyph> m_boldGlyphs;
@@ -48,6 +55,21 @@ private:
 
     int m_windowWidth;
     int m_windowHeight;
+
+    // ---------------------------------------------
+    friend class Buffer;
+    // Buffer drawing functions
+    // Step 1
+    void prepareForDrawing();
+    // Step 2
+    void setDrawingColor(const RGBColor& color);
+    // Step 3
+    GlyphDimensions renderChar(
+            char c,
+            const glm::ivec2& position,
+            FontStyle style=FontStyle::Regular
+    );
+    // ---------------------------------------------
 
 public:
     TextRenderer(
@@ -67,9 +89,11 @@ public:
             const glm::ivec2& position,
             FontStyle style=FontStyle::Regular,
             const RGBColor& color={1.0f, 1.0f, 1.0f},
-            bool shouldWrap=true,
-            bool shouldDrawLineNums=false
+            bool shouldWrap=false
     );
+
+    inline int getWindowWidth() const { return m_windowWidth; }
+    inline int getWindowHeight() const { return m_windowHeight; }
 
     ~TextRenderer();
 };

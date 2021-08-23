@@ -106,9 +106,28 @@ TextRenderer::TextRenderer(
     Logger::dbg << "Font renderer setup done" << Logger::End;
 }
 
-static inline void renderGlyph(
+void TextRenderer::prepareForDrawing()
+{
+    m_glyphShader.use();
+
+    const auto matrix = glm::ortho(0.0f, (float)m_windowWidth, (float)m_windowHeight, 0.0f);
+    glUniformMatrix4fv(
+            glGetUniformLocation(m_glyphShader.getId(), "projectionMat"),
+            1,
+            GL_FALSE,
+            glm::value_ptr(matrix));
+
+    glBindVertexArray(m_fontVao);
+}
+
+void TextRenderer::setDrawingColor(const RGBColor& color)
+{
+    glUniform3f(glGetUniformLocation(m_glyphShader.getId(), "textColor"), UNPACK_RGB_COLOR(color));
+}
+
+static inline TextRenderer::GlyphDimensions renderGlyph(
         const TextRenderer::Glyph& glyph,
-        float textX, float textY, float scale,
+        int textX, int textY, float scale,
         uint fontVbo)
 {
     const float charX = textX + glyph.bearing.x * scale;
@@ -134,6 +153,30 @@ static inline void renderGlyph(
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    return {glyph.dimensions, glyph.dimensions, glyph.advance};
+}
+
+TextRenderer::GlyphDimensions TextRenderer::renderChar(
+        char c,
+        const glm::ivec2& position,
+        FontStyle style/*=FontStyle::Regular*/
+    )
+{
+    std::map<char, Glyph>* glyphs{};
+    switch (style)
+    {
+    case FontStyle::Regular: glyphs = &m_regularGlyphs; break;
+    case FontStyle::Bold: glyphs = &m_boldGlyphs; break;
+    case FontStyle::Italic: glyphs = &m_italicGlyphs; break;
+    case FontStyle::BoldItalic: glyphs = &m_boldItalicGlyphs; break;
+    }
+
+    const auto& glyphIt = glyphs->find(c);
+    if (glyphIt == glyphs->end())
+        return {};
+
+    return renderGlyph(glyphIt->second, position.x, position.y, 1.0f, m_fontVbo);
 }
 
 void TextRenderer::renderString(
@@ -141,8 +184,7 @@ void TextRenderer::renderString(
         const glm::ivec2& position,
         FontStyle style/*=FontStyle::Regular*/,
         const RGBColor& color/*={1.0f, 1.0f, 1.0f}*/,
-        bool shouldWrap/*=true*/,
-        bool shouldDrawLineNums/*=false*/
+        bool shouldWrap/*=false*/
     )
 {
     static constexpr float scale = 1.0f;
@@ -160,52 +202,16 @@ void TextRenderer::renderString(
     float textX = initTextX;
     float textY = initTextY;
 
-    m_glyphShader.use();
+    prepareForDrawing();
+    setDrawingColor(color);
 
-    auto setTextColorUniform{
-        [&](const RGBColor& c){
-            glUniform3f(glGetUniformLocation(m_glyphShader.getId(), "textColor"), UNPACK_RGB_COLOR(c));
-        }
-    };
-
-    setTextColorUniform(color);
-    const auto matrix = glm::ortho(0.0f, (float)m_windowWidth, (float)m_windowHeight, 0.0f);
-    glUniformMatrix4fv(
-            glGetUniformLocation(m_glyphShader.getId(), "projectionMat"),
-            1,
-            GL_FALSE,
-            glm::value_ptr(matrix));
-
-    glActiveTexture(GL_TEXTURE0);
-
-    glBindVertexArray(m_fontVao);
-
-    char isLineBeginning = true;
-    size_t lineI{1};
     for (char c : str)
     {
-        if (shouldDrawLineNums && isLineBeginning)
-        {
-            setTextColorUniform(LINEN_FONT_COLOR);
-
-            float digitX = position.x;
-            for (char digit : std::to_string(lineI))
-            {
-                auto& glyph = m_italicGlyphs.find(digit)->second;
-                renderGlyph(glyph, digitX, textY, scale, m_fontVbo);
-                digitX += (glyph.advance/64.0f) * scale;
-            }
-            ++lineI;
-
-            setTextColorUniform(color);
-        }
-
         switch (c)
         {
         case '\n': // New line
             textX = initTextX;
             textY -= FONT_SIZE_PX * scale;
-            isLineBeginning = true;
             continue;
 
         case '\r': // Carriage return
@@ -240,12 +246,7 @@ void TextRenderer::renderString(
         renderGlyph(glyphIt->second, textX, textY, scale, m_fontVbo);
 
         textX += (glyphIt->second.advance/64.0f) * scale;
-
-        isLineBeginning = false;
     }
-
-    glBindVertexArray(0);
-    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 TextRenderer::~TextRenderer()
