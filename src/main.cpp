@@ -104,17 +104,6 @@ int main(int argc, char** argv)
 {
     Logger::setLoggerVerbosity(Logger::LoggerVerbosity::Debug);
 
-    std::vector<Buffer> buffers;
-    size_t currentBufferI{};
-    for (int i{1}; i < argc; ++i)
-    {
-        buffers.push_back(Buffer{});
-        if (buffers.back().open(argv[i]))
-        {
-            // TODO: Show an error dialog or something
-        }
-    }
-
     if (!glfwInit())
     {
         Logger::fatal << "Failed to initialize GLFW" << Logger::End;
@@ -146,6 +135,9 @@ int main(int argc, char** argv)
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(glDebugMsgCB, 0);
 
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     glClear(GL_COLOR_BUFFER_BIT);
     glClearColor(UNPACK_RGB_COLOR(BG_COLOR), 1.0f);
     glfwSwapBuffers(window);
@@ -167,8 +159,19 @@ int main(int argc, char** argv)
     UiRenderer uiRenderer;
     g_uiRendererPtr = &uiRenderer;
 
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    // Update TextRenderer's and UiRenderer's variables by triggering the resize callback
+    glfwPollEvents();
+
+    std::vector<Buffer> buffers;
+    size_t currentBufferI{};
+    for (int i{1}; i < argc; ++i)
+    {
+        buffers.push_back(Buffer{g_fontRendererPtr, g_uiRendererPtr});
+        if (buffers.back().open(argv[i]))
+        {
+            // TODO: Show an error dialog or something
+        }
+    }
 
     auto genTitle{
         [&](){
