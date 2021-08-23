@@ -60,7 +60,7 @@ void Buffer::render()
     m_uiRenderer->renderFilledRectangle(m_position, {FONT_SIZE_PX*LINEN_BAR_WIDTH, m_textRenderer->getWindowHeight()}, LINEN_BG_COLOR);
 
     const float initTextX = m_position.x+FONT_SIZE_PX*LINEN_BAR_WIDTH;
-    const float initTextY = m_position.y-FONT_SIZE_PX;
+    const float initTextY = m_position.y;
     float textX = initTextX;
     float textY = initTextY;
 
@@ -68,7 +68,8 @@ void Buffer::render()
     m_textRenderer->setDrawingColor({1.0f, 1.0f, 1.0f});
 
     char isLineBeginning = true;
-    size_t lineI{1};
+    size_t lineI{};
+    size_t colI{};
     for (char c : m_content)
     {
         if (BUFFER_DRAW_LINE_NUMS && isLineBeginning)
@@ -76,12 +77,11 @@ void Buffer::render()
             m_textRenderer->setDrawingColor(LINEN_FONT_COLOR);
 
             float digitX = m_position.x;
-            for (char digit : std::to_string(lineI))
+            for (char digit : std::to_string(lineI+1))
             {
                 auto dimensions = m_textRenderer->renderChar(digit, {digitX, textY}, FontStyle::Italic);
                 digitX += dimensions.advance/64.0f;
             }
-            ++lineI;
 
             // Reset color
             m_textRenderer->setDrawingColor({1.0f, 1.0f, 1.0f});
@@ -91,37 +91,56 @@ void Buffer::render()
         {
         case '\n': // New line
             textX = initTextX;
-            textY -= FONT_SIZE_PX;
+            textY += FONT_SIZE_PX;
             isLineBeginning = true;
+            ++lineI;
+            colI = 0;
             continue;
 
         case '\r': // Carriage return
             textX = initTextX;
+            colI = 0;
             continue;
 
         case '\t': // Tab
             textX += FONT_SIZE_PX*4;
+            ++colI;
             continue;
 
         case '\v': // Vertical tab
             textX = initTextX;
-            textY -= FONT_SIZE_PX * 4;
+            textY += FONT_SIZE_PX * 4;
+            colI = 0;
+            ++lineI;
             continue;
         }
 
         if (BUFFER_WRAP_LINES && textX+FONT_SIZE_PX > m_textRenderer->getWindowWidth())
         {
             textX = initTextX;
-            textY -= FONT_SIZE_PX;
+            textY += FONT_SIZE_PX;
         }
         if (textY < -m_textRenderer->getWindowHeight())
         {
             return;
         }
 
-        auto dimsensions = m_textRenderer->renderChar(c, {textX, textY});
-        textX += (dimsensions.advance/64.0f);
+        auto dimensions = m_textRenderer->renderChar(c, {textX, textY});
 
+        // Draw cursor
+        if (lineI == m_cursorRow && colI == m_cursorCol)
+        {
+            m_uiRenderer->renderFilledRectangle(
+                    {textX-1, initTextY+textY-2},
+                    {textX+1, initTextY+textY+FONT_SIZE_PX+2},
+                    {1.0f, 0.0f, 0.0f});
+
+            // Bind the text renderer shader again
+            m_textRenderer->prepareForDrawing();
+        }
+
+        textX += (dimensions.advance/64.0f);
+        ++colI;
         isLineBeginning = false;
     }
 }

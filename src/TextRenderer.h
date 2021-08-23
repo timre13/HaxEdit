@@ -84,6 +84,9 @@ public:
         m_windowHeight = height;
     }
 
+    /*
+     * Render a string to the window.
+     */
     void renderString(
             const std::string& str,
             const glm::ivec2& position,

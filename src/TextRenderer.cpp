@@ -131,7 +131,7 @@ static inline TextRenderer::GlyphDimensions renderGlyph(
         uint fontVbo)
 {
     const float charX = textX + glyph.bearing.x * scale;
-    const float charY = textY - (glyph.dimensions.y - glyph.bearing.y) * scale;
+    const float charY = textY - (glyph.bearing.y) + FONT_SIZE_PX;
     const float charW = glyph.dimensions.x * scale;
     const float charH = glyph.dimensions.y * scale;
 
@@ -197,8 +197,8 @@ void TextRenderer::renderString(
     case FontStyle::BoldItalic: glyphs = &m_boldItalicGlyphs; break;
     }
 
-    const float initTextX = position.x+FONT_SIZE_PX*LINEN_BAR_WIDTH;
-    const float initTextY = position.y-FONT_SIZE_PX*scale;
+    const float initTextX = position.x;
+    const float initTextY = position.y;
     float textX = initTextX;
     float textY = initTextY;
 
@@ -211,7 +211,7 @@ void TextRenderer::renderString(
         {
         case '\n': // New line
             textX = initTextX;
-            textY -= FONT_SIZE_PX * scale;
+            textY += FONT_SIZE_PX * scale;
             continue;
 
         case '\r': // Carriage return
@@ -224,7 +224,7 @@ void TextRenderer::renderString(
 
         case '\v': // Vertical tab
             textX = initTextX;
-            textY -= FONT_SIZE_PX * scale * 4;
+            textY += FONT_SIZE_PX * scale * 4;
             continue;
         }
 

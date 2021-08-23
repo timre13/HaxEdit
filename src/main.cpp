@@ -57,20 +57,23 @@ static void GLAPIENTRY glDebugMsgCB(
     std::cout.flush();
 }
 
-TextRenderer* g_fontRendererPtr{};
-UiRenderer* g_uiRendererPtr{};
 bool g_isRedrawNeeded = false;
 int g_windowWidth = 0;
 int g_windowHeight = 0;
 bool g_isDebugDrawMode = false;
+
+TextRenderer* g_textRenderer{};
+UiRenderer* g_uiRenderer{};
+std::vector<Buffer> g_buffers;
+size_t g_currentBufferI{};
 
 static void windowResizeCB(GLFWwindow*, int width, int height)
 {
     glViewport(0, 0, width, height);
     g_windowWidth = width;
     g_windowHeight = height;
-    g_fontRendererPtr->onWindowResized(width, height);
-    g_uiRendererPtr->onWindowResized(width, height);
+    g_textRenderer->onWindowResized(width, height);
+    g_uiRenderer->onWindowResized(width, height);
 }
 
 static void windowRefreshCB(GLFWwindow*)
@@ -95,6 +98,35 @@ static void windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods
         {
         case GLFW_KEY_F3:
             toggleDebugDraw();
+            break;
+        }
+    }
+    else if (action == GLFW_PRESS || action == GLFW_REPEAT)
+    {
+        switch (key)
+        {
+        case GLFW_KEY_RIGHT:
+            if (!g_buffers.empty())
+                g_buffers[g_currentBufferI].moveCursorRight();
+            g_isRedrawNeeded = true;
+            break;
+
+        case GLFW_KEY_LEFT:
+            if (!g_buffers.empty())
+                g_buffers[g_currentBufferI].moveCursorLeft();
+            g_isRedrawNeeded = true;
+            break;
+
+        case GLFW_KEY_DOWN:
+            if (!g_buffers.empty())
+                g_buffers[g_currentBufferI].moveCursorDown();
+            g_isRedrawNeeded = true;
+            break;
+
+        case GLFW_KEY_UP:
+            if (!g_buffers.empty())
+                g_buffers[g_currentBufferI].moveCursorUp();
+            g_isRedrawNeeded = true;
             break;
         }
     }
@@ -153,32 +185,32 @@ int main(int argc, char** argv)
         << "\n       Bold italic font: " << boldItalicFontPath
         << Logger::End;
     assert(regularFontPath.length() && boldFontPath.length() && italicFontPath.length() && boldItalicFontPath.length());
-    TextRenderer fontRenderer = {regularFontPath, boldFontPath, italicFontPath, boldItalicFontPath};
-    g_fontRendererPtr = &fontRenderer;
-
-    UiRenderer uiRenderer;
-    g_uiRendererPtr = &uiRenderer;
+    g_textRenderer = new TextRenderer{regularFontPath, boldFontPath, italicFontPath, boldItalicFontPath};
+    g_uiRenderer = new UiRenderer{};
 
     // Update TextRenderer's and UiRenderer's variables by triggering the resize callback
     glfwPollEvents();
 
-    std::vector<Buffer> buffers;
-    size_t currentBufferI{};
     for (int i{1}; i < argc; ++i)
     {
-        buffers.push_back(Buffer{g_fontRendererPtr, g_uiRendererPtr});
-        if (buffers.back().open(argv[i]))
+        g_buffers.push_back(Buffer{g_textRenderer, g_uiRenderer});
+        if (g_buffers.back().open(argv[i]))
         {
             // TODO: Show an error dialog or something
         }
     }
+    if (g_buffers.empty())
+    {
+        g_buffers.push_back(Buffer{g_textRenderer, g_uiRenderer});
+        g_buffers.back().open(__FILE__);
+    }
 
     auto genTitle{
         [&](){
-            if (buffers.empty())
+            if (g_buffers.empty())
                 return std::string{"HaxorEdit"};
-            return buffers[currentBufferI].getFileName()
-                + std::string{" - ["} + std::to_string(currentBufferI+1) + '/' + std::to_string(buffers.size()) + "]";
+            return g_buffers[g_currentBufferI].getFileName()
+                + std::string{" - ["} + std::to_string(g_currentBufferI+1) + '/' + std::to_string(g_buffers.size()) + "]";
         }
     };
 
@@ -192,11 +224,10 @@ int main(int argc, char** argv)
         {
             glClear(GL_COLOR_BUFFER_BIT);
             glClearColor(UNPACK_RGB_COLOR(BG_COLOR), 1.0f);
-            glfwSwapBuffers(window);
 
-            if (!buffers.empty())
+            if (!g_buffers.empty())
             {
-                buffers[currentBufferI].render();
+                g_buffers[g_currentBufferI].render();
             }
 
             g_isRedrawNeeded = false;
@@ -206,6 +237,9 @@ int main(int argc, char** argv)
     }
 
     Logger::log << "Shutting down!" << Logger::End;
+
+    delete g_textRenderer;
+    delete g_uiRenderer;
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
