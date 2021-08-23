@@ -12,7 +12,7 @@ include_directories(
 
 link_libraries(GLEW GL glfw freetype)
 
-project(metaballs VERSION 1.0)
+project(haxed VERSION 1.0)
 
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic -g3 -fno-limit-debug-info")
 
