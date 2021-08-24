@@ -20,4 +20,4 @@
 #define BUFFER_DRAW_LINE_NUMS true
 
 #define CURSOR_COLOR RGBColor{1.0f, 0.0f, 0.0f}
-#define CURSOR_DRAW_BLOCK 1
+#define CURSOR_DRAW_BLOCK 0

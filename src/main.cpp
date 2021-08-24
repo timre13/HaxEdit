@@ -228,6 +228,7 @@ int main(int argc, char** argv)
 
             if (!g_buffers.empty())
             {
+                g_buffers[g_currentBufferI].updateCursor();
                 g_buffers[g_currentBufferI].render();
             }
 
