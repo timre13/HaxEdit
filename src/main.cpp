@@ -210,7 +210,8 @@ int main(int argc, char** argv)
             if (g_buffers.empty())
                 return std::string{"HaxorEdit"};
             return g_buffers[g_currentBufferI].getFileName()
-                + std::string{" - ["} + std::to_string(g_currentBufferI+1) + '/' + std::to_string(g_buffers.size()) + "]";
+                + std::string{" - ["} + std::to_string(g_currentBufferI+1) + '/'
+                + std::to_string(g_buffers.size()) + "]";
         }
     };
 

@@ -27,13 +27,13 @@ public:
     void renderFilledRectangle(
         const glm::ivec2& position1,
         const glm::ivec2& position2,
-        const RGBColor& fillColor
+        const RGBAColor& fillColor
         );
 
     void renderRectangleOutline(
         const glm::ivec2& position1,
         const glm::ivec2& position2,
-        const RGBColor& color,
+        const RGBAColor& color,
         uint borderThickness
         );
 

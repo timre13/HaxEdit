@@ -57,7 +57,10 @@ int Buffer::open(const std::string& filePath)
 void Buffer::render()
 {
     // Draw line number background
-    m_uiRenderer->renderFilledRectangle(m_position, {FONT_SIZE_PX*LINEN_BAR_WIDTH, m_textRenderer->getWindowHeight()}, LINEN_BG_COLOR);
+    m_uiRenderer->renderFilledRectangle(
+            m_position,
+            {FONT_SIZE_PX*LINEN_BAR_WIDTH, m_textRenderer->getWindowHeight()},
+            RGB_COLOR_TO_RGBA(LINEN_BG_COLOR));
 
     const float initTextX = m_position.x+FONT_SIZE_PX*LINEN_BAR_WIDTH;
     const float initTextY = m_position.y;
@@ -125,15 +128,30 @@ void Buffer::render()
             return;
         }
 
-        auto dimensions = m_textRenderer->renderChar(c, {textX, textY});
+        TextRenderer::GlyphDimensions dimensions = m_textRenderer->renderChar(c, {textX, textY});
 
         // Draw cursor
-        if (lineI == m_cursorRow && colI == m_cursorCol)
+        if (lineI == m_cursorLine && colI == m_cursorCol)
         {
+#if CURSOR_DRAW_BLOCK
+            m_uiRenderer->renderRectangleOutline(
+                    {textX-2, initTextY+textY-2},
+                    {textX+dimensions.advance/64.0f+2, initTextY+textY+FONT_SIZE_PX+2},
+                    {1.0f, 0.0f, 0.0f},
+                    2
+            );
+            m_uiRenderer->renderFilledRectangle(
+                    {textX-2, initTextY+textY-2},
+                    {textX+dimensions.advance/64.0f+2, initTextY+textY+FONT_SIZE_PX+2},
+                    {1.0f, 0.0f, 0.0f, 0.4f}
+            );
+#else
             m_uiRenderer->renderFilledRectangle(
                     {textX-1, initTextY+textY-2},
                     {textX+1, initTextY+textY+FONT_SIZE_PX+2},
-                    {1.0f, 0.0f, 0.0f});
+                    {1.0f, 0.0f, 0.0f}
+            );
+#endif
 
             // Bind the text renderer shader again
             m_textRenderer->prepareForDrawing();

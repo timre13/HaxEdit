@@ -26,10 +26,10 @@ UiRenderer::UiRenderer()
     Logger::dbg << "Font renderer setup done" << Logger::End;
 }
 
-static void configShaderBeforeDrawing(Shader& shader, int windowWidth, int windowHeight, const RGBColor& color)
+static void configShaderBeforeDrawing(Shader& shader, int windowWidth, int windowHeight, const RGBAColor& color)
 {
     shader.use();
-    glUniform3f(glGetUniformLocation(shader.getId(), "fillColor"), UNPACK_RGB_COLOR(color));
+    glUniform4f(glGetUniformLocation(shader.getId(), "fillColor"), UNPACK_RGBA_COLOR(color));
     const auto matrix = glm::ortho(0.0f, (float)windowWidth, (float)windowHeight, 0.0f);
     glUniformMatrix4fv(
             glGetUniformLocation(shader.getId(), "projectionMat"),
@@ -54,7 +54,7 @@ static void drawVertices(uint vao, uint vbo, const float** vertexData, int verte
 void UiRenderer::renderFilledRectangle(
         const glm::ivec2& position1,
         const glm::ivec2& position2,
-        const RGBColor& fillColor
+        const RGBAColor& fillColor
     )
 {
     assert(m_windowWidth > 0 && m_windowHeight > 0);
@@ -76,7 +76,7 @@ void UiRenderer::renderFilledRectangle(
 void UiRenderer::renderRectangleOutline(
         const glm::ivec2& position1,
         const glm::ivec2& position2,
-        const RGBColor& fillColor,
+        const RGBAColor& fillColor,
         uint borderThickness
     )
 {
