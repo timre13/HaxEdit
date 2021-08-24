@@ -21,3 +21,6 @@
 
 #define CURSOR_COLOR RGBColor{1.0f, 0.0f, 0.0f}
 #define CURSOR_DRAW_BLOCK 0
+// The number of frames to wait before blinking one
+// Set to -1 to disable blinking
+#define CURSOR_BLINK_FRAMES 30

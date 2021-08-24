@@ -107,25 +107,41 @@ static void windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods
         {
         case GLFW_KEY_RIGHT:
             if (!g_buffers.empty())
+            {
                 g_buffers[g_currentBufferI].moveCursorRight();
+                // Show cursor while moving
+                g_buffers[g_currentBufferI].setCursorVisibility(true);
+            }
             g_isRedrawNeeded = true;
             break;
 
         case GLFW_KEY_LEFT:
             if (!g_buffers.empty())
+            {
                 g_buffers[g_currentBufferI].moveCursorLeft();
+                // Show cursor while moving
+                g_buffers[g_currentBufferI].setCursorVisibility(true);
+            }
             g_isRedrawNeeded = true;
             break;
 
         case GLFW_KEY_DOWN:
             if (!g_buffers.empty())
+            {
                 g_buffers[g_currentBufferI].moveCursorDown();
+                // Show cursor while moving
+                g_buffers[g_currentBufferI].setCursorVisibility(true);
+            }
             g_isRedrawNeeded = true;
             break;
 
         case GLFW_KEY_UP:
             if (!g_buffers.empty())
+            {
                 g_buffers[g_currentBufferI].moveCursorUp();
+                // Show cursor while moving
+                g_buffers[g_currentBufferI].setCursorVisibility(true);
+            }
             g_isRedrawNeeded = true;
             break;
         }
@@ -217,6 +233,7 @@ int main(int argc, char** argv)
 
     glfwSetWindowTitle(window, genTitle().c_str());
 
+    float framesUntilCursorBlinking = CURSOR_BLINK_FRAMES;
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
@@ -235,7 +252,18 @@ int main(int argc, char** argv)
             g_isRedrawNeeded = false;
         }
 
+        if (CURSOR_BLINK_FRAMES >= 0 && framesUntilCursorBlinking <= 0 && !g_buffers.empty())
+        {
+            glClear(GL_COLOR_BUFFER_BIT);
+            glClearColor(UNPACK_RGB_COLOR(BG_COLOR), 1.0f);
+
+            g_buffers[g_currentBufferI].toggleCursorVisibility();
+            g_buffers[g_currentBufferI].render();
+            framesUntilCursorBlinking = CURSOR_BLINK_FRAMES;
+        }
+
         glfwSwapBuffers(window);
+        --framesUntilCursorBlinking;
     }
 
     Logger::log << "Shutting down!" << Logger::End;

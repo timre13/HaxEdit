@@ -22,6 +22,7 @@ private:
     // 0-based indexes!
     size_t m_cursorLine{};
     size_t m_cursorCol{};
+    bool m_isCursorShown{true}; // Used to blink the cursor
 
     TextRenderer* m_textRenderer{};
     UiRenderer* m_uiRenderer{};
@@ -60,4 +61,9 @@ public:
     inline void moveCursorLeft()  { m_cursorMovCmd = CursorMovCmd::Left; }
     inline void moveCursorUp()    { m_cursorMovCmd = CursorMovCmd::Up; }
     inline void moveCursorDown()  { m_cursorMovCmd = CursorMovCmd::Down; }
+
+    inline void setCursorVisibility(bool isVisible) {
+        m_isCursorShown = isVisible; }
+    inline void toggleCursorVisibility() {
+        m_isCursorShown = !m_isCursorShown; }
 };

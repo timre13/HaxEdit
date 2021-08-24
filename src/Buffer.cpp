@@ -152,7 +152,8 @@ void Buffer::render()
         auto drawCursorIfNeeded{
             [&]()
             {
-                if (lineI == m_cursorLine && colI == m_cursorCol)
+                if ((m_cursorMovCmd != CursorMovCmd::None || m_isCursorShown)
+                        && lineI == m_cursorLine && colI == m_cursorCol)
                 {
 #if CURSOR_DRAW_BLOCK
                     m_uiRenderer->renderRectangleOutline(
@@ -220,7 +221,8 @@ void Buffer::render()
         auto dimensions = m_textRenderer->renderChar(c, {textX, textY});
 
         // Draw cursor
-        if (lineI == m_cursorLine && colI == m_cursorCol)
+        if ((m_cursorMovCmd != CursorMovCmd::None ||
+                m_isCursorShown) && lineI == m_cursorLine && colI == m_cursorCol)
         {
 #if CURSOR_DRAW_BLOCK
             m_uiRenderer->renderRectangleOutline(
