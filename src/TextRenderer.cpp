@@ -132,8 +132,8 @@ static inline TextRenderer::GlyphDimensions renderGlyph(
 {
     const float charX = textX + glyph.bearing.x * scale;
     const float charY = textY - (glyph.bearing.y) + FONT_SIZE_PX;
-    const float charW = glyph.dimensions.x * scale;
-    const float charH = glyph.dimensions.y * scale;
+    const float charW = glyph.size.x * scale;
+    const float charH = glyph.size.y * scale;
 
     const float vertexData[6][4] = {
         {charX,         charY + charH, 0.0f, 0.0f},
@@ -154,7 +154,7 @@ static inline TextRenderer::GlyphDimensions renderGlyph(
 
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
-    return {glyph.dimensions, glyph.dimensions, glyph.advance};
+    return {glyph.size, glyph.size, glyph.advance};
 }
 
 TextRenderer::GlyphDimensions TextRenderer::renderChar(

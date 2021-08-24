@@ -118,7 +118,7 @@ void Buffer::render()
             RGB_COLOR_TO_RGBA(LINEN_BG_COLOR));
 
     const float initTextX = m_position.x+FONT_SIZE_PX*LINEN_BAR_WIDTH;
-    const float initTextY = m_position.y;
+    const float initTextY = m_position.y+m_scrollY;
     float textX = initTextX;
     float textY = initTextY;
 
@@ -130,6 +130,13 @@ void Buffer::render()
     size_t colI{};
     for (char c : m_content)
     {
+        if (textY > m_textRenderer->getWindowHeight())
+        {
+            return;
+        }
+
+        // TODO: Don't draw the part of the buffer that is above the viewport
+
         if (BUFFER_DRAW_LINE_NUMS && isLineBeginning)
         {
             m_textRenderer->setDrawingColor(LINEN_FONT_COLOR);
@@ -157,20 +164,20 @@ void Buffer::render()
                 {
 #if CURSOR_DRAW_BLOCK
                     m_uiRenderer->renderRectangleOutline(
-                            {textX-2, initTextY+textY-2},
-                            {textX+FONT_SIZE_PX*0.75+2, initTextY+textY+FONT_SIZE_PX+2},
+                            {textX-2, initTextY+textY-m_scrollY-2},
+                            {textX+FONT_SIZE_PX*0.75+2, initTextY+textY-m_scrollY+FONT_SIZE_PX+2},
                             {1.0f, 0.0f, 0.0f},
                             2
                     );
                     m_uiRenderer->renderFilledRectangle(
-                            {textX-2, initTextY+textY-2},
-                            {textX+FONT_SIZE_PX*0.75+2, initTextY+textY+FONT_SIZE_PX+2},
+                            {textX-2, initTextY+textY-m_scrollY-2},
+                            {textX+FONT_SIZE_PX*0.75+2, initTextY+textY-m_scrollY+FONT_SIZE_PX+2},
                             {1.0f, 0.0f, 0.0f, 0.4f}
                     );
 #else
                     m_uiRenderer->renderFilledRectangle(
-                            {textX-1, initTextY+textY-2},
-                            {textX+1, initTextY+textY+FONT_SIZE_PX+2},
+                            {textX-1, initTextY+textY-m_scrollY-2},
+                            {textX+1, initTextY+textY-m_scrollY+FONT_SIZE_PX+2},
                             {1.0f, 0.0f, 0.0f}
                     );
 #endif
@@ -213,10 +220,6 @@ void Buffer::render()
             textX = initTextX;
             textY += FONT_SIZE_PX;
         }
-        if (textY < -m_textRenderer->getWindowHeight())
-        {
-            return;
-        }
 
         auto dimensions = m_textRenderer->renderChar(c, {textX, textY});
 
@@ -226,20 +229,20 @@ void Buffer::render()
         {
 #if CURSOR_DRAW_BLOCK
             m_uiRenderer->renderRectangleOutline(
-                    {textX-2, initTextY+textY-2},
-                    {textX+dimensions.advance/64.0f+2, initTextY+textY+FONT_SIZE_PX+2},
+                    {textX-2, initTextY+textY-m_scrollY-2},
+                    {textX+dimensions.advance/64.0f+2, initTextY+textY-m_scrollY+FONT_SIZE_PX+2},
                     {1.0f, 0.0f, 0.0f},
                     2
             );
             m_uiRenderer->renderFilledRectangle(
-                    {textX-2, initTextY+textY-2},
-                    {textX+dimensions.advance/64.0f+2, initTextY+textY+FONT_SIZE_PX+2},
+                    {textX-2, initTextY+textY-m_scrollY-2},
+                    {textX+dimensions.advance/64.0f+2, initTextY+textY-m_scrollY+FONT_SIZE_PX+2},
                     {1.0f, 0.0f, 0.0f, 0.4f}
             );
 #else
             m_uiRenderer->renderFilledRectangle(
-                    {textX-1, initTextY+textY-2},
-                    {textX+1, initTextY+textY+FONT_SIZE_PX+2},
+                    {textX-1, initTextY+textY-m_scrollY-2},
+                    {textX+1, initTextY+textY-m_scrollY+FONT_SIZE_PX+2},
                     {1.0f, 0.0f, 0.0f}
             );
 #endif

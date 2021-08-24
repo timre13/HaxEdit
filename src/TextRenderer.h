@@ -31,7 +31,7 @@ public:
     struct Glyph
     {
         uint textureId;
-        glm::ivec2 dimensions;
+        glm::ivec2 size;
         glm::ivec2 bearing;
         uint advance;
     };

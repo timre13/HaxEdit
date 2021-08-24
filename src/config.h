@@ -24,3 +24,5 @@
 // The number of frames to wait before blinking one
 // Set to -1 to disable blinking
 #define CURSOR_BLINK_FRAMES 30
+
+#define SCROLL_SPEED_MULTIPLIER 40

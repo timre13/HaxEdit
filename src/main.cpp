@@ -38,8 +38,8 @@ static void GLAPIENTRY glDebugMsgCB(
     case GL_DEBUG_SOURCE_WINDOW_SYSTEM: std::cout << "window system"; break;
     case GL_DEBUG_SOURCE_SHADER_COMPILER: std::cout << "shader compiler"; break;
     case GL_DEBUG_SOURCE_THIRD_PARTY: std::cout << "third party"; break;
-    case GL_DEBUG_SOURCE_APPLICATION: std::cout << "API"; break;
-    case GL_DEBUG_SOURCE_OTHER: std::cout << "API"; break;
+    case GL_DEBUG_SOURCE_APPLICATION: std::cout << "application"; break;
+    case GL_DEBUG_SOURCE_OTHER: std::cout << "other"; break;
     default: std::cout << "unknown"; break;
     }
 
@@ -148,6 +148,15 @@ static void windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods
     }
 }
 
+static void windowScrollCB(GLFWwindow*, double, double yOffset)
+{
+    if (!g_buffers.empty())
+    {
+        g_buffers[g_currentBufferI].scrollBy(yOffset*SCROLL_SPEED_MULTIPLIER);
+    }
+    g_isRedrawNeeded = true;
+}
+
 int main(int argc, char** argv)
 {
     Logger::setLoggerVerbosity(Logger::LoggerVerbosity::Debug);
@@ -168,6 +177,7 @@ int main(int argc, char** argv)
     glfwSetWindowSizeCallback(window, windowResizeCB);
     glfwSetWindowRefreshCallback(window, windowRefreshCB);
     glfwSetKeyCallback(window, windowKeyCB);
+    glfwSetScrollCallback(window, windowScrollCB);
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
     Logger::dbg << "Created GLFW window" << Logger::End;

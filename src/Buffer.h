@@ -19,6 +19,8 @@ private:
 
     glm::ivec2 m_position{};
 
+    int m_scrollY{};
+
     // 0-based indexes!
     size_t m_cursorLine{};
     size_t m_cursorCol{};
@@ -66,4 +68,6 @@ public:
         m_isCursorShown = isVisible; }
     inline void toggleCursorVisibility() {
         m_isCursorShown = !m_isCursorShown; }
+
+    inline void scrollBy(int val) { m_scrollY += val; }
 };
