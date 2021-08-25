@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 #include "TextRenderer.h"
 #include "UiRenderer.h"
+#include "config.h"
 
 namespace std_fs = std::filesystem;
 
@@ -69,5 +70,18 @@ public:
     inline void toggleCursorVisibility() {
         m_isCursorShown = !m_isCursorShown; }
 
-    inline void scrollBy(int val) { m_scrollY += val; }
+    inline void scrollBy(int val)
+    {
+        m_scrollY += val;
+        // Don't scroll above the first line
+        if (m_scrollY > 0)
+        {
+            m_scrollY = 0;
+        }
+        // Always show the last line when scrolling down
+        else if (m_scrollY < -(long)(m_numOfLines-1)*FONT_SIZE_PX)
+        {
+            m_scrollY = -(long)(m_numOfLines-1)*FONT_SIZE_PX;
+        }
+    }
 };
