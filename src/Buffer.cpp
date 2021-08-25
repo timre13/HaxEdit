@@ -139,12 +139,15 @@ void Buffer::render()
 
         if (BUFFER_DRAW_LINE_NUMS && isLineBeginning)
         {
-            m_textRenderer->setDrawingColor(LINEN_FONT_COLOR);
+            m_textRenderer->setDrawingColor(
+                    lineI == m_cursorLine ? LINEN_ACTIVE_FONT_COLOR : LINEN_FONT_COLOR);
 
             float digitX = m_position.x;
             for (char digit : std::to_string(lineI+1))
             {
-                auto dimensions = m_textRenderer->renderChar(digit, {digitX, textY}, FontStyle::Italic);
+                auto dimensions = m_textRenderer->renderChar(digit,
+                        {digitX, textY},
+                        lineI == m_cursorLine ? FontStyle::Bold : FontStyle::Italic);
                 digitX += dimensions.advance/64.0f;
             }
 
