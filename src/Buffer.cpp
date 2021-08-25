@@ -66,7 +66,6 @@ void Buffer::updateCursor()
             return line;
         }
     };
-    std::string cursorLine = getCursorLineStr();
 
     switch (m_cursorMovCmd)
     {
@@ -78,18 +77,23 @@ void Buffer::updateCursor()
         break;
 
     case CursorMovCmd::Right:
-        if (!cursorLine.empty() && m_cursorCol < cursorLine.size())
+    {
+        auto cursorLineVal = getCursorLineStr();
+        if (!cursorLineVal.empty() && m_cursorCol < cursorLineVal.size())
         {
             ++m_cursorCol;
         }
         break;
+    }
 
     case CursorMovCmd::Up:
         if (m_cursorLine > 0)
         {
             --m_cursorLine;
-            // If the new line is smaller than the current cursor column, step back to the end of the line
-            m_cursorCol = std::min(getCursorLineStr().length(), m_cursorCol);
+
+            if (m_cursorCol != 0) // Column 0 always exists
+                // If the new line is smaller than the current cursor column, step back to the end of the line
+                m_cursorCol = std::min(getCursorLineStr().length(), m_cursorCol);
         }
         break;
 
@@ -97,8 +101,10 @@ void Buffer::updateCursor()
         if (m_cursorLine < m_numOfLines-1)
         {
             ++m_cursorLine;
-            // If the new line is smaller than the current cursor column, step back to the end of the line
-            m_cursorCol = std::min(getCursorLineStr().length(), m_cursorCol);
+
+            if (m_cursorCol != 0) // Column 0 always exists
+                // If the new line is smaller than the current cursor column, step back to the end of the line
+                m_cursorCol = std::min(getCursorLineStr().length(), m_cursorCol);
         }
         break;
 
