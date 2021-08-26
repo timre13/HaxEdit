@@ -25,6 +25,7 @@ private:
     // 0-based indices!
     int m_cursorLine{};
     int m_cursorCol{};
+    size_t m_cursorCharPos{};
     bool m_isCursorShown{true}; // Used to blink the cursor
 
     TextRenderer* m_textRenderer{};
@@ -59,6 +60,7 @@ public:
 
     inline int getCursorLine() const { return m_cursorLine; }
     inline int getCursorCol() const { return m_cursorCol; }
+    inline int getCursorCharPos() const { return m_cursorCharPos; }
 
     inline void moveCursorRight() { m_cursorMovCmd = CursorMovCmd::Right; }
     inline void moveCursorLeft()  { m_cursorMovCmd = CursorMovCmd::Left; }

@@ -73,6 +73,7 @@ void Buffer::updateCursor()
         if (m_cursorCol > 0)
         {
             --m_cursorCol;
+            --m_cursorCharPos;
         }
         break;
 
@@ -82,6 +83,7 @@ void Buffer::updateCursor()
         if (!cursorLineVal.empty() && m_cursorCol < (int)cursorLineVal.size())
         {
             ++m_cursorCol;
+            ++m_cursorCharPos;
         }
         break;
     }
@@ -89,22 +91,31 @@ void Buffer::updateCursor()
     case CursorMovCmd::Up:
         if (m_cursorLine > 0)
         {
+            const int prevCursorCol = m_cursorCol;
+
             --m_cursorLine;
 
             if (m_cursorCol != 0) // Column 0 always exists
                 // If the new line is smaller than the current cursor column, step back to the end of the line
                 m_cursorCol = std::min((int)getCursorLineStr().length(), m_cursorCol);
+
+            m_cursorCharPos -= prevCursorCol + ((int)getCursorLineStr().length()+1-m_cursorCol);
         }
         break;
 
     case CursorMovCmd::Down:
         if (m_cursorLine < m_numOfLines-1)
         {
+            const int prevCursorCol = m_cursorCol;
+            const int prevCursorLineLen = getCursorLineStr().length();
+
             ++m_cursorLine;
 
             if (m_cursorCol != 0) // Column 0 always exists
                 // If the new line is smaller than the current cursor column, step back to the end of the line
                 m_cursorCol = std::min((int)getCursorLineStr().length(), m_cursorCol);
+
+            m_cursorCharPos += (prevCursorLineLen+1-prevCursorCol) + m_cursorCol;
         }
         break;
 
@@ -131,7 +142,7 @@ void Buffer::updateCursor()
 
 static inline void renderStatusLine(
         UiRenderer* uiRenderer, TextRenderer* textRenderer,
-        int cursorLine, int cursorCol,
+        int cursorLine, int cursorCol, int cursorCharPos,
         const std::string& filePath)
 {
     uiRenderer->renderRectangleOutline(
@@ -146,10 +157,11 @@ static inline void renderStatusLine(
 
     const std::string cursorPosString
         = std::to_string(cursorLine+1) + ':'
-        + std::to_string(cursorCol+1);
+        + std::to_string(cursorCol+1) + " | "
+        + std::to_string(cursorCharPos);
     textRenderer->renderString(
             cursorPosString,
-            {textRenderer->getWindowWidth()-FONT_SIZE_PX*7,
+            {textRenderer->getWindowWidth()-FONT_SIZE_PX*(4+1+3+3+7)*0.7f,
              textRenderer->getWindowHeight()-FONT_SIZE_PX-4});
 
     const std::string statusLineString = filePath;
@@ -309,5 +321,8 @@ void Buffer::render()
         isLineBeginning = false;
     }
 
-    renderStatusLine(m_uiRenderer, m_textRenderer, m_cursorLine, m_cursorCol, m_filePath);
+    renderStatusLine(
+            m_uiRenderer, m_textRenderer,
+            m_cursorLine, m_cursorCol, m_cursorCharPos,
+            m_filePath);
 }
