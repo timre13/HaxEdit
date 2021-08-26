@@ -129,6 +129,36 @@ void Buffer::updateCursor()
     m_cursorMovCmd = CursorMovCmd::None;
 }
 
+static inline void renderStatusLine(
+        UiRenderer* uiRenderer, TextRenderer* textRenderer,
+        int cursorLine, int cursorCol,
+        const std::string& filePath)
+{
+    uiRenderer->renderRectangleOutline(
+            {LINEN_BAR_WIDTH*FONT_SIZE_PX, textRenderer->getWindowHeight()-FONT_SIZE_PX*1.2f},
+            {textRenderer->getWindowWidth(), textRenderer->getWindowHeight()},
+            {0.5f, 0.5f, 0.5f},
+            2);
+    uiRenderer->renderFilledRectangle(
+            {LINEN_BAR_WIDTH*FONT_SIZE_PX, textRenderer->getWindowHeight()-FONT_SIZE_PX*1.2f},
+            {textRenderer->getWindowWidth(), textRenderer->getWindowHeight()},
+            RGB_COLOR_TO_RGBA(STATUSBAR_BG_COLOR));
+
+    const std::string cursorPosString
+        = std::to_string(cursorLine+1) + ':'
+        + std::to_string(cursorCol+1);
+    textRenderer->renderString(
+            cursorPosString,
+            {textRenderer->getWindowWidth()-FONT_SIZE_PX*7,
+             textRenderer->getWindowHeight()-FONT_SIZE_PX-4});
+
+    const std::string statusLineString = filePath;
+    textRenderer->renderString(
+            statusLineString,
+            {LINEN_BAR_WIDTH*FONT_SIZE_PX,
+             textRenderer->getWindowHeight()-FONT_SIZE_PX-4});
+}
+
 void Buffer::render()
 {
     // Draw line number background
@@ -152,7 +182,7 @@ void Buffer::render()
     {
         if (textY > m_textRenderer->getWindowHeight())
         {
-            return;
+            break;
         }
 
         // TODO: Don't draw the part of the buffer that is above the viewport
@@ -278,4 +308,6 @@ void Buffer::render()
         ++colI;
         isLineBeginning = false;
     }
+
+    renderStatusLine(m_uiRenderer, m_textRenderer, m_cursorLine, m_cursorCol, m_filePath);
 }
