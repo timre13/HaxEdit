@@ -16,15 +16,15 @@ class Buffer
 private:
     std::string m_filePath = FILENAME_NEW;
     std::string m_content;
-    size_t m_numOfLines{};
+    int m_numOfLines{};
 
     glm::ivec2 m_position{};
 
     int m_scrollY{};
 
-    // 0-based indexes!
-    size_t m_cursorLine{};
-    size_t m_cursorCol{};
+    // 0-based indices!
+    int m_cursorLine{};
+    int m_cursorCol{};
     bool m_isCursorShown{true}; // Used to blink the cursor
 
     TextRenderer* m_textRenderer{};
@@ -55,10 +55,10 @@ public:
     inline const std::string getFileExt() const {
         return std_fs::path{m_filePath}.extension().string(); }
     inline bool isNewFile() const { return m_filePath.compare(FILENAME_NEW); }
-    inline size_t getNumOfLines() const { return m_numOfLines; }
+    inline int getNumOfLines() const { return m_numOfLines; }
 
-    inline size_t getCursorLine() const { return m_cursorLine; }
-    inline size_t getCursorCol() const { return m_cursorCol; }
+    inline int getCursorLine() const { return m_cursorLine; }
+    inline int getCursorCol() const { return m_cursorCol; }
 
     inline void moveCursorRight() { m_cursorMovCmd = CursorMovCmd::Right; }
     inline void moveCursorLeft()  { m_cursorMovCmd = CursorMovCmd::Left; }
@@ -79,9 +79,10 @@ public:
             m_scrollY = 0;
         }
         // Always show the last line when scrolling down
-        else if (m_scrollY < -(long)(m_numOfLines-1)*FONT_SIZE_PX)
+        // FIXME: Line wrapping makes the document longer, so this breaks
+        else if (m_scrollY < -(int)(m_numOfLines-1)*FONT_SIZE_PX)
         {
-            m_scrollY = -(long)(m_numOfLines-1)*FONT_SIZE_PX;
+            m_scrollY = -(int)(m_numOfLines-1)*FONT_SIZE_PX;
         }
     }
 };

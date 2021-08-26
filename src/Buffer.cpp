@@ -9,9 +9,9 @@ Buffer::Buffer(TextRenderer* textRenderer, UiRenderer* uiRenderer)
 {
 }
 
-static size_t countLines(const std::string& str)
+static int countLines(const std::string& str)
 {
-    size_t lines{};
+    int lines{};
     for (auto it=str.begin(); it != str.end(); ++it)
     {
         if (*it == '\n')
@@ -59,7 +59,7 @@ void Buffer::updateCursor()
     auto getCursorLineStr{
         [&]()
         {
-            size_t lineI{};
+            int lineI{};
             std::string line;
             std::stringstream ss; ss << m_content;
             while (std::getline(ss, line) && lineI != m_cursorLine) { ++lineI; }
@@ -79,7 +79,7 @@ void Buffer::updateCursor()
     case CursorMovCmd::Right:
     {
         auto cursorLineVal = getCursorLineStr();
-        if (!cursorLineVal.empty() && m_cursorCol < cursorLineVal.size())
+        if (!cursorLineVal.empty() && m_cursorCol < (int)cursorLineVal.size())
         {
             ++m_cursorCol;
         }
@@ -93,7 +93,7 @@ void Buffer::updateCursor()
 
             if (m_cursorCol != 0) // Column 0 always exists
                 // If the new line is smaller than the current cursor column, step back to the end of the line
-                m_cursorCol = std::min(getCursorLineStr().length(), m_cursorCol);
+                m_cursorCol = std::min((int)getCursorLineStr().length(), m_cursorCol);
         }
         break;
 
@@ -104,12 +104,26 @@ void Buffer::updateCursor()
 
             if (m_cursorCol != 0) // Column 0 always exists
                 // If the new line is smaller than the current cursor column, step back to the end of the line
-                m_cursorCol = std::min(getCursorLineStr().length(), m_cursorCol);
+                m_cursorCol = std::min((int)getCursorLineStr().length(), m_cursorCol);
         }
         break;
 
     case CursorMovCmd::None:
-        break; // Already handled
+        break;
+    }
+
+    // Scroll up when the cursor goes out of the viewport
+    if (m_cursorMovCmd != CursorMovCmd::None &&
+        m_cursorLine-5 < -m_scrollY/FONT_SIZE_PX)
+    {
+        scrollBy(-(m_scrollY+(m_cursorLine-5)*FONT_SIZE_PX));
+    }
+    // Scroll down when the cursor goes out of the viewport
+    // FIXME: Line wrapping breaks this, too
+    else if (m_cursorMovCmd != CursorMovCmd::None &&
+        m_cursorLine+m_scrollY/FONT_SIZE_PX+5 > m_textRenderer->getWindowHeight()/FONT_SIZE_PX)
+    {
+        scrollBy(-(m_cursorLine*FONT_SIZE_PX+m_scrollY-m_textRenderer->getWindowHeight()+FONT_SIZE_PX*5));
     }
 
     m_cursorMovCmd = CursorMovCmd::None;
@@ -132,8 +146,8 @@ void Buffer::render()
     m_textRenderer->setDrawingColor({1.0f, 1.0f, 1.0f});
 
     char isLineBeginning = true;
-    size_t lineI{};
-    size_t colI{};
+    int lineI{};
+    int colI{};
     for (char c : m_content)
     {
         if (textY > m_textRenderer->getWindowHeight())
