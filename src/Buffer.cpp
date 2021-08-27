@@ -1,6 +1,7 @@
 #include "Buffer.h"
 #include "config.h"
 #include "Logger.h"
+#include "Timer.h"
 #include <fstream>
 #include <sstream>
 
@@ -22,6 +23,8 @@ static int countLines(const std::string& str)
 
 int Buffer::open(const std::string& filePath)
 {
+    TIMER_BEGIN_FUNC();
+
     m_filePath = filePath;
     Logger::dbg << "Opening file: " << filePath << Logger::End;
 
@@ -42,7 +45,7 @@ int Buffer::open(const std::string& filePath)
         Logger::dbg << "Read "
             << m_content.length() << " characters ("
             << m_numOfLines << " lines) from file" << Logger::End;
-        return 0;
+        file.close();
     }
     catch (std::exception& e)
     {
@@ -52,6 +55,9 @@ int Buffer::open(const std::string& filePath)
         Logger::err << "Failed to open file: \"" << filePath << "\": " << e.what() << Logger::End;
         return 1;
     }
+
+    TIMER_END_FUNC();
+    return 0;
 }
 
 static int getLineLenAt(const std::string& str, int lineI)
@@ -65,6 +71,8 @@ static int getLineLenAt(const std::string& str, int lineI)
 
 void Buffer::updateCursor()
 {
+    TIMER_BEGIN_FUNC();
+
     assert(m_cursorCol >= 0);
     assert(m_cursorLine >= 0);
     assert(m_cursorCharPos >= 0);
@@ -151,6 +159,8 @@ void Buffer::updateCursor()
     }
 
     m_cursorMovCmd = CursorMovCmd::None;
+
+    TIMER_END_FUNC();
 }
 
 static inline void renderStatusLine(
@@ -186,6 +196,8 @@ static inline void renderStatusLine(
 
 void Buffer::render()
 {
+    TIMER_BEGIN_FUNC();
+
     // Draw line number background
     m_uiRenderer->renderFilledRectangle(
             m_position,
@@ -338,10 +350,14 @@ void Buffer::render()
             m_uiRenderer, m_textRenderer,
             m_cursorLine, m_cursorCol, m_cursorCharPos,
             m_filePath);
+
+    TIMER_END_FUNC();
 }
 
 void Buffer::insert(char character)
 {
+    TIMER_BEGIN_FUNC();
+
     assert(m_cursorCol >= 0);
     assert(m_cursorLine >= 0);
     assert(m_cursorCharPos >= 0);
@@ -360,10 +376,14 @@ void Buffer::insert(char character)
         ++m_cursorCol;
         ++m_cursorCharPos;
     }
+
+    TIMER_END_FUNC();
 }
 
 void Buffer::deleteCharBackwards()
 {
+    TIMER_BEGIN_FUNC();
+
     assert(m_cursorCol >= 0);
     assert(m_cursorLine >= 0);
     assert(m_cursorCharPos >= 0);
@@ -387,10 +407,14 @@ void Buffer::deleteCharBackwards()
     assert(m_cursorCol >= 0);
     assert(m_cursorLine >= 0);
     assert(m_cursorCharPos >= 0);
+
+    TIMER_END_FUNC();
 }
 
 void Buffer::deleteCharForward()
 {
+    TIMER_BEGIN_FUNC();
+
     assert(m_cursorCol >= 0);
     assert(m_cursorLine >= 0);
     assert(m_cursorCharPos >= 0);
@@ -412,4 +436,6 @@ void Buffer::deleteCharForward()
     assert(m_cursorCol >= 0);
     assert(m_cursorLine >= 0);
     assert(m_cursorCharPos >= 0);
+
+    TIMER_END_FUNC();
 }

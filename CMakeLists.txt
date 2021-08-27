@@ -31,5 +31,7 @@ add_executable(haxed
     src/types.h
     src/UiRenderer.h
     src/UiRenderer.cpp
+    src/Timer.h
+    src/Timer.cpp
 )
 

@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <string>
 #include <glm/glm.hpp>
+#include "Timer.h"
 #include "TextRenderer.h"
 #include "UiRenderer.h"
 #include "config.h"
@@ -74,6 +75,8 @@ public:
 
     inline void scrollBy(int val)
     {
+        TIMER_BEGIN_FUNC();
+
         m_scrollY += val;
         // Don't scroll above the first line
         if (m_scrollY > 0)
@@ -86,6 +89,8 @@ public:
         {
             m_scrollY = -(int)(m_numOfLines-1)*FONT_SIZE_PX;
         }
+
+        TIMER_END_FUNC();
     }
 
     void insert(char character);

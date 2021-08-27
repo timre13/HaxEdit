@@ -12,6 +12,7 @@
 #include "UiRenderer.h"
 #include "Buffer.h"
 #include "types.h"
+#include "Timer.h"
 
 static void GLAPIENTRY glDebugMsgCB(
         GLenum source, GLenum type, GLuint, GLenum severity,
@@ -101,6 +102,8 @@ static void charCB(GLFWwindow*, uint codePoint)
 
 static void windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods)
 {
+    TIMER_BEGIN_FUNC();
+
     (void)mods; (void)scancode;
 
     if (action == GLFW_RELEASE)
@@ -201,6 +204,8 @@ static void windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods
             break;
         }
     }
+
+    TIMER_END_FUNC();
 }
 
 static void windowScrollCB(GLFWwindow*, double, double yOffset)

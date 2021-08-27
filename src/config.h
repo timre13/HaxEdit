@@ -1,5 +1,8 @@
 #pragma once
 
+#define DEBUG_ENABLE_FUNC_TIMER 0
+
+
 #define DEF_WIN_W 1500
 #define DEF_WIN_H 1000
 
