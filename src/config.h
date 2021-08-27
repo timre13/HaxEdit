@@ -29,3 +29,6 @@
 #define SCROLL_SPEED_MULTIPLIER 40
 
 #define STATUSBAR_BG_COLOR RGBColor{70/255.0f, 70/255.0f, 90/255.0f}
+
+// Number of spaces to insert when pressing tab, set to 0 to insert the tab character
+#define TAB_SPACE_COUNT 4

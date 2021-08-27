@@ -87,4 +87,8 @@ public:
             m_scrollY = -(int)(m_numOfLines-1)*FONT_SIZE_PX;
         }
     }
+
+    void insert(char character);
+    void deleteCharBackwards();
+    void deleteCharForward();
 };

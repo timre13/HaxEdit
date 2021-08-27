@@ -88,6 +88,17 @@ static void toggleDebugDraw()
     g_isRedrawNeeded = true;
 }
 
+static void charCB(GLFWwindow*, uint codePoint)
+{
+    if (!g_buffers.empty())
+    {
+        g_buffers[g_currentBufferI].insert((char)codePoint);
+        // Show cursor while typing
+        g_buffers[g_currentBufferI].setCursorVisibility(true);
+    }
+    g_isRedrawNeeded = true;
+}
+
 static void windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods)
 {
     (void)mods; (void)scancode;
@@ -111,8 +122,8 @@ static void windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods
                 g_buffers[g_currentBufferI].moveCursorRight();
                 // Show cursor while moving
                 g_buffers[g_currentBufferI].setCursorVisibility(true);
+                g_isRedrawNeeded = true;
             }
-            g_isRedrawNeeded = true;
             break;
 
         case GLFW_KEY_LEFT:
@@ -121,8 +132,8 @@ static void windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods
                 g_buffers[g_currentBufferI].moveCursorLeft();
                 // Show cursor while moving
                 g_buffers[g_currentBufferI].setCursorVisibility(true);
+                g_isRedrawNeeded = true;
             }
-            g_isRedrawNeeded = true;
             break;
 
         case GLFW_KEY_DOWN:
@@ -131,8 +142,8 @@ static void windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods
                 g_buffers[g_currentBufferI].moveCursorDown();
                 // Show cursor while moving
                 g_buffers[g_currentBufferI].setCursorVisibility(true);
+                g_isRedrawNeeded = true;
             }
-            g_isRedrawNeeded = true;
             break;
 
         case GLFW_KEY_UP:
@@ -141,8 +152,52 @@ static void windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods
                 g_buffers[g_currentBufferI].moveCursorUp();
                 // Show cursor while moving
                 g_buffers[g_currentBufferI].setCursorVisibility(true);
+                g_isRedrawNeeded = true;
             }
-            g_isRedrawNeeded = true;
+            break;
+
+        case GLFW_KEY_ENTER:
+            charCB(nullptr, '\n');
+            break;
+
+        case GLFW_KEY_BACKSPACE:
+            if (!g_buffers.empty())
+            {
+                g_buffers[g_currentBufferI].deleteCharBackwards();
+                // Show cursor while typing
+                g_buffers[g_currentBufferI].setCursorVisibility(true);
+                g_isRedrawNeeded = true;
+            }
+            break;
+
+        case GLFW_KEY_DELETE:
+            if (!g_buffers.empty())
+            {
+                g_buffers[g_currentBufferI].deleteCharForward();
+                // Show cursor while typing
+                g_buffers[g_currentBufferI].setCursorVisibility(true);
+                g_isRedrawNeeded = true;
+            }
+            break;
+
+        case GLFW_KEY_TAB:
+            if (!g_buffers.empty())
+            {
+                if (TAB_SPACE_COUNT < 1)
+                {
+                    g_buffers[g_currentBufferI].insert('\t');
+                }
+                else
+                {
+                    for (int i{}; i < TAB_SPACE_COUNT; ++i)
+                    {
+                        g_buffers[g_currentBufferI].insert(' ');
+                    }
+                }
+                // Show cursor while typing
+                g_buffers[g_currentBufferI].setCursorVisibility(true);
+                g_isRedrawNeeded = true;
+            }
             break;
         }
     }
@@ -178,6 +233,7 @@ int main(int argc, char** argv)
     glfwSetWindowRefreshCallback(window, windowRefreshCB);
     glfwSetKeyCallback(window, windowKeyCB);
     glfwSetScrollCallback(window, windowScrollCB);
+    glfwSetCharCallback(window, charCB);
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
     Logger::dbg << "Created GLFW window" << Logger::End;

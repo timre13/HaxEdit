@@ -54,16 +54,25 @@ int Buffer::open(const std::string& filePath)
     }
 }
 
+static int getLineLenAt(const std::string& str, int lineI)
+{
+    int _lineI{};
+    std::string line;
+    std::stringstream ss; ss << str;
+    while (std::getline(ss, line) && _lineI != lineI) { ++_lineI; }
+    return line.length();
+}
+
 void Buffer::updateCursor()
 {
-    auto getCursorLineStr{
+    assert(m_cursorCol >= 0);
+    assert(m_cursorLine >= 0);
+    assert(m_cursorCharPos >= 0);
+
+    auto getCursorLineLen{ // -> int
         [&]()
         {
-            int lineI{};
-            std::string line;
-            std::stringstream ss; ss << m_content;
-            while (std::getline(ss, line) && lineI != m_cursorLine) { ++lineI; }
-            return line;
+            return getLineLenAt(m_content, m_cursorLine);
         }
     };
 
@@ -79,8 +88,8 @@ void Buffer::updateCursor()
 
     case CursorMovCmd::Right:
     {
-        auto cursorLineVal = getCursorLineStr();
-        if (!cursorLineVal.empty() && m_cursorCol < (int)cursorLineVal.size())
+        auto cursorLineLen = getCursorLineLen();
+        if (cursorLineLen > 0 && m_cursorCol < cursorLineLen)
         {
             ++m_cursorCol;
             ++m_cursorCharPos;
@@ -97,9 +106,9 @@ void Buffer::updateCursor()
 
             if (m_cursorCol != 0) // Column 0 always exists
                 // If the new line is smaller than the current cursor column, step back to the end of the line
-                m_cursorCol = std::min((int)getCursorLineStr().length(), m_cursorCol);
+                m_cursorCol = std::min((int)getCursorLineLen(), m_cursorCol);
 
-            m_cursorCharPos -= prevCursorCol + ((int)getCursorLineStr().length()+1-m_cursorCol);
+            m_cursorCharPos -= prevCursorCol + ((int)getCursorLineLen()+1-m_cursorCol);
         }
         break;
 
@@ -107,13 +116,13 @@ void Buffer::updateCursor()
         if (m_cursorLine < m_numOfLines-1)
         {
             const int prevCursorCol = m_cursorCol;
-            const int prevCursorLineLen = getCursorLineStr().length();
+            const int prevCursorLineLen = getCursorLineLen();
 
             ++m_cursorLine;
 
             if (m_cursorCol != 0) // Column 0 always exists
                 // If the new line is smaller than the current cursor column, step back to the end of the line
-                m_cursorCol = std::min((int)getCursorLineStr().length(), m_cursorCol);
+                m_cursorCol = std::min((int)getCursorLineLen(), m_cursorCol);
 
             m_cursorCharPos += (prevCursorLineLen+1-prevCursorCol) + m_cursorCol;
         }
@@ -122,6 +131,10 @@ void Buffer::updateCursor()
     case CursorMovCmd::None:
         break;
     }
+
+    assert(m_cursorCol >= 0);
+    assert(m_cursorLine >= 0);
+    assert(m_cursorCharPos >= 0);
 
     // Scroll up when the cursor goes out of the viewport
     if (m_cursorMovCmd != CursorMovCmd::None &&
@@ -325,4 +338,78 @@ void Buffer::render()
             m_uiRenderer, m_textRenderer,
             m_cursorLine, m_cursorCol, m_cursorCharPos,
             m_filePath);
+}
+
+void Buffer::insert(char character)
+{
+    assert(m_cursorCol >= 0);
+    assert(m_cursorLine >= 0);
+    assert(m_cursorCharPos >= 0);
+
+    m_content = m_content.insert(m_cursorCharPos, 1, character);
+
+    if (character == '\n')
+    {
+        ++m_cursorLine;
+        ++m_cursorCharPos;
+        m_cursorCol = 0;
+        ++m_numOfLines;
+    }
+    else
+    {
+        ++m_cursorCol;
+        ++m_cursorCharPos;
+    }
+}
+
+void Buffer::deleteCharBackwards()
+{
+    assert(m_cursorCol >= 0);
+    assert(m_cursorLine >= 0);
+    assert(m_cursorCharPos >= 0);
+
+    // If deleting at the beginning of the line and we have stuff to delete
+    if (m_cursorCol == 0 && m_cursorLine != 0)
+    {
+        --m_cursorLine;
+        m_cursorCol = getLineLenAt(m_content, m_cursorLine);
+        m_content.erase(m_cursorCharPos-1, 1);
+        --m_cursorCharPos;
+    }
+    // If deleting in the middle/end of the line and we have stuff to delete
+    else if (m_cursorCharPos > 0)
+    {
+        m_content.erase(m_cursorCharPos-1, 1);
+        --m_cursorCol;
+        --m_cursorCharPos;
+    }
+
+    assert(m_cursorCol >= 0);
+    assert(m_cursorLine >= 0);
+    assert(m_cursorCharPos >= 0);
+}
+
+void Buffer::deleteCharForward()
+{
+    assert(m_cursorCol >= 0);
+    assert(m_cursorLine >= 0);
+    assert(m_cursorCharPos >= 0);
+
+    auto lineLen = getLineLenAt(m_content, m_cursorLine);
+
+    // If deleting at the end of the line and we have stuff to delete
+    if (m_cursorCol == lineLen && m_cursorLine < m_numOfLines)
+    {
+        m_content.erase(m_cursorCharPos, 1);
+        --m_numOfLines;
+    }
+    // If deleting in the middle/beginning of the line and we have stuff to delete
+    else if (m_cursorCharPos != lineLen && m_cursorCharPos < m_content.size())
+    {
+        m_content.erase(m_cursorCharPos, 1);
+    }
+
+    assert(m_cursorCol >= 0);
+    assert(m_cursorLine >= 0);
+    assert(m_cursorCharPos >= 0);
 }
