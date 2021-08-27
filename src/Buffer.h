@@ -14,6 +14,18 @@ namespace std_fs = std::filesystem;
 
 class Buffer
 {
+public:
+    enum class CursorMovCmd
+    {
+        None,
+        Right,
+        Left,
+        Up,
+        Down,
+        LineBeginning,
+        LineEnd,
+    };
+
 private:
     std::string m_filePath = FILENAME_NEW;
     std::string m_content;
@@ -32,14 +44,6 @@ private:
     TextRenderer* m_textRenderer{};
     UiRenderer* m_uiRenderer{};
 
-    enum class CursorMovCmd
-    {
-        None,
-        Right,
-        Left,
-        Up,
-        Down,
-    };
     CursorMovCmd m_cursorMovCmd{CursorMovCmd::None};
 
 public:
@@ -63,10 +67,7 @@ public:
     inline int getCursorCol() const { return m_cursorCol; }
     inline int getCursorCharPos() const { return m_cursorCharPos; }
 
-    inline void moveCursorRight() { m_cursorMovCmd = CursorMovCmd::Right; }
-    inline void moveCursorLeft()  { m_cursorMovCmd = CursorMovCmd::Left; }
-    inline void moveCursorUp()    { m_cursorMovCmd = CursorMovCmd::Up; }
-    inline void moveCursorDown()  { m_cursorMovCmd = CursorMovCmd::Down; }
+    inline void moveCursor(CursorMovCmd cmd) { m_cursorMovCmd = cmd; }
 
     inline void setCursorVisibility(bool isVisible) {
         m_isCursorShown = isVisible; }

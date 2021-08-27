@@ -122,7 +122,7 @@ static void windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods
         case GLFW_KEY_RIGHT:
             if (!g_buffers.empty())
             {
-                g_buffers[g_currentBufferI].moveCursorRight();
+                g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::Right);
                 // Show cursor while moving
                 g_buffers[g_currentBufferI].setCursorVisibility(true);
                 g_isRedrawNeeded = true;
@@ -132,7 +132,7 @@ static void windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods
         case GLFW_KEY_LEFT:
             if (!g_buffers.empty())
             {
-                g_buffers[g_currentBufferI].moveCursorLeft();
+                g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::Left);
                 // Show cursor while moving
                 g_buffers[g_currentBufferI].setCursorVisibility(true);
                 g_isRedrawNeeded = true;
@@ -142,7 +142,7 @@ static void windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods
         case GLFW_KEY_DOWN:
             if (!g_buffers.empty())
             {
-                g_buffers[g_currentBufferI].moveCursorDown();
+                g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::Down);
                 // Show cursor while moving
                 g_buffers[g_currentBufferI].setCursorVisibility(true);
                 g_isRedrawNeeded = true;
@@ -152,7 +152,27 @@ static void windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods
         case GLFW_KEY_UP:
             if (!g_buffers.empty())
             {
-                g_buffers[g_currentBufferI].moveCursorUp();
+                g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::Up);
+                // Show cursor while moving
+                g_buffers[g_currentBufferI].setCursorVisibility(true);
+                g_isRedrawNeeded = true;
+            }
+            break;
+
+        case GLFW_KEY_HOME:
+            if (!g_buffers.empty())
+            {
+                g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::LineBeginning);
+                // Show cursor while moving
+                g_buffers[g_currentBufferI].setCursorVisibility(true);
+                g_isRedrawNeeded = true;
+            }
+            break;
+
+        case GLFW_KEY_END:
+            if (!g_buffers.empty())
+            {
+                g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::LineEnd);
                 // Show cursor while moving
                 g_buffers[g_currentBufferI].setCursorVisibility(true);
                 g_isRedrawNeeded = true;

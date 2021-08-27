@@ -136,6 +136,22 @@ void Buffer::updateCursor()
         }
         break;
 
+    case CursorMovCmd::LineBeginning:
+    {
+        m_cursorCharPos -= m_cursorCol;
+        m_cursorCol = 0;
+        break;
+    }
+
+    case CursorMovCmd::LineEnd:
+    {
+        const int prevCursorCol = m_cursorCol;
+        const int cursorLineLen = getCursorLineLen();
+        m_cursorCharPos += cursorLineLen-prevCursorCol;
+        m_cursorCol = cursorLineLen;
+        break;
+    }
+
     case CursorMovCmd::None:
         break;
     }
