@@ -69,6 +69,21 @@ static int getLineLenAt(const std::string& str, int lineI)
     return line.length();
 }
 
+void Buffer::scrollViewportToCursor()
+{
+    // Scroll up when the cursor goes out of the viewport
+    if (m_cursorLine-5 < -m_scrollY/FONT_SIZE_PX)
+    {
+        scrollBy(-(m_scrollY+(m_cursorLine-5)*FONT_SIZE_PX));
+    }
+    // Scroll down when the cursor goes out of the viewport
+    // FIXME: Line wrapping breaks this, too
+    else if (m_cursorLine+m_scrollY/FONT_SIZE_PX+5 > m_textRenderer->getWindowHeight()/FONT_SIZE_PX)
+    {
+        scrollBy(-(m_cursorLine*FONT_SIZE_PX+m_scrollY-m_textRenderer->getWindowHeight()+FONT_SIZE_PX*5));
+    }
+}
+
 void Buffer::updateCursor()
 {
     TIMER_BEGIN_FUNC();
@@ -137,11 +152,9 @@ void Buffer::updateCursor()
         break;
 
     case CursorMovCmd::LineBeginning:
-    {
         m_cursorCharPos -= m_cursorCol;
         m_cursorCol = 0;
         break;
-    }
 
     case CursorMovCmd::LineEnd:
     {
@@ -161,20 +174,11 @@ void Buffer::updateCursor()
     assert(m_cursorCharPos >= 0);
 
     // Scroll up when the cursor goes out of the viewport
-    if (m_cursorMovCmd != CursorMovCmd::None &&
-        m_cursorLine-5 < -m_scrollY/FONT_SIZE_PX)
+    if (m_cursorMovCmd != CursorMovCmd::None)
     {
-        scrollBy(-(m_scrollY+(m_cursorLine-5)*FONT_SIZE_PX));
+        scrollViewportToCursor();
+        m_cursorMovCmd = CursorMovCmd::None;
     }
-    // Scroll down when the cursor goes out of the viewport
-    // FIXME: Line wrapping breaks this, too
-    else if (m_cursorMovCmd != CursorMovCmd::None &&
-        m_cursorLine+m_scrollY/FONT_SIZE_PX+5 > m_textRenderer->getWindowHeight()/FONT_SIZE_PX)
-    {
-        scrollBy(-(m_cursorLine*FONT_SIZE_PX+m_scrollY-m_textRenderer->getWindowHeight()+FONT_SIZE_PX*5));
-    }
-
-    m_cursorMovCmd = CursorMovCmd::None;
 
     TIMER_END_FUNC();
 }
@@ -393,6 +397,8 @@ void Buffer::insert(char character)
         ++m_cursorCharPos;
     }
 
+    scrollViewportToCursor();
+
     TIMER_END_FUNC();
 }
 
@@ -424,6 +430,8 @@ void Buffer::deleteCharBackwards()
     assert(m_cursorLine >= 0);
     assert(m_cursorCharPos >= 0);
 
+    scrollViewportToCursor();
+
     TIMER_END_FUNC();
 }
 
@@ -452,6 +460,8 @@ void Buffer::deleteCharForward()
     assert(m_cursorCol >= 0);
     assert(m_cursorLine >= 0);
     assert(m_cursorCharPos >= 0);
+
+    scrollViewportToCursor();
 
     TIMER_END_FUNC();
 }

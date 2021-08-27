@@ -46,6 +46,11 @@ private:
 
     CursorMovCmd m_cursorMovCmd{CursorMovCmd::None};
 
+    /*
+     * Make the cursor visible by scrolling the viewport.
+     */
+    void scrollViewportToCursor();
+
 public:
     Buffer(TextRenderer* textRenderer, UiRenderer* uiRenderer);
 
@@ -94,6 +99,7 @@ public:
         TIMER_END_FUNC();
     }
 
+    // Text editing
     void insert(char character);
     void deleteCharBackwards();
     void deleteCharForward();
