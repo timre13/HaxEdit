@@ -59,6 +59,7 @@ static void GLAPIENTRY glDebugMsgCB(
 }
 
 bool g_isRedrawNeeded = false;
+bool g_isTitleUpdateNeeded = true;
 int g_windowWidth = 0;
 int g_windowHeight = 0;
 bool g_isDebugDrawMode = false;
@@ -100,11 +101,27 @@ static void charCB(GLFWwindow*, uint codePoint)
     g_isRedrawNeeded = true;
 }
 
+static void goToNextTab()
+{
+    if (!g_buffers.empty() && g_currentBufferI < g_buffers.size()-1)
+        ++g_currentBufferI;
+    g_isRedrawNeeded = true;
+    g_isTitleUpdateNeeded = true;
+}
+
+static void goToPrevTab()
+{
+    if (g_currentBufferI > 0)
+        --g_currentBufferI;
+    g_isRedrawNeeded = true;
+    g_isTitleUpdateNeeded = true;
+}
+
 static void windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods)
 {
     TIMER_BEGIN_FUNC();
 
-    (void)mods; (void)scancode;
+    (void)scancode;
 
     if (action == GLFW_RELEASE)
     {
@@ -222,6 +239,28 @@ static void windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods
                 g_isRedrawNeeded = true;
             }
             break;
+
+        case GLFW_KEY_PAGE_UP:
+            if (mods & GLFW_MOD_CONTROL)
+            {
+                goToPrevTab();
+            }
+            else
+            {
+                // TODO: Implement stepping in buffers by a page
+            }
+            break;
+
+        case GLFW_KEY_PAGE_DOWN:
+            if (mods & GLFW_MOD_CONTROL)
+            {
+                goToNextTab();
+            }
+            else
+            {
+                // TODO: Implement stepping in buffers by a page
+            }
+            break;
         }
     }
 
@@ -322,8 +361,6 @@ int main(int argc, char** argv)
         }
     };
 
-    glfwSetWindowTitle(window, genTitle().c_str());
-
     float framesUntilCursorBlinking = CURSOR_BLINK_FRAMES;
     while (!glfwWindowShouldClose(window))
     {
@@ -370,6 +407,12 @@ int main(int argc, char** argv)
             }
 
             g_isRedrawNeeded = false;
+        }
+
+        if (g_isTitleUpdateNeeded)
+        {
+            glfwSetWindowTitle(window, genTitle().c_str());
+            g_isTitleUpdateNeeded = false;
         }
 
         glfwSwapBuffers(window);
