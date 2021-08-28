@@ -157,20 +157,25 @@ static inline TextRenderer::GlyphDimensions renderGlyph(
     return {glyph.size, glyph.size, glyph.advance};
 }
 
+
+std::map<char, TextRenderer::Glyph>* TextRenderer::getGlyphListFromStyle(FontStyle style)
+{
+    switch (style)
+    {
+    case FontStyle::Regular:    return &m_regularGlyphs;
+    case FontStyle::Bold:       return &m_boldGlyphs;
+    case FontStyle::Italic:     return &m_italicGlyphs;
+    case FontStyle::BoldItalic: return &m_boldItalicGlyphs;
+    }
+}
+
 TextRenderer::GlyphDimensions TextRenderer::renderChar(
         char c,
         const glm::ivec2& position,
         FontStyle style/*=FontStyle::Regular*/
     )
 {
-    std::map<char, Glyph>* glyphs{};
-    switch (style)
-    {
-    case FontStyle::Regular: glyphs = &m_regularGlyphs; break;
-    case FontStyle::Bold: glyphs = &m_boldGlyphs; break;
-    case FontStyle::Italic: glyphs = &m_italicGlyphs; break;
-    case FontStyle::BoldItalic: glyphs = &m_boldItalicGlyphs; break;
-    }
+    auto glyphs = getGlyphListFromStyle(style);
 
     const auto& glyphIt = glyphs->find(c);
     if (glyphIt == glyphs->end())
@@ -188,14 +193,7 @@ void TextRenderer::renderString(
     )
 {
     static constexpr float scale = 1.0f;
-    std::map<char, Glyph>* glyphs{};
-    switch (style)
-    {
-    case FontStyle::Regular: glyphs = &m_regularGlyphs; break;
-    case FontStyle::Bold: glyphs = &m_boldGlyphs; break;
-    case FontStyle::Italic: glyphs = &m_italicGlyphs; break;
-    case FontStyle::BoldItalic: glyphs = &m_boldItalicGlyphs; break;
-    }
+    auto glyphs = getGlyphListFromStyle(style);
 
     const float initTextX = position.x;
     const float initTextY = position.y;
@@ -247,6 +245,13 @@ void TextRenderer::renderString(
 
         textX += (glyphIt->second.advance/64.0f) * scale;
     }
+}
+
+uint TextRenderer::getCharGlyphAdvance(char c, FontStyle style/*=FontStyle::Regular*/)
+{
+    auto glyphs = getGlyphListFromStyle(style);
+    auto glyph = glyphs->find(c);
+    return glyph == glyphs->end() ? 0 : glyph->second.advance;
 }
 
 TextRenderer::~TextRenderer()

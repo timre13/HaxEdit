@@ -237,14 +237,14 @@ void Buffer::render()
     int colI{};
     for (char c : m_content)
     {
+        // Don't draw the part of the buffer that is below the viewport
         if (textY > m_textRenderer->getWindowHeight())
         {
             break;
         }
+        const bool isCharInsideViewport = textY > -FONT_SIZE_PX;
 
-        // TODO: Don't draw the part of the buffer that is above the viewport
-
-        if (BUFFER_DRAW_LINE_NUMS && isLineBeginning)
+        if (isCharInsideViewport && BUFFER_DRAW_LINE_NUMS && isLineBeginning)
         {
             m_textRenderer->setDrawingColor(
                     lineI == m_cursorLine ? LINEN_ACTIVE_FONT_COLOR : LINEN_FONT_COLOR);
@@ -331,37 +331,46 @@ void Buffer::render()
             textY += FONT_SIZE_PX;
         }
 
-        auto dimensions = m_textRenderer->renderChar(c, {textX, textY});
-
-        // Draw cursor
-        if ((m_cursorMovCmd != CursorMovCmd::None ||
-                m_isCursorShown) && lineI == m_cursorLine && colI == m_cursorCol)
+        uint advance{};
+        if (isCharInsideViewport)
         {
+            auto dimensions = m_textRenderer->renderChar(c, {textX, textY});
+            advance = dimensions.advance;
+
+            // Draw cursor
+            if ((m_cursorMovCmd != CursorMovCmd::None ||
+                    m_isCursorShown) && lineI == m_cursorLine && colI == m_cursorCol)
+            {
 #if CURSOR_DRAW_BLOCK
-            m_uiRenderer->renderRectangleOutline(
-                    {textX-2, initTextY+textY-m_scrollY-2},
-                    {textX+dimensions.advance/64.0f+2, initTextY+textY-m_scrollY+FONT_SIZE_PX+2},
-                    {1.0f, 0.0f, 0.0f},
-                    2
-            );
-            m_uiRenderer->renderFilledRectangle(
-                    {textX-2, initTextY+textY-m_scrollY-2},
-                    {textX+dimensions.advance/64.0f+2, initTextY+textY-m_scrollY+FONT_SIZE_PX+2},
-                    {1.0f, 0.0f, 0.0f, 0.4f}
-            );
+                m_uiRenderer->renderRectangleOutline(
+                        {textX-2, initTextY+textY-m_scrollY-2},
+                        {textX+dimensions.advance/64.0f+2, initTextY+textY-m_scrollY+FONT_SIZE_PX+2},
+                        {1.0f, 0.0f, 0.0f},
+                        2
+                );
+                m_uiRenderer->renderFilledRectangle(
+                        {textX-2, initTextY+textY-m_scrollY-2},
+                        {textX+dimensions.advance/64.0f+2, initTextY+textY-m_scrollY+FONT_SIZE_PX+2},
+                        {1.0f, 0.0f, 0.0f, 0.4f}
+                );
 #else
-            m_uiRenderer->renderFilledRectangle(
-                    {textX-1, initTextY+textY-m_scrollY-2},
-                    {textX+1, initTextY+textY-m_scrollY+FONT_SIZE_PX+2},
-                    {1.0f, 0.0f, 0.0f}
-            );
+                m_uiRenderer->renderFilledRectangle(
+                        {textX-1, initTextY+textY-m_scrollY-2},
+                        {textX+1, initTextY+textY-m_scrollY+FONT_SIZE_PX+2},
+                        {1.0f, 0.0f, 0.0f}
+                );
 #endif
 
-            // Bind the text renderer shader again
-            m_textRenderer->prepareForDrawing();
+                // Bind the text renderer shader again
+                m_textRenderer->prepareForDrawing();
+            }
+        }
+        else
+        {
+            advance = m_textRenderer->getCharGlyphAdvance(c, FontStyle::Regular);
         }
 
-        textX += (dimensions.advance/64.0f);
+        textX += (advance/64.0f);
         ++colI;
         isLineBeginning = false;
     }

@@ -71,6 +71,8 @@ private:
     );
     // ---------------------------------------------
 
+    std::map<char, Glyph>* getGlyphListFromStyle(FontStyle style);
+
 public:
     TextRenderer(
             const std::string& regularFontPath,
@@ -97,6 +99,8 @@ public:
 
     inline int getWindowWidth() const { return m_windowWidth; }
     inline int getWindowHeight() const { return m_windowHeight; }
+
+    uint getCharGlyphAdvance(char c, FontStyle style=FontStyle::Regular);
 
     ~TextRenderer();
 };
