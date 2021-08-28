@@ -274,20 +274,20 @@ void Buffer::render()
                 {
 #if CURSOR_DRAW_BLOCK
                     m_uiRenderer->renderRectangleOutline(
-                            {textX-2, initTextY+textY-m_scrollY-2},
-                            {textX+FONT_SIZE_PX*0.75+2, initTextY+textY-m_scrollY+FONT_SIZE_PX+2},
+                            {textX-2, initTextY+textY-m_scrollY-m_position.y-2},
+                            {textX+FONT_SIZE_PX*0.75+2, initTextY+textY-m_scrollY-m_position.y+FONT_SIZE_PX+2},
                             {1.0f, 0.0f, 0.0f},
                             2
                     );
                     m_uiRenderer->renderFilledRectangle(
-                            {textX-2, initTextY+textY-m_scrollY-2},
-                            {textX+FONT_SIZE_PX*0.75+2, initTextY+textY-m_scrollY+FONT_SIZE_PX+2},
+                            {textX-2, initTextY+textY-m_scrollY-m_position.y-2},
+                            {textX+FONT_SIZE_PX*0.75+2, initTextY+textY-m_scrollY-m_position.y+FONT_SIZE_PX+2},
                             {1.0f, 0.0f, 0.0f, 0.4f}
                     );
 #else
                     m_uiRenderer->renderFilledRectangle(
-                            {textX-1, initTextY+textY-m_scrollY-2},
-                            {textX+1, initTextY+textY-m_scrollY+FONT_SIZE_PX+2},
+                            {textX-1, initTextY+textY-m_scrollY-m_position.y-2},
+                            {textX+1, initTextY+textY-m_scrollY-m_position.y+FONT_SIZE_PX+2},
                             {1.0f, 0.0f, 0.0f}
                     );
 #endif
@@ -338,25 +338,25 @@ void Buffer::render()
             advance = dimensions.advance;
 
             // Draw cursor
-            if ((m_cursorMovCmd != CursorMovCmd::None ||
-                    m_isCursorShown) && lineI == m_cursorLine && colI == m_cursorCol)
+            if ((m_cursorMovCmd != CursorMovCmd::None || m_isCursorShown)
+                && lineI == m_cursorLine && colI == m_cursorCol)
             {
 #if CURSOR_DRAW_BLOCK
                 m_uiRenderer->renderRectangleOutline(
-                        {textX-2, initTextY+textY-m_scrollY-2},
-                        {textX+dimensions.advance/64.0f+2, initTextY+textY-m_scrollY+FONT_SIZE_PX+2},
+                        {textX-2, initTextY+textY-m_scrollY-m_position.y-2},
+                        {textX+dimensions.advance/64.0f+2, initTextY+textY-m_scrollY-m_position.y+FONT_SIZE_PX+2},
                         {1.0f, 0.0f, 0.0f},
                         2
                 );
                 m_uiRenderer->renderFilledRectangle(
-                        {textX-2, initTextY+textY-m_scrollY-2},
-                        {textX+dimensions.advance/64.0f+2, initTextY+textY-m_scrollY+FONT_SIZE_PX+2},
+                        {textX-2, initTextY+textY-m_scrollY-m_position.y-2},
+                        {textX+dimensions.advance/64.0f+2, initTextY+textY-m_scrollY-m_position.y+FONT_SIZE_PX+2},
                         {1.0f, 0.0f, 0.0f, 0.4f}
                 );
 #else
                 m_uiRenderer->renderFilledRectangle(
-                        {textX-1, initTextY+textY-m_scrollY-2},
-                        {textX+1, initTextY+textY-m_scrollY+FONT_SIZE_PX+2},
+                        {textX-1, initTextY+textY-m_scrollY-m_position.y-2},
+                        {textX+1, initTextY+textY-m_scrollY-m_position.y+FONT_SIZE_PX+2},
                         {1.0f, 0.0f, 0.0f}
                 );
 #endif

@@ -329,6 +329,13 @@ int main(int argc, char** argv)
     {
         glfwPollEvents();
 
+        if (CURSOR_BLINK_FRAMES >= 0 && framesUntilCursorBlinking <= 0 && !g_buffers.empty())
+        {
+            g_buffers[g_currentBufferI].toggleCursorVisibility();
+            g_isRedrawNeeded = true;
+            framesUntilCursorBlinking = CURSOR_BLINK_FRAMES;
+        }
+
         if (g_isRedrawNeeded)
         {
             glClear(GL_COLOR_BUFFER_BIT);
@@ -340,17 +347,29 @@ int main(int argc, char** argv)
                 g_buffers[g_currentBufferI].render();
             }
 
+            // Draw tabline background
+            g_uiRenderer->renderFilledRectangle({0, 0}, {g_windowWidth, TABLINE_HEIGHT_PX}, RGB_COLOR_TO_RGBA(TABLINE_BG_COLOR));
+            uint tabI{};
+            // Draw tabs
+            for (const auto& buffer : g_buffers)
+            {
+                const int tabX = TABLINE_TAB_WIDTH_PX*tabI;
+
+                // Stop rendering if we go out of the screen
+                if (tabX > g_windowWidth)
+                    break;
+
+                g_uiRenderer->renderFilledRectangle(
+                        {tabX, 0},
+                        {TABLINE_TAB_WIDTH_PX*(tabI+1)-2, TABLINE_HEIGHT_PX},
+                        RGB_COLOR_TO_RGBA((tabI == g_currentBufferI ? TABLINE_ACTIVE_TAB_COLOR : TABLINE_TAB_COLOR)));
+                g_textRenderer->renderString(buffer.getFileName().substr(0, TABLINE_TAB_MAX_TEXT_LEN),
+                        {tabX, -2},
+                        tabI == g_currentBufferI ? FontStyle::BoldItalic : FontStyle::Regular);
+                ++tabI;
+            }
+
             g_isRedrawNeeded = false;
-        }
-
-        if (CURSOR_BLINK_FRAMES >= 0 && framesUntilCursorBlinking <= 0 && !g_buffers.empty())
-        {
-            glClear(GL_COLOR_BUFFER_BIT);
-            glClearColor(UNPACK_RGB_COLOR(BG_COLOR), 1.0f);
-
-            g_buffers[g_currentBufferI].toggleCursorVisibility();
-            g_buffers[g_currentBufferI].render();
-            framesUntilCursorBlinking = CURSOR_BLINK_FRAMES;
         }
 
         glfwSwapBuffers(window);

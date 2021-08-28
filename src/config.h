@@ -35,3 +35,10 @@
 
 // Number of spaces to insert when pressing tab, set to 0 to insert the tab character
 #define TAB_SPACE_COUNT 4
+
+#define TABLINE_HEIGHT_PX 20
+#define TABLINE_BG_COLOR RGBColor{25/255.0f, 30/255.0f, 50/255.0f}
+#define TABLINE_TAB_WIDTH_PX 200
+#define TABLINE_TAB_COLOR RGBColor{50/255.0f, 50/255.0f, 100/255.0f}
+#define TABLINE_ACTIVE_TAB_COLOR RGBColor{100/255.0f, 108/255.0f, 169/255.0f}
+#define TABLINE_TAB_MAX_TEXT_LEN 18

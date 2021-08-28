@@ -31,7 +31,7 @@ private:
     std::string m_content;
     int m_numOfLines{};
 
-    glm::ivec2 m_position{};
+    glm::ivec2 m_position{0, TABLINE_HEIGHT_PX};
 
     int m_scrollY{};
 
