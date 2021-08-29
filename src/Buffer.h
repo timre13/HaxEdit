@@ -52,6 +52,7 @@ public:
     Buffer();
 
     int open(const std::string& filePath);
+    int saveAsFile();
 
     void updateCursor();
     void render();

@@ -42,8 +42,49 @@ int Buffer::open(const std::string& filePath)
         m_numOfLines = 0;
 
         Logger::err << "Failed to open file: \"" << filePath << "\": " << e.what() << Logger::End;
+        TIMER_END_FUNC();
         return 1;
     }
+
+    TIMER_END_FUNC();
+    return 0;
+}
+
+int Buffer::saveAsFile()
+{
+    TIMER_BEGIN_FUNC();
+
+    Logger::dbg << "Writing to file: " << m_filePath << Logger::End;
+
+    try
+    {
+        std::fstream file;
+        file.open(m_filePath, std::ios::out);
+        if (file.fail())
+        {
+            throw std::runtime_error{"Open failed"};
+        }
+        file.write(m_content.c_str(), m_content.length());
+        if (file.fail())
+        {
+            throw std::runtime_error{"Call to write() failed"};
+        }
+        file.close();
+        Logger::dbg << "Wrote "
+            << m_content.length() << " characters ("
+            << m_numOfLines << " lines) to file" << Logger::End;
+    }
+    catch (std::exception& e)
+    {
+        m_content.clear();
+        m_numOfLines = 0;
+
+        Logger::err << "Failed to write to file: \"" << m_filePath << "\": " << e.what() << Logger::End;
+        TIMER_END_FUNC();
+        return 1;
+    }
+
+    m_isModified = false;
 
     TIMER_END_FUNC();
     return 0;

@@ -136,160 +136,200 @@ static void goToPrevTab()
     g_isTitleUpdateNeeded = true;
 }
 
+static void onSaveFilePressed()
+{
+    if (!g_buffers.empty())
+    {
+        if (g_buffers[g_currentBufferI].saveAsFile())
+        {
+            g_dialogs.push_back(Dialog{"Failed to save file", Dialog::Type::Error});
+        }
+        g_isRedrawNeeded = true;
+    }
+}
+
+static void handleCtrlKeybindingPress(int key)
+{
+    Logger::dbg << "Handling Ctrl-Key" << Logger::End;
+    switch (key)
+    {
+    case GLFW_KEY_S:
+        onSaveFilePressed();
+        break;
+
+    case GLFW_KEY_PAGE_UP:
+        goToPrevTab();
+        break;
+
+    case GLFW_KEY_PAGE_DOWN:
+        goToNextTab();
+        break;
+    }
+}
+
+static void handleNoModifierKeybindingPress(int key)
+{
+    Logger::dbg << "Handling no-modifier key" << Logger::End;
+    switch (key)
+    {
+    case GLFW_KEY_RIGHT:
+        if (!g_buffers.empty())
+        {
+            g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::Right);
+            // Show cursor while moving
+            g_buffers[g_currentBufferI].setCursorVisibility(true);
+            g_isRedrawNeeded = true;
+        }
+        break;
+
+    case GLFW_KEY_LEFT:
+        if (!g_buffers.empty())
+        {
+            g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::Left);
+            // Show cursor while moving
+            g_buffers[g_currentBufferI].setCursorVisibility(true);
+            g_isRedrawNeeded = true;
+        }
+        break;
+
+    case GLFW_KEY_DOWN:
+        if (!g_buffers.empty())
+        {
+            g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::Down);
+            // Show cursor while moving
+            g_buffers[g_currentBufferI].setCursorVisibility(true);
+            g_isRedrawNeeded = true;
+        }
+        break;
+
+    case GLFW_KEY_UP:
+        if (!g_buffers.empty())
+        {
+            g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::Up);
+            // Show cursor while moving
+            g_buffers[g_currentBufferI].setCursorVisibility(true);
+            g_isRedrawNeeded = true;
+        }
+        break;
+
+    case GLFW_KEY_HOME:
+        if (!g_buffers.empty())
+        {
+            g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::LineBeginning);
+            // Show cursor while moving
+            g_buffers[g_currentBufferI].setCursorVisibility(true);
+            g_isRedrawNeeded = true;
+        }
+        break;
+
+    case GLFW_KEY_END:
+        if (!g_buffers.empty())
+        {
+            g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::LineEnd);
+            // Show cursor while moving
+            g_buffers[g_currentBufferI].setCursorVisibility(true);
+            g_isRedrawNeeded = true;
+        }
+        break;
+
+    case GLFW_KEY_ENTER:
+        charCB(nullptr, '\n');
+        break;
+
+    case GLFW_KEY_BACKSPACE:
+        if (!g_buffers.empty())
+        {
+            g_buffers[g_currentBufferI].deleteCharBackwards();
+            // Show cursor while typing
+            g_buffers[g_currentBufferI].setCursorVisibility(true);
+            g_isRedrawNeeded = true;
+        }
+        break;
+
+    case GLFW_KEY_DELETE:
+        if (!g_buffers.empty())
+        {
+            g_buffers[g_currentBufferI].deleteCharForward();
+            // Show cursor while typing
+            g_buffers[g_currentBufferI].setCursorVisibility(true);
+            g_isRedrawNeeded = true;
+        }
+        break;
+
+    case GLFW_KEY_TAB:
+        if (!g_buffers.empty())
+        {
+            if (TAB_SPACE_COUNT < 1)
+            {
+                g_buffers[g_currentBufferI].insert('\t');
+            }
+            else
+            {
+                for (int i{}; i < TAB_SPACE_COUNT; ++i)
+                {
+                    g_buffers[g_currentBufferI].insert(' ');
+                }
+            }
+            // Show cursor while typing
+            g_buffers[g_currentBufferI].setCursorVisibility(true);
+            g_isRedrawNeeded = true;
+        }
+        break;
+
+    case GLFW_KEY_PAGE_UP:
+        // TODO: Implement stepping in buffers by a page
+        break;
+
+    case GLFW_KEY_PAGE_DOWN:
+        // TODO: Implement stepping in buffers by a page
+        break;
+    }
+
+}
+
 static void windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods)
 {
-    TIMER_BEGIN_FUNC();
-
     (void)scancode;
 
-    if (action == GLFW_RELEASE && key == GLFW_KEY_F3)
+    TIMER_BEGIN_FUNC();
+
+    // We don't care about key releases
+    if (action == GLFW_RELEASE)
+    {
+        TIMER_END_FUNC();
+        return;
+    }
+
+    // Debug mode toggle should work even when a dialog is open
+    if (mods == 0 && key == GLFW_KEY_F3)
     {
         toggleDebugDraw();
+        TIMER_END_FUNC();
         return;
     }
 
     // If there are dialogs open, don't react to keypresses
-    if ((action == GLFW_PRESS) && !g_dialogs.empty())
+    if (!g_dialogs.empty())
     {
-        if (key == GLFW_KEY_ENTER)
+        if (mods == 0 && key == GLFW_KEY_ENTER)
         {
             // Close top dialog if Enter was pressed
             g_dialogs.pop_back();
             g_isRedrawNeeded = true;
         }
+        TIMER_END_FUNC();
         return;
     }
 
-    if (action == GLFW_PRESS || action == GLFW_REPEAT)
+    if (mods == GLFW_MOD_CONTROL)
     {
-        switch (key)
-        {
-        case GLFW_KEY_RIGHT:
-            if (!g_buffers.empty())
-            {
-                g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::Right);
-                // Show cursor while moving
-                g_buffers[g_currentBufferI].setCursorVisibility(true);
-                g_isRedrawNeeded = true;
-            }
-            break;
-
-        case GLFW_KEY_LEFT:
-            if (!g_buffers.empty())
-            {
-                g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::Left);
-                // Show cursor while moving
-                g_buffers[g_currentBufferI].setCursorVisibility(true);
-                g_isRedrawNeeded = true;
-            }
-            break;
-
-        case GLFW_KEY_DOWN:
-            if (!g_buffers.empty())
-            {
-                g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::Down);
-                // Show cursor while moving
-                g_buffers[g_currentBufferI].setCursorVisibility(true);
-                g_isRedrawNeeded = true;
-            }
-            break;
-
-        case GLFW_KEY_UP:
-            if (!g_buffers.empty())
-            {
-                g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::Up);
-                // Show cursor while moving
-                g_buffers[g_currentBufferI].setCursorVisibility(true);
-                g_isRedrawNeeded = true;
-            }
-            break;
-
-        case GLFW_KEY_HOME:
-            if (!g_buffers.empty())
-            {
-                g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::LineBeginning);
-                // Show cursor while moving
-                g_buffers[g_currentBufferI].setCursorVisibility(true);
-                g_isRedrawNeeded = true;
-            }
-            break;
-
-        case GLFW_KEY_END:
-            if (!g_buffers.empty())
-            {
-                g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::LineEnd);
-                // Show cursor while moving
-                g_buffers[g_currentBufferI].setCursorVisibility(true);
-                g_isRedrawNeeded = true;
-            }
-            break;
-
-        case GLFW_KEY_ENTER:
-            charCB(nullptr, '\n');
-            break;
-
-        case GLFW_KEY_BACKSPACE:
-            if (!g_buffers.empty())
-            {
-                g_buffers[g_currentBufferI].deleteCharBackwards();
-                // Show cursor while typing
-                g_buffers[g_currentBufferI].setCursorVisibility(true);
-                g_isRedrawNeeded = true;
-            }
-            break;
-
-        case GLFW_KEY_DELETE:
-            if (!g_buffers.empty())
-            {
-                g_buffers[g_currentBufferI].deleteCharForward();
-                // Show cursor while typing
-                g_buffers[g_currentBufferI].setCursorVisibility(true);
-                g_isRedrawNeeded = true;
-            }
-            break;
-
-        case GLFW_KEY_TAB:
-            if (!g_buffers.empty())
-            {
-                if (TAB_SPACE_COUNT < 1)
-                {
-                    g_buffers[g_currentBufferI].insert('\t');
-                }
-                else
-                {
-                    for (int i{}; i < TAB_SPACE_COUNT; ++i)
-                    {
-                        g_buffers[g_currentBufferI].insert(' ');
-                    }
-                }
-                // Show cursor while typing
-                g_buffers[g_currentBufferI].setCursorVisibility(true);
-                g_isRedrawNeeded = true;
-            }
-            break;
-
-        case GLFW_KEY_PAGE_UP:
-            if (mods & GLFW_MOD_CONTROL)
-            {
-                goToPrevTab();
-            }
-            else
-            {
-                // TODO: Implement stepping in buffers by a page
-            }
-            break;
-
-        case GLFW_KEY_PAGE_DOWN:
-            if (mods & GLFW_MOD_CONTROL)
-            {
-                goToNextTab();
-            }
-            else
-            {
-                // TODO: Implement stepping in buffers by a page
-            }
-            break;
-        }
+        // Ctrl-key
+        handleCtrlKeybindingPress(key);
+    }
+    else if (mods == 0)
+    {
+        // Key without modifier
+        handleNoModifierKeybindingPress(key);
     }
 
     TIMER_END_FUNC();
