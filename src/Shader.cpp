@@ -20,7 +20,7 @@ static std::string loadFile(const std::string& filePath)
     }
     catch (std::exception& e)
     {
-        Logger::fatal << "Failed to open file: " << filePath << e.what() << Logger::End;
+        Logger::fatal << "Failed to open file: " << filePath << ": " << e.what() << Logger::End;
         return "";
     }
 }
