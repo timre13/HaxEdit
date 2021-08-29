@@ -11,6 +11,7 @@
 #include "TextRenderer.h"
 #include "UiRenderer.h"
 #include "Buffer.h"
+#include "Dialog.h"
 #include "types.h"
 #include "Timer.h"
 
@@ -69,6 +70,8 @@ static bool g_isDebugDrawMode = false;
 static std::vector<Buffer> g_buffers;
 static size_t g_currentBufferI{};
 
+static std::vector<Dialog> g_dialogs;
+
 TextRenderer* g_textRenderer{};
 UiRenderer* g_uiRenderer{};
 
@@ -96,6 +99,18 @@ static void toggleDebugDraw()
 
 static void charCB(GLFWwindow*, uint codePoint)
 {
+    // If there are dialogs open, don't react to keypresses
+    if (!g_dialogs.empty())
+    {
+        if (codePoint == '\n')
+        {
+            // Close top dialog if Enter was pressed
+            g_dialogs.pop_back();
+            g_isRedrawNeeded = true;
+        }
+        return;
+    }
+
     if (!g_buffers.empty())
     {
         g_buffers[g_currentBufferI].insert((char)codePoint);
@@ -127,16 +142,25 @@ static void windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods
 
     (void)scancode;
 
-    if (action == GLFW_RELEASE)
+    if (action == GLFW_RELEASE && key == GLFW_KEY_F3)
     {
-        switch (key)
-        {
-        case GLFW_KEY_F3:
-            toggleDebugDraw();
-            break;
-        }
+        toggleDebugDraw();
+        return;
     }
-    else if (action == GLFW_PRESS || action == GLFW_REPEAT)
+
+    // If there are dialogs open, don't react to keypresses
+    if ((action == GLFW_PRESS) && !g_dialogs.empty())
+    {
+        if (key == GLFW_KEY_ENTER)
+        {
+            // Close top dialog if Enter was pressed
+            g_dialogs.pop_back();
+            g_isRedrawNeeded = true;
+        }
+        return;
+    }
+
+    if (action == GLFW_PRESS || action == GLFW_REPEAT)
     {
         switch (key)
         {
@@ -346,7 +370,9 @@ int main(int argc, char** argv)
         g_buffers.push_back(Buffer{});
         if (g_buffers.back().open(argv[i]))
         {
-            // TODO: Show an error dialog or something
+            g_dialogs.push_back(
+                    Dialog{"Failed to open file: \""+std::string{argv[i]}+'"', Dialog::Type::Error}
+            );
         }
     }
     if (g_buffers.empty())
@@ -408,6 +434,12 @@ int main(int argc, char** argv)
                         {tabX, -2},
                         tabI == g_currentBufferI ? FontStyle::BoldItalic : FontStyle::Regular);
                 ++tabI;
+            }
+
+            if (!g_dialogs.empty())
+            {
+                // Render the top dialog
+                g_dialogs.back().render();
             }
 
             g_isRedrawNeeded = false;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <sstream>
 
 using uint = unsigned int;
 
@@ -22,3 +23,28 @@ struct RGBAColor
 #define UNPACK_RGBA_COLOR(x) x.r, x.g, x.b, x.a
 
 #define RGB_COLOR_TO_RGBA(x) RGBAColor{x.r, x.g, x.b, 1.0f}
+
+inline int strCountLines(const std::string& str)
+{
+    int lines{};
+    for (auto it=str.begin(); it != str.end(); ++it)
+    {
+        if (*it == '\n')
+            ++lines;
+    }
+    return lines;
+}
+
+inline int getLongestLineLen(const std::string& str)
+{
+    size_t maxLen{};
+    std::stringstream ss;
+    ss << str;
+    std::string line;
+    while (std::getline(ss, line))
+    {
+        if (line.length() > maxLen)
+            maxLen = line.length();
+    }
+    return (int)maxLen;
+}

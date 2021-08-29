@@ -2,22 +2,12 @@
 #include "config.h"
 #include "Logger.h"
 #include "Timer.h"
+#include "types.h"
 #include <fstream>
 #include <sstream>
 
 Buffer::Buffer()
 {
-}
-
-static int countLines(const std::string& str)
-{
-    int lines{};
-    for (auto it=str.begin(); it != str.end(); ++it)
-    {
-        if (*it == '\n')
-            ++lines;
-    }
-    return lines;
 }
 
 int Buffer::open(const std::string& filePath)
@@ -39,7 +29,7 @@ int Buffer::open(const std::string& filePath)
         ss << file.rdbuf();
 
         m_content = ss.str();
-        m_numOfLines = countLines(m_content);
+        m_numOfLines = strCountLines(m_content);
 
         Logger::dbg << "Read "
             << m_content.length() << " characters ("
