@@ -394,6 +394,7 @@ void Buffer::insert(char character)
         ++m_cursorCol;
         ++m_cursorCharPos;
     }
+    m_isModified = true;
 
     scrollViewportToCursor();
 
@@ -415,6 +416,7 @@ void Buffer::deleteCharBackwards()
         m_cursorCol = getLineLenAt(m_content, m_cursorLine);
         m_content.erase(m_cursorCharPos-1, 1);
         --m_cursorCharPos;
+        m_isModified = true;
     }
     // If deleting in the middle/end of the line and we have stuff to delete
     else if (m_cursorCharPos > 0)
@@ -422,6 +424,7 @@ void Buffer::deleteCharBackwards()
         m_content.erase(m_cursorCharPos-1, 1);
         --m_cursorCol;
         --m_cursorCharPos;
+        m_isModified = true;
     }
 
     assert(m_cursorCol >= 0);
@@ -448,11 +451,13 @@ void Buffer::deleteCharForward()
     {
         m_content.erase(m_cursorCharPos, 1);
         --m_numOfLines;
+        m_isModified = true;
     }
     // If deleting in the middle/beginning of the line and we have stuff to delete
     else if (m_cursorCharPos != lineLen && m_cursorCharPos < m_content.size())
     {
         m_content.erase(m_cursorCharPos, 1);
+        m_isModified = true;
     }
 
     assert(m_cursorCol >= 0);

@@ -426,13 +426,16 @@ int main(int argc, char** argv)
                 if (tabX > g_windowWidth)
                     break;
 
+                // Render a tab, use a differenct color when it is the current tab
                 g_uiRenderer->renderFilledRectangle(
                         {tabX, 0},
                         {TABLINE_TAB_WIDTH_PX*(tabI+1)-2, TABLINE_HEIGHT_PX},
                         RGB_COLOR_TO_RGBA((tabI == g_currentBufferI ? TABLINE_ACTIVE_TAB_COLOR : TABLINE_TAB_COLOR)));
+                // Render the filename, use orange color when the buffer is modified since the last save
                 g_textRenderer->renderString(buffer.getFileName().substr(0, TABLINE_TAB_MAX_TEXT_LEN),
                         {tabX, -2},
-                        tabI == g_currentBufferI ? FontStyle::BoldItalic : FontStyle::Regular);
+                        tabI == g_currentBufferI ? FontStyle::BoldItalic : FontStyle::Regular,
+                        (buffer.isModified() ? RGBColor{1.0f, 0.5f, 0.0f} : RGBColor{1.0f, 1.0, 1.0f}));
                 ++tabI;
             }
 

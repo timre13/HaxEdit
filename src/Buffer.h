@@ -30,6 +30,7 @@ private:
     std::string m_filePath = FILENAME_NEW;
     std::string m_content;
     int m_numOfLines{};
+    bool m_isModified{};
 
     glm::ivec2 m_position{0, TABLINE_HEIGHT_PX};
 
@@ -40,7 +41,6 @@ private:
     int m_cursorCol{};
     size_t m_cursorCharPos{};
     bool m_isCursorShown{true}; // Used to blink the cursor
-
     CursorMovCmd m_cursorMovCmd{CursorMovCmd::None};
 
     /*
@@ -100,4 +100,5 @@ public:
     void insert(char character);
     void deleteCharBackwards();
     void deleteCharForward();
+    bool isModified() const { return m_isModified; }
 };
