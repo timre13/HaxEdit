@@ -104,3 +104,5 @@ public:
 
     ~TextRenderer();
 };
+
+extern TextRenderer *g_textRenderer;

@@ -39,3 +39,5 @@ public:
 
     ~UiRenderer();
 };
+
+extern UiRenderer *g_uiRenderer;

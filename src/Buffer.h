@@ -41,9 +41,6 @@ private:
     size_t m_cursorCharPos{};
     bool m_isCursorShown{true}; // Used to blink the cursor
 
-    TextRenderer* m_textRenderer{};
-    UiRenderer* m_uiRenderer{};
-
     CursorMovCmd m_cursorMovCmd{CursorMovCmd::None};
 
     /*
@@ -52,7 +49,7 @@ private:
     void scrollViewportToCursor();
 
 public:
-    Buffer(TextRenderer* textRenderer, UiRenderer* uiRenderer);
+    Buffer();
 
     int open(const std::string& filePath);
 

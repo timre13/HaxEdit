@@ -339,7 +339,7 @@ int main(int argc, char** argv)
 
     for (int i{1}; i < argc; ++i)
     {
-        g_buffers.push_back(Buffer{g_textRenderer, g_uiRenderer});
+        g_buffers.push_back(Buffer{});
         if (g_buffers.back().open(argv[i]))
         {
             // TODO: Show an error dialog or something
@@ -347,7 +347,7 @@ int main(int argc, char** argv)
     }
     if (g_buffers.empty())
     {
-        g_buffers.push_back(Buffer{g_textRenderer, g_uiRenderer});
+        g_buffers.push_back(Buffer{});
         g_buffers.back().open(__FILE__);
     }
 

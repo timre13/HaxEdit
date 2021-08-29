@@ -5,8 +5,7 @@
 #include <fstream>
 #include <sstream>
 
-Buffer::Buffer(TextRenderer* textRenderer, UiRenderer* uiRenderer)
-    : m_textRenderer{textRenderer}, m_uiRenderer{uiRenderer}
+Buffer::Buffer()
 {
 }
 
@@ -78,9 +77,9 @@ void Buffer::scrollViewportToCursor()
     }
     // Scroll down when the cursor goes out of the viewport
     // FIXME: Line wrapping breaks this, too
-    else if (m_cursorLine+m_scrollY/FONT_SIZE_PX+5 > m_textRenderer->getWindowHeight()/FONT_SIZE_PX)
+    else if (m_cursorLine+m_scrollY/FONT_SIZE_PX+5 > g_textRenderer->getWindowHeight()/FONT_SIZE_PX)
     {
-        scrollBy(-(m_cursorLine*FONT_SIZE_PX+m_scrollY-m_textRenderer->getWindowHeight()+FONT_SIZE_PX*5));
+        scrollBy(-(m_cursorLine*FONT_SIZE_PX+m_scrollY-g_textRenderer->getWindowHeight()+FONT_SIZE_PX*5));
     }
 }
 
@@ -219,9 +218,9 @@ void Buffer::render()
     TIMER_BEGIN_FUNC();
 
     // Draw line number background
-    m_uiRenderer->renderFilledRectangle(
+    g_uiRenderer->renderFilledRectangle(
             m_position,
-            {FONT_SIZE_PX*LINEN_BAR_WIDTH, m_textRenderer->getWindowHeight()},
+            {FONT_SIZE_PX*LINEN_BAR_WIDTH, g_textRenderer->getWindowHeight()},
             RGB_COLOR_TO_RGBA(LINEN_BG_COLOR));
 
     const float initTextX = m_position.x+FONT_SIZE_PX*LINEN_BAR_WIDTH;
@@ -229,8 +228,8 @@ void Buffer::render()
     float textX = initTextX;
     float textY = initTextY;
 
-    m_textRenderer->prepareForDrawing();
-    m_textRenderer->setDrawingColor({1.0f, 1.0f, 1.0f});
+    g_textRenderer->prepareForDrawing();
+    g_textRenderer->setDrawingColor({1.0f, 1.0f, 1.0f});
 
     char isLineBeginning = true;
     int lineI{};
@@ -238,7 +237,7 @@ void Buffer::render()
     for (char c : m_content)
     {
         // Don't draw the part of the buffer that is below the viewport
-        if (textY > m_textRenderer->getWindowHeight())
+        if (textY > g_textRenderer->getWindowHeight())
         {
             break;
         }
@@ -246,20 +245,20 @@ void Buffer::render()
 
         if (isCharInsideViewport && BUFFER_DRAW_LINE_NUMS && isLineBeginning)
         {
-            m_textRenderer->setDrawingColor(
+            g_textRenderer->setDrawingColor(
                     lineI == m_cursorLine ? LINEN_ACTIVE_FONT_COLOR : LINEN_FONT_COLOR);
 
             float digitX = m_position.x;
             for (char digit : std::to_string(lineI+1))
             {
-                auto dimensions = m_textRenderer->renderChar(digit,
+                auto dimensions = g_textRenderer->renderChar(digit,
                         {digitX, textY},
                         lineI == m_cursorLine ? FontStyle::Bold : FontStyle::Italic);
                 digitX += dimensions.advance/64.0f;
             }
 
             // Reset color
-            m_textRenderer->setDrawingColor({1.0f, 1.0f, 1.0f});
+            g_textRenderer->setDrawingColor({1.0f, 1.0f, 1.0f});
         }
 
         /*
@@ -273,26 +272,26 @@ void Buffer::render()
                         && lineI == m_cursorLine && colI == m_cursorCol)
                 {
 #if CURSOR_DRAW_BLOCK
-                    m_uiRenderer->renderRectangleOutline(
+                    g_uiRenderer->renderRectangleOutline(
                             {textX-2, initTextY+textY-m_scrollY-m_position.y-2},
                             {textX+FONT_SIZE_PX*0.75+2, initTextY+textY-m_scrollY-m_position.y+FONT_SIZE_PX+2},
                             {1.0f, 0.0f, 0.0f},
                             2
                     );
-                    m_uiRenderer->renderFilledRectangle(
+                    g_uiRenderer->renderFilledRectangle(
                             {textX-2, initTextY+textY-m_scrollY-m_position.y-2},
                             {textX+FONT_SIZE_PX*0.75+2, initTextY+textY-m_scrollY-m_position.y+FONT_SIZE_PX+2},
                             {1.0f, 0.0f, 0.0f, 0.4f}
                     );
 #else
-                    m_uiRenderer->renderFilledRectangle(
+                    g_uiRenderer->renderFilledRectangle(
                             {textX-1, initTextY+textY-m_scrollY-m_position.y-2},
                             {textX+1, initTextY+textY-m_scrollY-m_position.y+FONT_SIZE_PX+2},
                             {1.0f, 0.0f, 0.0f}
                     );
 #endif
                     // Bind the text renderer shader again
-                    m_textRenderer->prepareForDrawing();
+                    g_textRenderer->prepareForDrawing();
                 }
             }
         };
@@ -325,7 +324,7 @@ void Buffer::render()
             continue;
         }
 
-        if (BUFFER_WRAP_LINES && textX+FONT_SIZE_PX > m_textRenderer->getWindowWidth())
+        if (BUFFER_WRAP_LINES && textX+FONT_SIZE_PX > g_textRenderer->getWindowWidth())
         {
             textX = initTextX;
             textY += FONT_SIZE_PX;
@@ -334,7 +333,7 @@ void Buffer::render()
         uint advance{};
         if (isCharInsideViewport)
         {
-            auto dimensions = m_textRenderer->renderChar(c, {textX, textY});
+            auto dimensions = g_textRenderer->renderChar(c, {textX, textY});
             advance = dimensions.advance;
 
             // Draw cursor
@@ -342,19 +341,19 @@ void Buffer::render()
                 && lineI == m_cursorLine && colI == m_cursorCol)
             {
 #if CURSOR_DRAW_BLOCK
-                m_uiRenderer->renderRectangleOutline(
+                g_uiRenderer->renderRectangleOutline(
                         {textX-2, initTextY+textY-m_scrollY-m_position.y-2},
                         {textX+dimensions.advance/64.0f+2, initTextY+textY-m_scrollY-m_position.y+FONT_SIZE_PX+2},
                         {1.0f, 0.0f, 0.0f},
                         2
                 );
-                m_uiRenderer->renderFilledRectangle(
+                g_uiRenderer->renderFilledRectangle(
                         {textX-2, initTextY+textY-m_scrollY-m_position.y-2},
                         {textX+dimensions.advance/64.0f+2, initTextY+textY-m_scrollY-m_position.y+FONT_SIZE_PX+2},
                         {1.0f, 0.0f, 0.0f, 0.4f}
                 );
 #else
-                m_uiRenderer->renderFilledRectangle(
+                g_uiRenderer->renderFilledRectangle(
                         {textX-1, initTextY+textY-m_scrollY-m_position.y-2},
                         {textX+1, initTextY+textY-m_scrollY-m_position.y+FONT_SIZE_PX+2},
                         {1.0f, 0.0f, 0.0f}
@@ -362,12 +361,12 @@ void Buffer::render()
 #endif
 
                 // Bind the text renderer shader again
-                m_textRenderer->prepareForDrawing();
+                g_textRenderer->prepareForDrawing();
             }
         }
         else
         {
-            advance = m_textRenderer->getCharGlyphAdvance(c, FontStyle::Regular);
+            advance = g_textRenderer->getCharGlyphAdvance(c, FontStyle::Regular);
         }
 
         textX += (advance/64.0f);
@@ -376,7 +375,7 @@ void Buffer::render()
     }
 
     renderStatusLine(
-            m_uiRenderer, m_textRenderer,
+            g_uiRenderer, g_textRenderer,
             m_cursorLine, m_cursorCol, m_cursorCharPos,
             m_filePath);
 
