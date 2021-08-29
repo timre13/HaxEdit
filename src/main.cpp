@@ -58,16 +58,20 @@ static void GLAPIENTRY glDebugMsgCB(
     std::cout.flush();
 }
 
-bool g_isRedrawNeeded = false;
-bool g_isTitleUpdateNeeded = true;
-int g_windowWidth = 0;
-int g_windowHeight = 0;
-bool g_isDebugDrawMode = false;
+
+static int g_windowWidth = 0;
+static int g_windowHeight = 0;
+
+static bool g_isRedrawNeeded = false;
+static bool g_isTitleUpdateNeeded = true;
+static bool g_isDebugDrawMode = false;
+
+static std::vector<Buffer> g_buffers;
+static size_t g_currentBufferI{};
 
 TextRenderer* g_textRenderer{};
 UiRenderer* g_uiRenderer{};
-std::vector<Buffer> g_buffers;
-size_t g_currentBufferI{};
+
 
 static void windowResizeCB(GLFWwindow*, int width, int height)
 {
