@@ -97,9 +97,21 @@ void FileDialog::render()
 void FileDialog::genFileList()
 {
     TIMER_BEGIN_FUNC();
+    m_dirPath = std_fs::canonical(m_dirPath);
     Logger::dbg << "Listing directory: " << m_dirPath << Logger::End;
 
     m_fileList.clear();
+
+    if (m_dirPath != "/")
+    {
+        // Add entry to go to parent directory
+        auto parentDirEntry = std::make_unique<FileEntry>();
+        parentDirEntry->name = "..";
+        parentDirEntry->isDirectory = true;
+        parentDirEntry->lastModTime = {};
+        parentDirEntry->permissionStr = "";
+        m_fileList.push_back(std::move(parentDirEntry));
+    }
 
     try
     {

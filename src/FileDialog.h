@@ -27,7 +27,7 @@ private:
 
     inline void selectNextFile()
     {
-        if (m_selectedFileI < m_fileList.size()-1)
+        if (!m_fileList.empty() && (size_t)m_selectedFileI < m_fileList.size()-1)
             ++m_selectedFileI;
     }
     inline void selectPrevFile()
