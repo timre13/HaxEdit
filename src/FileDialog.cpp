@@ -30,6 +30,11 @@ void FileDialog::recalculateDimensions()
     m_dialogDims.width = std::max(m_windowWidth-160, 0);
     m_dialogDims.height = std::max(m_windowHeight-160, 0);
 
+    m_titleRect.xPos = m_dialogDims.xPos+10;
+    m_titleRect.yPos = m_dialogDims.yPos+10;
+    m_titleRect.width = m_dialogDims.width-20;
+    m_titleRect.height = FONT_SIZE_PX*1.5f;
+
     m_fileRectDims.clear();
     for (size_t i{}; i < m_fileList.size(); ++i)
     {
@@ -37,7 +42,7 @@ void FileDialog::recalculateDimensions()
         rect->width = m_dialogDims.width-20;
         rect->height = FONT_SIZE_PX;
         rect->xPos = m_dialogDims.xPos+10;
-        rect->yPos = m_dialogDims.yPos+(FONT_SIZE_PX+2)*i+10;
+        rect->yPos = m_titleRect.yPos+m_titleRect.height+20+(FONT_SIZE_PX+2)*i;
         m_fileRectDims.push_back(std::move(rect));
     }
 }
@@ -62,6 +67,16 @@ void FileDialog::render()
             {m_dialogDims.xPos, m_dialogDims.yPos},
             {m_dialogDims.xPos+m_dialogDims.width, m_dialogDims.yPos+m_dialogDims.height},
             {0.1f, 0.2f, 0.4f, 0.8f});
+
+    // Render title rectangle
+    g_uiRenderer->renderFilledRectangle(
+            {m_titleRect.xPos, m_titleRect.yPos},
+            {m_titleRect.xPos+m_titleRect.width, m_titleRect.yPos+m_titleRect.height},
+            {0.0f, 0.1f, 0.3f, 0.8f});
+    // Render current path
+    g_textRenderer->renderString(
+            m_dirPath,
+            {m_titleRect.xPos, m_titleRect.yPos});
 
     for (size_t i{}; i < m_fileList.size(); ++i)
     {

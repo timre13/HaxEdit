@@ -19,6 +19,7 @@ private:
         std::string permissionStr;
     };
     std::vector<std::unique_ptr<FileEntry>> m_fileList;
+    Dimensions m_titleRect{};
     std::vector<std::unique_ptr<Dimensions>> m_fileRectDims;
 
     virtual void recalculateDimensions() override;
