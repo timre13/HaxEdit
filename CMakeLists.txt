@@ -35,5 +35,9 @@ add_executable(haxed
     src/Timer.cpp
     src/Dialog.h
     src/Dialog.cpp
+    src/MessageDialog.h
+    src/MessageDialog.cpp
+    src/FileDialog.h
+    src/FileDialog.cpp
 )
 

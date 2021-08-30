@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cassert>
 #include <vector>
+#include <memory>
 #include <GL/glew.h>
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
@@ -11,7 +12,8 @@
 #include "TextRenderer.h"
 #include "UiRenderer.h"
 #include "Buffer.h"
-#include "Dialog.h"
+#include "MessageDialog.h"
+#include "FileDialog.h"
 #include "types.h"
 #include "Timer.h"
 
@@ -70,7 +72,7 @@ static bool g_isDebugDrawMode = false;
 static std::vector<Buffer> g_buffers;
 static size_t g_currentBufferI{};
 
-static std::vector<Dialog> g_dialogs;
+static std::vector<std::unique_ptr<Dialog>> g_dialogs;
 
 TextRenderer* g_textRenderer{};
 UiRenderer* g_uiRenderer{};
@@ -142,7 +144,7 @@ static void onSaveFilePressed()
     {
         if (g_buffers[g_currentBufferI].saveAsFile())
         {
-            g_dialogs.push_back(Dialog{"Failed to save file", Dialog::Type::Error});
+            g_dialogs.push_back(std::make_unique<MessageDialog>("Failed to save file", MessageDialog::Type::Error));
         }
         g_isRedrawNeeded = true;
     }
@@ -150,11 +152,15 @@ static void onSaveFilePressed()
 
 static void handleCtrlKeybindingPress(int key)
 {
-    Logger::dbg << "Handling Ctrl-Key" << Logger::End;
+    //Logger::dbg << "Handling Ctrl-Key" << Logger::End;
     switch (key)
     {
     case GLFW_KEY_S:
         onSaveFilePressed();
+        break;
+
+    case GLFW_KEY_O:
+        g_dialogs.push_back(std::make_unique<FileDialog>("."));
         break;
 
     case GLFW_KEY_PAGE_UP:
@@ -169,7 +175,7 @@ static void handleCtrlKeybindingPress(int key)
 
 static void handleNoModifierKeybindingPress(int key)
 {
-    Logger::dbg << "Handling no-modifier key" << Logger::End;
+    //Logger::dbg << "Handling no-modifier key" << Logger::End;
     switch (key)
     {
     case GLFW_KEY_RIGHT:
@@ -308,15 +314,28 @@ static void windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods
         return;
     }
 
-    // If there are dialogs open, don't react to keypresses
+    // If there are dialogs open, pass the event to the top one
     if (!g_dialogs.empty())
     {
-        if (mods == 0 && key == GLFW_KEY_ENTER)
+        g_dialogs.back()->handleKey(key, mods);
+        // Dialog closed? Destroy it
+        if (g_dialogs.back()->isClosed())
         {
-            // Close top dialog if Enter was pressed
+            if (auto* fileDialog = dynamic_cast<FileDialog*>(g_dialogs.back().get()))
+            {
+                g_buffers.push_back(Buffer{});
+                if (g_buffers.back().open(fileDialog->getSelectedFilePath()))
+                {
+                    g_dialogs.push_back(std::make_unique<MessageDialog>(
+                                "Failed to open file: \""+fileDialog->getSelectedFilePath()+'"',
+                                MessageDialog::Type::Error));
+                }
+                g_currentBufferI = g_buffers.size()-1; // Go to the last buffer
+                g_isTitleUpdateNeeded = true;
+            }
             g_dialogs.pop_back();
-            g_isRedrawNeeded = true;
         }
+        g_isRedrawNeeded = true;
         TIMER_END_FUNC();
         return;
     }
@@ -337,6 +356,9 @@ static void windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods
 
 static void windowScrollCB(GLFWwindow*, double, double yOffset)
 {
+    if (!g_dialogs.empty())
+        return;
+
     if (!g_buffers.empty())
     {
         g_buffers[g_currentBufferI].scrollBy(yOffset*SCROLL_SPEED_MULTIPLIER);
@@ -398,7 +420,10 @@ int main(int argc, char** argv)
         << "\n       Italic font: " << italicFontPath
         << "\n       Bold italic font: " << boldItalicFontPath
         << Logger::End;
-    assert(regularFontPath.length() && boldFontPath.length() && italicFontPath.length() && boldItalicFontPath.length());
+    assert(regularFontPath.length()
+        && boldFontPath.length()
+        && italicFontPath.length()
+        && boldItalicFontPath.length());
     g_textRenderer = new TextRenderer{regularFontPath, boldFontPath, italicFontPath, boldItalicFontPath};
     g_uiRenderer = new UiRenderer{};
 
@@ -410,9 +435,8 @@ int main(int argc, char** argv)
         g_buffers.push_back(Buffer{});
         if (g_buffers.back().open(argv[i]))
         {
-            g_dialogs.push_back(
-                    Dialog{"Failed to open file: \""+std::string{argv[i]}+'"', Dialog::Type::Error}
-            );
+            g_dialogs.push_back(std::make_unique<MessageDialog>(
+                        "Failed to open file: \""+std::string{argv[i]}+'"', MessageDialog::Type::Error));
         }
     }
     if (g_buffers.empty())
@@ -455,7 +479,8 @@ int main(int argc, char** argv)
             }
 
             // Draw tabline background
-            g_uiRenderer->renderFilledRectangle({0, 0}, {g_windowWidth, TABLINE_HEIGHT_PX}, RGB_COLOR_TO_RGBA(TABLINE_BG_COLOR));
+            g_uiRenderer->renderFilledRectangle({0, 0}, {g_windowWidth, TABLINE_HEIGHT_PX},
+                    RGB_COLOR_TO_RGBA(TABLINE_BG_COLOR));
             uint tabI{};
             // Draw tabs
             for (const auto& buffer : g_buffers)
@@ -482,7 +507,7 @@ int main(int argc, char** argv)
             if (!g_dialogs.empty())
             {
                 // Render the top dialog
-                g_dialogs.back().render();
+                g_dialogs.back()->render();
             }
 
             g_isRedrawNeeded = false;
