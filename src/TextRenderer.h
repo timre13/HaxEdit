@@ -2,6 +2,7 @@
 
 #include "types.h"
 #include "Shader.h"
+#include <memory>
 #include <string>
 #include <map>
 #include <glm/glm.hpp>
@@ -105,4 +106,4 @@ public:
     ~TextRenderer();
 };
 
-extern TextRenderer *g_textRenderer;
+extern std::unique_ptr<TextRenderer> g_textRenderer;

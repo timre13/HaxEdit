@@ -18,6 +18,8 @@ set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic -g3 -fno-limit-debug-info")
 
 add_executable(haxed
     src/main.cpp
+    src/App.h
+    src/App.cpp
     src/Logger.h
     src/Logger.cpp
     src/Shader.h

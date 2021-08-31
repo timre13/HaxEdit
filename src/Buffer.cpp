@@ -214,34 +214,33 @@ void Buffer::updateCursor()
 }
 
 static inline void renderStatusLine(
-        UiRenderer* uiRenderer, TextRenderer* textRenderer,
         int cursorLine, int cursorCol, int cursorCharPos,
         const std::string& filePath)
 {
-    uiRenderer->renderRectangleOutline(
-            {LINEN_BAR_WIDTH*FONT_SIZE_PX, textRenderer->getWindowHeight()-FONT_SIZE_PX*1.2f},
-            {textRenderer->getWindowWidth(), textRenderer->getWindowHeight()},
+    g_uiRenderer->renderRectangleOutline(
+            {LINEN_BAR_WIDTH*FONT_SIZE_PX, g_textRenderer->getWindowHeight()-FONT_SIZE_PX*1.2f},
+            {g_textRenderer->getWindowWidth(), g_textRenderer->getWindowHeight()},
             {0.5f, 0.5f, 0.5f},
             2);
-    uiRenderer->renderFilledRectangle(
-            {LINEN_BAR_WIDTH*FONT_SIZE_PX, textRenderer->getWindowHeight()-FONT_SIZE_PX*1.2f},
-            {textRenderer->getWindowWidth(), textRenderer->getWindowHeight()},
+    g_uiRenderer->renderFilledRectangle(
+            {LINEN_BAR_WIDTH*FONT_SIZE_PX, g_textRenderer->getWindowHeight()-FONT_SIZE_PX*1.2f},
+            {g_textRenderer->getWindowWidth(), g_textRenderer->getWindowHeight()},
             RGB_COLOR_TO_RGBA(STATUSBAR_BG_COLOR));
 
     const std::string cursorPosString
         = std::to_string(cursorLine+1) + ':'
         + std::to_string(cursorCol+1) + " | "
         + std::to_string(cursorCharPos);
-    textRenderer->renderString(
+    g_textRenderer->renderString(
             cursorPosString,
-            {textRenderer->getWindowWidth()-FONT_SIZE_PX*(4+1+3+3+7)*0.7f,
-             textRenderer->getWindowHeight()-FONT_SIZE_PX-4});
+            {g_textRenderer->getWindowWidth()-FONT_SIZE_PX*(4+1+3+3+7)*0.7f,
+             g_textRenderer->getWindowHeight()-FONT_SIZE_PX-4});
 
     const std::string statusLineString = filePath;
-    textRenderer->renderString(
+    g_textRenderer->renderString(
             statusLineString,
             {LINEN_BAR_WIDTH*FONT_SIZE_PX,
-             textRenderer->getWindowHeight()-FONT_SIZE_PX-4});
+             g_textRenderer->getWindowHeight()-FONT_SIZE_PX-4});
 }
 
 void Buffer::render()
@@ -406,7 +405,6 @@ void Buffer::render()
     }
 
     renderStatusLine(
-            g_uiRenderer, g_textRenderer,
             m_cursorLine, m_cursorCol, m_cursorCharPos,
             m_filePath);
 

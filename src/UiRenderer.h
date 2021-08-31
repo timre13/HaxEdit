@@ -2,6 +2,7 @@
 
 #include "types.h"
 #include "Shader.h"
+#include <memory>
 #include <glm/glm.hpp>
 
 class UiRenderer
@@ -40,4 +41,4 @@ public:
     ~UiRenderer();
 };
 
-extern UiRenderer *g_uiRenderer;
+extern std::unique_ptr<UiRenderer> g_uiRenderer;
