@@ -67,6 +67,11 @@ UiRenderer* App::createUiRenderer()
     return new UiRenderer{};
 }
 
+FileTypeHandler* App::createFileTypeHandler()
+{
+    return new FileTypeHandler{"../icons/icon_index.txt"};
+}
+
 void App::renderBuffers()
 {
     if (!g_buffers.empty())

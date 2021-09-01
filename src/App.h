@@ -11,6 +11,7 @@
 #include "Shader.h"
 #include "TextRenderer.h"
 #include "UiRenderer.h"
+#include "FileTypeHandler.h"
 #include "Buffer.h"
 #include "MessageDialog.h"
 #include "FileDialog.h"
@@ -37,6 +38,7 @@ public:
     static void setupGlFeatures();
     static TextRenderer* createTextRenderer();
     static UiRenderer* createUiRenderer();
+    static FileTypeHandler* createFileTypeHandler();
 
     // ----- Renderer functions -----
     static void renderBuffers();

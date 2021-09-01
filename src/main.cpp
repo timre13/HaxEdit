@@ -14,6 +14,7 @@ std::vector<std::unique_ptr<Dialog>> g_dialogs;
 
 std::unique_ptr<TextRenderer> g_textRenderer;
 std::unique_ptr<UiRenderer> g_uiRenderer;
+std::unique_ptr<FileTypeHandler> g_fileTypeHandler;
 
 int main(int argc, char** argv)
 {
@@ -39,6 +40,7 @@ int main(int argc, char** argv)
 
     g_textRenderer.reset(App::createTextRenderer());
     g_uiRenderer.reset(App::createUiRenderer());
+    g_fileTypeHandler.reset(App::createFileTypeHandler());
     glfwPollEvents();
 
     for (int i{1}; i < argc; ++i)

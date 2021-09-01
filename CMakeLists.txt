@@ -41,5 +41,7 @@ add_executable(haxed
     src/MessageDialog.cpp
     src/FileDialog.h
     src/FileDialog.cpp
+    src/FileTypeHandler.h
+    src/FileTypeHandler.cpp
 )
 
