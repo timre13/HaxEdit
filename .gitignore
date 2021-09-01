@@ -2,3 +2,5 @@
 .runcfg
 build/
 Session.vim
+.ccls-cache/
+icons/*.*

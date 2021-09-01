@@ -15,6 +15,11 @@ Install them on Debian:
 apt install cmake libglew-dev libglfw3-dev libglm-dev libfreetype-dev
 ```
 
+### Submodules
+HaxorEdit uses the [vscode-material-icon-theme](vscode-material-icon-theme) project for icons.
+
+Run `git submodule init --recursive` to get the submodule.
+
 ### Compiling
 ```
 mkdir build
