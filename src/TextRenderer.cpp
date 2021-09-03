@@ -103,7 +103,7 @@ TextRenderer::TextRenderer(
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    Logger::dbg << "Font renderer setup done" << Logger::End;
+    Logger::dbg << "Text renderer setup done" << Logger::End;
 }
 
 void TextRenderer::prepareForDrawing()

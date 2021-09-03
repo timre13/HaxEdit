@@ -33,6 +33,8 @@ add_executable(haxed
     src/types.h
     src/UiRenderer.h
     src/UiRenderer.cpp
+    src/Image.h
+    src/Image.cpp
     src/Timer.h
     src/Timer.cpp
     src/Dialog.h

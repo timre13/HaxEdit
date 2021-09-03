@@ -2,8 +2,11 @@
 
 #include "types.h"
 #include "Shader.h"
+#include "Image.h"
 #include <memory>
 #include <glm/glm.hpp>
+
+class Image;
 
 class UiRenderer
 {
@@ -11,10 +14,18 @@ private:
     uint m_vao;
     uint m_vbo;
 
+    uint m_imgVao;
+    uint m_imgVbo;
+
     Shader m_shader;
+    Shader m_imgShader;
 
     int m_windowWidth;
     int m_windowHeight;
+
+    friend class Image;
+    // Used by Image::render()
+    void renderImage(const Image* image);
 
 public:
     UiRenderer();

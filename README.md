@@ -16,9 +16,10 @@ apt install cmake libglew-dev libglfw3-dev libglm-dev libfreetype-dev
 ```
 
 ### Submodules
-HaxorEdit uses the [vscode-material-icon-theme](vscode-material-icon-theme) project for icons.
+* [vscode-material-icon-theme](https://github.com/PKief/vscode-material-icon-theme) for icons
+* [stb](https://github.com/nothings/stb) for image loading
 
-Run `git submodule init --recursive` to get the submodule.
+Run `git submodule init --recursive` to get the submodules.
 
 ### Compiling
 ```
