@@ -424,6 +424,10 @@ void App::toggleDebugDraw()
 {
     g_isDebugDrawMode = !g_isDebugDrawMode;
     glPolygonMode(GL_FRONT_AND_BACK, g_isDebugDrawMode ? GL_LINE : GL_FILL);
+    if (g_isDebugDrawMode)
+        glDisable(GL_BLEND);
+    else
+        glEnable(GL_BLEND);
     g_isRedrawNeeded = true;
 }
 
