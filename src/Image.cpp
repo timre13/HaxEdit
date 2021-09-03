@@ -6,7 +6,6 @@
 #include <GL/gl.h>
 
 Image::Image(const std::string& filePath,
-             const glm::ivec2& pos,
              const glm::ivec2& size)
 {
     stbi_set_flip_vertically_on_load(1);
@@ -37,16 +36,15 @@ Image::Image(const std::string& filePath,
     Logger::dbg << "Loaded image file " << filePath << Logger::End;
 
     m_size = size.x > 0 && size.y > 0 ? size : m_physicalSize;
-    m_pos = pos;
 }
 
-void Image::render()
+void Image::render(const glm::ivec2& pos) const
 {
-    g_uiRenderer->renderImage(this);
+    g_uiRenderer->renderImage(this, pos);
 }
 
 Image::~Image()
 {
     glDeleteTextures(1, &m_sampler);
-    Logger::dbg << "Cleaned up texture data for image" << Logger::End;
+    Logger::dbg << "Cleaned up texture data for image " << this << Logger::End;
 }

@@ -1,8 +1,11 @@
 #include "FileTypeHandler.h"
 #include "Logger.h"
+#include "config.h"
+#include "paths.h"
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include <filesystem>
 
 static std::string loadFile(const std::string& filePath)
 {
@@ -25,7 +28,7 @@ static std::string loadFile(const std::string& filePath)
     }
 }
 
-FileTypeHandler::FileTypeHandler(const std::string& databasePath)
+void FileTypeHandler::loadFileTypes(const std::string& databasePath)
 {
     Logger::log << "Loading file icon database: " << databasePath << Logger::End;
     std::stringstream ss; ss << loadFile(databasePath);
@@ -113,22 +116,38 @@ FileTypeHandler::FileTypeHandler(const std::string& databasePath)
     Logger::log << "Loaded " << m_fileTypes.size() << " file type values" << Logger::End;
 }
 
-std::string FileTypeHandler::getIconNameForExtension(const std::string& ext)
+FileTypeHandler::FileTypeHandler(const std::string& databasePath)
 {
-    for (const auto& value : m_fileTypes)
-    {
-        if (std::find(value.extensions.begin(), value.extensions.end(), ext) != value.extensions.end())
-            return value.iconName;
-    }
-    return "file"; // Return the generic value
+    loadFileTypes(databasePath);
+
+    // Load icons
+    for (auto& ft : m_fileTypes)
+        ft.icon = std::make_unique<Image>(
+                PATH_DIR_FT_ICON"/"+ft.iconName+".png",
+                glm::ivec2{FILE_DIALOG_ICON_SIZE_PX, FILE_DIALOG_ICON_SIZE_PX});
+
+    // Set up default filetype
+    m_defFT = FileType{};
+    m_defFT.icon = std::make_unique<Image>(
+            PATH_DIR_FT_ICON"/file.png",
+            glm::ivec2{FILE_DIALOG_ICON_SIZE_PX, FILE_DIALOG_ICON_SIZE_PX});
 }
 
-std::string FileTypeHandler::getIconNameForFilename(const std::string& fname)
+const Image* FileTypeHandler::getIconFromFilename(std::string fname)
 {
+    for (char& c : fname)
+        c = tolower(c);
+
+    std::string ext = std::filesystem::path{fname}.extension().string();
+    if (!ext.empty()) ext = ext.substr(1);
+
     for (const auto& value : m_fileTypes)
     {
         if (std::find(value.filenames.begin(), value.filenames.end(), fname) != value.filenames.end())
-            return value.iconName;
+            return value.icon.get();
+        if (std::find(value.extensions.begin(), value.extensions.end(), ext) != value.extensions.end())
+            return value.icon.get();
     }
-    return "file"; // Return the generic value
+
+    return m_defFT.icon.get();
 }

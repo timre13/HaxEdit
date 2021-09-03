@@ -1,5 +1,6 @@
 #include "FileDialog.h"
 #include "UiRenderer.h"
+#include "FileTypeHandler.h"
 #include "TextRenderer.h"
 #include "Logger.h"
 #include "Timer.h"
@@ -40,9 +41,9 @@ void FileDialog::recalculateDimensions()
     {
         auto rect = std::make_unique<Dimensions>();
         rect->width = m_dialogDims.width-20;
-        rect->height = FONT_SIZE_PX;
+        rect->height = std::max(FONT_SIZE_PX, FILE_DIALOG_ICON_SIZE_PX);
         rect->xPos = m_dialogDims.xPos+10;
-        rect->yPos = m_titleRect.yPos+m_titleRect.height+20+(FONT_SIZE_PX+2)*i;
+        rect->yPos = m_titleRect.yPos+m_titleRect.height+20+(rect->height+2)*i;
         m_fileRectDims.push_back(std::move(rect));
     }
 }
@@ -99,11 +100,13 @@ void FileDialog::render()
                     RGBAColor{0.2f, 0.3f, 0.5f, 0.7f} : RGBAColor{0.1f, 0.2f, 0.4f, 0.7f});
         // Render filename
         g_textRenderer->renderString(file->name,
-                {rect->xPos, rect->yPos-2},
+                {rect->xPos+FILE_DIALOG_ICON_SIZE_PX+10, rect->yPos+rect->height/2-FONT_SIZE_PX/2-2},
                 file->isDirectory ? FontStyle::Italic : FontStyle::Regular);
         // Render permissions
         g_textRenderer->renderString(file->permissionStr,
                 {m_dialogDims.xPos+m_dialogDims.width-FONT_SIZE_PX*0.7f*9, rect->yPos-2});
+        // Render file icon
+        g_fileTypeHandler->getIconFromFilename(file->name)->render({rect->xPos, rect->yPos});
     }
 
     TIMER_END_FUNC();

@@ -149,7 +149,7 @@ void UiRenderer::renderRectangleOutline(
     drawVertices(m_vao, m_vbo, (const float**)rect4VertexData, 6);
 }
 
-void UiRenderer::renderImage(const Image* image)
+void UiRenderer::renderImage(const Image* image, const glm::ivec2& pos)
 {
     assert(m_windowWidth > 0 && m_windowHeight > 0);
 
@@ -163,8 +163,8 @@ void UiRenderer::renderImage(const Image* image)
 
     glBindTexture(GL_TEXTURE_2D, image->getSamplerId());
 
-    const float x1 = image->getXPos();
-    const float y1 = image->getYPos();
+    const float x1 = pos.x;
+    const float y1 = pos.y;
     const float x2 = x1+image->getWidth();
     const float y2 = y1+image->getHeight();
     const float vertexData[6][4] = {
