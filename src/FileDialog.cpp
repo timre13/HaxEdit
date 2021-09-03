@@ -84,6 +84,9 @@ void FileDialog::render()
         auto& file = m_fileList[i];
         auto& rect = m_fileRectDims[i];
 
+        if (rect->yPos+rect->height > m_dialogDims.yPos+m_dialogDims.height)
+            break;
+
         if (i == (size_t)m_selectedFileI)
         {
             // Render file rectangle outline
