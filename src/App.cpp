@@ -69,7 +69,7 @@ UiRenderer* App::createUiRenderer()
 
 FileTypeHandler* App::createFileTypeHandler()
 {
-    return new FileTypeHandler{"../icons/icon_index.txt"};
+    return new FileTypeHandler{"../icons/file_icon_index.txt", "../icons/folder_icon_index.txt"};
 }
 
 void App::renderBuffers()

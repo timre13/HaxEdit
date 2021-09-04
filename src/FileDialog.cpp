@@ -109,7 +109,8 @@ void FileDialog::render()
         g_textRenderer->renderString(file->permissionStr,
                 {m_dialogDims.xPos+m_dialogDims.width-FONT_SIZE_PX*0.7f*9, rect->yPos-2});
         // Render file icon
-        g_fileTypeHandler->getIconFromFilename(file->name)->render({rect->xPos, rect->yPos});
+        g_fileTypeHandler->getIconFromFilename(
+                file->name, file->isDirectory)->render({rect->xPos, rect->yPos});
     }
 
     TIMER_END_FUNC();

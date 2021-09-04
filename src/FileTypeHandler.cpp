@@ -70,11 +70,7 @@ void FileTypeHandler::loadFileTypes(const std::string& databasePath)
         }
 
         {
-            std::string filenames;
-            while (i < line.size() && line[i] != '|')
-            {
-                filenames += line[i++];
-            }
+            const std::string filenames = line.substr(i);
 
             std::string filename;
             for (size_t j{}; j < filenames.size(); ++j)
@@ -116,38 +112,123 @@ void FileTypeHandler::loadFileTypes(const std::string& databasePath)
     Logger::log << "Loaded " << m_fileTypes.size() << " file type values" << Logger::End;
 }
 
-FileTypeHandler::FileTypeHandler(const std::string& databasePath)
+void FileTypeHandler::loadFolderTypes(const std::string& databasePath)
 {
-    loadFileTypes(databasePath);
+    Logger::log << "Loading folder icon database: " << databasePath << Logger::End;
+    std::stringstream ss; ss << loadFile(databasePath);
+    std::string line;
+    std::getline(ss, line); // Skip header
+    while (std::getline(ss, line))
+    {
+        //Logger::dbg << "Parsing line: " << line << Logger::End;
 
-    // Load icons
+        FolderType ft;
+        size_t i{};
+
+        while (i < line.size() && line[i] != '|')
+        {
+            ft.iconName += line[i++];
+        }
+        ++i;
+
+        {
+            const std::string names = line.substr(i);
+
+            std::string name;
+            for (size_t j{}; j < names.size(); ++j)
+            {
+                if (names[j] == '/')
+                {
+                    ft.names.push_back(std::move(name));
+                    continue;
+                }
+                name += names[j];
+            }
+            if (!name.empty())
+                ft.names.push_back(std::move(name));
+        }
+
+        /*
+        Logger::dbg << "Icon name: " << ft.iconName;
+        Logger::dbg << "\n       Names: ";
+        for (size_t i{}; i < ft.names.size(); ++i)
+        {
+            if (i != 0) Logger::dbg << ", ";
+            Logger::dbg << ft.names[i];
+        }
+        Logger::dbg << Logger::End;
+        */
+
+        m_folderTypes.push_back(std::move(ft));
+    }
+
+    Logger::log << "Loaded " << m_folderTypes.size() << " folder types" << Logger::End;
+}
+
+FileTypeHandler::FileTypeHandler(
+        const std::string& fileDbPath,
+        const std::string& folderDbPath)
+{
+    loadFileTypes(fileDbPath);
+    loadFolderTypes(folderDbPath);
+
+    // Load file icons
     for (auto& ft : m_fileTypes)
         ft.icon = std::make_unique<Image>(
                 PATH_DIR_FT_ICON"/"+ft.iconName+".png",
                 glm::ivec2{FILE_DIALOG_ICON_SIZE_PX, FILE_DIALOG_ICON_SIZE_PX});
 
-    // Set up default filetype
-    m_defFT = FileType{};
-    m_defFT.icon = std::make_unique<Image>(
+    // Load default file icon
+    m_defFileIcon = std::make_unique<Image>(
             PATH_DIR_FT_ICON"/file.png",
+            glm::ivec2{FILE_DIALOG_ICON_SIZE_PX, FILE_DIALOG_ICON_SIZE_PX});
+
+
+    // Load folder icons
+    for (auto& ft : m_folderTypes)
+        ft.icon = std::make_unique<Image>(
+                PATH_DIR_FT_ICON"/"+ft.iconName+".png",
+                glm::ivec2{FILE_DIALOG_ICON_SIZE_PX, FILE_DIALOG_ICON_SIZE_PX});
+
+    // Load default folder icon
+    m_defFolderIcon = std::make_unique<Image>(
+            PATH_DIR_FT_ICON"/folder-other.png",
             glm::ivec2{FILE_DIALOG_ICON_SIZE_PX, FILE_DIALOG_ICON_SIZE_PX});
 }
 
-const Image* FileTypeHandler::getIconFromFilename(std::string fname)
+const Image* FileTypeHandler::getIconFromFilename(std::string fname, bool isDir)
 {
     for (char& c : fname)
         c = tolower(c);
 
-    std::string ext = std::filesystem::path{fname}.extension().string();
-    if (!ext.empty()) ext = ext.substr(1);
-
-    for (const auto& value : m_fileTypes)
+    if (!isDir)
     {
-        if (std::find(value.filenames.begin(), value.filenames.end(), fname) != value.filenames.end())
-            return value.icon.get();
-        if (std::find(value.extensions.begin(), value.extensions.end(), ext) != value.extensions.end())
-            return value.icon.get();
-    }
+        // Check filename first
+        for (const auto& value : m_fileTypes)
+        {
+            if (std::find(value.filenames.begin(), value.filenames.end(), fname) != value.filenames.end())
+                return value.icon.get();
+        }
 
-    return m_defFT.icon.get();
+        std::string ext = std::filesystem::path{fname}.extension().string();
+        if (!ext.empty()) ext = ext.substr(1);
+        // Check extension
+        for (const auto& value : m_fileTypes)
+        {
+            if (std::find(value.extensions.begin(), value.extensions.end(), ext) != value.extensions.end())
+                return value.icon.get();
+        }
+
+        return m_defFileIcon.get();
+    }
+    else
+    {
+        for (const auto& value : m_folderTypes)
+        {
+            if (std::find(value.names.begin(), value.names.end(), fname) != value.names.end())
+                return value.icon.get();
+        }
+
+        return m_defFolderIcon.get();
+    }
 }
