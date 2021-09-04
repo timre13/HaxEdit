@@ -83,7 +83,6 @@ void App::renderBuffers()
 
 void App::renderTabLine()
 {
-
     // Draw tabline background
     g_uiRenderer->renderFilledRectangle({0, 0}, {g_windowWidth, TABLINE_HEIGHT_PX},
             RGB_COLOR_TO_RGBA(TABLINE_BG_COLOR));
@@ -107,9 +106,11 @@ void App::renderTabLine()
                         TABLINE_TAB_COLOR)));
         // Render the filename, use orange color when the buffer is modified since the last save
         g_textRenderer->renderString(buffer.getFileName().substr(0, TABLINE_TAB_MAX_TEXT_LEN),
-                {tabX, -2},
+                {tabX+20, -2},
                 tabI == g_currentBufferI ? FontStyle::BoldItalic : FontStyle::Regular,
                 (buffer.isModified() ? RGBColor{1.0f, 0.5f, 0.0f} : RGBColor{1.0f, 1.0, 1.0f}));
+
+        g_fileTypeHandler->getIconFromFilename(buffer.getFileName(), false)->render({tabX+2, 2}, {16, 16});
         ++tabI;
     }
 }

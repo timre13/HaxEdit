@@ -5,8 +5,7 @@
 #include <GL/glew.h>
 #include <GL/gl.h>
 
-Image::Image(const std::string& filePath,
-             const glm::ivec2& size)
+Image::Image(const std::string& filePath)
 {
     stbi_set_flip_vertically_on_load(1);
     int channelCount;
@@ -34,13 +33,13 @@ Image::Image(const std::string& filePath,
 
     stbi_image_free(imageData);
     Logger::dbg << "Loaded image file " << filePath << Logger::End;
-
-    m_size = size.x > 0 && size.y > 0 ? size : m_physicalSize;
 }
 
-void Image::render(const glm::ivec2& pos) const
+void Image::render(const glm::ivec2& pos, const glm::ivec2& size/*={0, 0}*/) const
 {
-    g_uiRenderer->renderImage(this, pos);
+    g_uiRenderer->renderImage(this,
+            pos,
+            {size.x > 0 && size.y > 0 ? size : m_physicalSize});
 }
 
 Image::~Image()

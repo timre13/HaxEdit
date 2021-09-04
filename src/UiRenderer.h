@@ -25,7 +25,7 @@ private:
 
     friend class Image;
     // Used by Image::render()
-    void renderImage(const Image* image, const glm::ivec2& pos);
+    void renderImage(const Image* image, const glm::ivec2& pos, const glm::ivec2& size);
 
 public:
     UiRenderer();

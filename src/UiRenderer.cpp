@@ -149,7 +149,7 @@ void UiRenderer::renderRectangleOutline(
     drawVertices(m_vao, m_vbo, (const float**)rect4VertexData, 6);
 }
 
-void UiRenderer::renderImage(const Image* image, const glm::ivec2& pos)
+void UiRenderer::renderImage(const Image* image, const glm::ivec2& pos, const glm::ivec2& size)
 {
     assert(m_windowWidth > 0 && m_windowHeight > 0);
 
@@ -165,8 +165,8 @@ void UiRenderer::renderImage(const Image* image, const glm::ivec2& pos)
 
     const float x1 = pos.x;
     const float y1 = pos.y;
-    const float x2 = x1+image->getWidth();
-    const float y2 = y1+image->getHeight();
+    const float x2 = x1+size.x;
+    const float y2 = y1+size.y;
     const float vertexData[6][4] = {
         {x1, y2, 0.0f, 0.0f},
         {x1, y1, 0.0f, 1.0f},

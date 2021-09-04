@@ -174,26 +174,18 @@ FileTypeHandler::FileTypeHandler(
 
     // Load file icons
     for (auto& ft : m_fileTypes)
-        ft.icon = std::make_unique<Image>(
-                PATH_DIR_FT_ICON"/"+ft.iconName+".png",
-                glm::ivec2{FILE_DIALOG_ICON_SIZE_PX, FILE_DIALOG_ICON_SIZE_PX});
+        ft.icon = std::make_unique<Image>(PATH_DIR_FT_ICON"/"+ft.iconName+".png");
 
     // Load default file icon
-    m_defFileIcon = std::make_unique<Image>(
-            PATH_DIR_FT_ICON"/file.png",
-            glm::ivec2{FILE_DIALOG_ICON_SIZE_PX, FILE_DIALOG_ICON_SIZE_PX});
+    m_defFileIcon = std::make_unique<Image>(PATH_DIR_FT_ICON"/file.png");
 
 
     // Load folder icons
     for (auto& ft : m_folderTypes)
-        ft.icon = std::make_unique<Image>(
-                PATH_DIR_FT_ICON"/"+ft.iconName+".png",
-                glm::ivec2{FILE_DIALOG_ICON_SIZE_PX, FILE_DIALOG_ICON_SIZE_PX});
+        ft.icon = std::make_unique<Image>(PATH_DIR_FT_ICON"/"+ft.iconName+".png");
 
     // Load default folder icon
-    m_defFolderIcon = std::make_unique<Image>(
-            PATH_DIR_FT_ICON"/folder-other.png",
-            glm::ivec2{FILE_DIALOG_ICON_SIZE_PX, FILE_DIALOG_ICON_SIZE_PX});
+    m_defFolderIcon = std::make_unique<Image>(PATH_DIR_FT_ICON"/folder-other.png");
 }
 
 const Image* FileTypeHandler::getIconFromFilename(std::string fname, bool isDir)

@@ -110,7 +110,8 @@ void FileDialog::render()
                 {m_dialogDims.xPos+m_dialogDims.width-FONT_SIZE_PX*0.7f*9, rect->yPos-2});
         // Render file icon
         g_fileTypeHandler->getIconFromFilename(
-                file->name, file->isDirectory)->render({rect->xPos, rect->yPos});
+                file->name, file->isDirectory)->render(
+                    {rect->xPos, rect->yPos}, {FILE_DIALOG_ICON_SIZE_PX, FILE_DIALOG_ICON_SIZE_PX});
     }
 
     TIMER_END_FUNC();
