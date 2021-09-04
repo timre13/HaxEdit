@@ -217,14 +217,17 @@ static inline void renderStatusLine(
         int cursorLine, int cursorCol, int cursorCharPos,
         const std::string& filePath)
 {
+    const int winW = g_textRenderer->getWindowWidth();
+    const int winH = g_textRenderer->getWindowHeight();
+
     g_uiRenderer->renderRectangleOutline(
-            {LINEN_BAR_WIDTH*FONT_SIZE_PX, g_textRenderer->getWindowHeight()-FONT_SIZE_PX*1.2f},
-            {g_textRenderer->getWindowWidth(), g_textRenderer->getWindowHeight()},
+            {LINEN_BAR_WIDTH*FONT_SIZE_PX, winH-FONT_SIZE_PX*1.2f},
+            {winW, winH},
             {0.5f, 0.5f, 0.5f},
             2);
     g_uiRenderer->renderFilledRectangle(
-            {LINEN_BAR_WIDTH*FONT_SIZE_PX, g_textRenderer->getWindowHeight()-FONT_SIZE_PX*1.2f},
-            {g_textRenderer->getWindowWidth(), g_textRenderer->getWindowHeight()},
+            {LINEN_BAR_WIDTH*FONT_SIZE_PX, winH-FONT_SIZE_PX*1.2f},
+            {winW, winH},
             RGB_COLOR_TO_RGBA(STATUSBAR_BG_COLOR));
 
     const std::string cursorPosString
@@ -233,14 +236,14 @@ static inline void renderStatusLine(
         + std::to_string(cursorCharPos);
     g_textRenderer->renderString(
             cursorPosString,
-            {g_textRenderer->getWindowWidth()-FONT_SIZE_PX*(4+1+3+3+7)*0.7f,
-             g_textRenderer->getWindowHeight()-FONT_SIZE_PX-4});
+            {winW-FONT_SIZE_PX*(4+1+3+3+7)*0.7f,
+             winH-FONT_SIZE_PX-4});
 
     const std::string statusLineString = filePath;
     g_textRenderer->renderString(
             statusLineString,
             {LINEN_BAR_WIDTH*FONT_SIZE_PX,
-             g_textRenderer->getWindowHeight()-FONT_SIZE_PX-4});
+             winH-FONT_SIZE_PX-4});
 }
 
 void Buffer::render()
@@ -483,7 +486,7 @@ void Buffer::deleteCharForward()
     assert(m_cursorLine >= 0);
     assert(m_cursorCharPos >= 0);
 
-    auto lineLen = getLineLenAt(m_content, m_cursorLine);
+    int lineLen = getLineLenAt(m_content, m_cursorLine);
 
     // If deleting at the end of the line and we have stuff to delete
     if (m_cursorCol == lineLen && m_cursorLine < m_numOfLines)
@@ -493,7 +496,7 @@ void Buffer::deleteCharForward()
         m_isModified = true;
     }
     // If deleting in the middle/beginning of the line and we have stuff to delete
-    else if (m_cursorCharPos != lineLen && m_cursorCharPos < m_content.size())
+    else if (m_cursorCharPos != (size_t)lineLen && m_cursorCharPos < m_content.size())
     {
         m_content.erase(m_cursorCharPos, 1);
         m_isModified = true;
