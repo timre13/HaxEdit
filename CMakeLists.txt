@@ -14,7 +14,11 @@ link_libraries(GLEW GL glfw freetype)
 
 project(haxed VERSION 1.0)
 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic -g3 -fno-limit-debug-info")
+if (CMAKE_BUILD_TYPE MATCHES Debug)
+    set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic -g3 -fno-limit-debug-info -fsanitize=address,leak,undefined")
+else()
+    set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic -g3 -fno-limit-debug-info")
+endif()
 
 add_executable(haxed
     src/main.cpp
