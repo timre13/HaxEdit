@@ -31,5 +31,5 @@ std::string getFontFilePath(const std::string& fontName, FontStyle style)
 #endif
 }
 
-};
+}
 

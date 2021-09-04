@@ -24,6 +24,7 @@ inline std::string fontStyleToStr(FontStyle style)
     case FontStyle::Italic: return "Oblique";
     case FontStyle::BoldItalic: return "Bold Oblique";
     }
+    return ""; // Never reached
 }
 
 class TextRenderer

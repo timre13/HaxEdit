@@ -167,6 +167,7 @@ std::map<char, TextRenderer::Glyph>* TextRenderer::getGlyphListFromStyle(FontSty
     case FontStyle::Italic:     return &m_italicGlyphs;
     case FontStyle::BoldItalic: return &m_boldItalicGlyphs;
     }
+    return {}; // Never reached
 }
 
 TextRenderer::GlyphDimensions TextRenderer::renderChar(

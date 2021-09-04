@@ -120,7 +120,6 @@ void Buffer::updateCursor()
 
     assert(m_cursorCol >= 0);
     assert(m_cursorLine >= 0);
-    assert(m_cursorCharPos >= 0);
 
     auto getCursorLineLen{ // -> int
         [&]()
@@ -201,7 +200,6 @@ void Buffer::updateCursor()
 
     assert(m_cursorCol >= 0);
     assert(m_cursorLine >= 0);
-    assert(m_cursorCharPos >= 0);
 
     // Scroll up when the cursor goes out of the viewport
     if (m_cursorMovCmd != CursorMovCmd::None)
@@ -420,7 +418,6 @@ void Buffer::insert(char character)
 
     assert(m_cursorCol >= 0);
     assert(m_cursorLine >= 0);
-    assert(m_cursorCharPos >= 0);
 
     m_content = m_content.insert(m_cursorCharPos, 1, character);
 
@@ -449,7 +446,6 @@ void Buffer::deleteCharBackwards()
 
     assert(m_cursorCol >= 0);
     assert(m_cursorLine >= 0);
-    assert(m_cursorCharPos >= 0);
 
     // If deleting at the beginning of the line and we have stuff to delete
     if (m_cursorCol == 0 && m_cursorLine != 0)
@@ -471,7 +467,6 @@ void Buffer::deleteCharBackwards()
 
     assert(m_cursorCol >= 0);
     assert(m_cursorLine >= 0);
-    assert(m_cursorCharPos >= 0);
 
     scrollViewportToCursor();
 
@@ -484,7 +479,6 @@ void Buffer::deleteCharForward()
 
     assert(m_cursorCol >= 0);
     assert(m_cursorLine >= 0);
-    assert(m_cursorCharPos >= 0);
 
     int lineLen = getLineLenAt(m_content, m_cursorLine);
 
@@ -504,7 +498,6 @@ void Buffer::deleteCharForward()
 
     assert(m_cursorCol >= 0);
     assert(m_cursorLine >= 0);
-    assert(m_cursorCharPos >= 0);
 
     scrollViewportToCursor();
 
