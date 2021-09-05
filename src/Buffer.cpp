@@ -294,10 +294,9 @@ void Buffer::render()
 
         /*
          * Render a cursor at the current character position if it is the cursor position.
-         * Used to draw a cursor when the character is special. (line endings, tabs, etc.)
          */
         auto drawCursorIfNeeded{
-            [&]()
+            [&](int width)
             {
                 if ((m_cursorMovCmd != CursorMovCmd::None || m_isCursorShown)
                         && lineI == m_cursorLine && colI == m_cursorCol)
@@ -305,22 +304,24 @@ void Buffer::render()
 #if CURSOR_DRAW_BLOCK
                     g_uiRenderer->renderRectangleOutline(
                             {textX-2, initTextY+textY-m_scrollY-m_position.y-2},
-                            {textX+FONT_SIZE_PX*0.75+2, initTextY+textY-m_scrollY-m_position.y+FONT_SIZE_PX+2},
+                            {textX+width+2, initTextY+textY-m_scrollY-m_position.y+FONT_SIZE_PX+2},
                             {1.0f, 0.0f, 0.0f},
                             2
                     );
                     g_uiRenderer->renderFilledRectangle(
                             {textX-2, initTextY+textY-m_scrollY-m_position.y-2},
-                            {textX+FONT_SIZE_PX*0.75+2, initTextY+textY-m_scrollY-m_position.y+FONT_SIZE_PX+2},
+                            {textX+width+2, initTextY+textY-m_scrollY-m_position.y+FONT_SIZE_PX+2},
                             {1.0f, 0.0f, 0.0f, 0.4f}
                     );
 #else
+                    (void)width;
                     g_uiRenderer->renderFilledRectangle(
                             {textX-1, initTextY+textY-m_scrollY-m_position.y-2},
                             {textX+1, initTextY+textY-m_scrollY-m_position.y+FONT_SIZE_PX+2},
                             {1.0f, 0.0f, 0.0f}
                     );
 #endif
+
                     // Bind the text renderer shader again
                     g_textRenderer->prepareForDrawing();
                 }
@@ -332,7 +333,7 @@ void Buffer::render()
         {
         case '\n': // New line
         case '\r': // Carriage return
-            drawCursorIfNeeded();
+            drawCursorIfNeeded(FONT_SIZE_PX*0.7f);
             textX = initTextX;
             textY += FONT_SIZE_PX;
             isLineBeginning = true;
@@ -341,13 +342,13 @@ void Buffer::render()
             continue;
 
         case '\t': // Tab
-            drawCursorIfNeeded();
+            drawCursorIfNeeded(FONT_SIZE_PX*0.7f);
             textX += FONT_SIZE_PX*4;
             ++colI;
             continue;
 
         case '\v': // Vertical tab
-            drawCursorIfNeeded();
+            drawCursorIfNeeded(FONT_SIZE_PX*0.7f);
             textX = initTextX;
             textY += FONT_SIZE_PX * 4;
             colI = 0;
@@ -364,36 +365,9 @@ void Buffer::render()
         uint advance{};
         if (isCharInsideViewport)
         {
-            auto dimensions = g_textRenderer->renderChar(c, {textX, textY});
-            advance = dimensions.advance;
+            advance = g_textRenderer->renderChar(c, {textX, textY}).advance;
 
-            // Draw cursor
-            if ((m_cursorMovCmd != CursorMovCmd::None || m_isCursorShown)
-                && lineI == m_cursorLine && colI == m_cursorCol)
-            {
-#if CURSOR_DRAW_BLOCK
-                g_uiRenderer->renderRectangleOutline(
-                        {textX-2, initTextY+textY-m_scrollY-m_position.y-2},
-                        {textX+dimensions.advance/64.0f+2, initTextY+textY-m_scrollY-m_position.y+FONT_SIZE_PX+2},
-                        {1.0f, 0.0f, 0.0f},
-                        2
-                );
-                g_uiRenderer->renderFilledRectangle(
-                        {textX-2, initTextY+textY-m_scrollY-m_position.y-2},
-                        {textX+dimensions.advance/64.0f+2, initTextY+textY-m_scrollY-m_position.y+FONT_SIZE_PX+2},
-                        {1.0f, 0.0f, 0.0f, 0.4f}
-                );
-#else
-                g_uiRenderer->renderFilledRectangle(
-                        {textX-1, initTextY+textY-m_scrollY-m_position.y-2},
-                        {textX+1, initTextY+textY-m_scrollY-m_position.y+FONT_SIZE_PX+2},
-                        {1.0f, 0.0f, 0.0f}
-                );
-#endif
-
-                // Bind the text renderer shader again
-                g_textRenderer->prepareForDrawing();
-            }
+            drawCursorIfNeeded(advance/64.f);
         }
         else
         {
