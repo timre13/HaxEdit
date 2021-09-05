@@ -292,6 +292,17 @@ void Buffer::render()
             g_textRenderer->setDrawingColor({1.0f, 1.0f, 1.0f});
         }
 
+        if (isCharInsideViewport && isLineBeginning && m_cursorLine == lineI)
+        {
+            g_uiRenderer->renderFilledRectangle(
+                    {textX, initTextY+textY-m_scrollY-m_position.y+2},
+                    {textX+g_textRenderer->getWindowWidth(), initTextY+textY-m_scrollY-m_position.y+2+FONT_SIZE_PX},
+                    CURSOR_LINE_COLOR
+            );
+            // Bind the text renderer shader again
+            g_textRenderer->prepareForDrawing();
+        }
+
         /*
          * Render a cursor at the current character position if it is the cursor position.
          */
