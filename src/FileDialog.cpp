@@ -37,11 +37,12 @@ void FileDialog::recalculateDimensions()
     m_titleRect.height = FONT_SIZE_PX*1.5f;
 
     m_fileRectDims.clear();
+    static constexpr int rectHeight = std::max(FONT_SIZE_PX, FILE_DIALOG_ICON_SIZE_PX);
     for (size_t i{}; i < m_fileList.size(); ++i)
     {
         auto rect = std::make_unique<Dimensions>();
         rect->width = m_dialogDims.width-20;
-        rect->height = std::max(FONT_SIZE_PX, FILE_DIALOG_ICON_SIZE_PX);
+        rect->height = rectHeight;
         rect->xPos = m_dialogDims.xPos+10;
         rect->yPos = m_titleRect.yPos+m_titleRect.height+20+(rect->height+2)*i;
         m_fileRectDims.push_back(std::move(rect));
