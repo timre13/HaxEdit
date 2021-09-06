@@ -403,6 +403,10 @@ void App::handleCtrlKeybindingPress(int key)
     //Logger::dbg << "Handling Ctrl-Key" << Logger::End;
     switch (key)
     {
+    case GLFW_KEY_N:
+        onNewBufferPressed();
+        break;
+
     case GLFW_KEY_S:
         onSaveFilePressed();
         break;
@@ -448,11 +452,19 @@ void App::goToPrevTab()
     g_isTitleUpdateNeeded = true;
 }
 
+void App::onNewBufferPressed()
+{
+    g_buffers.push_back(Buffer{});
+    g_currentBufferI = g_buffers.size()-1;
+    g_isRedrawNeeded = true;
+    g_isTitleUpdateNeeded = true;
+}
+
 void App::onSaveFilePressed()
 {
     if (!g_buffers.empty())
     {
-        if (g_buffers[g_currentBufferI].saveAsFile())
+        if (g_buffers[g_currentBufferI].saveToFile())
         {
             g_dialogs.push_back(std::make_unique<MessageDialog>(
                         "Failed to save file",

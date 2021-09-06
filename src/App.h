@@ -65,5 +65,6 @@ private:
     static void toggleDebugDraw();
     static void goToNextTab();
     static void goToPrevTab();
+    static void onNewBufferPressed();
     static void onSaveFilePressed();
 };
