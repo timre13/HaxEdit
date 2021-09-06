@@ -80,39 +80,47 @@ void FileDialog::render()
             m_dirPath,
             {m_titleRect.xPos, m_titleRect.yPos});
 
+    if (m_fileList.empty())
+    {
+        TIMER_END_FUNC();
+        return;
+    }
+
     for (size_t i{}; i < m_fileList.size(); ++i)
     {
         auto& file = m_fileList[i];
-        auto& rect = m_fileRectDims[i];
+        Dimensions rect = {
+            m_fileRectDims[i]->xPos, m_fileRectDims[i]->yPos-m_scrollPx,
+            m_fileRectDims[i]->width, m_fileRectDims[i]->height};
 
-        if (rect->yPos+rect->height > m_dialogDims.yPos+m_dialogDims.height)
-            break;
+        if (rect.yPos+rect.height > m_dialogDims.yPos+m_dialogDims.height)
+            continue;
 
         if (i == (size_t)m_selectedFileI)
         {
             // Render file rectangle outline
             g_uiRenderer->renderFilledRectangle(
-                    {rect->xPos-1, rect->yPos-1},
-                    {rect->xPos+rect->width+1, rect->yPos+rect->height+1},
+                    {rect.xPos-1, rect.yPos-1},
+                    {rect.xPos+rect.width+1, rect.yPos+rect.height+1},
                     {1.0f, 1.0f, 1.0f, 0.7f});
         }
         // Render file rectangle
         g_uiRenderer->renderFilledRectangle(
-                {rect->xPos, rect->yPos},
-                {rect->xPos+rect->width, rect->yPos+rect->height},
+                {rect.xPos, rect.yPos},
+                {rect.xPos+rect.width, rect.yPos+rect.height},
                 i == (size_t)m_selectedFileI ?
                     RGBAColor{0.2f, 0.3f, 0.5f, 0.7f} : RGBAColor{0.1f, 0.2f, 0.4f, 0.7f});
         // Render filename
         g_textRenderer->renderString(file->name,
-                {rect->xPos+FILE_DIALOG_ICON_SIZE_PX+10, rect->yPos+rect->height/2-FONT_SIZE_PX/2-2},
+                {rect.xPos+FILE_DIALOG_ICON_SIZE_PX+10, rect.yPos+rect.height/2-FONT_SIZE_PX/2-2},
                 file->isDirectory ? FontStyle::Italic : FontStyle::Regular);
         // Render permissions
         g_textRenderer->renderString(file->permissionStr,
-                {m_dialogDims.xPos+m_dialogDims.width-FONT_SIZE_PX*0.7f*9, rect->yPos-2});
+                {m_dialogDims.xPos+m_dialogDims.width-FONT_SIZE_PX*0.7f*9, rect.yPos-2});
         // Render file icon
         g_fileTypeHandler->getIconFromFilename(
                 file->name, file->isDirectory)->render(
-                    {rect->xPos, rect->yPos}, {FILE_DIALOG_ICON_SIZE_PX, FILE_DIALOG_ICON_SIZE_PX});
+                    {rect.xPos, rect.yPos}, {FILE_DIALOG_ICON_SIZE_PX, FILE_DIALOG_ICON_SIZE_PX});
     }
 
     TIMER_END_FUNC();

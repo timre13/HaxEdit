@@ -11,6 +11,7 @@ class FileDialog final : public Dialog
 private:
     int m_selectedFileI{};
     std::string m_dirPath;
+    int m_scrollPx{};
     struct FileEntry
     {
         std::string name;
