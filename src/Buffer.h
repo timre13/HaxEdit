@@ -51,8 +51,14 @@ private:
 public:
     Buffer();
 
+    Buffer(const Buffer&) = delete;
+    Buffer& operator=(const Buffer&) = delete;
+    Buffer(Buffer&& other) = default;
+    Buffer& operator=(Buffer&& other) = default;
+
     int open(const std::string& filePath);
-    int saveAsFile();
+    int saveToFile();
+    int saveAsToFile(const std::string& filePath);
 
     void updateCursor();
     void render();
@@ -63,7 +69,7 @@ public:
         return std_fs::path{m_filePath}.filename().string(); }
     inline const std::string getFileExt() const {
         return std_fs::path{m_filePath}.extension().string(); }
-    inline bool isNewFile() const { return m_filePath.compare(FILENAME_NEW); }
+    inline bool isNewFile() const { return m_filePath.compare(FILENAME_NEW) == 0; }
     inline int getNumOfLines() const { return m_numOfLines; }
 
     inline int getCursorLine() const { return m_cursorLine; }
@@ -102,4 +108,6 @@ public:
     void deleteCharBackwards();
     void deleteCharForward();
     bool isModified() const { return m_isModified; }
+
+    ~Buffer();
 };

@@ -54,7 +54,7 @@ int main(int argc, char** argv)
     }
     if (g_buffers.empty())
     {
-        g_buffers.push_back(Buffer{});
+        g_buffers.emplace_back();
         g_buffers.back().open(__FILE__);
     }
 

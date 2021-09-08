@@ -12,9 +12,17 @@
 
 namespace std_fs = std::filesystem;
 
-FileDialog::FileDialog(const std::string& dirPath)
-    : m_dirPath{dirPath}
+FileDialog::FileDialog(const std::string& dirPath, Type type)
+    : m_dirPath{dirPath}, m_type{type}
 {
+    Logger::dbg << "Opened a file dialog of type ";
+    switch (type)
+    {
+    case Type::Open: Logger::dbg << "Open"; break;
+    case Type::SaveAs: Logger::dbg << "Save as"; break;
+    }
+    Logger::dbg << Logger::End;
+
     genFileList();
 }
 
@@ -77,7 +85,7 @@ void FileDialog::render()
             {0.0f, 0.1f, 0.3f, 0.8f});
     // Render current path
     g_textRenderer->renderString(
-            m_dirPath,
+            m_dirPath/std_fs::path{!m_fileList.empty() ? m_fileList[m_selectedFileI]->name : ""},
             {m_titleRect.xPos, m_titleRect.yPos});
 
     if (m_fileList.empty())
@@ -143,6 +151,16 @@ void FileDialog::genFileList()
         parentDirEntry->lastModTime = {};
         parentDirEntry->permissionStr = "";
         m_fileList.push_back(std::move(parentDirEntry));
+    }
+    if (m_type == Type::SaveAs)
+    {
+        // Add entry to go the current directory
+        auto currentDirEntry = std::make_unique<FileEntry>();
+        currentDirEntry->name = ".";
+        currentDirEntry->isDirectory = true;
+        currentDirEntry->lastModTime = {};
+        currentDirEntry->permissionStr = "";
+        m_fileList.push_back(std::move(currentDirEntry));
     }
 
     try

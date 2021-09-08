@@ -212,14 +212,29 @@ void App::windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods)
         {
             if (auto* fileDialog = dynamic_cast<FileDialog*>(g_dialogs.back().get()))
             {
-                g_buffers.push_back(Buffer{});
-                if (g_buffers.back().open(fileDialog->getSelectedFilePath()))
+                if (fileDialog->getType() == FileDialog::Type::SaveAs) // Save as dialog
                 {
-                    g_dialogs.push_back(std::make_unique<MessageDialog>(
-                                "Failed to open file: \""+fileDialog->getSelectedFilePath()+'"',
-                                MessageDialog::Type::Error));
+                    if (g_buffers.back().saveAsToFile(fileDialog->getSelectedFilePath()))
+                    {
+                        g_dialogs.push_back(std::make_unique<MessageDialog>(
+                                    "Failed to save file: \""+fileDialog->getSelectedFilePath()+'"',
+                                    MessageDialog::Type::Error));
+                    }
                 }
-                g_currentBufferI = g_buffers.size()-1; // Go to the last buffer
+                else // Open dialog
+                {
+                    g_buffers.emplace_back();
+                    if (g_buffers.back().open(fileDialog->getSelectedFilePath()))
+                    {
+                        g_dialogs.push_back(std::make_unique<MessageDialog>(
+                                    "Failed to open file: \""+fileDialog->getSelectedFilePath()+'"',
+                                    MessageDialog::Type::Error));
+                    }
+                    else
+                    {
+                        g_currentBufferI = g_buffers.size()-1; // Go to the last buffer
+                    }
+                }
                 g_isTitleUpdateNeeded = true;
             }
             g_dialogs.pop_back();
@@ -248,12 +263,6 @@ void App::windowCharCB(GLFWwindow*, uint codePoint)
     // If there are dialogs open, don't react to keypresses
     if (!g_dialogs.empty())
     {
-        if (codePoint == '\n')
-        {
-            // Close top dialog if Enter was pressed
-            g_dialogs.pop_back();
-            g_isRedrawNeeded = true;
-        }
         return;
     }
 
@@ -412,7 +421,7 @@ void App::handleCtrlKeybindingPress(int key)
         break;
 
     case GLFW_KEY_O:
-        g_dialogs.push_back(std::make_unique<FileDialog>("."));
+        onOpenFilePressed();
         break;
 
     case GLFW_KEY_PAGE_UP:
@@ -454,7 +463,7 @@ void App::goToPrevTab()
 
 void App::onNewBufferPressed()
 {
-    g_buffers.push_back(Buffer{});
+    g_buffers.emplace_back();
     g_currentBufferI = g_buffers.size()-1;
     g_isRedrawNeeded = true;
     g_isTitleUpdateNeeded = true;
@@ -464,12 +473,25 @@ void App::onSaveFilePressed()
 {
     if (!g_buffers.empty())
     {
-        if (g_buffers[g_currentBufferI].saveToFile())
+        if (g_buffers[g_currentBufferI].isNewFile())
         {
-            g_dialogs.push_back(std::make_unique<MessageDialog>(
-                        "Failed to save file",
-                        MessageDialog::Type::Error));
+            // Open a save as dialog
+            g_dialogs.push_back(std::make_unique<FileDialog>(".", FileDialog::Type::SaveAs));
+        }
+        else
+        {
+            if (g_buffers[g_currentBufferI].saveToFile())
+            {
+                g_dialogs.push_back(std::make_unique<MessageDialog>(
+                            "Failed to save file",
+                            MessageDialog::Type::Error));
+            }
         }
         g_isRedrawNeeded = true;
     }
+}
+
+void App::onOpenFilePressed()
+{
+    g_dialogs.push_back(std::make_unique<FileDialog>(".", FileDialog::Type::Open));
 }

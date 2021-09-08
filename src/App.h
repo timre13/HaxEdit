@@ -67,4 +67,5 @@ private:
     static void goToPrevTab();
     static void onNewBufferPressed();
     static void onSaveFilePressed();
+    static void onOpenFilePressed();
 };

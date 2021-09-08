@@ -8,9 +8,17 @@
 
 class FileDialog final : public Dialog
 {
+public:
+    enum class Type
+    {
+        Open,
+        SaveAs,
+    };
+
 private:
-    int m_selectedFileI{};
     std::string m_dirPath;
+    Type m_type{};
+    int m_selectedFileI{};
     int m_scrollPx{};
     struct FileEntry
     {
@@ -39,7 +47,7 @@ private:
     }
 
 public:
-    FileDialog(const std::string& dirPath);
+    FileDialog(const std::string& dirPath, Type type);
 
     virtual void render() override;
     virtual void handleKey(int key, int mods) override;
@@ -51,4 +59,6 @@ public:
 
         return std::filesystem::path{m_dirPath}/m_fileList[m_selectedFileI]->name;
     }
+
+    inline Type getType() const { return m_type; }
 };

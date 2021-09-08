@@ -8,6 +8,7 @@
 
 Buffer::Buffer()
 {
+    Logger::dbg << "Created a buffer: " << this << Logger::End;
 }
 
 int Buffer::open(const std::string& filePath)
@@ -50,11 +51,11 @@ int Buffer::open(const std::string& filePath)
     return 0;
 }
 
-int Buffer::saveAsFile()
+int Buffer::saveToFile()
 {
     TIMER_BEGIN_FUNC();
 
-    Logger::dbg << "Writing to file: " << m_filePath << Logger::End;
+    Logger::dbg << "Writing buffer to file: " << m_filePath << Logger::End;
 
     try
     {
@@ -87,6 +88,21 @@ int Buffer::saveAsFile()
     m_isModified = false;
 
     TIMER_END_FUNC();
+    return 0;
+}
+
+int Buffer::saveAsToFile(const std::string& filePath)
+{
+    const std::string originalPath = filePath;
+    m_filePath = filePath;
+    Logger::dbg << "Saving as: " << filePath << Logger::End;
+
+    if (saveToFile())
+    {
+        Logger::err << "Save as failed" << Logger::End;
+        m_filePath = originalPath;
+        return 1;
+    }
     return 0;
 }
 
@@ -487,4 +503,9 @@ void Buffer::deleteCharForward()
     scrollViewportToCursor();
 
     TIMER_END_FUNC();
+}
+
+Buffer::~Buffer()
+{
+    Logger::dbg << "Destroyed a buffer: " << this << Logger::End;
 }
