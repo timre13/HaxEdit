@@ -3,8 +3,10 @@
 #include "Logger.h"
 #include "Timer.h"
 #include "types.h"
+#include "syntax.h"
 #include <fstream>
 #include <sstream>
+#include <regex>
 
 Buffer::Buffer()
 {
@@ -30,6 +32,7 @@ int Buffer::open(const std::string& filePath)
         ss << file.rdbuf();
 
         m_content = ss.str();
+        updateHighlighting();
         m_numOfLines = strCountLines(m_content);
 
         Logger::dbg << "Read "
@@ -40,6 +43,7 @@ int Buffer::open(const std::string& filePath)
     catch (std::exception& e)
     {
         m_content.clear();
+        updateHighlighting();
         m_numOfLines = 0;
 
         Logger::err << "Failed to open file: \"" << filePath << "\": " << e.what() << Logger::End;
@@ -77,9 +81,6 @@ int Buffer::saveToFile()
     }
     catch (std::exception& e)
     {
-        m_content.clear();
-        m_numOfLines = 0;
-
         Logger::err << "Failed to write to file: \"" << m_filePath << "\": " << e.what() << Logger::End;
         TIMER_END_FUNC();
         return 1;
@@ -128,6 +129,89 @@ void Buffer::scrollViewportToCursor()
     {
         scrollBy(-(m_cursorLine*FONT_SIZE_PX+m_scrollY-g_textRenderer->getWindowHeight()+FONT_SIZE_PX*5));
     }
+}
+
+void Buffer::updateHighlighting()
+{
+    if (m_content.empty())
+        return;
+
+    //Logger::log << "Updating syntax highlighting" << Logger::End;
+
+    m_highlightBuffer = std::string(m_content.length(), SYNTAX_MARK_NONE);
+
+#if ENABLE_SYNTAX_HIGHLIGHTING
+    auto highlightWord{[&](const std::string& word, char colorMark, bool shouldBeWholeWord){
+        assert(!word.empty());
+        size_t start{};
+        while (true)
+        {
+            size_t found = m_content.find(word, start);
+            if (found == std::string::npos)
+                break;
+            if (!shouldBeWholeWord |
+                ((found == 0 || !isalnum(m_content[found-1]))
+                 && (found+word.size()-1 == m_content.size()-1 || !isalnum(m_content[found+word.size()]))))
+                m_highlightBuffer.replace(found, word.length(), word.length(), colorMark);
+            start = found+word.length();
+        }
+    }};
+
+    auto highlightRegex{[&](const std::regex& exp, char colorMark){
+        for (auto it = std::sregex_iterator(m_content.begin(), m_content.end(), exp);
+             it != std::sregex_iterator();
+             ++it)
+        {
+            m_highlightBuffer.replace(it->position(), it->length(), it->length(), colorMark);
+        }
+    }};
+
+    auto highlightPrefixed{[&](const std::string& prefix, char colorMark){
+        size_t charI{};
+        std::stringstream ss;
+        ss << m_content;
+        std::string line;
+        while (std::getline(ss, line))
+        {
+            size_t found = line.find(prefix);
+            if (found != std::string::npos)
+            {
+                // FIXME
+                m_highlightBuffer.replace(charI+found, line.size()-prefix.size()-1, line.size()-prefix.size()-1, colorMark);
+            }
+            charI += line.size()+1;
+        }
+    }};
+
+    timer.reset();
+    for (const auto& word : Syntax::keywordList)
+        highlightWord(word, SYNTAX_MARK_KEYWORD, true);
+    Logger::dbg << "Highlighting of keywords took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
+
+    timer.reset();
+    for (const auto& word : Syntax::typeList)
+        highlightWord(word, SYNTAX_MARK_TYPE, true);
+    Logger::dbg << "Highlighting of types took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
+
+    timer.reset();
+    highlightRegex(Syntax::numberRegex, SYNTAX_MARK_NUMBER);
+    Logger::dbg << "Highlighting of numbers took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
+
+    timer.reset();
+    for (const auto& word : Syntax::operatorList)
+        highlightWord(word, SYNTAX_MARK_OPERATOR, false);
+    Logger::dbg << "Highlighting of operators took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
+
+    timer.reset();
+    highlightRegex(Syntax::stringRegex, SYNTAX_MARK_STRING);
+    Logger::dbg << "Highlighting of strings took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
+
+    timer.reset();
+    highlightPrefixed(Syntax::lineCommentPrefix, SYNTAX_MARK_COMMENT);
+    Logger::dbg << "Highlighting of line comments took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
+
+    Logger::log << "Syntax highlighting updated" << Logger::End;
+#endif
 }
 
 void Buffer::updateCursor()
@@ -281,8 +365,11 @@ void Buffer::render()
     char isLineBeginning = true;
     int lineI{};
     int colI{};
+    size_t charI{(size_t)-1};
     for (char c : m_content)
     {
+        ++charI;
+
         // Don't draw the part of the buffer that is below the viewport
         if (textY > g_textRenderer->getWindowHeight())
         {
@@ -392,7 +479,20 @@ void Buffer::render()
         uint advance{};
         if (isCharInsideViewport)
         {
-            advance = g_textRenderer->renderChar(c, {textX, textY}).advance;
+            FontStyle charStyle = FontStyle::Regular;
+            RGBColor charColor;
+            switch (m_highlightBuffer[charI])
+            {
+                case SYNTAX_MARK_NONE:     charColor = SYNTAX_COLOR_NONE;     charStyle = SYNTAX_STYLE_NONE; break;
+                case SYNTAX_MARK_KEYWORD:  charColor = SYNTAX_COLOR_KEYWORD;  charStyle = SYNTAX_STYLE_KEYWORD; break;
+                case SYNTAX_MARK_TYPE:     charColor = SYNTAX_COLOR_TYPE;     charStyle = SYNTAX_STYLE_TYPE; break;
+                case SYNTAX_MARK_NUMBER:   charColor = SYNTAX_COLOR_NUMBER;   charStyle = SYNTAX_STYLE_NUMBER; break;
+                case SYNTAX_MARK_OPERATOR: charColor = SYNTAX_COLOR_OPERATOR; charStyle = SYNTAX_STYLE_OPERATOR; break;
+                case SYNTAX_MARK_STRING:   charColor = SYNTAX_COLOR_STRING;   charStyle = SYNTAX_STYLE_STRING; break;
+                case SYNTAX_MARK_COMMENT:  charColor = SYNTAX_COLOR_COMMENT;  charStyle = SYNTAX_STYLE_COMMENT; break;
+            }
+            g_textRenderer->setDrawingColor(charColor);
+            advance = g_textRenderer->renderChar(c, {textX, textY}, charStyle).advance;
 
             drawCursorIfNeeded(advance/64.f);
         }
@@ -436,6 +536,7 @@ void Buffer::insert(char character)
     }
     m_isModified = true;
 
+    updateHighlighting();
     scrollViewportToCursor();
 
     TIMER_END_FUNC();
@@ -469,6 +570,7 @@ void Buffer::deleteCharBackwards()
     assert(m_cursorCol >= 0);
     assert(m_cursorLine >= 0);
 
+    updateHighlighting();
     scrollViewportToCursor();
 
     TIMER_END_FUNC();
@@ -501,6 +603,7 @@ void Buffer::deleteCharForward()
     assert(m_cursorLine >= 0);
 
     scrollViewportToCursor();
+    updateHighlighting();
 
     TIMER_END_FUNC();
 }

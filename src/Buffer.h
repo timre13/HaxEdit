@@ -32,6 +32,8 @@ private:
     int m_numOfLines{};
     bool m_isModified{};
 
+    std::string m_highlightBuffer;
+
     glm::ivec2 m_position{0, TABLINE_HEIGHT_PX};
 
     int m_scrollY{};
@@ -47,6 +49,8 @@ private:
      * Make the cursor visible by scrolling the viewport.
      */
     void scrollViewportToCursor();
+
+    void updateHighlighting();
 
 public:
     Buffer();

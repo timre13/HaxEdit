@@ -50,5 +50,6 @@ add_executable(haxed
     src/FileTypeHandler.h
     src/FileTypeHandler.cpp
     src/Bindings.h
+    src/syntax.h
 )
 
