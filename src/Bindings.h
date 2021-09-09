@@ -213,5 +213,6 @@ void insertTabOrSpaces()
 
 bindingMap_t noModMap = {};
 bindingMap_t ctrlMap = {};
+bindingMap_t ctrlShiftMap = {};
 
 }

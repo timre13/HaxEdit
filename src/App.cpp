@@ -93,6 +93,8 @@ void App::setupKeyBindings()
     Bindings::ctrlMap[GLFW_KEY_O]           = Bindings::Callbacks::openFile;
     Bindings::ctrlMap[GLFW_KEY_PAGE_UP]     = Bindings::Callbacks::goToPrevTab;
     Bindings::ctrlMap[GLFW_KEY_PAGE_DOWN]   = Bindings::Callbacks::goToNextTab;
+
+    Bindings::ctrlShiftMap[GLFW_KEY_S]      = Bindings::Callbacks::saveCurrentBufferAs;
 }
 
 void App::renderBuffers()
@@ -269,13 +271,15 @@ void App::windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods)
 
     if (mods == GLFW_MOD_CONTROL)
     {
-        // Ctrl-key
         Bindings::runBinding(Bindings::ctrlMap, key);
     }
     else if (mods == 0)
     {
-        // Key without modifier
         Bindings::runBinding(Bindings::noModMap, key);
+    }
+    else if (mods == (GLFW_MOD_CONTROL | GLFW_MOD_SHIFT))
+    {
+        Bindings::runBinding(Bindings::ctrlShiftMap, key);
     }
 
     TIMER_END_FUNC();
