@@ -122,6 +122,14 @@ void TextRenderer::prepareForDrawing()
 
 void TextRenderer::setDrawingColor(const RGBColor& color)
 {
+    // Don't set the color if it is already set
+    if (color.r == m_currentTextColor.r
+     && color.g == m_currentTextColor.g
+     && color.b == m_currentTextColor.b)
+    {
+        return;
+    }
+
     glUniform3f(glGetUniformLocation(m_glyphShader.getId(), "textColor"), UNPACK_RGB_COLOR(color));
 }
 

@@ -58,6 +58,8 @@ private:
     int m_windowWidth;
     int m_windowHeight;
 
+    RGBColor m_currentTextColor{-1, -1, -1};
+
     // ---------------------------------------------
     friend class Buffer;
     // Buffer drawing functions
