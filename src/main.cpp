@@ -34,6 +34,8 @@ int main(int argc, char** argv)
     App::setupGlFeatures();
     Logger::dbg << "OpenGL context configured" << Logger::End;
 
+    App::setupKeyBindings();
+
     glClear(GL_COLOR_BUFFER_BIT);
     glClearColor(UNPACK_RGB_COLOR(BG_COLOR), 1.0f);
     glfwSwapBuffers(window);

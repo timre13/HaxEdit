@@ -1,3 +1,5 @@
+#pragma once
+
 #include <iostream>
 #include <cassert>
 #include <vector>
@@ -39,6 +41,7 @@ public:
     static TextRenderer* createTextRenderer();
     static UiRenderer* createUiRenderer();
     static FileTypeHandler* createFileTypeHandler();
+    static void setupKeyBindings();
 
     // ----- Renderer functions -----
     static void renderBuffers();
@@ -54,18 +57,10 @@ private:
     static void windowRefreshCB(GLFWwindow*);
     static void windowResizeCB(GLFWwindow*, int width, int height);
     static void windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods);
-    static void windowCharCB(GLFWwindow*, uint codePoint);
     static void windowScrollCB(GLFWwindow*, double, double yOffset);
+public:
+    static void windowCharCB(GLFWwindow*, uint codePoint);
+private:
 
-    // ----- Keypress handlers -----
-    static void handleNoModifierKeybindingPress(int key);
-    static void handleCtrlKeybindingPress(int key);
-
-    // ----- Keybinding callbacks -----
     static void toggleDebugDraw();
-    static void goToNextTab();
-    static void goToPrevTab();
-    static void onNewBufferPressed();
-    static void onSaveFilePressed();
-    static void onOpenFilePressed();
 };

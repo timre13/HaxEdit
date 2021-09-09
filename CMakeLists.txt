@@ -49,5 +49,6 @@ add_executable(haxed
     src/FileDialog.cpp
     src/FileTypeHandler.h
     src/FileTypeHandler.cpp
+    src/Bindings.h
 )
 

@@ -1,4 +1,5 @@
 #include "App.h"
+#include "Bindings.h"
 
 GLFWwindow* App::createWindow()
 {
@@ -70,6 +71,28 @@ UiRenderer* App::createUiRenderer()
 FileTypeHandler* App::createFileTypeHandler()
 {
     return new FileTypeHandler{"../icons/file_icon_index.txt", "../icons/folder_icon_index.txt"};
+}
+
+void App::setupKeyBindings()
+{
+    Bindings::noModMap[GLFW_KEY_RIGHT]      = Bindings::Callbacks::moveCursorRight;
+    Bindings::noModMap[GLFW_KEY_LEFT]       = Bindings::Callbacks::moveCursorLeft;
+    Bindings::noModMap[GLFW_KEY_DOWN]       = Bindings::Callbacks::moveCursorDown;
+    Bindings::noModMap[GLFW_KEY_UP]         = Bindings::Callbacks::moveCursorUp;
+    Bindings::noModMap[GLFW_KEY_HOME]       = Bindings::Callbacks::moveCursorToLineBeginning;
+    Bindings::noModMap[GLFW_KEY_END]        = Bindings::Callbacks::moveCursorToLineEnd;
+    Bindings::noModMap[GLFW_KEY_ENTER]      = Bindings::Callbacks::putEnter;
+    Bindings::noModMap[GLFW_KEY_KP_ENTER]   = Bindings::Callbacks::putEnter;
+    Bindings::noModMap[GLFW_KEY_BACKSPACE]  = Bindings::Callbacks::deleteCharBackwards;
+    Bindings::noModMap[GLFW_KEY_DELETE]     = Bindings::Callbacks::deleteCharForward;
+    Bindings::noModMap[GLFW_KEY_KP_DECIMAL] = Bindings::Callbacks::deleteCharForward;
+    Bindings::noModMap[GLFW_KEY_TAB]        = Bindings::Callbacks::insertTabOrSpaces;
+
+    Bindings::ctrlMap[GLFW_KEY_N]           = Bindings::Callbacks::createNewBuffer;
+    Bindings::ctrlMap[GLFW_KEY_S]           = Bindings::Callbacks::saveCurrentBuffer;
+    Bindings::ctrlMap[GLFW_KEY_O]           = Bindings::Callbacks::openFile;
+    Bindings::ctrlMap[GLFW_KEY_PAGE_UP]     = Bindings::Callbacks::goToPrevTab;
+    Bindings::ctrlMap[GLFW_KEY_PAGE_DOWN]   = Bindings::Callbacks::goToNextTab;
 }
 
 void App::renderBuffers()
@@ -247,12 +270,12 @@ void App::windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods)
     if (mods == GLFW_MOD_CONTROL)
     {
         // Ctrl-key
-        handleCtrlKeybindingPress(key);
+        Bindings::runBinding(Bindings::ctrlMap, key);
     }
     else if (mods == 0)
     {
         // Key without modifier
-        handleNoModifierKeybindingPress(key);
+        Bindings::runBinding(Bindings::noModMap, key);
     }
 
     TIMER_END_FUNC();
@@ -287,153 +310,6 @@ void App::windowScrollCB(GLFWwindow*, double, double yOffset)
     g_isRedrawNeeded = true;
 }
 
-void App::handleNoModifierKeybindingPress(int key)
-{
-    //Logger::dbg << "Handling no-modifier key" << Logger::End;
-    switch (key)
-    {
-    case GLFW_KEY_RIGHT:
-        if (!g_buffers.empty())
-        {
-            g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::Right);
-            // Show cursor while moving
-            g_buffers[g_currentBufferI].setCursorVisibility(true);
-            g_isRedrawNeeded = true;
-        }
-        break;
-
-    case GLFW_KEY_LEFT:
-        if (!g_buffers.empty())
-        {
-            g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::Left);
-            // Show cursor while moving
-            g_buffers[g_currentBufferI].setCursorVisibility(true);
-            g_isRedrawNeeded = true;
-        }
-        break;
-
-    case GLFW_KEY_DOWN:
-        if (!g_buffers.empty())
-        {
-            g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::Down);
-            // Show cursor while moving
-            g_buffers[g_currentBufferI].setCursorVisibility(true);
-            g_isRedrawNeeded = true;
-        }
-        break;
-
-    case GLFW_KEY_UP:
-        if (!g_buffers.empty())
-        {
-            g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::Up);
-            // Show cursor while moving
-            g_buffers[g_currentBufferI].setCursorVisibility(true);
-            g_isRedrawNeeded = true;
-        }
-        break;
-
-    case GLFW_KEY_HOME:
-        if (!g_buffers.empty())
-        {
-            g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::LineBeginning);
-            // Show cursor while moving
-            g_buffers[g_currentBufferI].setCursorVisibility(true);
-            g_isRedrawNeeded = true;
-        }
-        break;
-
-    case GLFW_KEY_END:
-        if (!g_buffers.empty())
-        {
-            g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::LineEnd);
-            // Show cursor while moving
-            g_buffers[g_currentBufferI].setCursorVisibility(true);
-            g_isRedrawNeeded = true;
-        }
-        break;
-
-    case GLFW_KEY_ENTER:
-        windowCharCB(nullptr, '\n');
-        break;
-
-    case GLFW_KEY_BACKSPACE:
-        if (!g_buffers.empty())
-        {
-            g_buffers[g_currentBufferI].deleteCharBackwards();
-            // Show cursor while typing
-            g_buffers[g_currentBufferI].setCursorVisibility(true);
-            g_isRedrawNeeded = true;
-        }
-        break;
-
-    case GLFW_KEY_DELETE:
-        if (!g_buffers.empty())
-        {
-            g_buffers[g_currentBufferI].deleteCharForward();
-            // Show cursor while typing
-            g_buffers[g_currentBufferI].setCursorVisibility(true);
-            g_isRedrawNeeded = true;
-        }
-        break;
-
-    case GLFW_KEY_TAB:
-        if (!g_buffers.empty())
-        {
-            if (TAB_SPACE_COUNT < 1)
-            {
-                g_buffers[g_currentBufferI].insert('\t');
-            }
-            else
-            {
-                for (int i{}; i < TAB_SPACE_COUNT; ++i)
-                {
-                    g_buffers[g_currentBufferI].insert(' ');
-                }
-            }
-            // Show cursor while typing
-            g_buffers[g_currentBufferI].setCursorVisibility(true);
-            g_isRedrawNeeded = true;
-        }
-        break;
-
-    case GLFW_KEY_PAGE_UP:
-        // TODO: Implement stepping in buffers by a page
-        break;
-
-    case GLFW_KEY_PAGE_DOWN:
-        // TODO: Implement stepping in buffers by a page
-        break;
-    }
-
-}
-
-void App::handleCtrlKeybindingPress(int key)
-{
-    //Logger::dbg << "Handling Ctrl-Key" << Logger::End;
-    switch (key)
-    {
-    case GLFW_KEY_N:
-        onNewBufferPressed();
-        break;
-
-    case GLFW_KEY_S:
-        onSaveFilePressed();
-        break;
-
-    case GLFW_KEY_O:
-        onOpenFilePressed();
-        break;
-
-    case GLFW_KEY_PAGE_UP:
-        goToPrevTab();
-        break;
-
-    case GLFW_KEY_PAGE_DOWN:
-        goToNextTab();
-        break;
-    }
-}
-
 void App::toggleDebugDraw()
 {
     g_isDebugDrawMode = !g_isDebugDrawMode;
@@ -445,53 +321,3 @@ void App::toggleDebugDraw()
     g_isRedrawNeeded = true;
 }
 
-void App::goToNextTab()
-{
-    if (!g_buffers.empty() && g_currentBufferI < g_buffers.size()-1)
-        ++g_currentBufferI;
-    g_isRedrawNeeded = true;
-    g_isTitleUpdateNeeded = true;
-}
-
-void App::goToPrevTab()
-{
-    if (g_currentBufferI > 0)
-        --g_currentBufferI;
-    g_isRedrawNeeded = true;
-    g_isTitleUpdateNeeded = true;
-}
-
-void App::onNewBufferPressed()
-{
-    g_buffers.emplace_back();
-    g_currentBufferI = g_buffers.size()-1;
-    g_isRedrawNeeded = true;
-    g_isTitleUpdateNeeded = true;
-}
-
-void App::onSaveFilePressed()
-{
-    if (!g_buffers.empty())
-    {
-        if (g_buffers[g_currentBufferI].isNewFile())
-        {
-            // Open a save as dialog
-            g_dialogs.push_back(std::make_unique<FileDialog>(".", FileDialog::Type::SaveAs));
-        }
-        else
-        {
-            if (g_buffers[g_currentBufferI].saveToFile())
-            {
-                g_dialogs.push_back(std::make_unique<MessageDialog>(
-                            "Failed to save file",
-                            MessageDialog::Type::Error));
-            }
-        }
-        g_isRedrawNeeded = true;
-    }
-}
-
-void App::onOpenFilePressed()
-{
-    g_dialogs.push_back(std::make_unique<FileDialog>(".", FileDialog::Type::Open));
-}
