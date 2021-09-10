@@ -160,10 +160,10 @@ void Buffer::updateHighlighting()
         bool isInsideString = false;
         for (size_t i{}; i < m_content.size(); ++i)
         {
-            if (m_content[i] == '"'
+            if (m_highlightBuffer[i] != SYNTAX_MARK_COMMENT && m_content[i] == '"'
                     && (i == 0 || (m_content[i-1] != '\\' || (i >= 2 && m_content[i-2] == '\\'))))
                 isInsideString = !isInsideString;
-            if (isInsideString || m_content[i] == '"')
+            if (isInsideString || (m_highlightBuffer[i] != SYNTAX_MARK_COMMENT && m_content[i] == '"'))
                 m_highlightBuffer[i] = colorMark;
         }
     }};
@@ -215,12 +215,12 @@ void Buffer::updateHighlighting()
     Logger::dbg << "Highlighting of numbers took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
     timer.reset();
-    highlightStrings(SYNTAX_MARK_STRING);
-    Logger::dbg << "Highlighting of strings took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
-
-    timer.reset();
     highlightPrefixed(Syntax::lineCommentPrefix, SYNTAX_MARK_COMMENT);
     Logger::dbg << "Highlighting of line comments took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
+
+    timer.reset();
+    highlightStrings(SYNTAX_MARK_STRING);
+    Logger::dbg << "Highlighting of strings took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
     Logger::log << "Syntax highlighting updated" << Logger::End;
 #endif
