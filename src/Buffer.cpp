@@ -157,12 +157,15 @@ void Buffer::updateHighlighting()
         }
     }};
 
-    auto highlightRegex{[&](const std::regex& exp, char colorMark){
-        for (auto it = std::sregex_iterator(m_content.begin(), m_content.end(), exp);
-             it != std::sregex_iterator();
-             ++it)
+    auto highlightStrings{[&](char colorMark){
+        bool isInsideString = false;
+        for (size_t i{}; i < m_content.size(); ++i)
         {
-            m_highlightBuffer.replace(it->position(), it->length(), it->length(), colorMark);
+            if (m_content[i] == '"'
+                    && (i == 0 || (m_content[i-1] != '\\' || (i >= 2 && m_content[i-2] == '\\'))))
+                isInsideString = !isInsideString;
+            if (isInsideString || m_content[i] == '"')
+                m_highlightBuffer[i] = colorMark;
         }
     }};
 
@@ -194,7 +197,7 @@ void Buffer::updateHighlighting()
     Logger::dbg << "Highlighting of types took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
     timer.reset();
-    highlightRegex(Syntax::numberRegex, SYNTAX_MARK_NUMBER);
+    //highlightRegex(Syntax::numberRegex, SYNTAX_MARK_NUMBER);
     Logger::dbg << "Highlighting of numbers took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
     timer.reset();
@@ -203,7 +206,7 @@ void Buffer::updateHighlighting()
     Logger::dbg << "Highlighting of operators took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
     timer.reset();
-    highlightRegex(Syntax::stringRegex, SYNTAX_MARK_STRING);
+    highlightStrings(SYNTAX_MARK_STRING);
     Logger::dbg << "Highlighting of strings took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
     timer.reset();
