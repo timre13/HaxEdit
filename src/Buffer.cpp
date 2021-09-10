@@ -175,11 +175,12 @@ void Buffer::updateHighlighting()
         std::string line;
         while (std::getline(ss, line))
         {
-            size_t found = line.find(prefix);
+            const size_t found = line.find(prefix);
             if (found != std::string::npos)
             {
-                // FIXME
-                m_highlightBuffer.replace(charI+found, line.size()-prefix.size()-1, line.size()-prefix.size()-1, colorMark);
+                const size_t beginning = charI+found;
+                const size_t size = line.size()-found;
+                m_highlightBuffer.replace(beginning, size, size, colorMark);
             }
             charI += line.size()+1;
         }
