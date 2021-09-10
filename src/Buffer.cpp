@@ -6,7 +6,6 @@
 #include "syntax.h"
 #include <fstream>
 #include <sstream>
-#include <regex>
 
 Buffer::Buffer()
 {
@@ -186,24 +185,34 @@ void Buffer::updateHighlighting()
         }
     }};
 
+    auto highlightNumbers{[&](char colorMark){
+        size_t i{};
+        while (i < m_content.size())
+        {
+            // Go till a number
+            while (i < m_content.size() && !isdigit(m_content[i]) && m_content[i] != '.')
+                ++i;
+            // Color the number
+            while (i < m_content.size() && (isxdigit(m_content[i]) || m_content[i] == '.' || m_content[i] == 'x'))
+                m_highlightBuffer[i++] = colorMark;
+        }
+    }};
+
     timer.reset();
-    for (const auto& word : Syntax::keywordList)
-        highlightWord(word, SYNTAX_MARK_KEYWORD, true);
+    for (const auto& word : Syntax::keywordList) highlightWord(word, SYNTAX_MARK_KEYWORD, true);
     Logger::dbg << "Highlighting of keywords took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
     timer.reset();
-    for (const auto& word : Syntax::typeList)
-        highlightWord(word, SYNTAX_MARK_TYPE, true);
+    for (const auto& word : Syntax::typeList) highlightWord(word, SYNTAX_MARK_TYPE, true);
     Logger::dbg << "Highlighting of types took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
     timer.reset();
-    //highlightRegex(Syntax::numberRegex, SYNTAX_MARK_NUMBER);
-    Logger::dbg << "Highlighting of numbers took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
+    for (const auto& word : Syntax::operatorList) highlightWord(word, SYNTAX_MARK_OPERATOR, false);
+    Logger::dbg << "Highlighting of operators took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
     timer.reset();
-    for (const auto& word : Syntax::operatorList)
-        highlightWord(word, SYNTAX_MARK_OPERATOR, false);
-    Logger::dbg << "Highlighting of operators took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
+    highlightNumbers(SYNTAX_MARK_NUMBER);
+    Logger::dbg << "Highlighting of numbers took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
     timer.reset();
     highlightStrings(SYNTAX_MARK_STRING);

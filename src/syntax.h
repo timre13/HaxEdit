@@ -1,6 +1,7 @@
 #pragma once
 
-#include <regex>
+#include <array>
+#include <string>
 
 #define SYNTAX_MARK_NONE      ' '
 #define SYNTAX_MARK_KEYWORD   'k'
@@ -10,13 +11,13 @@
 #define SYNTAX_MARK_STRING    's'
 #define SYNTAX_MARK_COMMENT   'c'
 
-#define SYNTAX_COLOR_NONE       RGBColor{1.0f, 1.0f, 1.0f}
-#define SYNTAX_COLOR_KEYWORD    RGBColor{0.0f, 0.4f, 0.8f}
-#define SYNTAX_COLOR_TYPE       RGBColor{0.8f, 0.8f, 0.2f}
-#define SYNTAX_COLOR_OPERATOR   RGBColor{1.0f, 0.0f, 0.0f}
-#define SYNTAX_COLOR_NUMBER     RGBColor{0.7f, 0.5f, 0.3f}
-#define SYNTAX_COLOR_STRING     RGBColor{0.0f, 0.8f, 0.2f}
-#define SYNTAX_COLOR_COMMENT    RGBColor{0.5f, 0.5f, 0.5f}
+#define SYNTAX_COLOR_NONE       RGBColor{1.000f, 1.000f, 1.000f}
+#define SYNTAX_COLOR_KEYWORD    RGBColor{0.000f, 0.400f, 0.800f}
+#define SYNTAX_COLOR_TYPE       RGBColor{0.900f, 0.900f, 0.000f}
+#define SYNTAX_COLOR_OPERATOR   RGBColor{1.000f, 0.100f, 0.100f}
+#define SYNTAX_COLOR_NUMBER     RGBColor{0.938f, 0.402f, 0.031f}
+#define SYNTAX_COLOR_STRING     RGBColor{0.200f, 0.900f, 0.300f}
+#define SYNTAX_COLOR_COMMENT    RGBColor{0.500f, 0.500f, 0.500f}
 
 #define SYNTAX_STYLE_NONE       FontStyle::Regular
 #define SYNTAX_STYLE_KEYWORD    FontStyle::Bold
@@ -47,16 +48,9 @@ std::array<std::string, 12> typeList{
         "float", "int", "long", "short", "void", "size_t"
 };
 
-std::regex numberRegex{R"(0?[bxBX]?[0-9.]+)", std::regex::optimize};
-
 std::array<std::string, 27> operatorList{
         ":", "+", "-", "type", "!", "~", "^", "|", "*", "/", "&", "sizeof", "co_await", "new", "delete",
         "<", ">", "=", "?", "throw", "co_yield", "=", "%", ",", "[", "]", ".",
-};
-
-std::regex stringRegex{
-        R"(".*")",
-        std::regex::optimize
 };
 
 std::string lineCommentPrefix{"//"};
