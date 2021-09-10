@@ -236,6 +236,19 @@ void Buffer::updateHighlighting()
         }
     }};
 
+    auto highlightChar{[&](char c, char colorMark){
+        for (size_t i{}; i < m_content.size(); ++i)
+        {
+            if (m_highlightBuffer[i] != SYNTAX_MARK_STRING && m_highlightBuffer[i] != SYNTAX_MARK_COMMENT
+                    && m_content[i] == c)
+                m_highlightBuffer[i] = colorMark;
+        }
+    }};
+
+
+    timer.reset();
+    for (const auto& word : Syntax::operatorList) highlightWord(word, SYNTAX_MARK_OPERATOR, false);
+    Logger::dbg << "Highlighting of operators took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
     timer.reset();
     for (const auto& word : Syntax::keywordList) highlightWord(word, SYNTAX_MARK_KEYWORD, true);
@@ -244,10 +257,6 @@ void Buffer::updateHighlighting()
     timer.reset();
     for (const auto& word : Syntax::typeList) highlightWord(word, SYNTAX_MARK_TYPE, true);
     Logger::dbg << "Highlighting of types took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
-
-    timer.reset();
-    for (const auto& word : Syntax::operatorList) highlightWord(word, SYNTAX_MARK_OPERATOR, false);
-    Logger::dbg << "Highlighting of operators took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
     timer.reset();
     highlightNumbers();
@@ -268,6 +277,14 @@ void Buffer::updateHighlighting()
     timer.reset();
     highlightPreprocessors();
     Logger::dbg << "Highlighting preprocessor directives took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
+
+    timer.reset();
+    highlightChar(';', SYNTAX_MARK_SPECCHAR);
+    highlightChar('{', SYNTAX_MARK_SPECCHAR);
+    highlightChar('}', SYNTAX_MARK_SPECCHAR);
+    highlightChar('(', SYNTAX_MARK_SPECCHAR);
+    highlightChar(')', SYNTAX_MARK_SPECCHAR);
+    Logger::dbg << "Highlighting special characters took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
     Logger::log << "Syntax highlighting updated" << Logger::End;
 #endif
@@ -550,6 +567,7 @@ void Buffer::render()
                 case SYNTAX_MARK_STRING:   charColor = SYNTAX_COLOR_STRING;   charStyle = SYNTAX_STYLE_STRING; break;
                 case SYNTAX_MARK_COMMENT:  charColor = SYNTAX_COLOR_COMMENT;  charStyle = SYNTAX_STYLE_COMMENT; break;
                 case SYNTAX_MARK_PREPRO:   charColor = SYNTAX_COLOR_PREPRO;   charStyle = SYNTAX_STYLE_PREPRO; break;
+                case SYNTAX_MARK_SPECCHAR: charColor = SYNTAX_COLOR_SPECCHAR; charStyle = SYNTAX_STYLE_SPECCHAR; break;
             }
             g_textRenderer->setDrawingColor(charColor);
             advance = g_textRenderer->renderChar(c, {textX, textY}, charStyle).advance;

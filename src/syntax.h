@@ -11,6 +11,7 @@
 #define SYNTAX_MARK_STRING    's'
 #define SYNTAX_MARK_COMMENT   'c'
 #define SYNTAX_MARK_PREPRO    'p'
+#define SYNTAX_MARK_SPECCHAR  ';'
 
 #define SYNTAX_COLOR_NONE       RGBColor{1.000f, 1.000f, 1.000f}
 #define SYNTAX_COLOR_KEYWORD    RGBColor{0.000f, 0.400f, 0.800f}
@@ -20,6 +21,7 @@
 #define SYNTAX_COLOR_STRING     RGBColor{0.200f, 0.900f, 0.300f}
 #define SYNTAX_COLOR_COMMENT    RGBColor{0.500f, 0.500f, 0.500f}
 #define SYNTAX_COLOR_PREPRO     RGBColor{0.000f, 0.600f, 0.200f}
+#define SYNTAX_COLOR_SPECCHAR   RGBColor{0.500f, 0.500f, 0.500f}
 
 #define SYNTAX_STYLE_NONE       FontStyle::Regular
 #define SYNTAX_STYLE_KEYWORD    FontStyle::Bold
@@ -29,6 +31,7 @@
 #define SYNTAX_STYLE_STRING     FontStyle::Italic
 #define SYNTAX_STYLE_COMMENT    FontStyle::Regular
 #define SYNTAX_STYLE_PREPRO     FontStyle::Regular
+#define SYNTAX_STYLE_SPECCHAR   FontStyle::Bold
 
 namespace Syntax
 {
