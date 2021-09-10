@@ -199,6 +199,25 @@ void Buffer::updateHighlighting()
         }
     }};
 
+    auto highlightPreprocessors{[&](){
+        size_t charI{};
+        std::stringstream ss;
+        ss << m_content;
+        std::string line;
+        while (std::getline(ss, line))
+        {
+            const size_t found = line.find(Syntax::preprocessorPrefix);
+            if (found != std::string::npos)
+            {
+                const size_t beginning = charI+found;
+                const size_t preprocessorEnd = line.find_first_of(' ', found);
+                const size_t size = (preprocessorEnd != std::string::npos ? preprocessorEnd : line.size())-found;
+                m_highlightBuffer.replace(beginning, size, size, SYNTAX_MARK_PREPRO);
+            }
+            charI += line.size()+1;
+        }
+    }};
+
     auto highlightBlockComments{[&](){
         bool isInsideComment = false;
         for (size_t i{}; i < m_content.size(); ++i)
@@ -245,6 +264,10 @@ void Buffer::updateHighlighting()
     timer.reset();
     highlightStrings();
     Logger::dbg << "Highlighting of strings took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
+
+    timer.reset();
+    highlightPreprocessors();
+    Logger::dbg << "Highlighting preprocessor directives took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
     Logger::log << "Syntax highlighting updated" << Logger::End;
 #endif
@@ -526,6 +549,7 @@ void Buffer::render()
                 case SYNTAX_MARK_OPERATOR: charColor = SYNTAX_COLOR_OPERATOR; charStyle = SYNTAX_STYLE_OPERATOR; break;
                 case SYNTAX_MARK_STRING:   charColor = SYNTAX_COLOR_STRING;   charStyle = SYNTAX_STYLE_STRING; break;
                 case SYNTAX_MARK_COMMENT:  charColor = SYNTAX_COLOR_COMMENT;  charStyle = SYNTAX_STYLE_COMMENT; break;
+                case SYNTAX_MARK_PREPRO:   charColor = SYNTAX_COLOR_PREPRO;   charStyle = SYNTAX_STYLE_PREPRO; break;
             }
             g_textRenderer->setDrawingColor(charColor);
             advance = g_textRenderer->renderChar(c, {textX, textY}, charStyle).advance;

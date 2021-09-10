@@ -10,6 +10,7 @@
 #define SYNTAX_MARK_NUMBER    'n'
 #define SYNTAX_MARK_STRING    's'
 #define SYNTAX_MARK_COMMENT   'c'
+#define SYNTAX_MARK_PREPRO    'p'
 
 #define SYNTAX_COLOR_NONE       RGBColor{1.000f, 1.000f, 1.000f}
 #define SYNTAX_COLOR_KEYWORD    RGBColor{0.000f, 0.400f, 0.800f}
@@ -18,6 +19,7 @@
 #define SYNTAX_COLOR_NUMBER     RGBColor{0.938f, 0.402f, 0.031f}
 #define SYNTAX_COLOR_STRING     RGBColor{0.200f, 0.900f, 0.300f}
 #define SYNTAX_COLOR_COMMENT    RGBColor{0.500f, 0.500f, 0.500f}
+#define SYNTAX_COLOR_PREPRO     RGBColor{0.000f, 0.600f, 0.200f}
 
 #define SYNTAX_STYLE_NONE       FontStyle::Regular
 #define SYNTAX_STYLE_KEYWORD    FontStyle::Bold
@@ -26,6 +28,7 @@
 #define SYNTAX_STYLE_OPERATOR   FontStyle::Regular
 #define SYNTAX_STYLE_STRING     FontStyle::Italic
 #define SYNTAX_STYLE_COMMENT    FontStyle::Regular
+#define SYNTAX_STYLE_PREPRO     FontStyle::Regular
 
 namespace Syntax
 {
@@ -57,5 +60,7 @@ std::string lineCommentPrefix{"//"};
 
 std::string blockCommentBegin{"/*"};
 std::string blockCommentEnd{"*/"};
+
+std::string preprocessorPrefix{"#"};
 
 }
