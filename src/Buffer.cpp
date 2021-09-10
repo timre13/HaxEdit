@@ -156,7 +156,7 @@ void Buffer::updateHighlighting()
         }
     }};
 
-    auto highlightStrings{[&](char colorMark){
+    auto highlightStrings{[&](){
         bool isInsideString = false;
         for (size_t i{}; i < m_content.size(); ++i)
         {
@@ -164,7 +164,20 @@ void Buffer::updateHighlighting()
                     && (i == 0 || (m_content[i-1] != '\\' || (i >= 2 && m_content[i-2] == '\\'))))
                 isInsideString = !isInsideString;
             if (isInsideString || (m_highlightBuffer[i] != SYNTAX_MARK_COMMENT && m_content[i] == '"'))
-                m_highlightBuffer[i] = colorMark;
+                m_highlightBuffer[i] = SYNTAX_MARK_STRING;
+        }
+    }};
+
+    auto highlightNumbers{[&](){
+        size_t i{};
+        while (i < m_content.size())
+        {
+            // Go till a number
+            while (i < m_content.size() && !isdigit(m_content[i]) && m_content[i] != '.')
+                ++i;
+            // Color the number
+            while (i < m_content.size() && (isxdigit(m_content[i]) || m_content[i] == '.' || m_content[i] == 'x'))
+                m_highlightBuffer[i++] = SYNTAX_MARK_NUMBER;
         }
     }};
 
@@ -186,18 +199,24 @@ void Buffer::updateHighlighting()
         }
     }};
 
-    auto highlightNumbers{[&](char colorMark){
-        size_t i{};
-        while (i < m_content.size())
+    auto highlightBlockComments{[&](){
+        bool isInsideComment = false;
+        for (size_t i{}; i < m_content.size(); ++i)
         {
-            // Go till a number
-            while (i < m_content.size() && !isdigit(m_content[i]) && m_content[i] != '.')
-                ++i;
-            // Color the number
-            while (i < m_content.size() && (isxdigit(m_content[i]) || m_content[i] == '.' || m_content[i] == 'x'))
-                m_highlightBuffer[i++] = colorMark;
+            if (m_highlightBuffer[i] != SYNTAX_MARK_STRING
+                    && m_content.substr(i, Syntax::blockCommentBegin.size()) == Syntax::blockCommentBegin)
+                isInsideComment = true;
+            else if (m_highlightBuffer[i] != SYNTAX_MARK_STRING
+                    && m_content.substr(i, Syntax::blockCommentEnd.size()) == Syntax::blockCommentEnd)
+                isInsideComment = false;
+            if (isInsideComment
+                    || (m_highlightBuffer[i] != SYNTAX_MARK_STRING
+                    && (m_content.substr(i, Syntax::blockCommentEnd.size()) == Syntax::blockCommentEnd
+                    || (i > 0 && m_content.substr(i-1, Syntax::blockCommentEnd.size()) == Syntax::blockCommentEnd))))
+                m_highlightBuffer[i] = SYNTAX_MARK_COMMENT;
         }
     }};
+
 
     timer.reset();
     for (const auto& word : Syntax::keywordList) highlightWord(word, SYNTAX_MARK_KEYWORD, true);
@@ -212,7 +231,7 @@ void Buffer::updateHighlighting()
     Logger::dbg << "Highlighting of operators took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
     timer.reset();
-    highlightNumbers(SYNTAX_MARK_NUMBER);
+    highlightNumbers();
     Logger::dbg << "Highlighting of numbers took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
     timer.reset();
@@ -220,7 +239,11 @@ void Buffer::updateHighlighting()
     Logger::dbg << "Highlighting of line comments took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
     timer.reset();
-    highlightStrings(SYNTAX_MARK_STRING);
+    highlightBlockComments();
+    Logger::dbg << "Highlighting of block comments took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
+
+    timer.reset();
+    highlightStrings();
     Logger::dbg << "Highlighting of strings took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
     Logger::log << "Syntax highlighting updated" << Logger::End;

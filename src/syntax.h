@@ -55,4 +55,7 @@ std::array<std::string, 27> operatorList{
 
 std::string lineCommentPrefix{"//"};
 
+std::string blockCommentBegin{"/*"};
+std::string blockCommentEnd{"*/"};
+
 }
