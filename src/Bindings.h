@@ -100,8 +100,6 @@ void moveCursorRight()
     if (!g_buffers.empty())
     {
         g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::Right);
-        // Show cursor while moving
-        g_buffers[g_currentBufferI].setCursorVisibility(true);
         g_isRedrawNeeded = true;
     }
 }
@@ -111,8 +109,6 @@ void moveCursorLeft()
     if (!g_buffers.empty())
     {
         g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::Left);
-        // Show cursor while moving
-        g_buffers[g_currentBufferI].setCursorVisibility(true);
         g_isRedrawNeeded = true;
     }
 }
@@ -122,8 +118,6 @@ void moveCursorDown()
     if (!g_buffers.empty())
     {
         g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::Down);
-        // Show cursor while moving
-        g_buffers[g_currentBufferI].setCursorVisibility(true);
         g_isRedrawNeeded = true;
     }
 }
@@ -133,8 +127,6 @@ void moveCursorUp()
     if (!g_buffers.empty())
     {
         g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::Up);
-        // Show cursor while moving
-        g_buffers[g_currentBufferI].setCursorVisibility(true);
         g_isRedrawNeeded = true;
     }
 }
@@ -144,8 +136,6 @@ void moveCursorToLineBeginning()
     if (!g_buffers.empty())
     {
         g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::LineBeginning);
-        // Show cursor while moving
-        g_buffers[g_currentBufferI].setCursorVisibility(true);
         g_isRedrawNeeded = true;
     }
 }
@@ -155,8 +145,6 @@ void moveCursorToLineEnd()
     if (!g_buffers.empty())
     {
         g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::LineEnd);
-        // Show cursor while moving
-        g_buffers[g_currentBufferI].setCursorVisibility(true);
         g_isRedrawNeeded = true;
     }
 }
@@ -171,8 +159,6 @@ void deleteCharBackwards()
     if (!g_buffers.empty())
     {
         g_buffers[g_currentBufferI].deleteCharBackwards();
-        // Show cursor while typing
-        g_buffers[g_currentBufferI].setCursorVisibility(true);
         g_isRedrawNeeded = true;
     }
 }
@@ -182,8 +168,6 @@ void deleteCharForward()
     if (!g_buffers.empty())
     {
         g_buffers[g_currentBufferI].deleteCharForward();
-        // Show cursor while typing
-        g_buffers[g_currentBufferI].setCursorVisibility(true);
         g_isRedrawNeeded = true;
     }
 }
@@ -203,8 +187,6 @@ void insertTabOrSpaces()
                 g_buffers[g_currentBufferI].insert(' ');
             }
         }
-        // Show cursor while typing
-        g_buffers[g_currentBufferI].setCursorVisibility(true);
         g_isRedrawNeeded = true;
     }
 }
@@ -214,7 +196,6 @@ void goToFirstChar()
     if (!g_buffers.empty())
     {
         g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::FirstChar);
-        g_buffers[g_currentBufferI].setCursorVisibility(true);
         g_isRedrawNeeded = true;
     }
 }
@@ -224,7 +205,6 @@ void goToLastChar()
     if (!g_buffers.empty())
     {
         g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::LastChar);
-        g_buffers[g_currentBufferI].setCursorVisibility(true);
         g_isRedrawNeeded = true;
     }
 }

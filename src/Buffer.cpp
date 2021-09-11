@@ -395,6 +395,7 @@ void Buffer::updateCursor()
     if (m_cursorMovCmd != CursorMovCmd::None)
     {
         scrollViewportToCursor();
+        m_isCursorShown = true;
         m_cursorMovCmd = CursorMovCmd::None;
     }
 
@@ -628,6 +629,7 @@ void Buffer::insert(char character)
     }
     m_isModified = true;
 
+    m_isCursorShown = true;
     updateHighlighting();
     scrollViewportToCursor();
 
@@ -662,6 +664,7 @@ void Buffer::deleteCharBackwards()
     assert(m_cursorCol >= 0);
     assert(m_cursorLine >= 0);
 
+    m_isCursorShown = true;
     updateHighlighting();
     scrollViewportToCursor();
 
@@ -694,6 +697,7 @@ void Buffer::deleteCharForward()
     assert(m_cursorCol >= 0);
     assert(m_cursorLine >= 0);
 
+    m_isCursorShown = true;
     scrollViewportToCursor();
     updateHighlighting();
 

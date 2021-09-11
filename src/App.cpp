@@ -298,8 +298,6 @@ void App::windowCharCB(GLFWwindow*, uint codePoint)
     if (!g_buffers.empty())
     {
         g_buffers[g_currentBufferI].insert((char)codePoint);
-        // Show cursor while typing
-        g_buffers[g_currentBufferI].setCursorVisibility(true);
     }
     g_isRedrawNeeded = true;
 }
