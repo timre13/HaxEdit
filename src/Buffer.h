@@ -24,6 +24,8 @@ public:
         Down,
         LineBeginning,
         LineEnd,
+        FirstChar,
+        LastChar,
     };
 
 private:

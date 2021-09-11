@@ -209,6 +209,26 @@ void insertTabOrSpaces()
     }
 }
 
+void goToFirstChar()
+{
+    if (!g_buffers.empty())
+    {
+        g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::FirstChar);
+        g_buffers[g_currentBufferI].setCursorVisibility(true);
+        g_isRedrawNeeded = true;
+    }
+}
+
+void goToLastChar()
+{
+    if (!g_buffers.empty())
+    {
+        g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::LastChar);
+        g_buffers[g_currentBufferI].setCursorVisibility(true);
+        g_isRedrawNeeded = true;
+    }
+}
+
 }
 
 bindingMap_t noModMap = {};

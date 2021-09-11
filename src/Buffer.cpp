@@ -294,8 +294,9 @@ void Buffer::updateCursor()
 {
     TIMER_BEGIN_FUNC();
 
-    assert(m_cursorCol >= 0);
     assert(m_cursorLine >= 0);
+    assert(m_numOfLines == 0 || m_cursorLine < m_numOfLines);
+    assert(m_cursorCol >= 0);
 
     auto getCursorLineLen{ // -> int
         [&]()
@@ -370,12 +371,25 @@ void Buffer::updateCursor()
         break;
     }
 
+    case CursorMovCmd::FirstChar:
+        m_cursorLine = 0;
+        m_cursorCol = 0;
+        m_cursorCharPos = 0;
+        break;
+
+    case CursorMovCmd::LastChar:
+        m_cursorLine = m_numOfLines == 0 ? 0 : m_numOfLines-1;
+        m_cursorCol = getCursorLineLen();
+        m_cursorCharPos = m_content.size()-1;
+        break;
+
     case CursorMovCmd::None:
         break;
     }
 
-    assert(m_cursorCol >= 0);
     assert(m_cursorLine >= 0);
+    assert(m_numOfLines == 0 || m_cursorLine < m_numOfLines);
+    assert(m_cursorCol >= 0);
 
     // Scroll up when the cursor goes out of the viewport
     if (m_cursorMovCmd != CursorMovCmd::None)

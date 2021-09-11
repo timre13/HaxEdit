@@ -93,6 +93,8 @@ void App::setupKeyBindings()
     Bindings::ctrlMap[GLFW_KEY_O]           = Bindings::Callbacks::openFile;
     Bindings::ctrlMap[GLFW_KEY_PAGE_UP]     = Bindings::Callbacks::goToPrevTab;
     Bindings::ctrlMap[GLFW_KEY_PAGE_DOWN]   = Bindings::Callbacks::goToNextTab;
+    Bindings::ctrlMap[GLFW_KEY_HOME]        = Bindings::Callbacks::goToFirstChar;
+    Bindings::ctrlMap[GLFW_KEY_END]         = Bindings::Callbacks::goToLastChar;
 
     Bindings::ctrlShiftMap[GLFW_KEY_S]      = Bindings::Callbacks::saveCurrentBufferAs;
 }

@@ -52,4 +52,3 @@ add_executable(haxed
     src/Bindings.h
     src/syntax.h
 )
-
