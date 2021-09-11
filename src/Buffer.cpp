@@ -503,8 +503,7 @@ void Buffer::render()
         auto drawCursorIfNeeded{
             [&](int width)
             {
-                if ((m_cursorMovCmd != CursorMovCmd::None || m_isCursorShown)
-                        && lineI == m_cursorLine && colI == m_cursorCol)
+                if ((m_cursorMovCmd != CursorMovCmd::None || m_isCursorShown) && charI == m_cursorCharPos)
                 {
 #if CURSOR_DRAW_BLOCK
                     g_uiRenderer->renderRectangleOutline(
