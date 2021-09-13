@@ -40,8 +40,17 @@ namespace Callbacks
 
 void createNewBuffer()
 {
-    g_buffers.emplace_back();
-    g_currentBufferI = g_buffers.size()-1;
+    if (g_buffers.empty())
+    {
+        g_buffers.emplace_back();
+        g_currentBufferI = 0;
+    }
+    else
+    {
+        // Insert the buffer next to the current one
+        g_buffers.emplace(g_buffers.begin()+g_currentBufferI+1);
+        ++g_currentBufferI; // Go to the current buffer
+    }
     g_isRedrawNeeded = true;
     g_isTitleUpdateNeeded = true;
 }
