@@ -250,16 +250,23 @@ void App::windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods)
                 }
                 else // Open dialog
                 {
-                    g_buffers.emplace_back();
-                    if (g_buffers.back().open(fileDialog->getSelectedFilePath()))
+                    Buffer buffer;
+                    if (buffer.open(fileDialog->getSelectedFilePath()))
                     {
                         g_dialogs.push_back(std::make_unique<MessageDialog>(
                                     "Failed to open file: \""+fileDialog->getSelectedFilePath()+'"',
                                     MessageDialog::Type::Error));
                     }
+                    if (g_buffers.empty())
+                    {
+                        g_buffers.push_back(std::move(buffer));
+                        g_currentBufferI = 0;
+                    }
                     else
                     {
-                        g_currentBufferI = g_buffers.size()-1; // Go to the last buffer
+                        // Insert the buffer next to the current one
+                        g_buffers.insert(g_buffers.begin()+g_currentBufferI+1, std::move(buffer));
+                        ++g_currentBufferI; // Go to the current buffer
                     }
                 }
                 g_isTitleUpdateNeeded = true;
