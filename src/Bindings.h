@@ -81,6 +81,7 @@ void saveCurrentBufferAs()
 void openFile()
 {
     g_dialogs.push_back(std::make_unique<FileDialog>(".", FileDialog::Type::Open));
+    g_isRedrawNeeded = true;
 }
 
 void goToNextTab()
