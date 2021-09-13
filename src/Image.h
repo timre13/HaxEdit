@@ -10,6 +10,7 @@ class Image final
 private:
     uint m_sampler{};
     glm::ivec2 m_physicalSize{};
+    std::string m_filePath;
 
 public:
     /*
