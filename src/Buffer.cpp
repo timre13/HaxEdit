@@ -135,6 +135,8 @@ void Buffer::updateHighlighting()
     if (m_content.empty())
         return;
 
+    Logger::dbg("Highighter");
+
     //Logger::log << "Updating syntax highlighting" << Logger::End;
 
     m_highlightBuffer = std::string(m_content.length(), SYNTAX_MARK_NONE);
@@ -287,6 +289,8 @@ void Buffer::updateHighlighting()
     Logger::dbg << "Highlighting special characters took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
     Logger::log << "Syntax highlighting updated" << Logger::End;
+
+    Logger::log(Logger::End);
 #endif
 }
 

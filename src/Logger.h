@@ -27,6 +27,8 @@ enum Control
     End, // Can be used to mark the end of the line
 };
 
+extern std::string _loggerPrefix;
+
 class Logger final
 {
 public:
@@ -64,16 +66,25 @@ public:
         if (!m_isEnabled)
             return *this;
 
-        // If this is the beginning of the line, print the "initial"
-        // depending on the logger type
+        if (m_isBeginning)
+        {
+            switch (m_type)
+            {
+            case Type::Debug:   std::cout << LOGGER_COLOR_DBG   "[DBG]"   << (_loggerPrefix.empty() ? "" : '<'+_loggerPrefix+'>') << LOGGER_COLOR_DEF ": "; break;
+            case Type::Log:     std::cout << LOGGER_COLOR_LOG   "[INFO]"  << (_loggerPrefix.empty() ? "" : '<'+_loggerPrefix+'>') << LOGGER_COLOR_DEF ": "; break;
+            case Type::Warning: std::cerr << LOGGER_COLOR_WARN  "[WARN]"  << (_loggerPrefix.empty() ? "" : '<'+_loggerPrefix+'>') << LOGGER_COLOR_DEF ": "; break;
+            case Type::Error:   std::cerr << LOGGER_COLOR_ERR   "[ERR]"   << (_loggerPrefix.empty() ? "" : '<'+_loggerPrefix+'>') << LOGGER_COLOR_DEF ": "; break;
+            case Type::Fatal:   std::cerr << LOGGER_COLOR_FATAL "[FATAL]" << (_loggerPrefix.empty() ? "" : '<'+_loggerPrefix+'>') << LOGGER_COLOR_DEF ": "; break;
+            }
+        }
+
         switch (m_type)
         {
-        case Type::Debug:   std::cout << (m_isBeginning ? LOGGER_COLOR_DBG "[DBG]" LOGGER_COLOR_DEF ": " : "") << value; break;
-        case Type::Log:     std::cout << (m_isBeginning ? LOGGER_COLOR_LOG "[INFO]" LOGGER_COLOR_DEF ": " : "") << value; break;
-        case Type::Warning: std::cerr << (m_isBeginning ? LOGGER_COLOR_WARN "[WARN]" LOGGER_COLOR_DEF ": " : "")  << value; break;
-        case Type::Error:   std::cerr << (m_isBeginning ? LOGGER_COLOR_ERR "[ERR]" LOGGER_COLOR_DEF ": " : "")   << value; break;
-        case Type::Fatal:   std::cerr << (m_isBeginning ? LOGGER_COLOR_FATAL "[FATAL]" LOGGER_COLOR_DEF ": " : "") << value; break;
-        default: abort();
+        case Type::Debug:   std::cout << value; break;
+        case Type::Log:     std::cout << value; break;
+        case Type::Warning: std::cerr << value; break;
+        case Type::Error:   std::cerr << value; break;
+        case Type::Fatal:   std::cerr << value; break;
         }
 
         m_isBeginning = false;
@@ -112,6 +123,25 @@ public:
         m_isBeginning = true;
 
         // Make the operator chainable
+        return *this;
+    }
+
+    /*
+     * Sets the prefix to `prefix`.
+     */
+    inline Logger& operator()(const std::string& prefix)
+    {
+        _loggerPrefix = prefix;
+        return *this;
+    }
+
+    /*
+     * If ctrl is End, clears the prefix.
+     */
+    inline Logger& operator()(Control ctrl)
+    {
+        if (ctrl == Control::End)
+            _loggerPrefix.clear();
         return *this;
     }
 };

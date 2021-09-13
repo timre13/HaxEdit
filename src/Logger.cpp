@@ -3,6 +3,8 @@
 namespace Logger
 {
 
+std::string _loggerPrefix;
+
 Logger dbg{Logger::Type::Debug};
 Logger log{Logger::Type::Log};
 Logger warn{Logger::Type::Warning};
