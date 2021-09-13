@@ -70,8 +70,12 @@ void saveCurrentBuffer()
 
 void saveCurrentBufferAs()
 {
-    // Open a save as dialog
-    g_dialogs.push_back(std::make_unique<FileDialog>(".", FileDialog::Type::SaveAs));
+    if (!g_buffers.empty())
+    {
+        // Open a save as dialog
+        g_dialogs.push_back(std::make_unique<FileDialog>(".", FileDialog::Type::SaveAs));
+        g_isRedrawNeeded = true;
+    }
 }
 
 void openFile()
