@@ -238,9 +238,9 @@ void TextRenderer::renderString(
         if (shouldWrap && textX+FONT_SIZE_PX > m_windowWidth)
         {
             textX = initTextX;
-            textY -= FONT_SIZE_PX * scale;
+            textY += FONT_SIZE_PX * scale;
         }
-        if (textY < -m_windowHeight)
+        if (textY > m_windowHeight)
         {
             return;
         }
