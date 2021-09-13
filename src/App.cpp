@@ -68,6 +68,11 @@ UiRenderer* App::createUiRenderer()
     return new UiRenderer{};
 }
 
+std::unique_ptr<Image> App::loadProgramIcon()
+{
+    return std::unique_ptr<Image>(new Image{ICON_FILE_PATH});
+}
+
 FileTypeHandler* App::createFileTypeHandler()
 {
     return new FileTypeHandler{"../icons/file_icon_index.txt", "../icons/folder_icon_index.txt"};

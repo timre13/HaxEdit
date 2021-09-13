@@ -31,6 +31,7 @@ public:
     void render(const glm::ivec2& pos, const glm::ivec2& size={0, 0}) const;
 
     inline uint getSamplerId() const { return m_sampler; }
+    inline glm::ivec2 getPhysicalSize() const { return m_physicalSize; }
 
     ~Image();
 };

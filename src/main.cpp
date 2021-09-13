@@ -45,6 +45,8 @@ int main(int argc, char** argv)
     g_fileTypeHandler.reset(App::createFileTypeHandler());
     glfwPollEvents();
 
+    auto icon = App::loadProgramIcon();
+
     for (int i{1}; i < argc; ++i)
     {
         g_buffers.push_back(Buffer{});
@@ -87,8 +89,58 @@ int main(int argc, char** argv)
             glClear(GL_COLOR_BUFFER_BIT);
             glClearColor(UNPACK_RGB_COLOR(BG_COLOR), 1.0f);
 
-            App::renderBuffers();
-            App::renderTabLine();
+            if (g_buffers.empty())
+            {
+                std::string welcomeMsg = WELCOME_MSG;
+                {
+                    size_t buildDatePos = welcomeMsg.find("%BUILD_DATE%");
+                    if (buildDatePos != std::string::npos)
+                    {
+                        welcomeMsg = welcomeMsg.replace(buildDatePos, 12, (__DATE__ " at " __TIME__));
+                    }
+                }
+                {
+                    size_t buildTypePos = welcomeMsg.find("%BUILD_TYPE%");
+                    if (buildTypePos != std::string::npos)
+                    {
+                        std::string buildType =
+#ifdef NDEBUG
+                            "Release";
+#else
+                            "Debug";
+#endif
+                        welcomeMsg = welcomeMsg.replace(buildTypePos, 12, buildType);
+                    }
+                }
+                {
+                    size_t vendorStrPos = welcomeMsg.find("%GL_VENDOR%");
+                    if (vendorStrPos != std::string::npos)
+                    {
+                        welcomeMsg = welcomeMsg.replace(vendorStrPos, 11, std::string((const char*)glGetString(GL_VENDOR)));
+                    }
+                }
+                {
+                    size_t rendererStrPos = welcomeMsg.find("%GL_RENDERER%");
+                    if (rendererStrPos != std::string::npos)
+                    {
+                        welcomeMsg = welcomeMsg.replace(rendererStrPos, 13, std::string((const char*)glGetString(GL_RENDERER)));
+                    }
+                }
+                g_textRenderer->renderString(welcomeMsg, {200, 30}, FontStyle::Bold, {0.8f, 0.8f, 0.8f}, true);
+
+                const int origIconW = icon->getPhysicalSize().x;
+                const int origIconH = icon->getPhysicalSize().y;
+                const float iconRatio = (float)origIconW/origIconH;
+                const int iconSize = std::min(
+                        std::min(g_windowWidth, 512),
+                        std::min(g_windowHeight, 512));
+                icon->render({g_windowWidth/2-iconSize*iconRatio/2, g_windowHeight/2-iconSize/2}, {iconSize*iconRatio, iconSize});
+            }
+            else
+            {
+                App::renderBuffers();
+                App::renderTabLine();
+            }
             App::renderDialogs();
 
             g_isRedrawNeeded = false;

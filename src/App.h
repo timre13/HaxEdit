@@ -40,6 +40,7 @@ public:
     static void setupGlFeatures();
     static TextRenderer* createTextRenderer();
     static UiRenderer* createUiRenderer();
+    static std::unique_ptr<Image> loadProgramIcon();
     static FileTypeHandler* createFileTypeHandler();
     static void setupKeyBindings();
 

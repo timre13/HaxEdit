@@ -12,7 +12,7 @@
 #define FONT_FAMILY_BOLDITALIC  "FreeMono"
 #define FONT_SIZE_PX 18
 
-#define BG_COLOR RGBColor{0.1f, 0.1f, 0.1f}
+#define BG_COLOR RGBColor{0.15f, 0.15f, 0.15f}
 
 // Line number bar width in characters
 #define LINEN_BAR_WIDTH 4
@@ -47,3 +47,6 @@
 #define FILE_DIALOG_ICON_SIZE_PX 32
 
 #define ENABLE_SYNTAX_HIGHLIGHTING true
+
+#define ICON_FILE_PATH "../img/logo.png"
+#define WELCOME_MSG "Welcome to HaxorEdit\n\nBuilt on %BUILD_DATE% (%BUILD_TYPE%)\nOpenGL Vendor: %GL_VENDOR% | Renderer: %GL_RENDERER%"
