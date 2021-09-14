@@ -1,7 +1,6 @@
 #pragma once
 
-#include <GL/glew.h>
-#include <GL/gl.h>
+#include "glstuff.h"
 #include <string>
 #include "types.h"
 

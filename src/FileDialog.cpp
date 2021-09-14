@@ -8,7 +8,7 @@
 #include "types.h"
 #include "config.h"
 #include <filesystem>
-#include <GLFW/glfw3.h>
+#include "glstuff.h"
 
 namespace std_fs = std::filesystem;
 

@@ -1,8 +1,7 @@
 #include "TextRenderer.h"
 #include "Logger.h"
 #include "config.h"
-#include <GL/glew.h>
-#include <GL/gl.h>
+#include "glstuff.h"
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include <glm/glm.hpp>

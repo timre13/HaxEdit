@@ -1,8 +1,7 @@
 #include "UiRenderer.h"
 #include "Logger.h"
 #include "config.h"
-#include <GL/glew.h>
-#include <GL/gl.h>
+#include "glstuff.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>

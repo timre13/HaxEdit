@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Dialog.h"
+#include "glstuff.h"
 
 class MessageDialog final : public Dialog
 {

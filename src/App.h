@@ -4,9 +4,7 @@
 #include <cassert>
 #include <vector>
 #include <memory>
-#include <GL/glew.h>
-#include <GL/gl.h>
-#include <GLFW/glfw3.h>
+#include "glstuff.h"
 #include "Logger.h"
 #include "config.h"
 #include "os.h"

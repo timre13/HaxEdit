@@ -3,8 +3,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_FAILURE_USERMSG // Get better error messages
 #include "../external/stb/stb_image.h"
-#include <GL/glew.h>
-#include <GL/gl.h>
+#include "glstuff.h"
 
 Image::Image(const std::string& filePath)
 {
