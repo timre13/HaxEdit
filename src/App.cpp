@@ -276,6 +276,9 @@ void App::windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods)
                 }
                 g_isTitleUpdateNeeded = true;
             }
+            else if (auto* msgDialog = dynamic_cast<MessageDialog*>(g_dialogs.back().get()))
+            {
+            }
             g_dialogs.pop_back();
         }
         g_isRedrawNeeded = true;
