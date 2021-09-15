@@ -214,6 +214,38 @@ void App::windowResizeCB(GLFWwindow*, int width, int height)
     g_uiRenderer->onWindowResized(width, height);
 }
 
+static void handleSaveAsDialog(FileDialog* fileDialog)
+{
+    if (g_buffers.back().saveAsToFile(fileDialog->getSelectedFilePath()))
+    {
+        g_dialogs.push_back(std::make_unique<MessageDialog>(
+                    "Failed to save file: \""+fileDialog->getSelectedFilePath()+'"',
+                    MessageDialog::Type::Error));
+    }
+}
+
+static void handleOpenDialog(FileDialog* fileDialog)
+{
+    Buffer buffer;
+    if (buffer.open(fileDialog->getSelectedFilePath()))
+    {
+        g_dialogs.push_back(std::make_unique<MessageDialog>(
+                    "Failed to open file: \""+fileDialog->getSelectedFilePath()+'"',
+                    MessageDialog::Type::Error));
+    }
+    if (g_buffers.empty())
+    {
+        g_buffers.push_back(std::move(buffer));
+        g_currentBufferI = 0;
+    }
+    else
+    {
+        // Insert the buffer next to the current one
+        g_buffers.insert(g_buffers.begin()+g_currentBufferI+1, std::move(buffer));
+        ++g_currentBufferI; // Go to the current buffer
+    }
+}
+
 void App::windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods)
 {
     (void)scancode;
@@ -246,33 +278,11 @@ void App::windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods)
             {
                 if (fileDialog->getType() == FileDialog::Type::SaveAs) // Save as dialog
                 {
-                    if (g_buffers.back().saveAsToFile(fileDialog->getSelectedFilePath()))
-                    {
-                        g_dialogs.push_back(std::make_unique<MessageDialog>(
-                                    "Failed to save file: \""+fileDialog->getSelectedFilePath()+'"',
-                                    MessageDialog::Type::Error));
-                    }
+                    handleSaveAsDialog(fileDialog);
                 }
                 else // Open dialog
                 {
-                    Buffer buffer;
-                    if (buffer.open(fileDialog->getSelectedFilePath()))
-                    {
-                        g_dialogs.push_back(std::make_unique<MessageDialog>(
-                                    "Failed to open file: \""+fileDialog->getSelectedFilePath()+'"',
-                                    MessageDialog::Type::Error));
-                    }
-                    if (g_buffers.empty())
-                    {
-                        g_buffers.push_back(std::move(buffer));
-                        g_currentBufferI = 0;
-                    }
-                    else
-                    {
-                        // Insert the buffer next to the current one
-                        g_buffers.insert(g_buffers.begin()+g_currentBufferI+1, std::move(buffer));
-                        ++g_currentBufferI; // Go to the current buffer
-                    }
+                    handleOpenDialog(fileDialog);
                 }
                 g_isTitleUpdateNeeded = true;
             }
