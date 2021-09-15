@@ -46,6 +46,7 @@ public:
     static void renderBuffers();
     static void renderTabLine();
     static void renderDialogs();
+    static void renderStartupScreen();
 
 private:
     static void GLAPIENTRY glDebugMsgCB(
