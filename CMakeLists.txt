@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
 
+project(haxed VERSION 1.0)
+
+option(USE_SANITIZERS "Link with address, leak and UB sanitizers" OFF)
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED true)
 
@@ -12,16 +16,26 @@ include_directories(
 
 link_libraries(GLEW GL glfw freetype)
 
-project(haxed VERSION 1.0)
 
-if (CMAKE_BUILD_TYPE MATCHES Debug)
-    set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic -g3 -fno-limit-debug-info -fsanitize=address,leak,undefined")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic -g3")
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    # Clang needs more flags to generate good debug info
+    message("Clang detected")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-limit-debug-info")
 else()
-    set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic -g3 -fno-limit-debug-info")
+    message("Non-Clang compiler detected")
 endif()
+
+if (USE_SANITIZERS)
+    message("Using sanitizers")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address,leak,undefined")
+endif()
+
 
 add_executable(haxed
     src/main.cpp
+    src/glstuff.h
     src/App.h
     src/App.cpp
     src/Logger.h
