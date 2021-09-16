@@ -10,7 +10,7 @@
 #define FONT_FAMILY_BOLD        "FreeMono"
 #define FONT_FAMILY_ITALIC      "FreeMono"
 #define FONT_FAMILY_BOLDITALIC  "FreeMono"
-#define FONT_SIZE_PX 18
+#define DEF_FONT_SIZE_PX 18
 
 #define BG_COLOR RGBColor{0.15f, 0.15f, 0.15f}
 

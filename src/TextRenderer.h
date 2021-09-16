@@ -7,6 +7,8 @@
 #include <map>
 #include <glm/glm.hpp>
 
+extern int g_fontSizePx;
+
 enum class FontStyle
 {
     Regular,
@@ -46,6 +48,11 @@ public:
     };
 
 private:
+    std::string m_regularFontPath;
+    std::string m_boldFontPath;
+    std::string m_italicFontPath;
+    std::string m_boldItalicFontPath;
+
     std::map<char, Glyph> m_regularGlyphs;
     std::map<char, Glyph> m_boldGlyphs;
     std::map<char, Glyph> m_italicGlyphs;
@@ -77,12 +84,16 @@ private:
 
     std::map<char, Glyph>* getGlyphListFromStyle(FontStyle style);
 
+    void cleanUpGlyphs();
+
 public:
     TextRenderer(
             const std::string& regularFontPath,
             const std::string& boldFontPath,
             const std::string& italicFontPath,
             const std::string& boldItalicFontPath);
+
+    void setFontSize(int size);
 
     inline void onWindowResized(int width, int height)
     {

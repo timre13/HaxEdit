@@ -8,7 +8,20 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-static void loadGlyphs(FT_Library* library, std::map<char, TextRenderer::Glyph>* glyphs, const std::string& fontPath)
+void TextRenderer::cleanUpGlyphs()
+{
+    for (auto& glyph : m_regularGlyphs) { glDeleteTextures(1, &glyph.second.textureId); }
+    for (auto& glyph : m_boldGlyphs) { glDeleteTextures(1, &glyph.second.textureId); }
+    for (auto& glyph : m_italicGlyphs) { glDeleteTextures(1, &glyph.second.textureId); }
+    for (auto& glyph : m_boldItalicGlyphs) { glDeleteTextures(1, &glyph.second.textureId); }
+    Logger::dbg << "Cleaned up glyphs" << Logger::End;
+}
+
+static void loadGlyphs(
+        FT_Library* library,
+        std::map<char, TextRenderer::Glyph>* glyphs,
+        const std::string& fontPath,
+        int fontSize)
 {
     Logger::dbg << "Loading font: " << fontPath << Logger::End;
     FT_Face face;
@@ -23,7 +36,7 @@ static void loadGlyphs(FT_Library* library, std::map<char, TextRenderer::Glyph>*
         << "\n\tGlyphs: " << face->num_glyphs
         << Logger::End;
 
-    if (FT_Error error = FT_Set_Pixel_Sizes(face, FONT_SIZE_PX, 0))
+    if (FT_Error error = FT_Set_Pixel_Sizes(face, fontSize, 0))
     {
         Logger::fatal << "Failed to set font size: " << FT_Error_String(error) << Logger::End;
     }
@@ -69,25 +82,14 @@ TextRenderer::TextRenderer(
         const std::string& boldFontPath,
         const std::string& italicFontPath,
         const std::string& boldItalicFontPath)
-    : m_glyphShader{"../shaders/glyph.vert.glsl", "../shaders/glyph.frag.glsl"}
+    :
+    m_regularFontPath{regularFontPath},
+    m_boldFontPath{boldFontPath},
+    m_italicFontPath{italicFontPath},
+    m_boldItalicFontPath{boldItalicFontPath},
+    m_glyphShader{"../shaders/glyph.vert.glsl", "../shaders/glyph.frag.glsl"}
 {
-    auto fontPath = regularFontPath;
-
-    Logger::dbg << "Initializing FreeType" << Logger::End;
-    FT_Library library;
-    if (FT_Error error = FT_Init_FreeType(&library))
-    {
-        Logger::fatal << "Failed to initialize FreeType: " << FT_Error_String(error)
-            << Logger::End;
-    }
-
-    loadGlyphs(&library, &m_regularGlyphs,    regularFontPath);
-    loadGlyphs(&library, &m_boldGlyphs,       boldFontPath);
-    loadGlyphs(&library, &m_italicGlyphs,     italicFontPath);
-    loadGlyphs(&library, &m_boldItalicGlyphs, boldItalicFontPath);
-
-    FT_Done_FreeType(library);
-
+    setFontSize(DEF_FONT_SIZE_PX);
 
     glGenVertexArrays(1, &m_fontVao);
     glBindVertexArray(m_fontVao);
@@ -103,6 +105,31 @@ TextRenderer::TextRenderer(
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     Logger::dbg << "Text renderer setup done" << Logger::End;
+}
+
+void TextRenderer::setFontSize(int size)
+{
+    cleanUpGlyphs();
+    m_regularGlyphs.clear();
+    m_boldGlyphs.clear();
+    m_italicGlyphs.clear();
+    m_boldItalicGlyphs.clear();
+
+    auto fontPath = m_regularFontPath;
+
+    Logger::dbg << "Initializing FreeType" << Logger::End;
+    FT_Library library;
+    if (FT_Error error = FT_Init_FreeType(&library))
+    {
+        Logger::fatal << "Failed to initialize FreeType: " << FT_Error_String(error) << Logger::End;
+    }
+
+    loadGlyphs(&library, &m_regularGlyphs,    m_regularFontPath, size);
+    loadGlyphs(&library, &m_boldGlyphs,       m_boldFontPath, size);
+    loadGlyphs(&library, &m_italicGlyphs,     m_italicFontPath, size);
+    loadGlyphs(&library, &m_boldItalicGlyphs, m_boldItalicFontPath, size);
+
+    FT_Done_FreeType(library);
 }
 
 void TextRenderer::prepareForDrawing()
@@ -138,7 +165,7 @@ static inline TextRenderer::GlyphDimensions renderGlyph(
         uint fontVbo)
 {
     const float charX = textX + glyph.bearing.x * scale;
-    const float charY = textY - (glyph.bearing.y) + FONT_SIZE_PX;
+    const float charY = textY - (glyph.bearing.y) + g_fontSizePx;
     const float charW = glyph.size.x * scale;
     const float charH = glyph.size.y * scale;
 
@@ -217,7 +244,7 @@ void TextRenderer::renderString(
         {
         case '\n': // New line
             textX = initTextX;
-            textY += FONT_SIZE_PX * scale;
+            textY += g_fontSizePx * scale;
             continue;
 
         case '\r': // Carriage return
@@ -225,19 +252,19 @@ void TextRenderer::renderString(
             continue;
 
         case '\t': // Tab
-            textX += FONT_SIZE_PX*4;
+            textX += g_fontSizePx*4;
             continue;
 
         case '\v': // Vertical tab
             textX = initTextX;
-            textY += FONT_SIZE_PX * scale * 4;
+            textY += g_fontSizePx * scale * 4;
             continue;
         }
 
-        if (shouldWrap && textX+FONT_SIZE_PX > m_windowWidth)
+        if (shouldWrap && textX+g_fontSizePx > m_windowWidth)
         {
             textX = initTextX;
-            textY += FONT_SIZE_PX * scale;
+            textY += g_fontSizePx * scale;
         }
         if (textY > m_windowHeight)
         {
@@ -264,12 +291,7 @@ uint TextRenderer::getCharGlyphAdvance(char c, FontStyle style/*=FontStyle::Regu
 
 TextRenderer::~TextRenderer()
 {
-    for (auto& glyph : m_regularGlyphs) { glDeleteTextures(1, &glyph.second.textureId); }
-    for (auto& glyph : m_boldGlyphs) { glDeleteTextures(1, &glyph.second.textureId); }
-    for (auto& glyph : m_italicGlyphs) { glDeleteTextures(1, &glyph.second.textureId); }
-    for (auto& glyph : m_boldItalicGlyphs) { glDeleteTextures(1, &glyph.second.textureId); }
-    Logger::dbg << "Cleaned up glyphs" << Logger::End;
-
+    cleanUpGlyphs();
     glDeleteBuffers(1, &m_fontVbo);
     glDeleteVertexArrays(1, &m_fontVao);
     Logger::dbg << "Cleaned up font vertex data" << Logger::End;

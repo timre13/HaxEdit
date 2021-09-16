@@ -42,10 +42,10 @@ void FileDialog::recalculateDimensions()
     m_titleRect.xPos = m_dialogDims.xPos+10;
     m_titleRect.yPos = m_dialogDims.yPos+10;
     m_titleRect.width = m_dialogDims.width-20;
-    m_titleRect.height = FONT_SIZE_PX*1.5f;
+    m_titleRect.height = g_fontSizePx*1.5f;
 
     m_fileRectDims.clear();
-    static constexpr int rectHeight = std::max(FONT_SIZE_PX, FILE_DIALOG_ICON_SIZE_PX);
+    const int rectHeight = std::max(g_fontSizePx, FILE_DIALOG_ICON_SIZE_PX);
     for (size_t i{}; i < m_fileList.size(); ++i)
     {
         auto rect = std::make_unique<Dimensions>();
@@ -120,11 +120,11 @@ void FileDialog::render()
                     RGBAColor{0.2f, 0.3f, 0.5f, 0.7f} : RGBAColor{0.1f, 0.2f, 0.4f, 0.7f});
         // Render filename
         g_textRenderer->renderString(file->name,
-                {rect.xPos+FILE_DIALOG_ICON_SIZE_PX+10, rect.yPos+rect.height/2-FONT_SIZE_PX/2-2},
+                {rect.xPos+FILE_DIALOG_ICON_SIZE_PX+10, rect.yPos+rect.height/2-g_fontSizePx/2-2},
                 file->isDirectory ? FontStyle::Italic : FontStyle::Regular);
         // Render permissions
         g_textRenderer->renderString(file->permissionStr,
-                {m_dialogDims.xPos+m_dialogDims.width-FONT_SIZE_PX*0.7f*9, rect.yPos-2});
+                {m_dialogDims.xPos+m_dialogDims.width-g_fontSizePx*0.7f*9, rect.yPos-2});
         // Render file icon
         g_fileTypeHandler->getIconFromFilename(
                 file->name, file->isDirectory)->render(

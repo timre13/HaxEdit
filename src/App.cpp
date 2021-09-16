@@ -101,6 +101,10 @@ void App::setupKeyBindings()
     Bindings::ctrlMap[GLFW_KEY_PAGE_DOWN]   = Bindings::Callbacks::goToNextTab;
     Bindings::ctrlMap[GLFW_KEY_HOME]        = Bindings::Callbacks::goToFirstChar;
     Bindings::ctrlMap[GLFW_KEY_END]         = Bindings::Callbacks::goToLastChar;
+    Bindings::ctrlMap[GLFW_KEY_MINUS]       = Bindings::Callbacks::decreaseFontSize;
+    Bindings::ctrlMap[GLFW_KEY_KP_SUBTRACT] = Bindings::Callbacks::decreaseFontSize;
+    Bindings::ctrlMap[GLFW_KEY_EQUAL]       = Bindings::Callbacks::increaseFontSize;
+    Bindings::ctrlMap[GLFW_KEY_KP_ADD]      = Bindings::Callbacks::increaseFontSize;
 
     Bindings::ctrlShiftMap[GLFW_KEY_S]      = Bindings::Callbacks::saveCurrentBufferAs;
 }

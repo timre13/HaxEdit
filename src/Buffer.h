@@ -10,6 +10,8 @@
 
 namespace std_fs = std::filesystem;
 
+extern int g_fontSizePx;
+
 #define FILENAME_NEW "<new>"
 
 class Buffer
@@ -101,9 +103,9 @@ public:
         }
         // Always show the last line when scrolling down
         // FIXME: Line wrapping makes the document longer, so this breaks
-        else if (m_scrollY < -(int)(m_numOfLines-1)*FONT_SIZE_PX)
+        else if (m_scrollY < -(int)(m_numOfLines-1)*g_fontSizePx)
         {
-            m_scrollY = -(int)(m_numOfLines-1)*FONT_SIZE_PX;
+            m_scrollY = -(int)(m_numOfLines-1)*g_fontSizePx;
         }
 
         TIMER_END_FUNC();

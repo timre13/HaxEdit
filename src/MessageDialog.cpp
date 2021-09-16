@@ -37,15 +37,15 @@ void MessageDialog::recalculateDimensions()
 
     const int widestBtnW = std::max_element(m_btnInfo.begin(), m_btnInfo.end(),
             [](const BtnInfo& a, const BtnInfo& b){ return getBtnText(a).size() < getBtnText(b).size(); }
-            )->label.size()*FONT_SIZE_PX*0.7f+20;
+            )->label.size()*g_fontSizePx*0.7f+20;
 
     m_dialogDims.width = std::max(std::max(m_msgTextDims.width, widestBtnW)+10+10, 200);
-    m_dialogDims.height = 10+m_msgTextDims.height+10+(FONT_SIZE_PX+30)*m_btnInfo.size();
+    m_dialogDims.height = 10+m_msgTextDims.height+10+(g_fontSizePx+30)*m_btnInfo.size();
     m_dialogDims.xPos = m_windowWidth/2-m_dialogDims.width/2;
     m_dialogDims.yPos = m_windowHeight/2-m_dialogDims.height/2;
 
-    m_msgTextDims.width = getLongestLineLen(m_message)*FONT_SIZE_PX*0.7;
-    m_msgTextDims.height = strCountLines(m_message)*FONT_SIZE_PX;
+    m_msgTextDims.width = getLongestLineLen(m_message)*g_fontSizePx*0.7;
+    m_msgTextDims.height = strCountLines(m_message)*g_fontSizePx;
     m_msgTextDims.xPos = m_dialogDims.xPos+m_dialogDims.width/2-m_msgTextDims.width/2;
     m_msgTextDims.yPos = m_dialogDims.yPos+10;
 
@@ -56,8 +56,8 @@ void MessageDialog::recalculateDimensions()
         m_btnDims.emplace_back();
         m_btnTxtDims.emplace_back();
 
-        m_btnTxtDims.back().width = getBtnText(btn).size()*FONT_SIZE_PX*0.7;
-        m_btnTxtDims.back().height = FONT_SIZE_PX;
+        m_btnTxtDims.back().width = getBtnText(btn).size()*g_fontSizePx*0.7;
+        m_btnTxtDims.back().height = g_fontSizePx;
         m_btnDims.back().width = m_btnTxtDims.back().width+10+10;
         m_btnDims.back().height = m_btnTxtDims.back().height+10+10;
         m_btnDims.back().xPos = m_windowWidth/2-m_btnDims.back().width/2;

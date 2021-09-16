@@ -246,6 +246,22 @@ void goToLastChar()
     }
 }
 
+void increaseFontSize()
+{
+    ++g_fontSizePx;
+    g_textRenderer->setFontSize(g_fontSizePx);
+    g_isRedrawNeeded = true;
+}
+
+void decreaseFontSize()
+{
+    --g_fontSizePx;
+    if (g_fontSizePx <= 1)
+        g_fontSizePx = 1;
+    g_textRenderer->setFontSize(g_fontSizePx);
+    g_isRedrawNeeded = true;
+}
+
 }
 
 bindingMap_t noModMap = {};

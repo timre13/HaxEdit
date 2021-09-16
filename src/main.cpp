@@ -17,6 +17,8 @@ std::unique_ptr<TextRenderer> g_textRenderer;
 std::unique_ptr<UiRenderer> g_uiRenderer;
 std::unique_ptr<FileTypeHandler> g_fileTypeHandler;
 
+int g_fontSizePx = DEF_FONT_SIZE_PX;
+
 int main(int argc, char** argv)
 {
     Logger::setLoggerVerbosity(Logger::LoggerVerbosity::Debug);

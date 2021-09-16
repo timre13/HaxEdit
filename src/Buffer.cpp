@@ -118,15 +118,15 @@ static int getLineLenAt(const std::string& str, int lineI)
 void Buffer::scrollViewportToCursor()
 {
     // Scroll up when the cursor goes out of the viewport
-    if (m_cursorLine-5 < -m_scrollY/FONT_SIZE_PX)
+    if (m_cursorLine-5 < -m_scrollY/g_fontSizePx)
     {
-        scrollBy(-(m_scrollY+(m_cursorLine-5)*FONT_SIZE_PX));
+        scrollBy(-(m_scrollY+(m_cursorLine-5)*g_fontSizePx));
     }
     // Scroll down when the cursor goes out of the viewport
     // FIXME: Line wrapping breaks this, too
-    else if (m_cursorLine+m_scrollY/FONT_SIZE_PX+5 > g_textRenderer->getWindowHeight()/FONT_SIZE_PX)
+    else if (m_cursorLine+m_scrollY/g_fontSizePx+5 > g_textRenderer->getWindowHeight()/g_fontSizePx)
     {
-        scrollBy(-(m_cursorLine*FONT_SIZE_PX+m_scrollY-g_textRenderer->getWindowHeight()+FONT_SIZE_PX*5));
+        scrollBy(-(m_cursorLine*g_fontSizePx+m_scrollY-g_textRenderer->getWindowHeight()+g_fontSizePx*5));
     }
 }
 
@@ -414,12 +414,12 @@ static inline void renderStatusLine(
     const int winH = g_textRenderer->getWindowHeight();
 
     g_uiRenderer->renderRectangleOutline(
-            {LINEN_BAR_WIDTH*FONT_SIZE_PX, winH-FONT_SIZE_PX*1.2f},
+            {LINEN_BAR_WIDTH*g_fontSizePx, winH-g_fontSizePx*1.2f},
             {winW, winH},
             {0.5f, 0.5f, 0.5f},
             2);
     g_uiRenderer->renderFilledRectangle(
-            {LINEN_BAR_WIDTH*FONT_SIZE_PX, winH-FONT_SIZE_PX*1.2f},
+            {LINEN_BAR_WIDTH*g_fontSizePx, winH-g_fontSizePx*1.2f},
             {winW, winH},
             RGB_COLOR_TO_RGBA(STATUSBAR_BG_COLOR));
 
@@ -429,14 +429,14 @@ static inline void renderStatusLine(
         + std::to_string(cursorCharPos);
     g_textRenderer->renderString(
             cursorPosString,
-            {winW-FONT_SIZE_PX*(4+1+3+3+7)*0.7f,
-             winH-FONT_SIZE_PX-4});
+            {winW-g_fontSizePx*(4+1+3+3+7)*0.7f,
+             winH-g_fontSizePx-4});
 
     const std::string statusLineString = filePath;
     g_textRenderer->renderString(
             statusLineString,
-            {LINEN_BAR_WIDTH*FONT_SIZE_PX,
-             winH-FONT_SIZE_PX-4});
+            {LINEN_BAR_WIDTH*g_fontSizePx,
+             winH-g_fontSizePx-4});
 }
 
 void Buffer::render()
@@ -446,10 +446,10 @@ void Buffer::render()
     // Draw line number background
     g_uiRenderer->renderFilledRectangle(
             m_position,
-            {FONT_SIZE_PX*LINEN_BAR_WIDTH, g_textRenderer->getWindowHeight()},
+            {g_fontSizePx*LINEN_BAR_WIDTH, g_textRenderer->getWindowHeight()},
             RGB_COLOR_TO_RGBA(LINEN_BG_COLOR));
 
-    const float initTextX = m_position.x+FONT_SIZE_PX*LINEN_BAR_WIDTH;
+    const float initTextX = m_position.x+g_fontSizePx*LINEN_BAR_WIDTH;
     const float initTextY = m_position.y+m_scrollY;
     float textX = initTextX;
     float textY = initTextY;
@@ -470,7 +470,7 @@ void Buffer::render()
         {
             break;
         }
-        const bool isCharInsideViewport = textY > -FONT_SIZE_PX;
+        const bool isCharInsideViewport = textY > -g_fontSizePx;
 
         if (isCharInsideViewport && BUFFER_DRAW_LINE_NUMS && isLineBeginning)
         {
@@ -494,7 +494,7 @@ void Buffer::render()
         {
             g_uiRenderer->renderFilledRectangle(
                     {textX, initTextY+textY-m_scrollY-m_position.y+2},
-                    {textX+g_textRenderer->getWindowWidth(), initTextY+textY-m_scrollY-m_position.y+2+FONT_SIZE_PX},
+                    {textX+g_textRenderer->getWindowWidth(), initTextY+textY-m_scrollY-m_position.y+2+g_fontSizePx},
                     CURSOR_LINE_COLOR
             );
             // Bind the text renderer shader again
@@ -512,20 +512,20 @@ void Buffer::render()
 #if CURSOR_DRAW_BLOCK
                     g_uiRenderer->renderRectangleOutline(
                             {textX-2, initTextY+textY-m_scrollY-m_position.y-2},
-                            {textX+width+2, initTextY+textY-m_scrollY-m_position.y+FONT_SIZE_PX+2},
+                            {textX+width+2, initTextY+textY-m_scrollY-m_position.y+g_fontSizePx+2},
                             {1.0f, 0.0f, 0.0f},
                             2
                     );
                     g_uiRenderer->renderFilledRectangle(
                             {textX-2, initTextY+textY-m_scrollY-m_position.y-2},
-                            {textX+width+2, initTextY+textY-m_scrollY-m_position.y+FONT_SIZE_PX+2},
+                            {textX+width+2, initTextY+textY-m_scrollY-m_position.y+g_fontSizePx+2},
                             {1.0f, 0.0f, 0.0f, 0.4f}
                     );
 #else
                     (void)width;
                     g_uiRenderer->renderFilledRectangle(
                             {textX-1, initTextY+textY-m_scrollY-m_position.y-2},
-                            {textX+1, initTextY+textY-m_scrollY-m_position.y+FONT_SIZE_PX+2},
+                            {textX+1, initTextY+textY-m_scrollY-m_position.y+g_fontSizePx+2},
                             {1.0f, 0.0f, 0.0f}
                     );
 #endif
@@ -541,33 +541,33 @@ void Buffer::render()
         {
         case '\n': // New line
         case '\r': // Carriage return
-            drawCursorIfNeeded(FONT_SIZE_PX*0.7f);
+            drawCursorIfNeeded(g_fontSizePx*0.7f);
             textX = initTextX;
-            textY += FONT_SIZE_PX;
+            textY += g_fontSizePx;
             isLineBeginning = true;
             ++lineI;
             colI = 0;
             continue;
 
         case '\t': // Tab
-            drawCursorIfNeeded(FONT_SIZE_PX*0.7f);
-            textX += FONT_SIZE_PX*4;
+            drawCursorIfNeeded(g_fontSizePx*0.7f);
+            textX += g_fontSizePx*4;
             ++colI;
             continue;
 
         case '\v': // Vertical tab
-            drawCursorIfNeeded(FONT_SIZE_PX*0.7f);
+            drawCursorIfNeeded(g_fontSizePx*0.7f);
             textX = initTextX;
-            textY += FONT_SIZE_PX * 4;
+            textY += g_fontSizePx * 4;
             colI = 0;
             ++lineI;
             continue;
         }
 
-        if (BUFFER_WRAP_LINES && textX+FONT_SIZE_PX > g_textRenderer->getWindowWidth())
+        if (BUFFER_WRAP_LINES && textX+g_fontSizePx > g_textRenderer->getWindowWidth())
         {
             textX = initTextX;
-            textY += FONT_SIZE_PX;
+            textY += g_fontSizePx;
         }
 
         uint advance{};
