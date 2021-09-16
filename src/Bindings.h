@@ -110,7 +110,14 @@ void closeCurrentBuffer()
     else
     {
         g_buffers.erase(g_buffers.begin()+g_currentBufferI);
-        g_currentBufferI = g_buffers.size() < 2 ? 0 : g_currentBufferI-1;
+        if (g_buffers.size() == 0)
+        {
+            g_currentBufferI = 0;
+        }
+        else if (g_currentBufferI >= g_buffers.size())
+        {
+            g_currentBufferI = g_buffers.size()-1;
+        }
         g_isTitleUpdateNeeded = true;
     }
     g_isRedrawNeeded = true;
