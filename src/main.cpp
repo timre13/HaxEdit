@@ -6,6 +6,7 @@ int g_windowHeight = 0;
 bool g_isRedrawNeeded = false;
 bool g_isTitleUpdateNeeded = true;
 bool g_isDebugDrawMode = false;
+bool g_shouldIgnoreNextChar = false;
 
 std::vector<Buffer> g_buffers;
 size_t g_currentBufferI{};

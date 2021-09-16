@@ -96,6 +96,7 @@ void App::setupKeyBindings()
     Bindings::ctrlMap[GLFW_KEY_N]           = Bindings::Callbacks::createNewBuffer;
     Bindings::ctrlMap[GLFW_KEY_S]           = Bindings::Callbacks::saveCurrentBuffer;
     Bindings::ctrlMap[GLFW_KEY_O]           = Bindings::Callbacks::openFile;
+    Bindings::ctrlMap[GLFW_KEY_Q]           = Bindings::Callbacks::closeCurrentBuffer;
     Bindings::ctrlMap[GLFW_KEY_PAGE_UP]     = Bindings::Callbacks::goToPrevTab;
     Bindings::ctrlMap[GLFW_KEY_PAGE_DOWN]   = Bindings::Callbacks::goToNextTab;
     Bindings::ctrlMap[GLFW_KEY_HOME]        = Bindings::Callbacks::goToFirstChar;
@@ -273,7 +274,7 @@ void App::windowResizeCB(GLFWwindow*, int width, int height)
 
 static void handleSaveAsDialog(FileDialog* fileDialog)
 {
-    if (g_buffers.back().saveAsToFile(fileDialog->getSelectedFilePath()))
+    if (g_buffers[g_currentBufferI].saveAsToFile(fileDialog->getSelectedFilePath()))
     {
         g_dialogs.push_back(std::make_unique<MessageDialog>(
                     "Failed to save file: \""+fileDialog->getSelectedFilePath()+'"',
@@ -337,7 +338,7 @@ void App::windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods)
                 {
                     handleSaveAsDialog(fileDialog);
                 }
-                else // Open dialog
+                else if (fileDialog->getType() == FileDialog::Type::Open) // Open dialog
                 {
                     handleOpenDialog(fileDialog);
                 }
@@ -345,8 +346,27 @@ void App::windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods)
             }
             else if (auto* msgDialog = dynamic_cast<MessageDialog*>(g_dialogs.back().get()))
             {
+                if (msgDialog->getId() == MessageDialog::Id::AskSaveCloseCurrentBuffer)
+                {
+                    if (msgDialog->getPressedBtnI() == 0) // If pressed "Yes"
+                    {
+                        Bindings::Callbacks::saveCurrentBuffer();
+                        Bindings::Callbacks::closeCurrentBuffer();
+                    }
+                    else if (msgDialog->getPressedBtnI() == 1) // Pressed "No"
+                    {
+                        g_buffers.erase(g_buffers.begin()+g_currentBufferI);
+                        g_currentBufferI = g_buffers.size() < 2 ? 0 : g_currentBufferI-1;
+                        g_isTitleUpdateNeeded = true;
+                    }
+                    else
+                    {
+                        // Do nothing
+                    }
+                }
             }
             g_dialogs.pop_back();
+            g_shouldIgnoreNextChar = true;
         }
         g_isRedrawNeeded = true;
         TIMER_END_FUNC();
@@ -374,6 +394,12 @@ void App::windowCharCB(GLFWwindow*, uint codePoint)
     // If there are dialogs open, don't react to keypresses
     if (!g_dialogs.empty())
     {
+        return;
+    }
+
+    if (g_shouldIgnoreNextChar)
+    {
+        g_shouldIgnoreNextChar = false;
         return;
     }
 

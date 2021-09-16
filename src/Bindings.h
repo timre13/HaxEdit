@@ -93,6 +93,29 @@ void openFile()
     g_isRedrawNeeded = true;
 }
 
+void closeCurrentBuffer()
+{
+    if (g_buffers.empty())
+        return;
+
+    if (g_buffers[g_currentBufferI].isModified())
+    {
+        g_dialogs.push_back(std::make_unique<MessageDialog>(
+                    "Save?",
+                    MessageDialog::Type::Information,
+                    MessageDialog::Id::AskSaveCloseCurrentBuffer,
+                    std::vector<MessageDialog::BtnInfo>{{"Yes", GLFW_KEY_Y}, {"No", GLFW_KEY_N}, {"Cancel", GLFW_KEY_C}}
+        ));
+    }
+    else
+    {
+        g_buffers.erase(g_buffers.begin()+g_currentBufferI);
+        g_currentBufferI = g_buffers.size() < 2 ? 0 : g_currentBufferI-1;
+        g_isTitleUpdateNeeded = true;
+    }
+    g_isRedrawNeeded = true;
+}
+
 void goToNextTab()
 {
     if (!g_buffers.empty() && g_currentBufferI < g_buffers.size()-1)

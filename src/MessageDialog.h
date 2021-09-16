@@ -10,6 +10,7 @@ public:
     enum class Id
     {
         Generic,
+        AskSaveCloseCurrentBuffer,
     };
 
     enum class Type
