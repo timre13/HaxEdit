@@ -36,10 +36,10 @@ void MessageDialog::recalculateDimensions()
     assert(m_windowHeight > 0);
 
     const int widestBtnW = std::max_element(m_btnInfo.begin(), m_btnInfo.end(),
-            [](const BtnInfo& a, const BtnInfo& b){ return a.label.size() < b.label.size(); }
-            )->label.size()*FONT_SIZE_PX*0.7f;
+            [](const BtnInfo& a, const BtnInfo& b){ return getBtnText(a).size() < getBtnText(b).size(); }
+            )->label.size()*FONT_SIZE_PX*0.7f+20;
 
-    m_dialogDims.width = std::max(m_msgTextDims.width, widestBtnW)+10+10;
+    m_dialogDims.width = std::max(std::max(m_msgTextDims.width, widestBtnW)+10+10, 200);
     m_dialogDims.height = 10+m_msgTextDims.height+10+(FONT_SIZE_PX+30)*m_btnInfo.size();
     m_dialogDims.xPos = m_windowWidth/2-m_dialogDims.width/2;
     m_dialogDims.yPos = m_windowHeight/2-m_dialogDims.height/2;
