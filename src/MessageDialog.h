@@ -49,6 +49,7 @@ public:
 
     virtual void render() override;
     virtual void handleKey(int key, int mods) override;
+    virtual void handleChar(uint) override {}
     inline int getPressedBtnI() const { return m_pressedBtnI; }
     inline int getPressedKey() const {
         return m_pressedBtnI >= 0 ? m_btnInfo[m_pressedBtnI].key : 0; }

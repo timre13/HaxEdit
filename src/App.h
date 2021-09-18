@@ -15,6 +15,7 @@
 #include "Buffer.h"
 #include "MessageDialog.h"
 #include "FileDialog.h"
+#include "AskerDialog.h"
 #include "types.h"
 #include "Timer.h"
 

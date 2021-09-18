@@ -1,6 +1,8 @@
 #include "App.h"
 #include "Bindings.h"
 
+static std::string s_selectedSaveDir = "";
+
 GLFWwindow* App::createWindow()
 {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -278,11 +280,22 @@ void App::windowResizeCB(GLFWwindow*, int width, int height)
 
 static void handleSaveAsDialog(FileDialog* fileDialog)
 {
-    if (g_buffers[g_currentBufferI].saveAsToFile(fileDialog->getSelectedFilePath()))
+    const std::string path = fileDialog->getSelectedFilePath();
+    if (fileDialog->isDirSelected()) // ask filename
     {
-        g_dialogs.push_back(std::make_unique<MessageDialog>(
-                    "Failed to save file: \""+fileDialog->getSelectedFilePath()+'"',
-                    MessageDialog::Type::Error));
+        s_selectedSaveDir = path;
+        g_dialogs.insert(g_dialogs.begin()+g_dialogs.size()-1, std::make_unique<AskerDialog>(
+                    "Filename:",
+                    AskerDialog::Id::AskSaveFileName));
+    }
+    else // Save to an existing file
+    {
+        if (g_buffers[g_currentBufferI].saveAsToFile(path))
+        {
+            g_dialogs.push_back(std::make_unique<MessageDialog>(
+                        "Failed to save file: \""+fileDialog->getSelectedFilePath()+'"',
+                        MessageDialog::Type::Error));
+        }
     }
 }
 
@@ -305,6 +318,62 @@ static void handleOpenDialog(FileDialog* fileDialog)
         // Insert the buffer next to the current one
         g_buffers.insert(g_buffers.begin()+g_currentBufferI+1, std::move(buffer));
         ++g_currentBufferI; // Go to the current buffer
+    }
+}
+
+static void handleDialogClose()
+{
+    if (g_dialogs.back()->isClosed())
+    {
+        if (auto* fileDialog = dynamic_cast<FileDialog*>(g_dialogs.back().get()))
+        {
+            if (fileDialog->getType() == FileDialog::Type::SaveAs) // Save as dialog
+            {
+                handleSaveAsDialog(fileDialog);
+            }
+            else if (fileDialog->getType() == FileDialog::Type::Open) // Open dialog
+            {
+                handleOpenDialog(fileDialog);
+            }
+            g_isTitleUpdateNeeded = true;
+        }
+        else if (auto* msgDialog = dynamic_cast<MessageDialog*>(g_dialogs.back().get()))
+        {
+            if (msgDialog->getId() == MessageDialog::Id::AskSaveCloseCurrentBuffer)
+            {
+                if (msgDialog->getPressedBtnI() == 0) // If pressed "Yes"
+                {
+                    Bindings::Callbacks::saveCurrentBuffer();
+                    Bindings::Callbacks::closeCurrentBuffer();
+                }
+                else if (msgDialog->getPressedBtnI() == 1) // Pressed "No"
+                {
+                    g_buffers.erase(g_buffers.begin()+g_currentBufferI);
+                    g_currentBufferI = g_buffers.size() < 2 ? 0 : g_currentBufferI-1;
+                    g_isTitleUpdateNeeded = true;
+                }
+                else
+                {
+                    // Do nothing
+                }
+            }
+        }
+        else if (auto* askerDialog = dynamic_cast<AskerDialog*>(g_dialogs.back().get()))
+        {
+            if (askerDialog->getId() == AskerDialog::Id::AskSaveFileName)
+            {
+                if (g_buffers[g_currentBufferI].saveAsToFile(
+                            std_fs::path{s_selectedSaveDir}/std_fs::path{askerDialog->getValue()}))
+                {
+                    g_dialogs.insert(g_dialogs.begin()+g_dialogs.size()-1, std::make_unique<MessageDialog>(
+                                "Failed to save file: \""+fileDialog->getSelectedFilePath()+'"',
+                                MessageDialog::Type::Error));
+                }
+            }
+        }
+        g_dialogs.pop_back();
+        g_shouldIgnoreNextChar = true;
+        g_isRedrawNeeded = true;
     }
 }
 
@@ -333,45 +402,7 @@ void App::windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods)
     if (!g_dialogs.empty())
     {
         g_dialogs.back()->handleKey(key, mods);
-        // Dialog closed? Destroy it
-        if (g_dialogs.back()->isClosed())
-        {
-            if (auto* fileDialog = dynamic_cast<FileDialog*>(g_dialogs.back().get()))
-            {
-                if (fileDialog->getType() == FileDialog::Type::SaveAs) // Save as dialog
-                {
-                    handleSaveAsDialog(fileDialog);
-                }
-                else if (fileDialog->getType() == FileDialog::Type::Open) // Open dialog
-                {
-                    handleOpenDialog(fileDialog);
-                }
-                g_isTitleUpdateNeeded = true;
-            }
-            else if (auto* msgDialog = dynamic_cast<MessageDialog*>(g_dialogs.back().get()))
-            {
-                if (msgDialog->getId() == MessageDialog::Id::AskSaveCloseCurrentBuffer)
-                {
-                    if (msgDialog->getPressedBtnI() == 0) // If pressed "Yes"
-                    {
-                        Bindings::Callbacks::saveCurrentBuffer();
-                        Bindings::Callbacks::closeCurrentBuffer();
-                    }
-                    else if (msgDialog->getPressedBtnI() == 1) // Pressed "No"
-                    {
-                        g_buffers.erase(g_buffers.begin()+g_currentBufferI);
-                        g_currentBufferI = g_buffers.size() < 2 ? 0 : g_currentBufferI-1;
-                        g_isTitleUpdateNeeded = true;
-                    }
-                    else
-                    {
-                        // Do nothing
-                    }
-                }
-            }
-            g_dialogs.pop_back();
-            g_shouldIgnoreNextChar = true;
-        }
+        handleDialogClose();
         g_isRedrawNeeded = true;
         TIMER_END_FUNC();
         return;
@@ -398,6 +429,7 @@ void App::windowCharCB(GLFWwindow*, uint codePoint)
     // If there are dialogs open, don't react to keypresses
     if (!g_dialogs.empty())
     {
+        g_dialogs.back()->handleChar(codePoint);
         return;
     }
 

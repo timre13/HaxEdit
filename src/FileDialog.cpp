@@ -214,7 +214,12 @@ void FileDialog::handleKey(int key, int mods)
     }
     else if (key == GLFW_KEY_ENTER)
     {
-        if (m_fileList.empty() || !m_fileList[m_selectedFileI]->isDirectory)
+        if (!m_fileList.empty() && m_fileList[m_selectedFileI]->name == ".")
+        {
+            Logger::dbg << "FileDialog: Selected a directory" << Logger::End;
+            m_isClosed = true;
+        }
+        else if (m_fileList.empty() || !m_fileList[m_selectedFileI]->isDirectory)
         {
             Logger::dbg << "FileDialog: Opened a file: " << m_fileList[m_selectedFileI]->name << Logger::End;
             // If the list is empty or a file was opened, we are done

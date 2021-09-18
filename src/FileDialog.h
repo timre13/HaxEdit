@@ -51,13 +51,21 @@ public:
 
     virtual void render() override;
     virtual void handleKey(int key, int mods) override;
+    virtual void handleChar(uint) override {}
 
     inline std::string getSelectedFilePath()
     {
         if (m_fileList.empty())
             return "";
 
+        if (m_fileList[m_selectedFileI]->name == ".")
+            return m_dirPath;
+
         return std::filesystem::path{m_dirPath}/m_fileList[m_selectedFileI]->name;
+    }
+    inline bool isDirSelected()
+    {
+        return m_fileList.empty() || m_fileList[m_selectedFileI]->name == ".";
     }
 
     inline Type getType() const { return m_type; }
