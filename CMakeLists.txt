@@ -61,6 +61,8 @@ add_executable(haxed
     src/MessageDialog.cpp
     src/FileDialog.h
     src/FileDialog.cpp
+    src/AskerDialog.h
+    src/AskerDialog.cpp
     src/FileTypeHandler.h
     src/FileTypeHandler.cpp
     src/Bindings.h
