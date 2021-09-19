@@ -10,6 +10,7 @@
 #define SYNTAX_MARK_NUMBER    'n'
 #define SYNTAX_MARK_STRING    's'
 #define SYNTAX_MARK_COMMENT   'c'
+#define SYNTAX_MARK_CHARLIT   'C'
 #define SYNTAX_MARK_PREPRO    'p'
 #define SYNTAX_MARK_SPECCHAR  ';'
 
@@ -20,6 +21,7 @@
 #define SYNTAX_COLOR_NUMBER     RGBColor{0.938f, 0.402f, 0.031f}
 #define SYNTAX_COLOR_STRING     RGBColor{0.200f, 0.900f, 0.300f}
 #define SYNTAX_COLOR_COMMENT    RGBColor{0.500f, 0.500f, 0.500f}
+#define SYNTAX_COLOR_CHARLIT    RGBColor{0.050f, 0.600f, 0.100f}
 #define SYNTAX_COLOR_PREPRO     RGBColor{0.000f, 0.600f, 0.200f}
 #define SYNTAX_COLOR_SPECCHAR   RGBColor{0.500f, 0.500f, 0.500f}
 
@@ -30,6 +32,7 @@
 #define SYNTAX_STYLE_OPERATOR   FontStyle::Regular
 #define SYNTAX_STYLE_STRING     FontStyle::Italic
 #define SYNTAX_STYLE_COMMENT    FontStyle::Regular
+#define SYNTAX_STYLE_CHARLIT    FontStyle::Regular
 #define SYNTAX_STYLE_PREPRO     FontStyle::Regular
 #define SYNTAX_STYLE_SPECCHAR   FontStyle::Bold
 

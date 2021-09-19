@@ -162,10 +162,10 @@ void Buffer::updateHighlighting()
         bool isInsideString = false;
         for (size_t i{}; i < m_content.size(); ++i)
         {
-            if (m_highlightBuffer[i] != SYNTAX_MARK_COMMENT && m_content[i] == '"'
+            if (m_highlightBuffer[i] == SYNTAX_MARK_NONE && m_content[i] == '"'
                     && (i == 0 || (m_content[i-1] != '\\' || (i >= 2 && m_content[i-2] == '\\'))))
                 isInsideString = !isInsideString;
-            if (isInsideString || (m_highlightBuffer[i] != SYNTAX_MARK_COMMENT && m_content[i] == '"'))
+            if (isInsideString || (m_highlightBuffer[i] == SYNTAX_MARK_NONE && m_content[i] == '"'))
                 m_highlightBuffer[i] = SYNTAX_MARK_STRING;
         }
     }};
@@ -238,6 +238,18 @@ void Buffer::updateHighlighting()
         }
     }};
 
+    auto highlightCharLiterals{[&](){
+        bool isInsideCharLit = false;
+        for (size_t i{}; i < m_content.size(); ++i)
+        {
+            if (m_highlightBuffer[i] == SYNTAX_MARK_NONE && m_content[i] == '\''
+                    && (i == 0 || (m_content[i-1] != '\\')))
+                isInsideCharLit = !isInsideCharLit;
+            if (isInsideCharLit || (m_highlightBuffer[i] == SYNTAX_MARK_NONE && m_content[i] == '\''))
+                m_highlightBuffer[i] = SYNTAX_MARK_CHARLIT;
+        }
+    }};
+
     auto highlightChar{[&](char c, char colorMark){
         for (size_t i{}; i < m_content.size(); ++i)
         {
@@ -271,6 +283,10 @@ void Buffer::updateHighlighting()
     timer.reset();
     highlightBlockComments();
     Logger::dbg << "Highlighting of block comments took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
+
+    timer.reset();
+    highlightCharLiterals();
+    Logger::dbg << "Highlighting of character literals took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
     timer.reset();
     highlightStrings();
@@ -577,15 +593,19 @@ void Buffer::render()
             RGBColor charColor;
             switch (m_highlightBuffer[charI])
             {
-                case SYNTAX_MARK_NONE:     charColor = SYNTAX_COLOR_NONE;     charStyle = SYNTAX_STYLE_NONE; break;
-                case SYNTAX_MARK_KEYWORD:  charColor = SYNTAX_COLOR_KEYWORD;  charStyle = SYNTAX_STYLE_KEYWORD; break;
-                case SYNTAX_MARK_TYPE:     charColor = SYNTAX_COLOR_TYPE;     charStyle = SYNTAX_STYLE_TYPE; break;
-                case SYNTAX_MARK_NUMBER:   charColor = SYNTAX_COLOR_NUMBER;   charStyle = SYNTAX_STYLE_NUMBER; break;
-                case SYNTAX_MARK_OPERATOR: charColor = SYNTAX_COLOR_OPERATOR; charStyle = SYNTAX_STYLE_OPERATOR; break;
-                case SYNTAX_MARK_STRING:   charColor = SYNTAX_COLOR_STRING;   charStyle = SYNTAX_STYLE_STRING; break;
-                case SYNTAX_MARK_COMMENT:  charColor = SYNTAX_COLOR_COMMENT;  charStyle = SYNTAX_STYLE_COMMENT; break;
-                case SYNTAX_MARK_PREPRO:   charColor = SYNTAX_COLOR_PREPRO;   charStyle = SYNTAX_STYLE_PREPRO; break;
-                case SYNTAX_MARK_SPECCHAR: charColor = SYNTAX_COLOR_SPECCHAR; charStyle = SYNTAX_STYLE_SPECCHAR; break;
+            case SYNTAX_MARK_NONE:     charColor = SYNTAX_COLOR_NONE;     charStyle = SYNTAX_STYLE_NONE; break;
+            case SYNTAX_MARK_KEYWORD:  charColor = SYNTAX_COLOR_KEYWORD;  charStyle = SYNTAX_STYLE_KEYWORD; break;
+            case SYNTAX_MARK_TYPE:     charColor = SYNTAX_COLOR_TYPE;     charStyle = SYNTAX_STYLE_TYPE; break;
+            case SYNTAX_MARK_OPERATOR: charColor = SYNTAX_COLOR_OPERATOR; charStyle = SYNTAX_STYLE_OPERATOR; break;
+            case SYNTAX_MARK_NUMBER:   charColor = SYNTAX_COLOR_NUMBER;   charStyle = SYNTAX_STYLE_NUMBER; break;
+            case SYNTAX_MARK_STRING:   charColor = SYNTAX_COLOR_STRING;   charStyle = SYNTAX_STYLE_STRING; break;
+            case SYNTAX_MARK_COMMENT:  charColor = SYNTAX_COLOR_COMMENT;  charStyle = SYNTAX_STYLE_COMMENT; break;
+            case SYNTAX_MARK_CHARLIT:  charColor = SYNTAX_COLOR_CHARLIT;  charStyle = SYNTAX_STYLE_CHARLIT; break;
+            case SYNTAX_MARK_PREPRO:   charColor = SYNTAX_COLOR_PREPRO;   charStyle = SYNTAX_STYLE_PREPRO; break;
+            case SYNTAX_MARK_SPECCHAR: charColor = SYNTAX_COLOR_SPECCHAR; charStyle = SYNTAX_STYLE_SPECCHAR; break;
+            default:
+                Logger::err << "BUG: Invalid highlighting buffer value: " << m_highlightBuffer[charI] << Logger::End;
+                abort();
             }
             g_textRenderer->setDrawingColor(charColor);
             advance = g_textRenderer->renderChar(c, {textX, textY}, charStyle).advance;
