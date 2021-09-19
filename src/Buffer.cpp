@@ -473,20 +473,23 @@ void Buffer::render()
     g_textRenderer->prepareForDrawing();
     g_textRenderer->setDrawingColor({1.0f, 1.0f, 1.0f});
 
-    char isLineBeginning = true;
+    bool isLineBeginning = true;
+    bool isLeadingSpace = true;
     int lineI{};
     int colI{};
     size_t charI{(size_t)-1};
     for (char c : m_content)
     {
-        ++charI;
-
         // Don't draw the part of the buffer that is below the viewport
         if (textY > g_textRenderer->getWindowHeight())
         {
             break;
         }
         const bool isCharInsideViewport = textY > -g_fontSizePx;
+
+        ++charI;
+        if (!isspace(c))
+            isLeadingSpace = false;
 
         if (isCharInsideViewport && BUFFER_DRAW_LINE_NUMS && isLineBeginning)
         {
@@ -512,6 +515,29 @@ void Buffer::render()
                     {textX, initTextY+textY-m_scrollY-m_position.y+2},
                     {textX+g_textRenderer->getWindowWidth(), initTextY+textY-m_scrollY-m_position.y+2+g_fontSizePx},
                     CURSOR_LINE_COLOR
+            );
+            // Bind the text renderer shader again
+            g_textRenderer->prepareForDrawing();
+        }
+
+        // Render indent guides
+        if (TAB_SPACE_COUNT > 0 && isCharInsideViewport
+         && isLeadingSpace && colI%TAB_SPACE_COUNT==0 && colI != 0)
+        {
+            g_uiRenderer->renderFilledRectangle(
+                    {textX, initTextY+textY-m_scrollY-m_position.y+2},
+                    {textX+g_fontSizePx/10, initTextY+textY-m_scrollY-m_position.y+2+g_fontSizePx/5},
+                    {0.7f, 0.7f, 0.7f, 0.7f}
+            );
+            g_uiRenderer->renderFilledRectangle(
+                    {textX, initTextY+textY-m_scrollY-m_position.y+2+g_fontSizePx/5*2},
+                    {textX+g_fontSizePx/10, initTextY+textY-m_scrollY-m_position.y+2+g_fontSizePx/5*3},
+                    {0.7f, 0.7f, 0.7f, 0.7f}
+            );
+            g_uiRenderer->renderFilledRectangle(
+                    {textX, initTextY+textY-m_scrollY-m_position.y+2+g_fontSizePx/5*4},
+                    {textX+g_fontSizePx/10, initTextY+textY-m_scrollY-m_position.y+2+g_fontSizePx/5*5},
+                    {0.7f, 0.7f, 0.7f, 0.7f}
             );
             // Bind the text renderer shader again
             g_textRenderer->prepareForDrawing();
@@ -561,6 +587,7 @@ void Buffer::render()
             textX = initTextX;
             textY += g_fontSizePx;
             isLineBeginning = true;
+            isLeadingSpace = true;
             ++lineI;
             colI = 0;
             continue;
