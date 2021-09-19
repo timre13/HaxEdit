@@ -163,47 +163,23 @@ void App::renderDialogs()
     }
 }
 
-static const std::string genWelcomeMsg(const std::string& templ)
+static const std::string genWelcomeMsg(std::string templ)
 {
-    std::string welcomeMsg = templ;
-    {
-        size_t buildDatePos = welcomeMsg.find("%BUILD_DATE%");
-        if (buildDatePos != std::string::npos)
-        {
-            welcomeMsg = welcomeMsg.replace(buildDatePos, 12, (__DATE__ " at " __TIME__));
-        }
-    }
-    {
-        size_t buildTypePos = welcomeMsg.find("%BUILD_TYPE%");
-        if (buildTypePos != std::string::npos)
-        {
-            std::string buildType =
+    static std::map<std::string, std::string> map;
+    map["BUILD_DATE"] = __DATE__ " at " __TIME__;
+    map["BUILD_TYPE"] =
 #ifdef NDEBUG
                 "Release";
 #else
                 "Debug";
 #endif
-            welcomeMsg = welcomeMsg.replace(buildTypePos, 12, buildType);
-        }
-    }
-    {
-        size_t isOptimizedPos = welcomeMsg.find("%BUILD_IS_OPTIMIZED%");
-        if (isOptimizedPos != std::string::npos)
-        {
-            std::string isOpt =
+    map["BUILD_IS_OPTIMIZED"] =
 #ifdef __OPTIMIZE__
                 "ON";
 #else
                 "OFF";
 #endif
-            welcomeMsg = welcomeMsg.replace(isOptimizedPos, 20, isOpt);
-        }
-    }
-    {
-        size_t isAsanPos = welcomeMsg.find("%BUILD_IS_ASAN_ON%");
-        if (isAsanPos != std::string::npos)
-        {
-            std::string buildType =
+    map["BUILD_IS_ASAN_ON"] =
 #ifdef __has_feature
 #   if __has_feature(address_sanitizer)
                 "ON";
@@ -213,34 +189,19 @@ static const std::string genWelcomeMsg(const std::string& templ)
 #else
                 "???";
 #endif
-            welcomeMsg = welcomeMsg.replace(isAsanPos, 18, buildType);
-        }
-    }
+    map["COMPILER_NAME"] = __VERSION__;
+    map["GL_VENDOR"] = (const char*)glGetString(GL_VENDOR);
+    map["GL_RENDERER"] = (const char*)glGetString(GL_RENDERER);
+
+    for (const auto& pair : map)
     {
-        size_t compilerStrPos = welcomeMsg.find("%COMPILER_NAME%");
-        if (compilerStrPos != std::string::npos)
+        const size_t pos = templ.find('%'+pair.first+'%');
+        if (pos != std::string::npos)
         {
-            welcomeMsg = welcomeMsg.replace(compilerStrPos, 15,
-                    std::string(__VERSION__));
+            templ = templ.replace(pos, pair.first.length()+2, pair.second);
         }
     }
-    {
-        size_t vendorStrPos = welcomeMsg.find("%GL_VENDOR%");
-        if (vendorStrPos != std::string::npos)
-        {
-            welcomeMsg = welcomeMsg.replace(vendorStrPos, 11,
-                    std::string((const char*)glGetString(GL_VENDOR)));
-        }
-    }
-    {
-        size_t rendererStrPos = welcomeMsg.find("%GL_RENDERER%");
-        if (rendererStrPos != std::string::npos)
-        {
-            welcomeMsg = welcomeMsg.replace(rendererStrPos, 13,
-                    std::string((const char*)glGetString(GL_RENDERER)));
-        }
-    }
-    return welcomeMsg;
+    return templ;
 }
 
 void App::renderStartupScreen()
@@ -249,7 +210,8 @@ void App::renderStartupScreen()
     static const auto welcomeMsg1 = genWelcomeMsg(WELCOME_MSG_PRIMARY);
     static const auto welcomeMsg2 = genWelcomeMsg(WELCOME_MSG_SECONDARY);
     g_textRenderer->renderString(welcomeMsg1, {200, 30}, FontStyle::Bold, {0.8f, 0.8f, 0.8f}, true);
-    g_textRenderer->renderString(welcomeMsg2, {200, 30+(strCountLines(welcomeMsg1)+1)*g_fontSizePx},
+    g_textRenderer->renderString(welcomeMsg2,
+            {200, 30+(strCountLines(welcomeMsg1)+1)*g_fontSizePx},
             FontStyle::Regular, {0.8f, 0.8f, 0.8f}, true);
 
     const int origIconW = icon->getPhysicalSize().x;
@@ -258,7 +220,8 @@ void App::renderStartupScreen()
     const int iconSize = std::min(
             std::min(g_windowWidth, 512),
             std::min(g_windowHeight, 512));
-    icon->render({g_windowWidth/2-iconSize*iconRatio/2, g_windowHeight/2-iconSize/2}, {iconSize*iconRatio, iconSize});
+    icon->render({g_windowWidth/2-iconSize*iconRatio/2, g_windowHeight/2-iconSize/2},
+            {iconSize*iconRatio, iconSize});
 }
 
 void GLAPIENTRY App::glDebugMsgCB(
