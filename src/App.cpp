@@ -163,9 +163,9 @@ void App::renderDialogs()
     }
 }
 
-static const std::string genWelcomeMsg()
+static const std::string genWelcomeMsg(const std::string& templ)
 {
-    std::string welcomeMsg = WELCOME_MSG;
+    std::string welcomeMsg = templ;
     {
         size_t buildDatePos = welcomeMsg.find("%BUILD_DATE%");
         if (buildDatePos != std::string::npos)
@@ -184,6 +184,44 @@ static const std::string genWelcomeMsg()
                 "Debug";
 #endif
             welcomeMsg = welcomeMsg.replace(buildTypePos, 12, buildType);
+        }
+    }
+    {
+        size_t isOptimizedPos = welcomeMsg.find("%BUILD_IS_OPTIMIZED%");
+        if (isOptimizedPos != std::string::npos)
+        {
+            std::string isOpt =
+#ifdef __OPTIMIZE__
+                "ON";
+#else
+                "OFF";
+#endif
+            welcomeMsg = welcomeMsg.replace(isOptimizedPos, 20, isOpt);
+        }
+    }
+    {
+        size_t isAsanPos = welcomeMsg.find("%BUILD_IS_ASAN_ON%");
+        if (isAsanPos != std::string::npos)
+        {
+            std::string buildType =
+#ifdef __has_feature
+#   if __has_feature(address_sanitizer)
+                "ON";
+#   else
+                "OFF";
+#   endif
+#else
+                "???";
+#endif
+            welcomeMsg = welcomeMsg.replace(isAsanPos, 18, buildType);
+        }
+    }
+    {
+        size_t compilerStrPos = welcomeMsg.find("%COMPILER_NAME%");
+        if (compilerStrPos != std::string::npos)
+        {
+            welcomeMsg = welcomeMsg.replace(compilerStrPos, 15,
+                    std::string(__VERSION__));
         }
     }
     {
@@ -208,8 +246,11 @@ static const std::string genWelcomeMsg()
 void App::renderStartupScreen()
 {
     static const auto icon = loadProgramIcon();
-    static const auto welcomeMsg = genWelcomeMsg();
-    g_textRenderer->renderString(welcomeMsg, {200, 30}, FontStyle::Bold, {0.8f, 0.8f, 0.8f}, true);
+    static const auto welcomeMsg1 = genWelcomeMsg(WELCOME_MSG_PRIMARY);
+    static const auto welcomeMsg2 = genWelcomeMsg(WELCOME_MSG_SECONDARY);
+    g_textRenderer->renderString(welcomeMsg1, {200, 30}, FontStyle::Bold, {0.8f, 0.8f, 0.8f}, true);
+    g_textRenderer->renderString(welcomeMsg2, {200, 30+(strCountLines(welcomeMsg1)+1)*g_fontSizePx},
+            FontStyle::Regular, {0.8f, 0.8f, 0.8f}, true);
 
     const int origIconW = icon->getPhysicalSize().x;
     const int origIconH = icon->getPhysicalSize().y;

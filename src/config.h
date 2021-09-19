@@ -49,4 +49,7 @@
 #define ENABLE_SYNTAX_HIGHLIGHTING true
 
 #define ICON_FILE_PATH "../img/logo.png"
-#define WELCOME_MSG "Welcome to HaxorEdit\n\nBuilt on %BUILD_DATE% (%BUILD_TYPE%)\nOpenGL Vendor: %GL_VENDOR% | Renderer: %GL_RENDERER%"
+#define WELCOME_MSG_PRIMARY "Welcome to HaxorEdit\n"
+#define WELCOME_MSG_SECONDARY "Built on %BUILD_DATE% (Build t.: %BUILD_TYPE%, Optim.: %BUILD_IS_OPTIMIZED%, " \
+                              "ASAN: %BUILD_IS_ASAN_ON%)\nCompiler: %COMPILER_NAME%\n" \
+                              "OpenGL Vendor: %GL_VENDOR% | Renderer: %GL_RENDERER%"
