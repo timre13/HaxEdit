@@ -208,13 +208,16 @@ void Buffer::updateHighlighting()
         std::string line;
         while (std::getline(ss, line))
         {
-            const size_t found = line.find(Syntax::preprocessorPrefix);
-            if (found != std::string::npos)
+            const size_t prefixPos = line.find(Syntax::preprocessorPrefix);
+            if (prefixPos != std::string::npos)
             {
-                const size_t beginning = charI+found;
-                const size_t preprocessorEnd = line.find_first_of(' ', found);
-                const size_t size = (preprocessorEnd != std::string::npos ? preprocessorEnd : line.size())-found;
-                m_highlightBuffer.replace(beginning, size, size, SYNTAX_MARK_PREPRO);
+                const size_t beginning = charI+prefixPos;
+                if (m_highlightBuffer[beginning] == SYNTAX_MARK_NONE)
+                {
+                    const size_t preprocessorEnd = line.find_first_of(' ', prefixPos);
+                    const size_t size = (preprocessorEnd != std::string::npos ? preprocessorEnd : line.size())-prefixPos;
+                    m_highlightBuffer.replace(beginning, size, size, SYNTAX_MARK_PREPRO);
+                }
             }
             charI += line.size()+1;
         }
