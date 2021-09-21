@@ -18,6 +18,7 @@ GLFWwindow* App::createWindow()
     glfwSetKeyCallback(window, App::windowKeyCB);
     glfwSetScrollCallback(window, App::windowScrollCB);
     glfwSetCharCallback(window, App::windowCharCB);
+    glfwSetWindowCloseCallback(window, App::windowCloseCB);
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
     return window;
@@ -473,3 +474,20 @@ void App::toggleDebugDraw()
     g_isRedrawNeeded = true;
 }
 
+void App::windowCloseCB(GLFWwindow* window)
+{
+    Logger::log << "Window close requested!" << Logger::End;
+
+    for (const auto& buffer : g_buffers)
+    {
+        if (buffer.isModified())
+        {
+            glfwSetWindowShouldClose(window, false);
+            g_dialogs.push_back(std::make_unique<MessageDialog>(
+                        "Please save or close all modified buffers",
+                        MessageDialog::Type::Information));
+            Logger::log << "Window close aborted" << Logger::End;
+            return;
+        }
+    }
+}

@@ -59,10 +59,11 @@ private:
     static void windowRefreshCB(GLFWwindow*);
     static void windowResizeCB(GLFWwindow*, int width, int height);
     static void windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods);
-    static void windowScrollCB(GLFWwindow*, double, double yOffset);
 public:
     static void windowCharCB(GLFWwindow*, uint codePoint);
 private:
+    static void windowScrollCB(GLFWwindow*, double, double yOffset);
+    static void windowCloseCB(GLFWwindow* window);
 
     static void toggleDebugDraw();
 };
