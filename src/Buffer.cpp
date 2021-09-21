@@ -17,6 +17,7 @@ int Buffer::open(const std::string& filePath)
     TIMER_BEGIN_FUNC();
 
     m_filePath = filePath;
+    m_isReadOnly = false;
     Logger::dbg << "Opening file: " << filePath << Logger::End;
 
     try
@@ -48,6 +49,18 @@ int Buffer::open(const std::string& filePath)
         Logger::err << "Failed to open file: \"" << filePath << "\": " << e.what() << Logger::End;
         TIMER_END_FUNC();
         return 1;
+    }
+
+    // Try to open the file as writable. If fails, read-only file.
+    {
+        std::fstream file;
+        file.open(filePath, std::ios_base::out | std::ios_base::app);
+        if (!file.is_open())
+        {
+            Logger::warn << "File is read only" << Logger::End;
+            m_isReadOnly = true;
+        }
+        file.close();
     }
 
     TIMER_END_FUNC();
@@ -86,6 +99,7 @@ int Buffer::saveToFile()
     }
 
     m_isModified = false;
+    m_isReadOnly = false;
 
     TIMER_END_FUNC();
     return 0;
@@ -427,7 +441,7 @@ void Buffer::updateCursor()
 
 static inline void renderStatusLine(
         int cursorLine, int cursorCol, int cursorCharPos,
-        const std::string& filePath)
+        const std::string& filePath, bool isReadOnly)
 {
     const int winW = g_textRenderer->getWindowWidth();
     const int winH = g_textRenderer->getWindowHeight();
@@ -451,7 +465,7 @@ static inline void renderStatusLine(
             {winW-g_fontSizePx*(4+1+3+3+7)*0.7f,
              winH-g_fontSizePx-4});
 
-    const std::string statusLineString = filePath;
+    const std::string statusLineString = filePath+(isReadOnly ? " [RO]" : "");
     g_textRenderer->renderString(
             statusLineString,
             {LINEN_BAR_WIDTH*g_fontSizePx,
@@ -654,13 +668,16 @@ void Buffer::render()
 
     renderStatusLine(
             m_cursorLine, m_cursorCol, m_cursorCharPos,
-            m_filePath);
+            m_filePath, m_isReadOnly);
 
     TIMER_END_FUNC();
 }
 
 void Buffer::insert(char character)
 {
+    if (m_isReadOnly)
+        return;
+
     TIMER_BEGIN_FUNC();
 
     assert(m_cursorCol >= 0);
@@ -691,6 +708,9 @@ void Buffer::insert(char character)
 
 void Buffer::deleteCharBackwards()
 {
+    if (m_isReadOnly)
+        return;
+
     TIMER_BEGIN_FUNC();
 
     assert(m_cursorCol >= 0);
@@ -726,6 +746,9 @@ void Buffer::deleteCharBackwards()
 
 void Buffer::deleteCharForward()
 {
+    if (m_isReadOnly)
+        return;
+
     TIMER_BEGIN_FUNC();
 
     assert(m_cursorCol >= 0);

@@ -35,6 +35,7 @@ private:
     std::string m_content;
     int m_numOfLines{};
     bool m_isModified{};
+    bool m_isReadOnly{};
 
     std::string m_highlightBuffer;
 
@@ -115,7 +116,10 @@ public:
     void insert(char character);
     void deleteCharBackwards();
     void deleteCharForward();
-    bool isModified() const { return m_isModified; }
+    inline bool isModified() const { return m_isModified; }
+
+    inline void setReadOnly(bool isReadOnly) { m_isReadOnly = isReadOnly; }
+    inline bool isReadOnly() { return m_isReadOnly; }
 
     ~Buffer();
 };
