@@ -26,7 +26,10 @@ void ImageBuffer::render()
 {
     TIMER_BEGIN_FUNC();
 
-    m_image->render(m_position);
+    m_image->render({
+            g_windowWidth/2-m_image->getPhysicalSize().x/2,
+            g_windowHeight/2-m_image->getPhysicalSize().y/2,
+    });
 
     renderStatusLine();
 

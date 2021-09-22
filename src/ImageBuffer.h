@@ -6,6 +6,9 @@
 #include "types.h"
 #include <memory>
 
+extern int g_windowWidth;
+extern int g_windowHeight;
+
 inline bool isImageExtension(std::string ext)
 {
     ext = strToLower(ext);
