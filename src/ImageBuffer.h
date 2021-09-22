@@ -35,6 +35,7 @@ class ImageBuffer final : public Buffer
 {
 private:
     std::unique_ptr<Image> m_image;
+    float m_zoom{1.0f};
 
 public:
     ImageBuffer()
@@ -58,6 +59,15 @@ public:
     virtual inline void moveCursor(CursorMovCmd) override {}
     virtual inline void scrollBy(int) override {}
     virtual inline void setReadOnly(bool) override {}
+
+    virtual inline void zoomBy(float val)
+    {
+        if (m_image->getPhysicalSize().x*(m_zoom+val) >= 1.0f
+         && m_image->getPhysicalSize().y*(m_zoom+val) >= 1.0f)
+        {
+            m_zoom += val;
+        }
+    }
 
     virtual inline ~ImageBuffer()
     {

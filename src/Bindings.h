@@ -11,6 +11,7 @@
 #include "Dialog.h"
 #include "FileDialog.h"
 #include "MessageDialog.h"
+#include "config.h"
 
 extern int g_windowWidth;
 extern int g_windowHeight;
@@ -266,6 +267,30 @@ void decreaseFontSize()
     if (g_fontSizePx <= 1)
         g_fontSizePx = 1;
     g_textRenderer->setFontSize(g_fontSizePx);
+    g_isRedrawNeeded = true;
+}
+
+void zoomInBufferIfImage()
+{
+    if (g_buffers.empty())
+        return;
+
+    if (auto* img = dynamic_cast<ImageBuffer*>(g_buffers[g_currentBufferI].get()))
+    {
+        img->zoomBy(IMG_BUF_ZOOM_STEP);
+    }
+    g_isRedrawNeeded = true;
+}
+
+void zoomOutBufferIfImage()
+{
+    if (g_buffers.empty())
+        return;
+
+    if (auto* img = dynamic_cast<ImageBuffer*>(g_buffers[g_currentBufferI].get()))
+    {
+        img->zoomBy(-IMG_BUF_ZOOM_STEP);
+    }
     g_isRedrawNeeded = true;
 }
 

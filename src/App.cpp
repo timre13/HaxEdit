@@ -95,6 +95,10 @@ void App::setupKeyBindings()
     Bindings::noModMap[GLFW_KEY_DELETE]     = Bindings::Callbacks::deleteCharForward;
     Bindings::noModMap[GLFW_KEY_KP_DECIMAL] = Bindings::Callbacks::deleteCharForward;
     Bindings::noModMap[GLFW_KEY_TAB]        = Bindings::Callbacks::insertTabOrSpaces;
+    Bindings::noModMap[GLFW_KEY_MINUS]      = Bindings::Callbacks::zoomOutBufferIfImage;
+    Bindings::noModMap[GLFW_KEY_KP_SUBTRACT]= Bindings::Callbacks::zoomOutBufferIfImage;
+    Bindings::noModMap[GLFW_KEY_EQUAL]      = Bindings::Callbacks::zoomInBufferIfImage;
+    Bindings::noModMap[GLFW_KEY_KP_ADD]     = Bindings::Callbacks::zoomInBufferIfImage;
 
     Bindings::ctrlMap[GLFW_KEY_N]           = Bindings::Callbacks::createNewBuffer;
     Bindings::ctrlMap[GLFW_KEY_S]           = Bindings::Callbacks::saveCurrentBuffer;

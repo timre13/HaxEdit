@@ -53,3 +53,5 @@
 #define WELCOME_MSG_SECONDARY "Built on %BUILD_DATE% (Build t.: %BUILD_TYPE%, Optim.: %BUILD_IS_OPTIMIZED%, " \
                               "ASAN: %BUILD_IS_ASAN_ON%)\nCompiler: %COMPILER_NAME%\n" \
                               "OpenGL Vendor: %GL_VENDOR% | Renderer: %GL_RENDERER%"
+
+#define IMG_BUF_ZOOM_STEP 0.05f

@@ -26,10 +26,12 @@ void ImageBuffer::render()
 {
     TIMER_BEGIN_FUNC();
 
-    m_image->render({
-            g_windowWidth/2-m_image->getPhysicalSize().x/2,
-            g_windowHeight/2-m_image->getPhysicalSize().y/2,
-    });
+    const float zoomedW = m_image->getPhysicalSize().x*m_zoom;
+    const float zoomedH = m_image->getPhysicalSize().y*m_zoom;
+
+    m_image->render(
+            {g_windowWidth/2-zoomedW/2, g_windowHeight/2-zoomedH/2},
+            {zoomedW, zoomedH});
 
     renderStatusLine();
 
