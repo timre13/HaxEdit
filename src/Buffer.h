@@ -7,6 +7,7 @@
 #include "TextRenderer.h"
 #include "UiRenderer.h"
 #include "config.h"
+#include "Logger.h"
 
 namespace std_fs = std::filesystem;
 
@@ -30,7 +31,7 @@ public:
         LastChar,
     };
 
-private:
+protected:
     std::string m_filePath = FILENAME_NEW;
     std::string m_content;
     int m_numOfLines{};
@@ -53,46 +54,47 @@ private:
     /*
      * Make the cursor visible by scrolling the viewport.
      */
-    void scrollViewportToCursor();
+    virtual void scrollViewportToCursor();
 
-    void updateHighlighting();
+    virtual void updateHighlighting();
 
 public:
-    Buffer();
+    inline Buffer() { Logger::log << "Created a buffer: " << this << Logger::End; }
 
     Buffer(const Buffer&) = delete;
     Buffer& operator=(const Buffer&) = delete;
     Buffer(Buffer&& other) = default;
     Buffer& operator=(Buffer&& other) = default;
 
-    int open(const std::string& filePath);
-    int saveToFile();
-    int saveAsToFile(const std::string& filePath);
+    virtual int open(const std::string& filePath);
+    virtual int saveToFile();
+    virtual int saveAsToFile(const std::string& filePath);
 
-    void updateCursor();
-    void render();
+    virtual void updateCursor();
+    virtual void renderStatusLine() final;
+    virtual void render();
 
-    inline const std::string& getContent() const { return m_content; }
-    inline const std::string& getFilePath() const { return m_filePath; }
-    inline const std::string getFileName() const {
-        return std_fs::path{m_filePath}.filename().string(); }
-    inline const std::string getFileExt() const {
+    virtual inline const std::string& getContent() const { return m_content; }
+    virtual inline const std::string& getFilePath() const final { return m_filePath; }
+    virtual inline const std::string getFileName() const final {
+         return std_fs::path{m_filePath}.filename().string(); }
+    virtual inline const std::string getFileExt() const final {
         return std_fs::path{m_filePath}.extension().string(); }
-    inline bool isNewFile() const { return m_filePath.compare(FILENAME_NEW) == 0; }
-    inline int getNumOfLines() const { return m_numOfLines; }
+    virtual inline bool isNewFile() const final { return m_filePath.compare(FILENAME_NEW) == 0; }
+    virtual inline int getNumOfLines() const { return m_numOfLines; }
 
-    inline int getCursorLine() const { return m_cursorLine; }
-    inline int getCursorCol() const { return m_cursorCol; }
-    inline int getCursorCharPos() const { return m_cursorCharPos; }
+    virtual inline int getCursorLine() const { return m_cursorLine; }
+    virtual inline int getCursorCol() const { return m_cursorCol; }
+    virtual inline int getCursorCharPos() const { return m_cursorCharPos; }
 
-    inline void moveCursor(CursorMovCmd cmd) { m_cursorMovCmd = cmd; }
+    virtual inline void moveCursor(CursorMovCmd cmd) { m_cursorMovCmd = cmd; }
 
-    inline void setCursorVisibility(bool isVisible) {
+    virtual inline void setCursorVisibility(bool isVisible) {
         m_isCursorShown = isVisible; }
-    inline void toggleCursorVisibility() {
+    virtual inline void toggleCursorVisibility() {
         m_isCursorShown = !m_isCursorShown; }
 
-    inline void scrollBy(int val)
+    virtual inline void scrollBy(int val)
     {
         TIMER_BEGIN_FUNC();
 
@@ -113,13 +115,16 @@ public:
     }
 
     // Text editing
-    void insert(char character);
-    void deleteCharBackwards();
-    void deleteCharForward();
-    inline bool isModified() const { return m_isModified; }
+    virtual void insert(char character);
+    virtual void deleteCharBackwards();
+    virtual void deleteCharForward();
+    virtual inline bool isModified() const final { return m_isModified; }
 
-    inline void setReadOnly(bool isReadOnly) { m_isReadOnly = isReadOnly; }
-    inline bool isReadOnly() { return m_isReadOnly; }
+    virtual inline void setReadOnly(bool isReadOnly) { m_isReadOnly = isReadOnly; }
+    virtual inline bool isReadOnly() final { return m_isReadOnly; }
 
-    ~Buffer();
+    virtual inline ~Buffer()
+    {
+        Logger::log << "Destroyed a buffer: " << this << " (" << m_filePath << ')' << Logger::End;
+    }
 };

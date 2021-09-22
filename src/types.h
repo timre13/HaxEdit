@@ -2,6 +2,7 @@
 
 #include <string>
 #include <sstream>
+#include <filesystem>
 
 using uint = unsigned int;
 
@@ -47,4 +48,16 @@ inline int getLongestLineLen(const std::string& str)
             maxLen = line.length();
     }
     return (int)maxLen;
+}
+
+inline std::string strToLower(std::string str)
+{
+    for (char& c : str)
+        c = tolower(c);
+    return str;
+}
+
+inline std::string getFileExt(const std::string& path)
+{
+    return std::filesystem::path{path}.extension().string().substr(1);
 }

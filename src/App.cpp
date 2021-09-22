@@ -306,11 +306,21 @@ static void handleSaveAsDialog(FileDialog* fileDialog)
 
 static void handleOpenDialog(FileDialog* fileDialog)
 {
-    Buffer buffer;
-    if (buffer.open(fileDialog->getSelectedFilePath()))
+    auto path = fileDialog->getSelectedFilePath();
+
+    Buffer* buffer;
+    if (isImageExtension(getFileExt(path)))
+    {
+        buffer = new ImageBuffer;
+    }
+    else
+    {
+        buffer = new Buffer;
+    }
+    if (buffer->open(path))
     {
         g_dialogs.push_back(std::make_unique<MessageDialog>(
-                    "Failed to open file: \""+fileDialog->getSelectedFilePath()+'"',
+                    "Failed to open file: \""+path+'"',
                     MessageDialog::Type::Error));
     }
     if (g_buffers.empty())

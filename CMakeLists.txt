@@ -48,6 +48,8 @@ add_executable(haxed
     src/TextRenderer.cpp
     src/Buffer.h
     src/Buffer.cpp
+    src/ImageBuffer.h
+    src/ImageBuffer.cpp
     src/types.h
     src/UiRenderer.h
     src/UiRenderer.cpp

@@ -15,6 +15,7 @@ Image::Image(const std::string& filePath)
     if (!imageData)
     {
         Logger::err << "Failed to load image: " << filePath << ": " << stbi_failure_reason() << Logger::End;
+        m_isOpenFailed = true;
         imageData = (unsigned char*)malloc(4*4*4);
         static constexpr const uint32_t imgData[] = {
             0xffffffff, 0xff000000, 0xffffffff, 0xff000000,
@@ -29,6 +30,7 @@ Image::Image(const std::string& filePath)
     else
     {
         Logger::dbg << "Loaded image file: " << filePath << Logger::End;
+        m_isOpenFailed = false;
     }
 
     glGenTextures(1, &m_sampler);

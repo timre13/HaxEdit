@@ -11,6 +11,7 @@ private:
     uint m_sampler{};
     glm::ivec2 m_physicalSize{};
     std::string m_filePath;
+    bool m_isOpenFailed{};
 
 public:
     /*
@@ -32,6 +33,8 @@ public:
 
     inline uint getSamplerId() const { return m_sampler; }
     inline glm::ivec2 getPhysicalSize() const { return m_physicalSize; }
+
+    inline bool isOpenFailed() const { return m_isOpenFailed; }
 
     ~Image();
 };

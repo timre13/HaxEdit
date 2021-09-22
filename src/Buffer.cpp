@@ -1,16 +1,10 @@
 #include "Buffer.h"
 #include "config.h"
-#include "Logger.h"
 #include "Timer.h"
 #include "types.h"
 #include "syntax.h"
 #include <fstream>
 #include <sstream>
-
-Buffer::Buffer()
-{
-    Logger::dbg << "Created a buffer: " << this << Logger::End;
-}
 
 int Buffer::open(const std::string& filePath)
 {
@@ -439,9 +433,7 @@ void Buffer::updateCursor()
     TIMER_END_FUNC();
 }
 
-static inline void renderStatusLine(
-        int cursorLine, int cursorCol, int cursorCharPos,
-        const std::string& filePath, bool isReadOnly)
+void Buffer::renderStatusLine()
 {
     const int winW = g_textRenderer->getWindowWidth();
     const int winH = g_textRenderer->getWindowHeight();
@@ -457,15 +449,15 @@ static inline void renderStatusLine(
             RGB_COLOR_TO_RGBA(STATUSBAR_BG_COLOR));
 
     const std::string cursorPosString
-        = std::to_string(cursorLine+1) + ':'
-        + std::to_string(cursorCol+1) + " | "
-        + std::to_string(cursorCharPos);
+        = std::to_string(m_cursorLine+1) + ':'
+        + std::to_string(m_cursorCol+1) + " | "
+        + std::to_string(m_cursorCharPos);
     g_textRenderer->renderString(
             cursorPosString,
             {winW-g_fontSizePx*(4+1+3+3+7)*0.7f,
              winH-g_fontSizePx-4});
 
-    const std::string statusLineString = filePath+(isReadOnly ? " [RO]" : "");
+    const std::string statusLineString = m_filePath+(m_isReadOnly ? " [RO]" : "");
     g_textRenderer->renderString(
             statusLineString,
             {LINEN_BAR_WIDTH*g_fontSizePx,
@@ -666,9 +658,7 @@ void Buffer::render()
         isLineBeginning = false;
     }
 
-    renderStatusLine(
-            m_cursorLine, m_cursorCol, m_cursorCharPos,
-            m_filePath, m_isReadOnly);
+    renderStatusLine();
 
     TIMER_END_FUNC();
 }
@@ -778,9 +768,4 @@ void Buffer::deleteCharForward()
     updateHighlighting();
 
     TIMER_END_FUNC();
-}
-
-Buffer::~Buffer()
-{
-    Logger::dbg << "Destroyed a buffer: " << this << Logger::End;
 }

@@ -50,14 +50,25 @@ int main(int argc, char** argv)
 
     for (int i{1}; i < argc; ++i)
     {
-        g_buffers.push_back(Buffer{});
-        if (g_buffers.back().open(argv[i]))
+        const std::string path = argv[i];
+        Buffer* buffer;
+        if (isImageExtension(getFileExt(path)))
+        {
+            buffer = new ImageBuffer;
+        }
+        else
+        {
+            buffer = new Buffer;
+        }
+        if (buffer->open(path))
         {
             g_dialogs.push_back(std::make_unique<MessageDialog>(
-                        "Failed to open file: \""+std::string{argv[i]}+'"', MessageDialog::Type::Error));
+                        "Failed to open file: \""+path+'"',
+                        MessageDialog::Type::Error));
         }
         g_buffers.push_back(std::unique_ptr<Buffer>(buffer));
     }
+
     if (g_buffers.empty())
     {
         g_buffers.emplace_back(new Buffer{});

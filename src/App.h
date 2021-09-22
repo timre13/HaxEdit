@@ -18,6 +18,7 @@
 #include "AskerDialog.h"
 #include "types.h"
 #include "Timer.h"
+#include "ImageBuffer.h"
 
 extern int g_windowWidth;
 extern int g_windowHeight;
