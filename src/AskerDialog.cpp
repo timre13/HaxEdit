@@ -10,7 +10,7 @@ extern bool g_isRedrawNeeded;
 extern bool g_isTitleUpdateNeeded;
 extern bool g_isDebugDrawMode;
 extern bool g_shouldIgnoreNextChar;
-extern std::vector<Buffer> g_buffers;
+extern std::vector<std::unique_ptr<Buffer>> g_buffers;
 extern size_t g_currentBufferI;
 extern std::vector<std::unique_ptr<Dialog>> g_dialogs;
 extern int g_fontSizePx;

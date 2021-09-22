@@ -8,7 +8,7 @@ bool g_isTitleUpdateNeeded = true;
 bool g_isDebugDrawMode = false;
 bool g_shouldIgnoreNextChar = false;
 
-std::vector<Buffer> g_buffers;
+std::vector<std::unique_ptr<Buffer>> g_buffers;
 size_t g_currentBufferI{};
 
 std::vector<std::unique_ptr<Dialog>> g_dialogs;
@@ -56,18 +56,19 @@ int main(int argc, char** argv)
             g_dialogs.push_back(std::make_unique<MessageDialog>(
                         "Failed to open file: \""+std::string{argv[i]}+'"', MessageDialog::Type::Error));
         }
+        g_buffers.push_back(std::unique_ptr<Buffer>(buffer));
     }
     if (g_buffers.empty())
     {
-        g_buffers.emplace_back();
-        g_buffers.back().open(__FILE__);
+        g_buffers.emplace_back(new Buffer{});
+        g_buffers.back()->open(__FILE__);
     }
 
     auto genTitle{
         [&](){
             if (g_buffers.empty())
                 return std::string{"HaxorEdit"};
-            return g_buffers[g_currentBufferI].getFileName()
+            return g_buffers[g_currentBufferI]->getFileName()
                 + std::string{" - ["} + std::to_string(g_currentBufferI+1) + '/'
                 + std::to_string(g_buffers.size()) + "]";
         }
@@ -80,7 +81,7 @@ int main(int argc, char** argv)
 
         if (CURSOR_BLINK_FRAMES >= 0 && framesUntilCursorBlinking <= 0 && !g_buffers.empty())
         {
-            g_buffers[g_currentBufferI].toggleCursorVisibility();
+            g_buffers[g_currentBufferI]->toggleCursorVisibility();
             g_isRedrawNeeded = true;
             framesUntilCursorBlinking = CURSOR_BLINK_FRAMES;
         }

@@ -17,7 +17,7 @@ extern int g_windowHeight;
 extern bool g_isRedrawNeeded;
 extern bool g_isTitleUpdateNeeded;
 extern bool g_isDebugDrawMode;
-extern std::vector<Buffer> g_buffers;
+extern std::vector<std::unique_ptr<Buffer>> g_buffers;
 extern size_t g_currentBufferI;
 extern std::vector<std::unique_ptr<Dialog>> g_dialogs;
 
@@ -42,13 +42,13 @@ void createNewBuffer()
 {
     if (g_buffers.empty())
     {
-        g_buffers.emplace_back();
+        g_buffers.emplace_back(new Buffer{});
         g_currentBufferI = 0;
     }
     else
     {
         // Insert the buffer next to the current one
-        g_buffers.emplace(g_buffers.begin()+g_currentBufferI+1);
+        g_buffers.emplace(g_buffers.begin()+g_currentBufferI+1, new Buffer{});
         ++g_currentBufferI; // Go to the current buffer
     }
     g_isRedrawNeeded = true;
@@ -59,14 +59,14 @@ void saveCurrentBuffer()
 {
     if (!g_buffers.empty())
     {
-        if (g_buffers[g_currentBufferI].isNewFile())
+        if (g_buffers[g_currentBufferI]->isNewFile())
         {
             // Open a save as dialog
             g_dialogs.push_back(std::make_unique<FileDialog>(".", FileDialog::Type::SaveAs));
         }
         else
         {
-            if (g_buffers[g_currentBufferI].saveToFile())
+            if (g_buffers[g_currentBufferI]->saveToFile())
             {
                 g_dialogs.push_back(std::make_unique<MessageDialog>(
                             "Failed to save file",
@@ -98,7 +98,7 @@ void closeCurrentBuffer()
     if (g_buffers.empty())
         return;
 
-    if (g_buffers[g_currentBufferI].isModified())
+    if (g_buffers[g_currentBufferI]->isModified())
     {
         g_dialogs.push_back(std::make_unique<MessageDialog>(
                     "Save?",
@@ -143,7 +143,7 @@ void moveCursorRight()
 {
     if (!g_buffers.empty())
     {
-        g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::Right);
+        g_buffers[g_currentBufferI]->moveCursor(Buffer::CursorMovCmd::Right);
         g_isRedrawNeeded = true;
     }
 }
@@ -152,7 +152,7 @@ void moveCursorLeft()
 {
     if (!g_buffers.empty())
     {
-        g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::Left);
+        g_buffers[g_currentBufferI]->moveCursor(Buffer::CursorMovCmd::Left);
         g_isRedrawNeeded = true;
     }
 }
@@ -161,7 +161,7 @@ void moveCursorDown()
 {
     if (!g_buffers.empty())
     {
-        g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::Down);
+        g_buffers[g_currentBufferI]->moveCursor(Buffer::CursorMovCmd::Down);
         g_isRedrawNeeded = true;
     }
 }
@@ -170,7 +170,7 @@ void moveCursorUp()
 {
     if (!g_buffers.empty())
     {
-        g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::Up);
+        g_buffers[g_currentBufferI]->moveCursor(Buffer::CursorMovCmd::Up);
         g_isRedrawNeeded = true;
     }
 }
@@ -179,7 +179,7 @@ void moveCursorToLineBeginning()
 {
     if (!g_buffers.empty())
     {
-        g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::LineBeginning);
+        g_buffers[g_currentBufferI]->moveCursor(Buffer::CursorMovCmd::LineBeginning);
         g_isRedrawNeeded = true;
     }
 }
@@ -188,7 +188,7 @@ void moveCursorToLineEnd()
 {
     if (!g_buffers.empty())
     {
-        g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::LineEnd);
+        g_buffers[g_currentBufferI]->moveCursor(Buffer::CursorMovCmd::LineEnd);
         g_isRedrawNeeded = true;
     }
 }
@@ -202,7 +202,7 @@ void deleteCharBackwards()
 {
     if (!g_buffers.empty())
     {
-        g_buffers[g_currentBufferI].deleteCharBackwards();
+        g_buffers[g_currentBufferI]->deleteCharBackwards();
         g_isRedrawNeeded = true;
     }
 }
@@ -211,7 +211,7 @@ void deleteCharForward()
 {
     if (!g_buffers.empty())
     {
-        g_buffers[g_currentBufferI].deleteCharForward();
+        g_buffers[g_currentBufferI]->deleteCharForward();
         g_isRedrawNeeded = true;
     }
 }
@@ -222,13 +222,13 @@ void insertTabOrSpaces()
     {
         if (TAB_SPACE_COUNT < 1)
         {
-            g_buffers[g_currentBufferI].insert('\t');
+            g_buffers[g_currentBufferI]->insert('\t');
         }
         else
         {
             for (int i{}; i < TAB_SPACE_COUNT; ++i)
             {
-                g_buffers[g_currentBufferI].insert(' ');
+                g_buffers[g_currentBufferI]->insert(' ');
             }
         }
         g_isRedrawNeeded = true;
@@ -239,7 +239,7 @@ void goToFirstChar()
 {
     if (!g_buffers.empty())
     {
-        g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::FirstChar);
+        g_buffers[g_currentBufferI]->moveCursor(Buffer::CursorMovCmd::FirstChar);
         g_isRedrawNeeded = true;
     }
 }
@@ -248,7 +248,7 @@ void goToLastChar()
 {
     if (!g_buffers.empty())
     {
-        g_buffers[g_currentBufferI].moveCursor(Buffer::CursorMovCmd::LastChar);
+        g_buffers[g_currentBufferI]->moveCursor(Buffer::CursorMovCmd::LastChar);
         g_isRedrawNeeded = true;
     }
 }

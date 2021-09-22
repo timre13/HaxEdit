@@ -116,8 +116,8 @@ void App::renderBuffers()
 {
     if (!g_buffers.empty())
     {
-        g_buffers[g_currentBufferI].updateCursor();
-        g_buffers[g_currentBufferI].render();
+        g_buffers[g_currentBufferI]->updateCursor();
+        g_buffers[g_currentBufferI]->render();
     }
 }
 
@@ -145,12 +145,12 @@ void App::renderTabLine()
                         TABLINE_ACTIVE_TAB_COLOR :
                         TABLINE_TAB_COLOR)));
         // Render the filename, use orange color when the buffer is modified since the last save
-        g_textRenderer->renderString(buffer.getFileName().substr(0, TABLINE_TAB_MAX_TEXT_LEN),
+        g_textRenderer->renderString(buffer->getFileName().substr(0, TABLINE_TAB_MAX_TEXT_LEN),
                 {tabX+20, -2},
                 tabI == g_currentBufferI ? FontStyle::BoldItalic : FontStyle::Regular,
-                (buffer.isModified() ? RGBColor{1.0f, 0.5f, 0.0f} : RGBColor{1.0f, 1.0, 1.0f}));
+                (buffer->isModified() ? RGBColor{1.0f, 0.5f, 0.0f} : RGBColor{1.0f, 1.0, 1.0f}));
 
-        g_fileTypeHandler->getIconFromFilename(buffer.getFileName(), false)->render({tabX+2, 2}, {16, 16});
+        g_fileTypeHandler->getIconFromFilename(buffer->getFileName(), false)->render({tabX+2, 2}, {16, 16});
         ++tabI;
     }
 }
@@ -295,7 +295,7 @@ static void handleSaveAsDialog(FileDialog* fileDialog)
     }
     else // Save to an existing file
     {
-        if (g_buffers[g_currentBufferI].saveAsToFile(path))
+        if (g_buffers[g_currentBufferI]->saveAsToFile(path))
         {
             g_dialogs.push_back(std::make_unique<MessageDialog>(
                         "Failed to save file: \""+fileDialog->getSelectedFilePath()+'"',
@@ -315,13 +315,13 @@ static void handleOpenDialog(FileDialog* fileDialog)
     }
     if (g_buffers.empty())
     {
-        g_buffers.push_back(std::move(buffer));
+        g_buffers.push_back(std::unique_ptr<Buffer>(buffer));
         g_currentBufferI = 0;
     }
     else
     {
         // Insert the buffer next to the current one
-        g_buffers.insert(g_buffers.begin()+g_currentBufferI+1, std::move(buffer));
+        g_buffers.insert(g_buffers.begin()+g_currentBufferI+1, std::unique_ptr<Buffer>(buffer));
         ++g_currentBufferI; // Go to the current buffer
     }
 }
@@ -367,7 +367,7 @@ static void handleDialogClose()
         {
             if (askerDialog->getId() == AskerDialog::Id::AskSaveFileName)
             {
-                if (g_buffers[g_currentBufferI].saveAsToFile(
+                if (g_buffers[g_currentBufferI]->saveAsToFile(
                             std_fs::path{s_selectedSaveDir}/std_fs::path{askerDialog->getValue()}))
                 {
                     g_dialogs.insert(g_dialogs.begin()+g_dialogs.size()-1, std::make_unique<MessageDialog>(
@@ -446,7 +446,7 @@ void App::windowCharCB(GLFWwindow*, uint codePoint)
 
     if (!g_buffers.empty())
     {
-        g_buffers[g_currentBufferI].insert((char)codePoint);
+        g_buffers[g_currentBufferI]->insert((char)codePoint);
     }
     g_isRedrawNeeded = true;
 }
@@ -458,7 +458,7 @@ void App::windowScrollCB(GLFWwindow*, double, double yOffset)
 
     if (!g_buffers.empty())
     {
-        g_buffers[g_currentBufferI].scrollBy(yOffset*SCROLL_SPEED_MULTIPLIER);
+        g_buffers[g_currentBufferI]->scrollBy(yOffset*SCROLL_SPEED_MULTIPLIER);
     }
     g_isRedrawNeeded = true;
 }
@@ -480,7 +480,7 @@ void App::windowCloseCB(GLFWwindow* window)
 
     for (const auto& buffer : g_buffers)
     {
-        if (buffer.isModified())
+        if (buffer->isModified())
         {
             glfwSetWindowShouldClose(window, false);
             g_dialogs.push_back(std::make_unique<MessageDialog>(
