@@ -39,7 +39,7 @@
 namespace Syntax
 {
 
-std::array<std::string, 85> keywordList{
+inline std::array<std::string, 85> keywordList{
         "alignas", "alignof", "and", "and_eq", "asm", "atomic_cancel", "atomic_commit", "atomic_noexcept",
         "auto", "bitand", "bitor", "break", "case", "catch", "class", "compl", "concept", "const",
         "consteval", "constexpr", "constinit", "const_cast", "continue", "co_await", "co_return",
@@ -52,21 +52,21 @@ std::array<std::string, 85> keywordList{
         "using", "virtual", "volatile", "while", "xor", "xor_eq",
 };
 
-std::array<std::string, 12> typeList{
+inline std::array<std::string, 12> typeList{
         "bool", "char", "char8_t", "char16_t", "char32_t", "double",
         "float", "int", "long", "short", "void", "size_t"
 };
 
-std::array<std::string, 27> operatorList{
+inline std::array<std::string, 27> operatorList{
         ":", "+", "-", "type", "!", "~", "^", "|", "*", "/", "&", "sizeof", "co_await", "new", "delete",
         "<", ">", "=", "?", "throw", "co_yield", "=", "%", ",", "[", "]", ".",
 };
 
-std::string lineCommentPrefix{"//"};
+inline std::string lineCommentPrefix{"//"};
 
-std::string blockCommentBegin{"/*"};
-std::string blockCommentEnd{"*/"};
+inline std::string blockCommentBegin{"/*"};
+inline std::string blockCommentEnd{"*/"};
 
-std::string preprocessorPrefix{"#"};
+inline std::string preprocessorPrefix{"#"};
 
 }
