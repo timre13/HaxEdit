@@ -433,6 +433,15 @@ void Buffer::updateCursor()
     TIMER_END_FUNC();
 }
 
+void Buffer::updateRStatusLineStr()
+{
+    m_statusLineStr.str
+        = std::to_string(m_cursorLine+1)
+        +':'+std::to_string(m_cursorCol+1)
+        +" | "+std::to_string(m_cursorCharPos);
+    m_statusLineStr.maxLen = std::max(size_t(4+1+3+3+7), m_statusLineStr.str.size());
+}
+
 void Buffer::renderStatusLine()
 {
     const int winW = g_textRenderer->getWindowWidth();
@@ -443,19 +452,18 @@ void Buffer::renderStatusLine()
             {winW, winH},
             RGB_COLOR_TO_RGBA(STATUSBAR_BG_COLOR));
 
-    const std::string cursorPosString
-        = std::to_string(m_cursorLine+1) + ':'
-        + std::to_string(m_cursorCol+1) + " | "
-        + std::to_string(m_cursorCharPos);
+
+    const std::string leftStr = m_filePath+(m_isReadOnly ? " [RO]" : "");
     g_textRenderer->renderString(
-            cursorPosString,
-            {winW-g_fontSizePx*(4+1+3+3+7)*0.7f,
+            leftStr,
+            {LINEN_BAR_WIDTH*g_fontSizePx,
              winH-g_fontSizePx-4});
 
-    const std::string statusLineString = m_filePath+(m_isReadOnly ? " [RO]" : "");
+    updateRStatusLineStr();
+    assert(m_statusLineStr.maxLen > 0);
     g_textRenderer->renderString(
-            statusLineString,
-            {LINEN_BAR_WIDTH*g_fontSizePx,
+            m_statusLineStr.str,
+            {winW-g_fontSizePx*m_statusLineStr.maxLen*0.7f,
              winH-g_fontSizePx-4});
 }
 

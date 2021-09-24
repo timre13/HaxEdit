@@ -22,6 +22,12 @@ int ImageBuffer::open(const std::string& filePath)
     return 0;
 }
 
+void ImageBuffer::updateRStatusLineStr()
+{
+    m_statusLineStr.str = std::to_string((int)std::round(m_zoom*100.0f))+"%";
+    m_statusLineStr.maxLen = std::max((size_t)4, m_statusLineStr.str.length());
+}
+
 void ImageBuffer::render()
 {
     TIMER_BEGIN_FUNC();

@@ -53,6 +53,7 @@ public:
     virtual int saveToFile() override { return 1; }
     virtual int saveAsToFile(const std::string&) override { return 1; }
 
+    virtual void updateRStatusLineStr() override;
     virtual void updateCursor() override {}
     virtual void render() override;
 

@@ -51,6 +51,12 @@ protected:
     bool m_isCursorShown{true}; // Used to blink the cursor
     CursorMovCmd m_cursorMovCmd{CursorMovCmd::None};
 
+    struct StatusLineStr
+    {
+        std::string str;
+        size_t maxLen{};
+    } m_statusLineStr{};
+
     /*
      * Make the cursor visible by scrolling the viewport.
      */
@@ -71,6 +77,7 @@ public:
     virtual int saveAsToFile(const std::string& filePath);
 
     virtual void updateCursor();
+    virtual void updateRStatusLineStr();
     virtual void renderStatusLine() final;
     virtual void render();
 
