@@ -16,7 +16,7 @@ int ImageBuffer::open(const std::string& filePath)
     m_filePath = filePath;
     m_isReadOnly = true;
     Logger::dbg << "Opening image file: " << filePath << Logger::End;
-    m_image = std::make_unique<Image>(filePath);
+    m_image = std::make_unique<Image>(filePath, GL_NEAREST, GL_NEAREST);
 
     TIMER_END_FUNC();
     return 0;

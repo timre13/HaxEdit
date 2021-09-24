@@ -21,7 +21,9 @@ public:
      * Arguments:
      *      filePath: The file to load.
      */
-    Image(const std::string& filePath);
+    Image(
+            const std::string& filePath,
+            uint upscaleFilt=GL_LINEAR, uint downscaleFilt=GL_LINEAR);
 
     /*
      * Render the image on the screen.

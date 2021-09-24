@@ -5,7 +5,9 @@
 #include "../external/stb/stb_image.h"
 #include "glstuff.h"
 
-Image::Image(const std::string& filePath)
+Image::Image(
+        const std::string& filePath,
+        uint upscaleFilt/*=GL_LINEAR*/, uint downscaleFilt/*=GL_LINEAR*/)
 {
     m_filePath = filePath;
 
@@ -36,8 +38,8 @@ Image::Image(const std::string& filePath)
     glGenTextures(1, &m_sampler);
     glBindTexture(GL_TEXTURE_2D, m_sampler);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_physicalSize.x, m_physicalSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // Downscale filter
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); // Upscale filter
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, downscaleFilt); // Downscale filter
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, upscaleFilt); // Upscale filter
 
     stbi_image_free(imageData);
 }
