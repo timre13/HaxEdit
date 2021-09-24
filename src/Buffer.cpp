@@ -438,11 +438,6 @@ void Buffer::renderStatusLine()
     const int winW = g_textRenderer->getWindowWidth();
     const int winH = g_textRenderer->getWindowHeight();
 
-    g_uiRenderer->renderRectangleOutline(
-            {LINEN_BAR_WIDTH*g_fontSizePx, winH-g_fontSizePx*1.2f},
-            {winW, winH},
-            {0.5f, 0.5f, 0.5f},
-            2);
     g_uiRenderer->renderFilledRectangle(
             {LINEN_BAR_WIDTH*g_fontSizePx, winH-g_fontSizePx*1.2f},
             {winW, winH},
