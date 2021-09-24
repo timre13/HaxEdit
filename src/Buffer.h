@@ -64,6 +64,8 @@ protected:
 
     virtual void updateHighlighting();
 
+    friend class App;
+
 public:
     inline Buffer() { Logger::log << "Created a buffer: " << this << Logger::End; }
 
@@ -78,7 +80,6 @@ public:
 
     virtual void updateCursor();
     virtual void updateRStatusLineStr();
-    virtual void renderStatusLine() final;
     virtual void render();
 
     virtual inline const std::string& getContent() const { return m_content; }

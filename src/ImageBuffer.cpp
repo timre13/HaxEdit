@@ -39,7 +39,5 @@ void ImageBuffer::render()
             {g_windowWidth/2-zoomedW/2, g_windowHeight/2-zoomedH/2},
             {zoomedW, zoomedH});
 
-    renderStatusLine();
-
     TIMER_END_FUNC();
 }

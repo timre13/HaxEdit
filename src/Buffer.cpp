@@ -442,31 +442,6 @@ void Buffer::updateRStatusLineStr()
     m_statusLineStr.maxLen = std::max(size_t(4+1+3+3+7), m_statusLineStr.str.size());
 }
 
-void Buffer::renderStatusLine()
-{
-    const int winW = g_textRenderer->getWindowWidth();
-    const int winH = g_textRenderer->getWindowHeight();
-
-    g_uiRenderer->renderFilledRectangle(
-            {LINEN_BAR_WIDTH*g_fontSizePx, winH-g_fontSizePx*1.2f},
-            {winW, winH},
-            RGB_COLOR_TO_RGBA(STATUSBAR_BG_COLOR));
-
-
-    const std::string leftStr = m_filePath+(m_isReadOnly ? " [RO]" : "");
-    g_textRenderer->renderString(
-            leftStr,
-            {LINEN_BAR_WIDTH*g_fontSizePx,
-             winH-g_fontSizePx-4});
-
-    updateRStatusLineStr();
-    assert(m_statusLineStr.maxLen > 0);
-    g_textRenderer->renderString(
-            m_statusLineStr.str,
-            {winW-g_fontSizePx*m_statusLineStr.maxLen*0.7f,
-             winH-g_fontSizePx-4});
-}
-
 void Buffer::render()
 {
     TIMER_BEGIN_FUNC();
@@ -660,8 +635,6 @@ void Buffer::render()
         ++colI;
         isLineBeginning = false;
     }
-
-    renderStatusLine();
 
     TIMER_END_FUNC();
 }

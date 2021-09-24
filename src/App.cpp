@@ -125,6 +125,34 @@ void App::renderBuffers()
     }
 }
 
+void App::renderStatusLine()
+{
+    if (g_buffers.empty())
+        return;
+
+    const int winW = g_textRenderer->getWindowWidth();
+    const int winH = g_textRenderer->getWindowHeight();
+    const auto& buff = g_buffers[g_currentBufferI];
+
+    g_uiRenderer->renderFilledRectangle(
+            {0, winH-g_fontSizePx*1.2f},
+            {winW, winH},
+            RGB_COLOR_TO_RGBA(STATUSBAR_BG_COLOR));
+
+
+    const std::string leftStr = buff->m_filePath+(buff->m_isReadOnly ? " [RO]" : "");
+    g_textRenderer->renderString(
+            leftStr,
+            {0, winH-g_fontSizePx-4});
+
+    buff->updateRStatusLineStr();
+    assert(buff->m_statusLineStr.maxLen > 0);
+    g_textRenderer->renderString(
+            buff->m_statusLineStr.str,
+            {winW-g_fontSizePx*buff->m_statusLineStr.maxLen*0.7f,
+             winH-g_fontSizePx-4});
+}
+
 void App::renderTabLine()
 {
     // Draw tabline background

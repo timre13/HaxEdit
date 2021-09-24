@@ -47,6 +47,7 @@ public:
 
     // ----- Renderer functions -----
     static void renderBuffers();
+    static void renderStatusLine();
     static void renderTabLine();
     static void renderDialogs();
     static void renderStartupScreen();
