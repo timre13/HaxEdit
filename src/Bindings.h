@@ -12,15 +12,7 @@
 #include "FileDialog.h"
 #include "MessageDialog.h"
 #include "config.h"
-
-extern int g_windowWidth;
-extern int g_windowHeight;
-extern bool g_isRedrawNeeded;
-extern bool g_isTitleUpdateNeeded;
-extern bool g_isDebugDrawMode;
-extern std::vector<std::unique_ptr<Buffer>> g_buffers;
-extern size_t g_currentBufferI;
-extern std::vector<std::unique_ptr<Dialog>> g_dialogs;
+#include "globals.h"
 
 namespace Bindings
 {
@@ -41,33 +33,33 @@ namespace Callbacks
 
 void createNewBuffer()
 {
-    if (g_buffers.empty())
-    {
-        g_buffers.emplace_back(new Buffer{});
-        g_currentBufferI = 0;
-    }
-    else
-    {
-        // Insert the buffer next to the current one
-        g_buffers.emplace(g_buffers.begin()+g_currentBufferI+1, new Buffer{});
-        ++g_currentBufferI; // Go to the current buffer
-    }
+    ///if (g_buffers.empty())
+    ///{
+    ///    g_buffers.emplace_back(new Buffer{});
+    ///    g_currTabI = 0;
+    ///}
+    ///else
+    ///{
+    ///    // Insert the buffer next to the current one
+    ///    g_buffers.emplace(g_buffers.begin()+g_currTabI+1, new Buffer{});
+    ///    ++g_currTabI; // Go to the current buffer
+    ///}
     g_isRedrawNeeded = true;
     g_isTitleUpdateNeeded = true;
 }
 
 void saveCurrentBuffer()
 {
-    if (!g_buffers.empty())
+    if (g_activeBuff)
     {
-        if (g_buffers[g_currentBufferI]->isNewFile())
+        if (g_activeBuff->isNewFile())
         {
             // Open a save as dialog
             g_dialogs.push_back(std::make_unique<FileDialog>(".", FileDialog::Type::SaveAs));
         }
         else
         {
-            if (g_buffers[g_currentBufferI]->saveToFile())
+            if (g_activeBuff->saveToFile())
             {
                 g_dialogs.push_back(std::make_unique<MessageDialog>(
                             "Failed to save file",
@@ -80,7 +72,7 @@ void saveCurrentBuffer()
 
 void saveCurrentBufferAs()
 {
-    if (!g_buffers.empty())
+    if (g_activeBuff)
     {
         // Open a save as dialog
         g_dialogs.push_back(std::make_unique<FileDialog>(".", FileDialog::Type::SaveAs));
@@ -94,30 +86,47 @@ void openFile()
     g_isRedrawNeeded = true;
 }
 
-void closeCurrentBuffer()
+void closeActiveBuffer()
 {
-    if (g_buffers.empty())
+    if (!g_activeBuff)
         return;
 
-    if (g_buffers[g_currentBufferI]->isModified())
+    if (g_activeBuff->isModified())
     {
         g_dialogs.push_back(std::make_unique<MessageDialog>(
                     "Save?",
                     MessageDialog::Type::Information,
-                    MessageDialog::Id::AskSaveCloseCurrentBuffer,
+                    MessageDialog::Id::AskSaveCloseActiveBuffer,
                     std::vector<MessageDialog::BtnInfo>{{"Yes", GLFW_KEY_Y}, {"No", GLFW_KEY_N}, {"Cancel", GLFW_KEY_C}}
         ));
     }
     else
     {
-        g_buffers.erase(g_buffers.begin()+g_currentBufferI);
-        if (g_buffers.size() == 0)
+        g_tabs[g_currTabI]->closeActiveBufferRecursive();
+        if (g_tabs.empty())
         {
-            g_currentBufferI = 0;
+            g_currTabI = 0;
+            g_activeBuff = nullptr;
         }
-        else if (g_currentBufferI >= g_buffers.size())
+        else
         {
-            g_currentBufferI = g_buffers.size()-1;
+            if (g_currTabI >= g_tabs.size())
+            {
+                g_currTabI = g_tabs.size()-1;
+            }
+            g_activeBuff = g_tabs[g_currTabI]->getActiveBufferRecursive();
+            if (!g_activeBuff)
+            {
+                g_tabs.erase(g_tabs.begin()+g_currTabI);
+                if (!g_tabs.empty() && g_tabs[g_currTabI])
+                {
+                    g_activeBuff = g_tabs[g_currTabI]->getActiveBufferRecursive();
+                }
+                else
+                {
+                    g_activeBuff = nullptr;
+                }
+            }
         }
         g_isTitleUpdateNeeded = true;
     }
@@ -126,70 +135,76 @@ void closeCurrentBuffer()
 
 void goToNextTab()
 {
-    if (!g_buffers.empty() && g_currentBufferI < g_buffers.size()-1)
-        ++g_currentBufferI;
+    if (!g_tabs.empty() && g_currTabI < g_tabs.size()-1)
+    {
+        ++g_currTabI;
+        g_activeBuff = g_tabs[g_currTabI]->getActiveBufferRecursive();
+    }
     g_isRedrawNeeded = true;
     g_isTitleUpdateNeeded = true;
 }
 
 void goToPrevTab()
 {
-    if (g_currentBufferI > 0)
-        --g_currentBufferI;
+    if (g_currTabI > 0)
+    {
+        --g_currTabI;
+        g_activeBuff = g_tabs[g_currTabI]->getActiveBufferRecursive();
+    }
     g_isRedrawNeeded = true;
     g_isTitleUpdateNeeded = true;
 }
 
 void moveCursorRight()
 {
-    if (!g_buffers.empty())
+    if (g_activeBuff)
     {
-        g_buffers[g_currentBufferI]->moveCursor(Buffer::CursorMovCmd::Right);
+        g_activeBuff->moveCursor(Buffer::CursorMovCmd::Right);
         g_isRedrawNeeded = true;
     }
 }
 
 void moveCursorLeft()
 {
-    if (!g_buffers.empty())
+    if (g_activeBuff)
     {
-        g_buffers[g_currentBufferI]->moveCursor(Buffer::CursorMovCmd::Left);
+        g_activeBuff->moveCursor(Buffer::CursorMovCmd::Left);
         g_isRedrawNeeded = true;
     }
 }
 
 void moveCursorDown()
 {
-    if (!g_buffers.empty())
+    if (g_activeBuff)
     {
-        g_buffers[g_currentBufferI]->moveCursor(Buffer::CursorMovCmd::Down);
+        g_activeBuff->moveCursor(Buffer::CursorMovCmd::Down);
         g_isRedrawNeeded = true;
     }
 }
 
 void moveCursorUp()
 {
-    if (!g_buffers.empty())
+    if (g_activeBuff)
     {
-        g_buffers[g_currentBufferI]->moveCursor(Buffer::CursorMovCmd::Up);
+        g_activeBuff->moveCursor(Buffer::CursorMovCmd::Up);
         g_isRedrawNeeded = true;
     }
 }
 
 void moveCursorToLineBeginning()
 {
-    if (!g_buffers.empty())
+    if (g_activeBuff)
     {
-        g_buffers[g_currentBufferI]->moveCursor(Buffer::CursorMovCmd::LineBeginning);
+        g_activeBuff->moveCursor(Buffer::CursorMovCmd::LineBeginning);
         g_isRedrawNeeded = true;
     }
 }
 
 void moveCursorToLineEnd()
 {
-    if (!g_buffers.empty())
+    if (g_activeBuff)
     {
-        g_buffers[g_currentBufferI]->moveCursor(Buffer::CursorMovCmd::LineEnd);
+        g_activeBuff->moveCursor(Buffer::CursorMovCmd::LineEnd);
         g_isRedrawNeeded = true;
     }
 }
@@ -201,35 +216,35 @@ void putEnter()
 
 void deleteCharBackwards()
 {
-    if (!g_buffers.empty())
+    if (g_activeBuff)
     {
-        g_buffers[g_currentBufferI]->deleteCharBackwards();
+        g_activeBuff->deleteCharBackwards();
         g_isRedrawNeeded = true;
     }
 }
 
 void deleteCharForward()
 {
-    if (!g_buffers.empty())
+    if (g_activeBuff)
     {
-        g_buffers[g_currentBufferI]->deleteCharForward();
+        g_activeBuff->deleteCharForward();
         g_isRedrawNeeded = true;
     }
 }
 
 void insertTabOrSpaces()
 {
-    if (!g_buffers.empty())
+    if (g_activeBuff)
     {
         if (TAB_SPACE_COUNT < 1)
         {
-            g_buffers[g_currentBufferI]->insert('\t');
+            g_activeBuff->insert('\t');
         }
         else
         {
             for (int i{}; i < TAB_SPACE_COUNT; ++i)
             {
-                g_buffers[g_currentBufferI]->insert(' ');
+                g_activeBuff->insert(' ');
             }
         }
         g_isRedrawNeeded = true;
@@ -238,18 +253,18 @@ void insertTabOrSpaces()
 
 void goToFirstChar()
 {
-    if (!g_buffers.empty())
+    if (g_activeBuff)
     {
-        g_buffers[g_currentBufferI]->moveCursor(Buffer::CursorMovCmd::FirstChar);
+        g_activeBuff->moveCursor(Buffer::CursorMovCmd::FirstChar);
         g_isRedrawNeeded = true;
     }
 }
 
 void goToLastChar()
 {
-    if (!g_buffers.empty())
+    if (g_activeBuff)
     {
-        g_buffers[g_currentBufferI]->moveCursor(Buffer::CursorMovCmd::LastChar);
+        g_activeBuff->moveCursor(Buffer::CursorMovCmd::LastChar);
         g_isRedrawNeeded = true;
     }
 }
@@ -272,10 +287,10 @@ void decreaseFontSize()
 
 void zoomInBufferIfImage()
 {
-    if (g_buffers.empty())
+    if (g_activeBuff)
         return;
 
-    if (auto* img = dynamic_cast<ImageBuffer*>(g_buffers[g_currentBufferI].get()))
+    if (auto* img = dynamic_cast<ImageBuffer*>(g_activeBuff))
     {
         img->zoomBy(IMG_BUF_ZOOM_STEP);
     }
@@ -284,10 +299,10 @@ void zoomInBufferIfImage()
 
 void zoomOutBufferIfImage()
 {
-    if (g_buffers.empty())
+    if (g_activeBuff)
         return;
 
-    if (auto* img = dynamic_cast<ImageBuffer*>(g_buffers[g_currentBufferI].get()))
+    if (auto* img = dynamic_cast<ImageBuffer*>(g_activeBuff))
     {
         img->zoomBy(-IMG_BUF_ZOOM_STEP);
     }

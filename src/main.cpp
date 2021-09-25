@@ -1,21 +1,7 @@
+#define _DEF_GLOBALS_
+#include "globals.h"
+#undef _DEF_GLOBALS_
 #include "App.h"
-
-int g_windowWidth = 0;
-int g_windowHeight = 0;
-
-bool g_isRedrawNeeded = false;
-bool g_isTitleUpdateNeeded = true;
-bool g_isDebugDrawMode = false;
-bool g_shouldIgnoreNextChar = false;
-
-std::vector<std::unique_ptr<Buffer>> g_buffers;
-size_t g_currentBufferI{};
-
-std::vector<std::unique_ptr<Dialog>> g_dialogs;
-
-std::unique_ptr<TextRenderer> g_textRenderer;
-std::unique_ptr<UiRenderer> g_uiRenderer;
-std::unique_ptr<FileTypeHandler> g_fileTypeHandler;
 
 int g_fontSizePx = DEF_FONT_SIZE_PX;
 
@@ -66,22 +52,26 @@ int main(int argc, char** argv)
                         "Failed to open file: \""+path+'"',
                         MessageDialog::Type::Error));
         }
-        g_buffers.push_back(std::unique_ptr<Buffer>(buffer));
+        g_tabs.push_back(std::make_unique<Split>(buffer));
+    }
+    if (!g_tabs.empty())
+    {
+        g_activeBuff = g_tabs[0]->getActiveBufferRecursive();
     }
 
-    if (g_buffers.empty())
-    {
-        g_buffers.emplace_back(new Buffer{});
-        g_buffers.back()->open(__FILE__);
-    }
+    //if (g_tabs.empty())
+    //{
+    //    g_tabs.emplace_back(new Buffer{});
+    //    g_tabs.back()->open(__FILE__);
+    //}
 
     auto genTitle{
         [&](){
-            if (g_buffers.empty())
+            if (!g_activeBuff)
                 return std::string{"HaxorEdit"};
-            return g_buffers[g_currentBufferI]->getFileName()
-                + std::string{" - ["} + std::to_string(g_currentBufferI+1) + '/'
-                + std::to_string(g_buffers.size()) + "]";
+            return g_activeBuff->getFileName()
+                + std::string{" - ["} + std::to_string(g_currTabI+1) + '/'
+                + std::to_string(g_tabs.size()) + "]";
         }
     };
 
@@ -90,9 +80,9 @@ int main(int argc, char** argv)
     {
         glfwPollEvents();
 
-        if (CURSOR_BLINK_FRAMES >= 0 && framesUntilCursorBlinking <= 0 && !g_buffers.empty())
+        if (CURSOR_BLINK_FRAMES >= 0 && framesUntilCursorBlinking <= 0 && g_activeBuff)
         {
-            g_buffers[g_currentBufferI]->toggleCursorVisibility();
+            g_activeBuff->toggleCursorVisibility();
             g_isRedrawNeeded = true;
             framesUntilCursorBlinking = CURSOR_BLINK_FRAMES;
         }
@@ -102,7 +92,7 @@ int main(int argc, char** argv)
             glClear(GL_COLOR_BUFFER_BIT);
             glClearColor(UNPACK_RGB_COLOR(BG_COLOR), 1.0f);
 
-            if (g_buffers.empty())
+            if (g_tabs.empty())
             {
                 App::renderStartupScreen();
             }

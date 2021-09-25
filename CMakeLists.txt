@@ -44,6 +44,7 @@ add_executable(haxed
     src/TextRenderer.cpp
     src/Buffer.cpp
     src/ImageBuffer.cpp
+    src/Split.cpp
     src/Image.cpp
     src/Timer.cpp
     src/Dialog.cpp

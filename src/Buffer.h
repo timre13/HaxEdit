@@ -8,10 +8,11 @@
 #include "UiRenderer.h"
 #include "config.h"
 #include "Logger.h"
-
-namespace std_fs = std::filesystem;
+#include "globals.h"
 
 extern int g_fontSizePx;
+
+namespace std_fs = std::filesystem;
 
 #define FILENAME_NEW "<new>"
 

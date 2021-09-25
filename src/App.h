@@ -19,16 +19,8 @@
 #include "types.h"
 #include "Timer.h"
 #include "ImageBuffer.h"
-
-extern int g_windowWidth;
-extern int g_windowHeight;
-extern bool g_isRedrawNeeded;
-extern bool g_isTitleUpdateNeeded;
-extern bool g_isDebugDrawMode;
-extern bool g_shouldIgnoreNextChar;
-extern std::vector<std::unique_ptr<Buffer>> g_buffers;
-extern size_t g_currentBufferI;
-extern std::vector<std::unique_ptr<Dialog>> g_dialogs;
+#include "Split.h"
+#include "globals.h"
 
 class App final
 {
@@ -51,6 +43,9 @@ public:
     static void renderTabLine();
     static void renderDialogs();
     static void renderStartupScreen();
+
+    // ----- Utility functions -----
+    static Split::child_t& getActiveBuffer();
 
 private:
     static void GLAPIENTRY glDebugMsgCB(

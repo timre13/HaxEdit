@@ -103,7 +103,7 @@ void App::setupKeyBindings()
     Bindings::ctrlMap[GLFW_KEY_N]           = Bindings::Callbacks::createNewBuffer;
     Bindings::ctrlMap[GLFW_KEY_S]           = Bindings::Callbacks::saveCurrentBuffer;
     Bindings::ctrlMap[GLFW_KEY_O]           = Bindings::Callbacks::openFile;
-    Bindings::ctrlMap[GLFW_KEY_Q]           = Bindings::Callbacks::closeCurrentBuffer;
+    Bindings::ctrlMap[GLFW_KEY_Q]           = Bindings::Callbacks::closeActiveBuffer;
     Bindings::ctrlMap[GLFW_KEY_PAGE_UP]     = Bindings::Callbacks::goToPrevTab;
     Bindings::ctrlMap[GLFW_KEY_PAGE_DOWN]   = Bindings::Callbacks::goToNextTab;
     Bindings::ctrlMap[GLFW_KEY_HOME]        = Bindings::Callbacks::goToFirstChar;
@@ -118,21 +118,20 @@ void App::setupKeyBindings()
 
 void App::renderBuffers()
 {
-    if (!g_buffers.empty())
+    if (g_activeBuff)
     {
-        g_buffers[g_currentBufferI]->updateCursor();
-        g_buffers[g_currentBufferI]->render();
+        g_activeBuff->updateCursor();
+        g_activeBuff->render();
     }
 }
 
 void App::renderStatusLine()
 {
-    if (g_buffers.empty())
+    if (!g_activeBuff)
         return;
 
     const int winW = g_textRenderer->getWindowWidth();
     const int winH = g_textRenderer->getWindowHeight();
-    const auto& buff = g_buffers[g_currentBufferI];
 
     g_uiRenderer->renderFilledRectangle(
             {0, winH-g_fontSizePx*1.2f},
@@ -140,16 +139,16 @@ void App::renderStatusLine()
             RGB_COLOR_TO_RGBA(STATUSBAR_BG_COLOR));
 
 
-    const std::string leftStr = buff->m_filePath+(buff->m_isReadOnly ? " [RO]" : "");
+    const std::string leftStr = g_activeBuff->m_filePath+(g_activeBuff->m_isReadOnly ? " [RO]" : "");
     g_textRenderer->renderString(
             leftStr,
             {0, winH-g_fontSizePx-4});
 
-    buff->updateRStatusLineStr();
-    assert(buff->m_statusLineStr.maxLen > 0);
+    g_activeBuff->updateRStatusLineStr();
+    assert(g_activeBuff->m_statusLineStr.maxLen > 0);
     g_textRenderer->renderString(
-            buff->m_statusLineStr.str,
-            {winW-g_fontSizePx*buff->m_statusLineStr.maxLen*0.7f,
+            g_activeBuff->m_statusLineStr.str,
+            {winW-g_fontSizePx*g_activeBuff->m_statusLineStr.maxLen*0.7f,
              winH-g_fontSizePx-4});
 }
 
@@ -160,9 +159,10 @@ void App::renderTabLine()
             RGB_COLOR_TO_RGBA(TABLINE_BG_COLOR));
     uint tabI{};
     // Draw tabs
-    for (const auto& buffer : g_buffers)
+    for (const auto& tab : g_tabs)
     {
         const int tabX = TABLINE_TAB_WIDTH_PX*tabI;
+        const auto& buffer = tab->getActiveBufferRecursive();
 
         // Stop rendering if we go out of the screen
         if (tabX > g_windowWidth)
@@ -173,13 +173,13 @@ void App::renderTabLine()
                 {tabX, 0},
                 {TABLINE_TAB_WIDTH_PX*(tabI+1)-2, TABLINE_HEIGHT_PX},
                 RGB_COLOR_TO_RGBA((
-                        tabI == g_currentBufferI ?
+                        tabI == g_currTabI ?
                         TABLINE_ACTIVE_TAB_COLOR :
                         TABLINE_TAB_COLOR)));
         // Render the filename, use orange color when the buffer is modified since the last save
         g_textRenderer->renderString(buffer->getFileName().substr(0, TABLINE_TAB_MAX_TEXT_LEN),
                 {tabX+20, -2},
-                tabI == g_currentBufferI ? FontStyle::BoldItalic : FontStyle::Regular,
+                tabI == g_currTabI ? FontStyle::BoldItalic : FontStyle::Regular,
                 (buffer->isModified() ? RGBColor{1.0f, 0.5f, 0.0f} : RGBColor{1.0f, 1.0, 1.0f}));
 
         g_fileTypeHandler->getIconFromFilename(buffer->getFileName(), false)->render({tabX+2, 2}, {16, 16});
@@ -327,7 +327,7 @@ static void handleSaveAsDialog(FileDialog* fileDialog)
     }
     else // Save to an existing file
     {
-        if (g_buffers[g_currentBufferI]->saveAsToFile(path))
+        if (g_activeBuff->saveAsToFile(path))
         {
             g_dialogs.push_back(std::make_unique<MessageDialog>(
                         "Failed to save file: \""+fileDialog->getSelectedFilePath()+'"',
@@ -355,16 +355,18 @@ static void handleOpenDialog(FileDialog* fileDialog)
                     "Failed to open file: \""+path+'"',
                     MessageDialog::Type::Error));
     }
-    if (g_buffers.empty())
+    if (g_tabs.empty())
     {
-        g_buffers.push_back(std::unique_ptr<Buffer>(buffer));
-        g_currentBufferI = 0;
+        g_tabs.push_back(std::make_unique<Split>(buffer));
+        g_activeBuff = buffer;
+        g_currTabI = 0;
     }
     else
     {
         // Insert the buffer next to the current one
-        g_buffers.insert(g_buffers.begin()+g_currentBufferI+1, std::unique_ptr<Buffer>(buffer));
-        ++g_currentBufferI; // Go to the current buffer
+        g_tabs.insert(g_tabs.begin()+g_currTabI+1, std::make_unique<Split>(buffer));
+        g_activeBuff = buffer;
+        ++g_currTabI; // Go to the current buffer
     }
 }
 
@@ -386,18 +388,18 @@ static void handleDialogClose()
         }
         else if (auto* msgDialog = dynamic_cast<MessageDialog*>(g_dialogs.back().get()))
         {
-            if (msgDialog->getId() == MessageDialog::Id::AskSaveCloseCurrentBuffer)
+            if (msgDialog->getId() == MessageDialog::Id::AskSaveCloseActiveBuffer)
             {
                 if (msgDialog->getPressedBtnI() == 0) // If pressed "Yes"
                 {
                     Bindings::Callbacks::saveCurrentBuffer();
-                    Bindings::Callbacks::closeCurrentBuffer();
+                    Bindings::Callbacks::closeActiveBuffer();
                 }
                 else if (msgDialog->getPressedBtnI() == 1) // Pressed "No"
                 {
-                    g_buffers.erase(g_buffers.begin()+g_currentBufferI);
-                    g_currentBufferI = g_buffers.size() < 2 ? 0 : g_currentBufferI-1;
-                    g_isTitleUpdateNeeded = true;
+                    ///g_buffers.erase(g_buffers.begin()+g_currTabI);
+                    ///g_currTabI = g_buffers.size() < 2 ? 0 : g_currTabI-1;
+                    ///g_isTitleUpdateNeeded = true;
                 }
                 else
                 {
@@ -409,7 +411,8 @@ static void handleDialogClose()
         {
             if (askerDialog->getId() == AskerDialog::Id::AskSaveFileName)
             {
-                if (g_buffers[g_currentBufferI]->saveAsToFile(
+                assert(g_activeBuff);
+                if (g_activeBuff->saveAsToFile(
                             std_fs::path{s_selectedSaveDir}/std_fs::path{askerDialog->getValue()}))
                 {
                     g_dialogs.insert(g_dialogs.begin()+g_dialogs.size()-1, std::make_unique<MessageDialog>(
@@ -486,9 +489,9 @@ void App::windowCharCB(GLFWwindow*, uint codePoint)
         return;
     }
 
-    if (!g_buffers.empty())
+    if (g_activeBuff)
     {
-        g_buffers[g_currentBufferI]->insert((char)codePoint);
+        g_activeBuff->insert((char)codePoint);
     }
     g_isRedrawNeeded = true;
 }
@@ -498,9 +501,9 @@ void App::windowScrollCB(GLFWwindow*, double, double yOffset)
     if (!g_dialogs.empty())
         return;
 
-    if (!g_buffers.empty())
+    if (g_activeBuff)
     {
-        g_buffers[g_currentBufferI]->scrollBy(yOffset*SCROLL_SPEED_MULTIPLIER);
+        g_activeBuff->scrollBy(yOffset*SCROLL_SPEED_MULTIPLIER);
     }
     g_isRedrawNeeded = true;
 }
@@ -516,13 +519,29 @@ void App::toggleDebugDraw()
     g_isRedrawNeeded = true;
 }
 
+static bool hasModifiedBuffer(Split* parent)
+{
+    for (const auto& child : parent->getChildren())
+    {
+        if (std::holds_alternative<std::unique_ptr<Split>>(child))
+        {
+            hasModifiedBuffer(std::get<std::unique_ptr<Split>>(child).get());
+        }
+        else if (std::get<std::unique_ptr<Buffer>>(child)->isModified())
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 void App::windowCloseCB(GLFWwindow* window)
 {
     Logger::log << "Window close requested!" << Logger::End;
 
-    for (const auto& buffer : g_buffers)
+    for (const auto& tab : g_tabs)
     {
-        if (buffer->isModified())
+        if (hasModifiedBuffer(tab.get()))
         {
             glfwSetWindowShouldClose(window, false);
             g_dialogs.push_back(std::make_unique<MessageDialog>(

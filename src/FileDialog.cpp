@@ -9,6 +9,9 @@
 #include "config.h"
 #include <filesystem>
 #include "glstuff.h"
+#include "globals.h"
+
+extern int g_fontSizePx;
 
 namespace std_fs = std::filesystem;
 

@@ -4,10 +4,8 @@
 #include "Image.h"
 #include "Logger.h"
 #include "types.h"
+#include "globals.h"
 #include <memory>
-
-extern int g_windowWidth;
-extern int g_windowHeight;
 
 inline bool isImageExtension(std::string ext)
 {

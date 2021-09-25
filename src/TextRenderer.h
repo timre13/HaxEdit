@@ -2,12 +2,12 @@
 
 #include "types.h"
 #include "Shader.h"
+#include "globals.h"
 #include <memory>
 #include <string>
 #include <map>
 #include <glm/glm.hpp>
 
-extern int g_fontSizePx;
 
 enum class FontStyle
 {

@@ -8,6 +8,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+extern int g_fontSizePx;
+
 void TextRenderer::cleanUpGlyphs()
 {
     for (auto& glyph : m_regularGlyphs) { glDeleteTextures(1, &glyph.second.textureId); }
