@@ -484,7 +484,15 @@ void Buffer::render()
                     lineI == m_cursorLine ? LINEN_ACTIVE_FONT_COLOR : LINEN_FONT_COLOR);
 
             float digitX = m_position.x;
-            for (char digit : std::to_string(lineI+1))
+            const std::string lineNumStr =
+#if LINEN_DRAW_RELATIVE
+                std::to_string(lineI == m_cursorLine ?
+                        m_cursorLine+1 :
+                        std::abs(lineI-m_cursorLine));
+#else
+                std::to_string(lineI+1);
+#endif
+            for (char digit : lineNumStr)
             {
                 auto dimensions = g_textRenderer->renderChar(digit,
                         {digitX, textY},

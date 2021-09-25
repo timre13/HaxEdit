@@ -19,6 +19,7 @@
 #define LINEN_FONT_COLOR RGBColor{0.56f, 0.71f, 0.07f}
 #define LINEN_BG_COLOR RGBColor{0.2f, 0.2f, 0.2f}
 #define LINEN_ACTIVE_FONT_COLOR RGBColor{100/255.f, 210/255.f, 200/255.f}
+#define LINEN_DRAW_RELATIVE true
 
 #define BUFFER_WRAP_LINES true
 #define BUFFER_DRAW_LINE_NUMS true
