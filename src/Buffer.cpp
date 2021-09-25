@@ -483,7 +483,6 @@ void Buffer::render()
             g_textRenderer->setDrawingColor(
                     lineI == m_cursorLine ? LINEN_ACTIVE_FONT_COLOR : LINEN_FONT_COLOR);
 
-            float digitX = m_position.x;
             const std::string lineNumStr =
 #if LINEN_DRAW_RELATIVE
                 std::to_string(lineI == m_cursorLine ?
@@ -491,6 +490,13 @@ void Buffer::render()
                         std::abs(lineI-m_cursorLine));
 #else
                 std::to_string(lineI+1);
+#endif
+
+            float digitX = m_position.x
+#if LINEN_ALIGN_NONCURR_RIGHT
+                + (lineI == m_cursorLine ? 0 : (LINEN_BAR_WIDTH-lineNumStr.length()*0.75f)*g_fontSizePx);
+#else
+            ;
 #endif
             for (char digit : lineNumStr)
             {
