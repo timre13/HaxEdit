@@ -2,13 +2,12 @@
 #include "Logger.h"
 #include "config.h"
 #include "glstuff.h"
+#include "globals.h"
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
-extern int g_fontSizePx;
 
 void TextRenderer::cleanUpGlyphs()
 {

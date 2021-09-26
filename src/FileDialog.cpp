@@ -11,8 +11,6 @@
 #include "glstuff.h"
 #include "globals.h"
 
-extern int g_fontSizePx;
-
 namespace std_fs = std::filesystem;
 
 FileDialog::FileDialog(const std::string& dirPath, Type type)

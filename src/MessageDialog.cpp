@@ -8,8 +8,6 @@
 #include "globals.h"
 #include <algorithm>
 
-extern int g_fontSizePx;
-
 MessageDialog::MessageDialog(
         const std::string& msg,
         Type type,
