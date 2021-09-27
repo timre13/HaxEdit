@@ -118,6 +118,7 @@ void closeActiveBuffer()
             if (!g_activeBuff)
             {
                 g_tabs.erase(g_tabs.begin()+g_currTabI);
+                g_currTabI = g_tabs.empty() ? 0 : std::min(g_currTabI, g_tabs.size()-1);
                 if (!g_tabs.empty() && g_tabs[g_currTabI])
                 {
                     g_activeBuff = g_tabs[g_currTabI]->getActiveBufferRecursive();
