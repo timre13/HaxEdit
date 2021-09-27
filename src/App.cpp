@@ -397,9 +397,8 @@ static void handleDialogClose()
                 }
                 else if (msgDialog->getPressedBtnI() == 1) // Pressed "No"
                 {
-                    ///g_buffers.erase(g_buffers.begin()+g_currTabI);
-                    ///g_currTabI = g_buffers.size() < 2 ? 0 : g_currTabI-1;
-                    ///g_isTitleUpdateNeeded = true;
+                    g_activeBuff->setModified(false); // Drop changes
+                    Bindings::Callbacks::closeActiveBuffer();
                 }
                 else
                 {

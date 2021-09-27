@@ -126,6 +126,7 @@ public:
     virtual void deleteCharBackwards();
     virtual void deleteCharForward();
     virtual inline bool isModified() const final { return m_isModified; }
+    virtual inline void setModified(bool isModified) final { m_isModified = isModified; }
 
     virtual inline void setReadOnly(bool isReadOnly) { m_isReadOnly = isReadOnly; }
     virtual inline bool isReadOnly() final { return m_isReadOnly; }
