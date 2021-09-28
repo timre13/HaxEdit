@@ -31,19 +31,21 @@ void runBinding(bindingMap_t& map, int binding)
 namespace Callbacks
 {
 
-void createNewBuffer()
+void createBufferInNewTab()
 {
-    ///if (g_buffers.empty())
-    ///{
-    ///    g_buffers.emplace_back(new Buffer{});
-    ///    g_currTabI = 0;
-    ///}
-    ///else
-    ///{
-    ///    // Insert the buffer next to the current one
-    ///    g_buffers.emplace(g_buffers.begin()+g_currTabI+1, new Buffer{});
-    ///    ++g_currTabI; // Go to the current buffer
-    ///}
+    if (g_tabs.empty())
+    {
+        g_tabs.push_back(std::make_unique<Split>(new Buffer));
+        g_currTabI = 0;
+        g_activeBuff = g_tabs[g_currTabI]->getActiveBufferRecursive();
+    }
+    else
+    {
+        // Insert the buffer next to the current one
+        g_tabs.emplace(g_tabs.begin()+g_currTabI+1, std::make_unique<Split>(new Buffer));
+        ++g_currTabI; // Go to the current buffer
+        g_activeBuff = g_tabs[g_currTabI]->getActiveBufferRecursive();
+    }
     g_isRedrawNeeded = true;
     g_isTitleUpdateNeeded = true;
 }

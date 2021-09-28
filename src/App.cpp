@@ -100,7 +100,7 @@ void App::setupKeyBindings()
     Bindings::noModMap[GLFW_KEY_EQUAL]      = Bindings::Callbacks::zoomInBufferIfImage;
     Bindings::noModMap[GLFW_KEY_KP_ADD]     = Bindings::Callbacks::zoomInBufferIfImage;
 
-    Bindings::ctrlMap[GLFW_KEY_N]           = Bindings::Callbacks::createNewBuffer;
+    Bindings::ctrlMap[GLFW_KEY_N]           = Bindings::Callbacks::createBufferInNewTab;
     Bindings::ctrlMap[GLFW_KEY_S]           = Bindings::Callbacks::saveCurrentBuffer;
     Bindings::ctrlMap[GLFW_KEY_O]           = Bindings::Callbacks::openFile;
     Bindings::ctrlMap[GLFW_KEY_Q]           = Bindings::Callbacks::closeActiveBuffer;
