@@ -32,11 +32,19 @@ void ImageBuffer::render()
 {
     TIMER_BEGIN_FUNC();
 
+    // Fill background
+    g_uiRenderer->renderFilledRectangle(
+            m_position,
+            {m_position.x+m_size.x, m_position.y+m_size.y},
+            RGB_COLOR_TO_RGBA(BG_COLOR)
+    );
+
     const float zoomedW = m_image->getPhysicalSize().x*m_zoom;
     const float zoomedH = m_image->getPhysicalSize().y*m_zoom;
 
     m_image->render(
-            {g_windowWidth/2-zoomedW/2, g_windowHeight/2-zoomedH/2},
+            {m_position.x+m_size.x/2-zoomedW/2,
+             m_position.y+m_size.y/2-zoomedH/2},
             {zoomedW, zoomedH});
 
     TIMER_END_FUNC();

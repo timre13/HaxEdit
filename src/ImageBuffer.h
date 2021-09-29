@@ -61,6 +61,7 @@ public:
 
     virtual inline void zoomBy(float val)
     {
+        Logger::log << "Zooming image buffer by " << val << '%' << Logger::End;
         if (m_image->getPhysicalSize().x*(m_zoom+val) >= 1.0f
          && m_image->getPhysicalSize().y*(m_zoom+val) >= 1.0f)
         {

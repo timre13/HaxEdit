@@ -449,6 +449,13 @@ void Buffer::render()
     assert(m_size.x > 0);
     assert(m_size.y > 0);
 
+    // Fill background
+    g_uiRenderer->renderFilledRectangle(
+            m_position,
+            {m_position.x+m_size.x, m_position.y+m_size.y},
+            RGB_COLOR_TO_RGBA(BG_COLOR)
+    );
+
     // Draw line number background
     g_uiRenderer->renderFilledRectangle(
             m_position,

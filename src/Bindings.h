@@ -290,7 +290,7 @@ void decreaseFontSize()
 
 void zoomInBufferIfImage()
 {
-    if (g_activeBuff)
+    if (!g_activeBuff)
         return;
 
     if (auto* img = dynamic_cast<ImageBuffer*>(g_activeBuff))
@@ -302,7 +302,7 @@ void zoomInBufferIfImage()
 
 void zoomOutBufferIfImage()
 {
-    if (g_activeBuff)
+    if (!g_activeBuff)
         return;
 
     if (auto* img = dynamic_cast<ImageBuffer*>(g_activeBuff))
