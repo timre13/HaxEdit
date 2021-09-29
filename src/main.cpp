@@ -54,7 +54,7 @@ int main(int argc, char** argv)
     }
     if (!g_tabs.empty())
     {
-        g_activeBuff = g_tabs[0]->getActiveBufferRecursive();
+        g_activeBuff = g_tabs[0]->getActiveBufferRecursively();
     }
 
     //if (g_tabs.empty())

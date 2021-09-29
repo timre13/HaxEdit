@@ -5,6 +5,7 @@
 #include <variant>
 #include <memory>
 #include <cassert>
+#include <functional>
 
 class Split final
 {
@@ -46,47 +47,17 @@ public:
         return m_children[m_activeChildI];
     }
     inline size_t getActiveChildI() const { return m_activeChildI; }
-    inline Buffer* getActiveBufferRecursive()
-    {
-        if (m_children.empty())
-            return nullptr;
-        assert(m_activeChildI < m_children.size());
-        //m_activeChildI = std::min(int(m_activeChildI), int(m_children.size())-1);
-        auto& child = m_children[m_activeChildI];
-        if (std::holds_alternative<std::unique_ptr<Split>>(child))
-        {
-            return std::get<std::unique_ptr<Split>>(child)->getActiveBufferRecursive();
-        }
-        else if (std::holds_alternative<std::unique_ptr<Buffer>>(child))
-        {
-            return std::get<std::unique_ptr<Buffer>>(child).get();
-        }
-        else
-        {
-            assert(false);
-        }
-    }
-    inline void closeActiveBufferRecursive()
-    {
-        if (m_children.empty())
-            return;
-        assert(m_activeChildI < m_children.size());
-        auto& child = m_children[m_activeChildI];
-        if (std::holds_alternative<std::unique_ptr<Buffer>>(child)
-         || !std::get<std::unique_ptr<Split>>(child)->hasChild())
-        {
-            m_children.erase(m_children.begin()+m_activeChildI);
-            m_activeChildI = std::min(m_activeChildI, m_children.size()-1);
-        }
-        else if (std::holds_alternative<std::unique_ptr<Buffer>>(child))
-        {
-            std::get<std::unique_ptr<Split>>(child)->closeActiveBufferRecursive();
-        }
-        else
-        {
-            assert(false);
-        }
-    }
+    Buffer* getActiveBufferRecursively();
+
+    void closeActiveBufferRecursively();
+
+    void addChild(Buffer* buff);
+    void addChild(Split* split);
+
+    void forEachBuffer(const std::function<void(Buffer*, size_t, size_t)>& func);
+    void forEachBufferRecursively(const std::function<void(Buffer*)>& func);
+
+    void makeChildrenSizesEqual();
 
     ~Split();
 };

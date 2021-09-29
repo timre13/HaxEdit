@@ -118,10 +118,10 @@ void App::setupKeyBindings()
 
 void App::renderBuffers()
 {
-    if (g_activeBuff)
+    if (!g_tabs.empty())
     {
         g_activeBuff->updateCursor();
-        g_activeBuff->render();
+        g_tabs[g_currTabI]->forEachBufferRecursively([](Buffer* buff) { buff->render(); });
     }
 }
 
@@ -162,7 +162,7 @@ void App::renderTabLine()
     for (const auto& tab : g_tabs)
     {
         const int tabX = TABLINE_TAB_WIDTH_PX*tabI;
-        const auto& buffer = tab->getActiveBufferRecursive();
+        const auto& buffer = tab->getActiveBufferRecursively();
 
         // Stop rendering if we go out of the screen
         if (tabX > g_windowWidth)
@@ -355,18 +355,27 @@ static void handleOpenDialog(FileDialog* fileDialog)
                     "Failed to open file: \""+path+'"',
                     MessageDialog::Type::Error));
     }
-    if (g_tabs.empty())
+
+    if (fileDialog->getOpenMode() == FileDialog::OpenMode::NewTab || g_tabs.empty())
     {
-        g_tabs.push_back(std::make_unique<Split>(buffer));
-        g_activeBuff = buffer;
-        g_currTabI = 0;
+        if (g_tabs.empty())
+        {
+            g_tabs.push_back(std::make_unique<Split>(buffer));
+            g_activeBuff = buffer;
+            g_currTabI = 0;
+        }
+        else
+        {
+            // Insert the buffer next to the current one
+            g_tabs.insert(g_tabs.begin()+g_currTabI+1, std::make_unique<Split>(buffer));
+            g_activeBuff = buffer;
+            ++g_currTabI; // Go to the current buffer
+        }
     }
     else
     {
-        // Insert the buffer next to the current one
-        g_tabs.insert(g_tabs.begin()+g_currTabI+1, std::make_unique<Split>(buffer));
-        g_activeBuff = buffer;
-        ++g_currTabI; // Go to the current buffer
+        g_tabs[g_currTabI]->addChild(buffer);
+        g_activeBuff = g_tabs[g_currTabI]->getActiveBufferRecursively();
     }
 }
 

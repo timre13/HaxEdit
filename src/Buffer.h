@@ -131,6 +131,18 @@ public:
     virtual inline void setReadOnly(bool isReadOnly) { m_isReadOnly = isReadOnly; }
     virtual inline bool isReadOnly() final { return m_isReadOnly; }
 
+    virtual inline void setPos(const glm::ivec2& pos) final { m_position = pos; }
+    virtual inline void setXPos(int x) final
+    {
+        m_position.x = x;
+        Logger::dbg << "Set buffer x pos to " << x << Logger::End;
+    }
+    virtual inline void setYPos(int y) final
+    {
+        m_position.y = y;
+        Logger::dbg << "Set buffer y pos to " << y << Logger::End;
+    }
+
     virtual inline ~Buffer()
     {
         Logger::log << "Destroyed a buffer: " << this << " (" << m_filePath << ')' << Logger::End;

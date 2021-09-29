@@ -15,9 +15,16 @@ public:
         SaveAs,
     };
 
+    enum class OpenMode
+    {
+        NewTab,
+        Split,
+    };
+
 private:
     std::string m_dirPath;
     Type m_type{};
+    OpenMode m_openMode{};
     int m_selectedFileI{};
     int m_scrollPx{};
     struct FileEntry
@@ -69,4 +76,5 @@ public:
     }
 
     inline Type getType() const { return m_type; }
+    inline OpenMode getOpenMode() const { return m_openMode; }
 };

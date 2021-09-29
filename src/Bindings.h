@@ -37,14 +37,14 @@ void createBufferInNewTab()
     {
         g_tabs.push_back(std::make_unique<Split>(new Buffer));
         g_currTabI = 0;
-        g_activeBuff = g_tabs[g_currTabI]->getActiveBufferRecursive();
+        g_activeBuff = g_tabs[g_currTabI]->getActiveBufferRecursively();
     }
     else
     {
         // Insert the buffer next to the current one
         g_tabs.emplace(g_tabs.begin()+g_currTabI+1, std::make_unique<Split>(new Buffer));
         ++g_currTabI; // Go to the current buffer
-        g_activeBuff = g_tabs[g_currTabI]->getActiveBufferRecursive();
+        g_activeBuff = g_tabs[g_currTabI]->getActiveBufferRecursively();
     }
     g_isRedrawNeeded = true;
     g_isTitleUpdateNeeded = true;
@@ -104,7 +104,7 @@ void closeActiveBuffer()
     }
     else
     {
-        g_tabs[g_currTabI]->closeActiveBufferRecursive();
+        g_tabs[g_currTabI]->closeActiveBufferRecursively();
         if (g_tabs.empty())
         {
             g_currTabI = 0;
@@ -116,14 +116,14 @@ void closeActiveBuffer()
             {
                 g_currTabI = g_tabs.size()-1;
             }
-            g_activeBuff = g_tabs[g_currTabI]->getActiveBufferRecursive();
+            g_activeBuff = g_tabs[g_currTabI]->getActiveBufferRecursively();
             if (!g_activeBuff)
             {
                 g_tabs.erase(g_tabs.begin()+g_currTabI);
                 g_currTabI = g_tabs.empty() ? 0 : std::min(g_currTabI, g_tabs.size()-1);
                 if (!g_tabs.empty() && g_tabs[g_currTabI])
                 {
-                    g_activeBuff = g_tabs[g_currTabI]->getActiveBufferRecursive();
+                    g_activeBuff = g_tabs[g_currTabI]->getActiveBufferRecursively();
                 }
                 else
                 {
@@ -141,7 +141,7 @@ void goToNextTab()
     if (!g_tabs.empty() && g_currTabI < g_tabs.size()-1)
     {
         ++g_currTabI;
-        g_activeBuff = g_tabs[g_currTabI]->getActiveBufferRecursive();
+        g_activeBuff = g_tabs[g_currTabI]->getActiveBufferRecursively();
     }
     g_isRedrawNeeded = true;
     g_isTitleUpdateNeeded = true;
@@ -152,7 +152,7 @@ void goToPrevTab()
     if (g_currTabI > 0)
     {
         --g_currTabI;
-        g_activeBuff = g_tabs[g_currTabI]->getActiveBufferRecursive();
+        g_activeBuff = g_tabs[g_currTabI]->getActiveBufferRecursively();
     }
     g_isRedrawNeeded = true;
     g_isTitleUpdateNeeded = true;

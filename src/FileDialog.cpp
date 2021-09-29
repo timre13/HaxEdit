@@ -19,8 +19,8 @@ FileDialog::FileDialog(const std::string& dirPath, Type type)
     Logger::dbg << "Opened a file dialog of type ";
     switch (type)
     {
-    case Type::Open: Logger::dbg << "Open"; break;
-    case Type::SaveAs: Logger::dbg << "Save as"; break;
+    case Type::Open: Logger::dbg << "\"Open\""; break;
+    case Type::SaveAs: Logger::dbg << "\"Save as\""; break;
     }
     Logger::dbg << Logger::End;
 
@@ -218,12 +218,14 @@ void FileDialog::handleKey(int key, int mods)
         if (!m_fileList.empty() && m_fileList[m_selectedFileI]->name == ".")
         {
             Logger::dbg << "FileDialog: Selected a directory" << Logger::End;
+            m_openMode = OpenMode::NewTab;
             m_isClosed = true;
         }
         else if (m_fileList.empty() || !m_fileList[m_selectedFileI]->isDirectory)
         {
             Logger::dbg << "FileDialog: Opened a file: " << m_fileList[m_selectedFileI]->name << Logger::End;
             // If the list is empty or a file was opened, we are done
+            m_openMode = OpenMode::NewTab;
             m_isClosed = true;
         }
         else
@@ -234,6 +236,21 @@ void FileDialog::handleKey(int key, int mods)
             m_selectedFileI = 0;
             genFileList();
             recalculateDimensions();
+        }
+    }
+    else if (key == GLFW_KEY_S)
+    {
+        if (!m_fileList.empty() && m_fileList[m_selectedFileI]->name == ".")
+        {
+            Logger::dbg << "FileDialog: Selected a directory" << Logger::End;
+            m_openMode = OpenMode::Split;
+            m_isClosed = true;
+        }
+        else if (m_fileList.empty() || !m_fileList[m_selectedFileI]->isDirectory)
+        {
+            Logger::dbg << "FileDialog: Opened a file: " << m_fileList[m_selectedFileI]->name << Logger::End;
+            m_openMode = OpenMode::Split;
+            m_isClosed = true;
         }
     }
 }
