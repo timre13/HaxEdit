@@ -38,6 +38,13 @@ void ImageBuffer::render()
             {m_position.x+m_size.x, m_position.y+m_size.y},
             RGB_COLOR_TO_RGBA(BG_COLOR)
     );
+    // Draw border
+    g_uiRenderer->renderRectangleOutline(
+            m_position,
+            {m_position.x+m_size.x, m_position.y+m_size.y},
+            {0.6f, 0.6f, 0.6f},
+            1
+    );
 
     const float zoomedW = m_image->getPhysicalSize().x*m_zoom;
     const float zoomedH = m_image->getPhysicalSize().y*m_zoom;
