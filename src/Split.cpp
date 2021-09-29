@@ -69,6 +69,7 @@ void Split::closeActiveBufferRecursively()
     {
         m_children.erase(m_children.begin()+m_activeChildI);
         m_activeChildI = std::min(m_activeChildI, m_children.size()-1);
+        makeChildrenSizesEqual();
     }
     else if (std::holds_alternative<std::unique_ptr<Buffer>>(child))
     {
