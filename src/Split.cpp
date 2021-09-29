@@ -117,6 +117,8 @@ void Split::makeChildrenSizesEqual()
     forEachBuffer([](Buffer* buff, size_t i, size_t len){
             assert(len > 0);
             buff->setXPos((float)g_windowWidth/len*i);
+            buff->setWidth((float)g_windowWidth/len);
+            buff->setHeight(g_windowHeight);
             if (i == 0)
             {
                 Logger::dbg << "Resized children to " << (float)g_windowWidth/len << "px"

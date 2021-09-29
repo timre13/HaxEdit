@@ -446,10 +446,13 @@ void Buffer::render()
 {
     TIMER_BEGIN_FUNC();
 
+    assert(m_size.x > 0);
+    assert(m_size.y > 0);
+
     // Draw line number background
     g_uiRenderer->renderFilledRectangle(
             m_position,
-            {g_fontSizePx*LINEN_BAR_WIDTH, g_textRenderer->getWindowHeight()},
+            {m_position.x+g_fontSizePx*LINEN_BAR_WIDTH, m_position.y+m_size.y},
             RGB_COLOR_TO_RGBA(LINEN_BG_COLOR));
 
     const float initTextX = m_position.x+g_fontSizePx*LINEN_BAR_WIDTH;
@@ -468,7 +471,7 @@ void Buffer::render()
     for (char c : m_content)
     {
         // Don't draw the part of the buffer that is below the viewport
-        if (textY > g_textRenderer->getWindowHeight())
+        if (textY > m_position.y+m_size.y)
         {
             break;
         }
@@ -510,11 +513,13 @@ void Buffer::render()
             g_textRenderer->setDrawingColor({1.0f, 1.0f, 1.0f});
         }
 
+        // Render the cursor line highlight
         if (isCharInsideViewport && isLineBeginning && m_cursorLine == lineI)
         {
             g_uiRenderer->renderFilledRectangle(
                     {textX, initTextY+textY-m_scrollY-m_position.y+2},
-                    {textX+g_textRenderer->getWindowWidth(), initTextY+textY-m_scrollY-m_position.y+2+g_fontSizePx},
+                    {textX+m_size.x,
+                        initTextY+textY-m_scrollY-m_position.y+2+g_fontSizePx},
                     CURSOR_LINE_COLOR
             );
             // Bind the text renderer shader again
@@ -608,7 +613,7 @@ void Buffer::render()
             continue;
         }
 
-        if (BUFFER_WRAP_LINES && textX+g_fontSizePx > g_textRenderer->getWindowWidth())
+        if (BUFFER_WRAP_LINES && textX+g_fontSizePx > m_position.x+m_size.x)
         {
             textX = initTextX;
             textY += g_fontSizePx;

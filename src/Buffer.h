@@ -40,6 +40,7 @@ protected:
     std::string m_highlightBuffer;
 
     glm::ivec2 m_position{0, TABLINE_HEIGHT_PX};
+    glm::ivec2 m_size{};
 
     int m_scrollY{};
 
@@ -141,6 +142,18 @@ public:
     {
         m_position.y = y;
         Logger::dbg << "Set buffer y pos to " << y << Logger::End;
+    }
+
+    virtual inline void setSize(const glm::ivec2& size) final { m_size = size; }
+    virtual inline void setWidth(int w) final
+    {
+        m_size.x = w;
+        Logger::dbg << "Set buffer width to " << w << Logger::End;
+    }
+    virtual inline void setHeight(int h) final
+    {
+        m_size.y = h;
+        Logger::dbg << "Set buffer height to " << h << Logger::End;
     }
 
     virtual inline ~Buffer()

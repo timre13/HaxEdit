@@ -44,9 +44,6 @@ public:
     static void renderDialogs();
     static void renderStartupScreen();
 
-    // ----- Utility functions -----
-    static Split::child_t& getActiveBuffer();
-
 private:
     static void GLAPIENTRY glDebugMsgCB(
             GLenum source, GLenum type, GLuint, GLenum severity,

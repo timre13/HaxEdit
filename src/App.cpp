@@ -308,11 +308,16 @@ void App::windowRefreshCB(GLFWwindow*)
 
 void App::windowResizeCB(GLFWwindow*, int width, int height)
 {
+    Logger::log << "Resized window to " << width << 'x' << height << Logger::End;
     glViewport(0, 0, width, height);
     g_windowWidth = width;
     g_windowHeight = height;
     g_textRenderer->onWindowResized(width, height);
     g_uiRenderer->onWindowResized(width, height);
+    for (auto& tab : g_tabs)
+    {
+        tab->makeChildrenSizesEqual();
+    }
 }
 
 static void handleSaveAsDialog(FileDialog* fileDialog)
