@@ -40,6 +40,7 @@ add_executable(haxed
     src/Shader.cpp
     src/FileTypeHandler.cpp
     src/os.cpp
+    src/Bindings.cpp
     src/UiRenderer.cpp
     src/TextRenderer.cpp
     src/Buffer.cpp
