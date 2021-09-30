@@ -59,5 +59,8 @@ inline std::string strToLower(std::string str)
 
 inline std::string getFileExt(const std::string& path)
 {
-    return std::filesystem::path{path}.extension().string().substr(1);
+    const std::string out = std::filesystem::path{path}.extension().string();
+    if (!out.empty())
+        return out.substr(1);
+    return "";
 }
