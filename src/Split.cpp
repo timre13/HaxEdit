@@ -24,6 +24,7 @@ void Split::addChild(Buffer* buff)
     m_children.emplace_back(std::unique_ptr<Buffer>(buff));
     Logger::log("Split");
     Logger::log << "Added a child (a buffer): " << buff << Logger::End;
+    setActiveChildI(m_children.size()-1);
     makeChildrenSizesEqual();
     Logger::log(Logger::End);
 }
@@ -33,6 +34,7 @@ void Split::addChild(Split* split)
     m_children.emplace_back(std::unique_ptr<Split>(split));
     Logger::log("Split");
     Logger::log << "Added a child (a split): " << split << Logger::End;
+    setActiveChildI(m_children.size()-1);
     makeChildrenSizesEqual();
     Logger::log(Logger::End);
 }
@@ -69,6 +71,8 @@ void Split::closeActiveBufferRecursively()
     {
         m_children.erase(m_children.begin()+m_activeChildI);
         m_activeChildI = std::min(m_activeChildI, m_children.size()-1);
+        if (!m_children.empty())
+            setActiveChildI(m_activeChildI);
         makeChildrenSizesEqual();
     }
     else if (std::holds_alternative<std::unique_ptr<Buffer>>(child))

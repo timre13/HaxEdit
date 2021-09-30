@@ -662,6 +662,15 @@ void Buffer::render()
         isLineBeginning = false;
     }
 
+    if (m_isDimmed)
+    {
+        g_uiRenderer->renderFilledRectangle(
+                m_position,
+                {m_position.x+m_size.x, m_position.y+m_size.y},
+                {UNPACK_RGB_COLOR(BG_COLOR), 0.5f}
+        );
+    }
+
     TIMER_END_FUNC();
 }
 

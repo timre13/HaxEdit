@@ -42,6 +42,8 @@ protected:
     glm::ivec2 m_position{0, TABLINE_HEIGHT_PX};
     glm::ivec2 m_size{};
 
+    bool m_isDimmed = true;
+
     int m_scrollY{};
 
     // 0-based indices!
@@ -81,6 +83,7 @@ public:
     virtual void updateCursor();
     virtual void updateRStatusLineStr();
     virtual void render();
+    virtual void setDimmed(bool val) final { m_isDimmed = val; }
 
     virtual inline const std::string& getContent() const { return m_content; }
     virtual inline const std::string& getFilePath() const final { return m_filePath; }

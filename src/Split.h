@@ -52,7 +52,21 @@ public:
     inline void setActiveChildI(size_t index)
     {
         assert(index < m_children.size());
+        {
+            auto& activeChild = m_children[m_activeChildI];
+            if (std::holds_alternative<std::unique_ptr<Buffer>>(activeChild))
+            {
+                std::get<std::unique_ptr<Buffer>>(activeChild)->setDimmed(true);
+            }
+        }
         m_activeChildI = index;
+        {
+            auto& activeChild = m_children[m_activeChildI];
+            if (std::holds_alternative<std::unique_ptr<Buffer>>(activeChild))
+            {
+                std::get<std::unique_ptr<Buffer>>(activeChild)->setDimmed(false);
+            }
+        }
     }
     Buffer* getActiveBufferRecursively();
 
