@@ -193,6 +193,11 @@ void App::renderDialogs()
 {
     if (!g_dialogs.empty())
     {
+        g_uiRenderer->renderFilledRectangle(
+                {0, 0},
+                {g_windowWidth, g_windowHeight},
+                {UNPACK_RGB_COLOR(BG_COLOR), 0.7f});
+
         // Render the top dialog
         g_dialogs.back()->render();
     }
