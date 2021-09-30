@@ -106,6 +106,7 @@ void App::setupKeyBindings()
     Bindings::ctrlMap[GLFW_KEY_Q]           = Bindings::Callbacks::closeActiveBuffer;
     Bindings::ctrlMap[GLFW_KEY_PAGE_UP]     = Bindings::Callbacks::goToPrevTab;
     Bindings::ctrlMap[GLFW_KEY_PAGE_DOWN]   = Bindings::Callbacks::goToNextTab;
+    Bindings::ctrlMap[GLFW_KEY_TAB]         = Bindings::Callbacks::goToNextSplit;
     Bindings::ctrlMap[GLFW_KEY_HOME]        = Bindings::Callbacks::goToFirstChar;
     Bindings::ctrlMap[GLFW_KEY_END]         = Bindings::Callbacks::goToLastChar;
     Bindings::ctrlMap[GLFW_KEY_MINUS]       = Bindings::Callbacks::decreaseFontSize;
@@ -114,6 +115,7 @@ void App::setupKeyBindings()
     Bindings::ctrlMap[GLFW_KEY_KP_ADD]      = Bindings::Callbacks::increaseFontSize;
 
     Bindings::ctrlShiftMap[GLFW_KEY_S]      = Bindings::Callbacks::saveCurrentBufferAs;
+    Bindings::ctrlShiftMap[GLFW_KEY_TAB]    = Bindings::Callbacks::goToPrevSplit;
 }
 
 void App::renderBuffers()

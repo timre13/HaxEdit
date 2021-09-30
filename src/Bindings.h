@@ -21,6 +21,8 @@ void closeActiveBuffer();
 
 void goToNextTab();
 void goToPrevTab();
+void goToNextSplit();
+void goToPrevSplit();
 
 void moveCursorRight();
 void moveCursorLeft();

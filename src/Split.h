@@ -39,6 +39,8 @@ public:
 
     inline Orientation getOrientation() const { return m_orientation; }
 
+    inline size_t getNumOfChildren() const { return m_children.size(); }
+
     inline std::vector<child_t>& getChildren() { return m_children; }
     inline bool hasChild() { return !m_children.empty(); }
     inline child_t& getActiveChild()
@@ -47,6 +49,11 @@ public:
         return m_children[m_activeChildI];
     }
     inline size_t getActiveChildI() const { return m_activeChildI; }
+    inline void setActiveChildI(size_t index)
+    {
+        assert(index < m_children.size());
+        m_activeChildI = index;
+    }
     Buffer* getActiveBufferRecursively();
 
     void closeActiveBufferRecursively();

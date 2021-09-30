@@ -153,6 +153,52 @@ void goToPrevTab()
     g_isTitleUpdateNeeded = true;
 }
 
+void goToNextSplit()
+{
+    if (!g_activeBuff)
+        return;
+
+    auto& tab = g_tabs[g_currTabI];
+    if (tab->getNumOfChildren() < 2)
+        return;
+    // If focused on the last child, focus the first one
+    if (tab->getActiveChildI() == tab->getNumOfChildren()-1)
+    {
+        tab->setActiveChildI(0);
+    }
+    // Else: focus on the next one
+    else
+    {
+        tab->setActiveChildI(tab->getActiveChildI()+1);
+    }
+    g_activeBuff = tab->getActiveBufferRecursively();
+    g_isRedrawNeeded = true;
+    g_isTitleUpdateNeeded = true;
+}
+
+void goToPrevSplit()
+{
+    if (!g_activeBuff)
+        return;
+
+    auto& tab = g_tabs[g_currTabI];
+    if (tab->getNumOfChildren() < 2)
+        return;
+    // If focused on the first child, focus the last one
+    if (tab->getActiveChildI() == 0)
+    {
+        tab->setActiveChildI(tab->getNumOfChildren()-1);
+    }
+    // Else: focus on the prev. one
+    else
+    {
+        tab->setActiveChildI(tab->getActiveChildI()-1);
+    }
+    g_activeBuff = tab->getActiveBufferRecursively();
+    g_isRedrawNeeded = true;
+    g_isTitleUpdateNeeded = true;
+}
+
 void moveCursorRight()
 {
     if (g_activeBuff)
