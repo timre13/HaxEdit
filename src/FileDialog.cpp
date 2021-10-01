@@ -7,9 +7,10 @@
 #include "config.h"
 #include "types.h"
 #include "config.h"
-#include <filesystem>
 #include "glstuff.h"
 #include "globals.h"
+#include <filesystem>
+#include <algorithm>
 
 namespace std_fs = std::filesystem;
 
@@ -196,6 +197,12 @@ void FileDialog::genFileList()
     {
         Logger::err << "Failed to list directory: " << e.what() << Logger::End;
     }
+
+    std::sort(m_fileList.begin(), m_fileList.end(),
+            [](const std::unique_ptr<FileEntry>& a, const std::unique_ptr<FileEntry>& b){
+                return a->name < b->name;
+        }
+    );
 
     TIMER_END_FUNC();
 }
