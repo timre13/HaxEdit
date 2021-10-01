@@ -51,6 +51,7 @@ public:
     virtual void handleKey(int key, int mods) override;
     virtual void handleChar(uint) override {}
     virtual bool isInsideButton(const glm::ivec2& pos) override;
+    virtual void pressButtonAt(const glm::ivec2 pos) override;
     inline int getPressedBtnI() const { return m_pressedBtnI; }
     inline int getPressedKey() const {
         return m_pressedBtnI >= 0 ? m_btnInfo[m_pressedBtnI].key : 0; }

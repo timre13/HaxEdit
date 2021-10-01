@@ -169,3 +169,20 @@ bool MessageDialog::isInsideButton(const glm::ivec2& pos)
     }
     return false;
 }
+
+void MessageDialog::pressButtonAt(const glm::ivec2 pos)
+{
+    for (size_t i{}; i < m_btnInfo.size(); ++i)
+    {
+        const auto& btn = m_btnDims[i];
+        if (pos.x >= btn.xPos
+         && pos.x < btn.xPos+btn.width
+         && pos.y >= btn.yPos
+         && pos.y < btn.yPos+btn.height)
+        {
+            m_pressedBtnI = i;
+            m_isClosed = true;
+            break;
+        }
+    }
+}

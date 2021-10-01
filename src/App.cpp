@@ -638,6 +638,17 @@ void App::mouseButtonCB(GLFWwindow*, int btn, int act, int mods)
         << GlfwHelpers::keyOrBtnActionToStr(act) << " at {"
         << g_cursorX << ", " << g_cursorY << '}' << Logger::End;
 
+    if (!g_dialogs.empty())
+    {
+        if (act == GLFW_PRESS && g_dialogs.back()->isInsideButton({g_cursorX, g_cursorY}))
+        {
+            g_dialogs.back()->pressButtonAt({g_cursorX, g_cursorY});
+            handleDialogClose();
+            g_isRedrawNeeded = true;
+        }
+        return;
+    }
+
     // If the cursor has been pressed on the tab line
     if (act == GLFW_PRESS
      && g_cursorX < (int)g_tabs.size()*TABLINE_TAB_WIDTH_PX
