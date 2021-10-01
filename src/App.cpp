@@ -19,6 +19,8 @@ GLFWwindow* App::createWindow()
     glfwSetScrollCallback(window, App::windowScrollCB);
     glfwSetCharCallback(window, App::windowCharCB);
     glfwSetWindowCloseCallback(window, App::windowCloseCB);
+    glfwSetCursorPosCallback(window, App::cursorPosCB);
+    glfwSetMouseButtonCallback(window, App::mouseButtonCB);
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
     return window;
@@ -570,5 +572,33 @@ void App::windowCloseCB(GLFWwindow* window)
             Logger::log << "Window close aborted" << Logger::End;
             return;
         }
+    }
+}
+
+void App::cursorPosCB(GLFWwindow*, double x, double y)
+{
+    g_cursorX = (int)x;
+    g_cursorY = (int)y;
+}
+
+void App::mouseButtonCB(GLFWwindow*, int btn, int act, int mods)
+{
+    (void)mods;
+    Logger::dbg << "Mouse button " << btn << " (" << GlfwHelpers::mouseBtnToStr(btn) << ") "
+        << GlfwHelpers::keyOrBtnActionToStr(act) << " at {"
+        << g_cursorX << ", " << g_cursorY << '}' << Logger::End;
+
+    // If the cursor has been pressed on the tab line
+    if (act == GLFW_PRESS
+     && g_cursorX < (int)g_tabs.size()*TABLINE_TAB_WIDTH_PX
+     && g_cursorY < TABLINE_HEIGHT_PX)
+    {
+        // Switch to the clicked tab
+        g_currTabI = g_cursorX/TABLINE_TAB_WIDTH_PX;
+        assert(g_currTabI < g_tabs.size());
+
+        g_activeBuff = g_tabs[g_currTabI]->getActiveBufferRecursively();
+        g_isTitleUpdateNeeded = true;
+        g_isRedrawNeeded = true;
     }
 }

@@ -13,6 +13,8 @@ class FileTypeHandler;
 
 int g_windowWidth = 0;
 int g_windowHeight = 0;
+int g_cursorX = 0;
+int g_cursorY = 0;
 
 bool g_isRedrawNeeded = false;
 bool g_isTitleUpdateNeeded = true;
@@ -31,10 +33,12 @@ std::unique_ptr<FileTypeHandler> g_fileTypeHandler;
 
 int g_fontSizePx = DEF_FONT_SIZE_PX;
 
-#else // ----------------------------------------
+#else // ----------------------------------------------------------------------
 
 extern int g_windowWidth;
 extern int g_windowHeight;
+extern int g_cursorX;
+extern int g_cursorY;
 
 extern bool g_isRedrawNeeded;
 extern bool g_isTitleUpdateNeeded;
