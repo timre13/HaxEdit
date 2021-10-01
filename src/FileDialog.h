@@ -59,6 +59,7 @@ public:
     virtual void render() override;
     virtual void handleKey(int key, int mods) override;
     virtual void handleChar(uint) override {}
+    virtual bool isInsideButton(const glm::ivec2&) override { return false; }
 
     inline std::string getSelectedFilePath()
     {

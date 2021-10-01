@@ -154,3 +154,18 @@ void MessageDialog::handleKey(int key, int mods)
         }
     }
 }
+
+bool MessageDialog::isInsideButton(const glm::ivec2& pos)
+{
+    for (const auto& btn : m_btnDims)
+    {
+        if (pos.x >= btn.xPos
+         && pos.x < btn.xPos+btn.width
+         && pos.y >= btn.yPos
+         && pos.y < btn.yPos+btn.height)
+        {
+            return true;
+        }
+    }
+    return false;
+}

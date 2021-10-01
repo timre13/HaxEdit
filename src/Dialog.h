@@ -28,7 +28,8 @@ public:
     virtual void handleKey(int key, int mods) = 0;
     virtual void handleChar(uint codePoint) = 0;
 
-    inline bool isClosed() const { return m_isClosed; }
+    virtual inline bool isClosed() const final { return m_isClosed; }
+    virtual inline bool isInsideButton(const glm::ivec2& pos) = 0;
 
     virtual ~Dialog() {};
 };

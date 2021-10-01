@@ -33,5 +33,6 @@ public:
     virtual void handleChar(uint c) override;
     inline Id getId() const { return m_id; }
     inline const std::string& getValue() const { return m_buffer; }
+    virtual bool isInsideButton(const glm::ivec2&) override { return false; }
     virtual ~AskerDialog() { Logger::dbg << "Destroyed an asker dialog" << Logger::End; }
 };
