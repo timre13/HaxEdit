@@ -601,4 +601,31 @@ void App::mouseButtonCB(GLFWwindow*, int btn, int act, int mods)
         g_isTitleUpdateNeeded = true;
         g_isRedrawNeeded = true;
     }
+
+    if (!g_tabs.empty())
+    {
+        // TODO: Nested splits are not well supported
+        for (size_t i{}; i < g_tabs[g_currTabI]->getChildren().size(); ++i)
+        {
+            const auto& child = g_tabs[g_currTabI]->getChildren()[i];
+            if (std::holds_alternative<std::unique_ptr<Buffer>>(child))
+            {
+                const auto& buffer = std::get<std::unique_ptr<Buffer>>(child);
+
+                // If the pointer is inside the buffer
+                if (g_cursorX >= buffer->getXPos()
+                 && g_cursorX < buffer->getXPos()+buffer->getWidth()
+                 && g_cursorY >= buffer->getYPos()
+                 && g_cursorY < buffer->getYPos()+buffer->getHeight())
+                {
+                    // Activate the clicked buffer
+                    g_tabs[g_currTabI]->setActiveChildI(i);
+                    g_activeBuff = g_tabs[g_currTabI]->getActiveBufferRecursively();
+                    g_isTitleUpdateNeeded = true;
+                    g_isRedrawNeeded = true;
+                    break;
+                }
+            }
+        }
+    }
 }

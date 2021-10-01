@@ -146,6 +146,9 @@ public:
         m_position.y = y;
         Logger::dbg << "Set buffer y pos to " << y << Logger::End;
     }
+    virtual inline const glm::ivec2& getPos() const final { return m_position; }
+    virtual inline int getXPos() const final { return m_position.x; }
+    virtual inline int getYPos() const final { return m_position.y; }
 
     virtual inline void setSize(const glm::ivec2& size) final { m_size = size; }
     virtual inline void setWidth(int w) final
@@ -158,6 +161,9 @@ public:
         m_size.y = h;
         Logger::dbg << "Set buffer height to " << h << Logger::End;
     }
+    virtual inline const glm::ivec2& getSize() const final { return m_size; }
+    virtual inline int getWidth() const final { return m_size.x; }
+    virtual inline int getHeight() const final { return m_size.y; }
 
     virtual inline ~Buffer()
     {
