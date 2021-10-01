@@ -58,7 +58,7 @@ public:
 private:
     static void windowScrollCB(GLFWwindow*, double, double yOffset);
     static void windowCloseCB(GLFWwindow* window);
-    static void cursorPosCB(GLFWwindow*, double x, double y);
+    static void cursorPosCB(GLFWwindow* window, double x, double y);
     static void mouseButtonCB(GLFWwindow*, int btn, int act, int mods);
 
     static void toggleDebugDraw();

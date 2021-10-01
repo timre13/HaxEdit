@@ -575,10 +575,46 @@ void App::windowCloseCB(GLFWwindow* window)
     }
 }
 
-void App::cursorPosCB(GLFWwindow*, double x, double y)
+void App::cursorPosCB(GLFWwindow* window, double x, double y)
 {
     g_cursorX = (int)x;
     g_cursorY = (int)y;
+
+    // If the cursor is inside the tab bar
+    if (g_cursorY < TABLINE_HEIGHT_PX)
+    {
+        glfwSetCursor(window, NULL);
+    }
+
+    if (!g_tabs.empty())
+    {
+        // TODO: Nested splits are not well supported
+        for (size_t i{}; i < g_tabs[g_currTabI]->getChildren().size(); ++i)
+        {
+            const auto& child = g_tabs[g_currTabI]->getChildren()[i];
+            if (std::holds_alternative<std::unique_ptr<Buffer>>(child))
+            {
+                const auto& buffer = std::get<std::unique_ptr<Buffer>>(child);
+
+                // If the pointer is inside a buffer
+                if (g_cursorX >= buffer->getXPos()
+                 && g_cursorX < buffer->getXPos()+buffer->getWidth()
+                 && g_cursorY >= buffer->getYPos()
+                 && g_cursorY < buffer->getYPos()+buffer->getHeight())
+                {
+                    glfwSetCursor(window, glfwCreateStandardCursor(
+                                dynamic_cast<ImageBuffer*>(buffer.get()) == nullptr
+                                ? GLFW_IBEAM_CURSOR : GLFW_CROSSHAIR_CURSOR
+                    ));
+                    break;
+                }
+            }
+        }
+    }
+    else
+    {
+        glfwSetCursor(window, NULL);
+    }
 }
 
 void App::mouseButtonCB(GLFWwindow*, int btn, int act, int mods)
