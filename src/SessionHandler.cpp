@@ -6,7 +6,7 @@
 #include <fstream>
 #include <string.h>
 
-Split* processTabRecursively(const cJSON* node)
+static Split* loadTabRecursively(const cJSON* node)
 {
     Split* output = new Split{};
     const cJSON* children = cJSON_GetObjectItemCaseSensitive(node, "children");
@@ -37,7 +37,7 @@ Split* processTabRecursively(const cJSON* node)
 
         if (strcmp(typeVal->valuestring, "split") == 0)
         {
-            processTabRecursively(child);
+            loadTabRecursively(child);
         }
         else if (strcmp(typeVal->valuestring, "buffer") == 0)
         {
@@ -95,16 +95,21 @@ Split* processTabRecursively(const cJSON* node)
 
 SessionHandler::SessionHandler(const std::string& path)
 {
+    m_sessionFilePath = path;
+}
+
+void SessionHandler::loadFromFile()
+{
     g_tabs.clear();
     g_currTabI = 0;
     g_activeBuff = nullptr;
 
     Logger::log("SessionHandler");
     std::fstream file;
-    file.open(path, std::ios::in);
+    file.open(m_sessionFilePath, std::ios::in);
     if (file.fail())
     {
-        Logger::err << "Failed to load session file: " << path << Logger::End;
+        Logger::err << "Failed to load session file: " << m_sessionFilePath << Logger::End;
         Logger::log(Logger::End);
         return;
     }
@@ -160,7 +165,7 @@ SessionHandler::SessionHandler(const std::string& path)
                 }
                 else if (strcmp(tabType->valuestring, "split") == 0)
                 {
-                    Split* tabObj = processTabRecursively(tab);
+                    Split* tabObj = loadTabRecursively(tab);
                     if (!tabObj)
                         goto error;
                     g_tabs.push_back(std::unique_ptr<Split>(tabObj));
@@ -197,7 +202,82 @@ error:
     Logger::err << "Session loading failed" << Logger::End;
 success:
     cJSON_Delete(json);
-    Logger::log(Logger::End);
     if (!g_tabs.empty())
         g_activeBuff = g_tabs[g_currTabI]->getActiveBufferRecursively();
+
+    Logger::log("SessionHandler");
+    Logger::log << "Loaded session from " << m_sessionFilePath << Logger::End;
+    Logger::log(Logger::End);
+}
+
+static cJSON* storeTabRecursively(const Split* split)
+{
+    cJSON* output = cJSON_CreateObject();
+    cJSON_AddStringToObject(output, "type", "split");
+    cJSON* childrenJson = cJSON_AddArrayToObject(output, "children");
+    for (const auto& child : split->getChildren())
+    {
+        if (std::holds_alternative<std::unique_ptr<Buffer>>(child))
+        {
+            Buffer* buff = std::get<std::unique_ptr<Buffer>>(child).get();
+            cJSON* childJson = cJSON_CreateObject();
+            cJSON_AddStringToObject(childJson, "type", "buffer");
+            cJSON_AddStringToObject(childJson, "file", buff->getFilePath().c_str());
+            cJSON_AddNumberToObject(childJson, "cursorLine", buff->getCursorLine());
+            cJSON_AddNumberToObject(childJson, "cursorCol", buff->getCursorCol());
+            cJSON_AddItemToArray(childrenJson, childJson);
+        }
+        else if (std::holds_alternative<std::unique_ptr<Split>>(child))
+        {
+            storeTabRecursively(std::get<std::unique_ptr<Split>>(child).get());
+        }
+        else
+        {
+            assert(false);
+        }
+    }
+    return output;
+}
+
+void SessionHandler::writeToFile()
+{
+    Logger::log("SessionHandler");
+    cJSON* json = cJSON_CreateObject();
+    cJSON* tabListJson = cJSON_AddArrayToObject(json, "tabs");
+    for (const auto& tab : g_tabs)
+    {
+        cJSON* tabJson = storeTabRecursively(tab.get());
+        if (!tabJson)
+        {
+            Logger::err << "Failed to save tabs" << Logger::End;
+            goto error;
+        }
+        cJSON_AddItemToArray(tabListJson, tabJson);
+    }
+    cJSON_AddNumberToObject(json, "activeTabI", g_currTabI);
+
+    goto success;
+error:
+    Logger::err << "Session saving failed" << Logger::End;
+    Logger::log(Logger::End);
+    return;
+success:
+    const char* str = cJSON_Print(json);
+    Logger::dbg << "Generated session JSON:\n" << str << Logger::End;
+    std::fstream file{m_sessionFilePath, std::ios_base::out};
+    if (file.fail())
+    {
+        Logger::err << "Failed to write session: Open failed" << Logger::End;
+    }
+    file.write(str, strlen(str));
+    if (file.fail())
+    {
+        Logger::err << "Failed to write session" << Logger::End;
+    }
+    file.close();
+    cJSON_free((void*)str);
+    cJSON_Delete(json);
+
+    Logger::log << "Wrote session to " << m_sessionFilePath << Logger::End;
+    Logger::log(Logger::End);
 }

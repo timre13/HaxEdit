@@ -67,6 +67,11 @@ int main(int argc, char** argv)
     //}
 
     SessionHandler sessHndlr{"Session.haxedsess"};
+    // If we didn't get files to open, load the last session
+    if (g_tabs.empty())
+    {
+        sessHndlr.loadFromFile();
+    }
 
     auto genTitle{
         [&](){
@@ -121,6 +126,7 @@ int main(int argc, char** argv)
     }
 
     Logger::log << "Shutting down!" << Logger::End;
+    sessHndlr.writeToFile();
     glfwDestroyWindow(g_window);
     glfwTerminate();
     return 0;

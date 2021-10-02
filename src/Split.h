@@ -42,6 +42,7 @@ public:
     inline size_t getNumOfChildren() const { return m_children.size(); }
 
     inline std::vector<child_t>& getChildren() { return m_children; }
+    inline const std::vector<child_t>& getChildren() const { return m_children; }
     inline bool hasChild() { return !m_children.empty(); }
     inline child_t& getActiveChild()
     {
