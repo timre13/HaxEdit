@@ -2,6 +2,7 @@
 #include "globals.h"
 #undef _DEF_GLOBALS_
 #include "App.h"
+#include "SessionHandler.h"
 
 int main(int argc, char** argv)
 {
@@ -64,6 +65,8 @@ int main(int argc, char** argv)
     //    g_tabs.emplace_back(new Buffer{});
     //    g_tabs.back()->open(__FILE__);
     //}
+
+    SessionHandler sessHndlr{"Session.haxedsess"};
 
     auto genTitle{
         [&](){

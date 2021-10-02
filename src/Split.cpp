@@ -3,7 +3,6 @@
 
 Split::Split()
 {
-    assert(false);
     Logger::log << "Created a split" << Logger::End;
 }
 

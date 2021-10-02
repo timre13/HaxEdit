@@ -18,6 +18,7 @@ apt install cmake libglew-dev libglfw3-dev libglm-dev libfreetype-dev
 ### Submodules
 * [vscode-material-icon-theme](https://github.com/PKief/vscode-material-icon-theme) for icons
 * [stb](https://github.com/nothings/stb) for image loading
+* [cJSON](https://github.com/DaveGamble/cJSON) for JSON parsing
 
 Run `git submodule init --recursive` to get the submodules.
 

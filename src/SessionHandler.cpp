@@ -1,0 +1,203 @@
+#include "SessionHandler.h"
+#include "Logger.h"
+#include "Split.h"
+#include "Buffer.h"
+#include <sstream>
+#include <fstream>
+#include <string.h>
+
+Split* processTabRecursively(const cJSON* node)
+{
+    Split* output = new Split{};
+    const cJSON* children = cJSON_GetObjectItemCaseSensitive(node, "children");
+    if (!children)
+    {
+        Logger::err << "Split without children" << Logger::End;
+        return nullptr;
+    }
+    const cJSON* child;
+    cJSON_ArrayForEach(child, children)
+    {
+        if (!cJSON_IsObject(child))
+        {
+            Logger::err << "Child of invalid type, expected Object, got something else" << Logger::End;
+            return nullptr;
+        }
+        const cJSON* typeVal = cJSON_GetObjectItemCaseSensitive(child, "type");
+        if (!typeVal)
+        {
+            Logger::err << "Key 'type' not found in Object" << Logger::End;
+            return nullptr;
+        }
+        else if (!cJSON_IsString(typeVal))
+        {
+            Logger::err << "Invalid 'type' value, expected a string" << Logger::End;
+            return nullptr;
+        }
+
+        if (strcmp(typeVal->valuestring, "split") == 0)
+        {
+            processTabRecursively(child);
+        }
+        else if (strcmp(typeVal->valuestring, "buffer") == 0)
+        {
+            Buffer* buff = new Buffer;
+            const cJSON* fileVal = cJSON_GetObjectItemCaseSensitive(child, "file");
+            if (!fileVal)
+            {
+                Logger::err << "Key 'file' not found in Object" << Logger::End;
+                return nullptr;
+            }
+            else if (!cJSON_IsString(fileVal))
+            {
+                Logger::err << "Invalid 'file' value, expected a string" << Logger::End;
+                return nullptr;
+            }
+            buff->open(fileVal->valuestring);
+            if (const cJSON* cursorLineVal = cJSON_GetObjectItemCaseSensitive(child, "cursorLine"))
+            {
+                if (!cJSON_IsNumber(cursorLineVal) || cursorLineVal->valueint < 0)
+                {
+                    Logger::err << "Invalid value for 'cursorLine', expected a number" << Logger::End;
+                    return nullptr;
+                }
+                // Not very efficient but oh, well, at least it does all the checks
+                for (int i{}; i < cursorLineVal->valueint; ++i)
+                {
+                    buff->moveCursor(Buffer::CursorMovCmd::Down);
+                    buff->updateCursor();
+                }
+            }
+            if (const cJSON* cursorColVal = cJSON_GetObjectItemCaseSensitive(child, "cursorCol"))
+            {
+                if (!cJSON_IsNumber(cursorColVal) || cursorColVal->valueint < 0)
+                {
+                    Logger::err << "Invalid value for 'cursorCol', expected a positive number" << Logger::End;
+                    return nullptr;
+                }
+                // Not very efficient but oh, well, at least it does all the checks
+                for (int i{}; i < cursorColVal->valueint; ++i)
+                {
+                    buff->moveCursor(Buffer::CursorMovCmd::Right);
+                    buff->updateCursor();
+                }
+            }
+            output->addChild(buff);
+        }
+        else
+        {
+            Logger::err << "Invalid value for 'key', expected 'buffer' or 'split'" << Logger::End;
+            return nullptr;
+        }
+    }
+    return output;
+}
+
+SessionHandler::SessionHandler(const std::string& path)
+{
+    g_tabs.clear();
+    g_currTabI = 0;
+    g_activeBuff = nullptr;
+
+    Logger::log("SessionHandler");
+    std::fstream file;
+    file.open(path, std::ios::in);
+    if (file.fail())
+    {
+        Logger::err << "Failed to load session file: " << path << Logger::End;
+        Logger::log(Logger::End);
+        return;
+    }
+    std::stringstream ss;
+    std::string line;
+    while (std::getline(file, line))
+    {
+        if (!line.empty() && line[0] != '#')
+            ss << line+'\n';
+    }
+    const std::string str = ss.str();
+    const char* cstr = str.c_str();
+
+    cJSON* json = cJSON_Parse(cstr);
+    if (!json)
+    {
+        Logger::err << "Failed to parse JSON, error at char " << cJSON_GetErrorPtr()-cstr << Logger::End;
+        Logger::log(Logger::End);
+        return;
+    }
+    const char* printed = cJSON_Print(json);
+    Logger::dbg << "Loaded JSON:\n" << printed << Logger::End;
+    cJSON_free((void*)printed);
+
+    if (!cJSON_IsObject(json))
+    {
+        Logger::err << "Expected a JSON object, got something else" << Logger::End;
+        goto error;
+    }
+
+    {
+        const cJSON* tabs = cJSON_GetObjectItemCaseSensitive(json, "tabs");
+        if (tabs)
+        {
+            if (!cJSON_IsArray(tabs))
+            {
+                Logger::err << "Expected an array inside 'tabs', got something else" << Logger::End;
+                goto error;
+            }
+            const cJSON* tab;
+            cJSON_ArrayForEach(tab, tabs)
+            {
+                const cJSON* tabType = cJSON_GetObjectItemCaseSensitive(tab, "type");
+                if (!cJSON_IsString(tabType))
+                {
+                    Logger::err << "Invalid 'type' value, expected a string" << Logger::End;
+                    goto error;
+                }
+                if (strcmp(tabType->valuestring, "buffer") == 0)
+                {
+                    Logger::err << "Buffer outside a split" << Logger::End;
+                    goto error;
+                }
+                else if (strcmp(tabType->valuestring, "split") == 0)
+                {
+                    Split* tabObj = processTabRecursively(tab);
+                    if (!tabObj)
+                        goto error;
+                    g_tabs.push_back(std::unique_ptr<Split>(tabObj));
+                }
+                else
+                {
+                    Logger::err << "Invalid 'type' value, expected 'buffer' or 'split'" << Logger::End;
+                    goto error;
+                }
+            }
+        }
+    }
+    {
+        const cJSON* activeTabVal = cJSON_GetObjectItemCaseSensitive(json, "activeTabI");
+        if (activeTabVal)
+        {
+            if (!cJSON_IsNumber(activeTabVal))
+            {
+                Logger::err << "Invalid value for 'activeTabI', expected a number" << Logger::End;
+                goto error;
+            }
+            if (activeTabVal->valueint < 0 || (size_t)activeTabVal->valueint >= g_tabs.size())
+            {
+                Logger::err << "Invalid value for 'activeTabI', should be 0 <= x < numOfTabs"
+                    << Logger::End;
+                goto error;
+            }
+            g_currTabI = activeTabVal->valueint;
+        }
+    }
+
+    goto success;
+error:
+    Logger::err << "Session loading failed" << Logger::End;
+success:
+    cJSON_Delete(json);
+    Logger::log(Logger::End);
+    if (!g_tabs.empty())
+        g_activeBuff = g_tabs[g_currTabI]->getActiveBufferRecursively();
+}
