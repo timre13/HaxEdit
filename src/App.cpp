@@ -1,5 +1,6 @@
 #include "App.h"
 #include "Bindings.h"
+#include "../external/stb/stb_image.h"
 
 static std::string s_selectedSaveDir = "";
 
@@ -76,6 +77,14 @@ UiRenderer* App::createUiRenderer()
 std::unique_ptr<Image> App::loadProgramIcon()
 {
     return std::unique_ptr<Image>(new Image{ICON_FILE_PATH});
+}
+
+void App::loadCursors()
+{
+    GLFWimage image;
+    image.pixels = stbi_load("../img/busy_cursor.png", &image.width, &image.height, nullptr, 4);
+    Cursors::busy = glfwCreateCursor(&image, 0, 0);
+    stbi_image_free(image.pixels); // glfwCreateCursor() copies the data, so free the original
 }
 
 FileTypeHandler* App::createFileTypeHandler()

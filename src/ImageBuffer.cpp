@@ -10,6 +10,7 @@
 int ImageBuffer::open(const std::string& filePath)
 {
     TIMER_BEGIN_FUNC();
+    glfwSetCursor(g_window, Cursors::busy);
 
     assert(isImageExtension(::getFileExt(filePath)));
 
@@ -18,6 +19,7 @@ int ImageBuffer::open(const std::string& filePath)
     Logger::dbg << "Opening image file: " << filePath << Logger::End;
     m_image = std::make_unique<Image>(filePath, GL_NEAREST, GL_NEAREST);
 
+    glfwSetCursor(g_window, nullptr);
     TIMER_END_FUNC();
     return 0;
 }

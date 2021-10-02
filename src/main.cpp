@@ -12,7 +12,7 @@ int main(int argc, char** argv)
         Logger::fatal << "Failed to initialize GLFW" << Logger::End;
     }
 
-    auto window = App::createWindow();
+    g_window = App::createWindow();
     Logger::dbg << "Created GLFW window" << Logger::End;
 
     App::initGlew();
@@ -23,9 +23,11 @@ int main(int argc, char** argv)
 
     App::setupKeyBindings();
 
+    App::loadCursors();
+
     glClear(GL_COLOR_BUFFER_BIT);
     glClearColor(UNPACK_RGB_COLOR(BG_COLOR), 1.0f);
-    glfwSwapBuffers(window);
+    glfwSwapBuffers(g_window);
 
     g_textRenderer.reset(App::createTextRenderer());
     g_uiRenderer.reset(App::createUiRenderer());
@@ -74,7 +76,7 @@ int main(int argc, char** argv)
     };
 
     float framesUntilCursorBlinking = CURSOR_BLINK_FRAMES;
-    while (!glfwWindowShouldClose(window))
+    while (!glfwWindowShouldClose(g_window))
     {
         glfwPollEvents();
 
@@ -107,16 +109,16 @@ int main(int argc, char** argv)
 
         if (g_isTitleUpdateNeeded)
         {
-            glfwSetWindowTitle(window, genTitle().c_str());
+            glfwSetWindowTitle(g_window, genTitle().c_str());
             g_isTitleUpdateNeeded = false;
         }
 
-        glfwSwapBuffers(window);
+        glfwSwapBuffers(g_window);
         --framesUntilCursorBlinking;
     }
 
     Logger::log << "Shutting down!" << Logger::End;
-    glfwDestroyWindow(window);
+    glfwDestroyWindow(g_window);
     glfwTerminate();
     return 0;
 }

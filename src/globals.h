@@ -1,5 +1,6 @@
 #include <vector>
 #include <memory>
+#include "glstuff.h"
 #include "config.h"
 
 class Dialog;
@@ -11,6 +12,7 @@ class FileTypeHandler;
 
 #ifdef _DEF_GLOBALS_
 
+GLFWwindow* g_window = nullptr;
 int g_windowWidth = 0;
 int g_windowHeight = 0;
 int g_cursorX = 0;
@@ -33,8 +35,15 @@ std::unique_ptr<FileTypeHandler> g_fileTypeHandler;
 
 int g_fontSizePx = DEF_FONT_SIZE_PX;
 
+// Loaded by App::loadCursors()
+namespace Cursors
+{
+GLFWcursor* busy{};
+}
+
 #else // ----------------------------------------------------------------------
 
+extern GLFWwindow* g_window;
 extern int g_windowWidth;
 extern int g_windowHeight;
 extern int g_cursorX;
@@ -52,5 +61,10 @@ extern Buffer* g_activeBuff;
 extern size_t g_currTabI;
 
 extern int g_fontSizePx;
+
+namespace Cursors
+{
+extern GLFWcursor* busy;
+}
 
 #endif

@@ -10,6 +10,8 @@ int Buffer::open(const std::string& filePath)
 {
     TIMER_BEGIN_FUNC();
 
+    glfwSetCursor(g_window, Cursors::busy);
+
     m_filePath = filePath;
     m_isReadOnly = false;
     Logger::dbg << "Opening file: " << filePath << Logger::End;
@@ -41,6 +43,7 @@ int Buffer::open(const std::string& filePath)
         m_numOfLines = 0;
 
         Logger::err << "Failed to open file: \"" << filePath << "\": " << e.what() << Logger::End;
+        glfwSetCursor(g_window, nullptr);
         TIMER_END_FUNC();
         return 1;
     }
@@ -57,6 +60,7 @@ int Buffer::open(const std::string& filePath)
         file.close();
     }
 
+    glfwSetCursor(g_window, nullptr);
     TIMER_END_FUNC();
     return 0;
 }

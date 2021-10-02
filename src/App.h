@@ -34,6 +34,7 @@ public:
     static TextRenderer* createTextRenderer();
     static UiRenderer* createUiRenderer();
     static std::unique_ptr<Image> loadProgramIcon();
+    static void loadCursors();
     static FileTypeHandler* createFileTypeHandler();
     static void setupKeyBindings();
 
