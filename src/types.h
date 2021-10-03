@@ -64,3 +64,14 @@ inline std::string getFileExt(const std::string& path)
         return out.substr(1);
     return "";
 }
+
+inline bool isValidFilePath(const std::string& str)
+{
+    const auto path = std::filesystem::path{str};
+    return std::filesystem::exists(path)
+        && (std::filesystem::is_regular_file(path)
+         || std::filesystem::is_symlink(path)
+         || std::filesystem::is_block_file(path)
+         || std::filesystem::is_character_file(path)
+    );
+}

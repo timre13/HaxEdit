@@ -13,6 +13,7 @@
 #define SYNTAX_MARK_CHARLIT   'C'
 #define SYNTAX_MARK_PREPRO    'p'
 #define SYNTAX_MARK_SPECCHAR  ';'
+#define SYNTAX_MARK_FILEPATH  'P'
 
 #define SYNTAX_COLOR_NONE       RGBColor{1.000f, 1.000f, 1.000f}
 #define SYNTAX_COLOR_KEYWORD    RGBColor{0.000f, 0.400f, 0.800f}
@@ -24,6 +25,7 @@
 #define SYNTAX_COLOR_CHARLIT    RGBColor{0.050f, 0.600f, 0.100f}
 #define SYNTAX_COLOR_PREPRO     RGBColor{0.000f, 0.600f, 0.200f}
 #define SYNTAX_COLOR_SPECCHAR   RGBColor{0.500f, 0.500f, 0.500f}
+#define SYNTAX_COLOR_FILEPATH   RGBColor{0.0800, 0.510f, 0.710f}
 
 #define SYNTAX_STYLE_NONE       FontStyle::Regular
 #define SYNTAX_STYLE_KEYWORD    FontStyle::Bold
@@ -35,6 +37,7 @@
 #define SYNTAX_STYLE_CHARLIT    FontStyle::Regular
 #define SYNTAX_STYLE_PREPRO     FontStyle::Regular
 #define SYNTAX_STYLE_SPECCHAR   FontStyle::Bold
+#define SYNTAX_STYLE_FILEPATH   FontStyle::Italic // Should be "Underlined" in the future, when we support it
 
 namespace Syntax
 {

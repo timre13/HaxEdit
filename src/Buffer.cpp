@@ -274,6 +274,25 @@ void Buffer::updateHighlighting()
         }
     }};
 
+    auto highlightFilePaths{[&](){
+        for (size_t i{}; i < m_content.size();)
+        {
+            while (i < m_content.size() && (isspace(m_content[i]) || m_content[i] == '"'))
+                ++i;
+
+            std::string word;
+            while (i < m_content.size() && !isspace(m_content[i]) && m_content[i] != '"')
+                word += m_content[i++];
+
+            if (isValidFilePath(word))
+            {
+                m_highlightBuffer.replace(i-word.size(), word.size(), word.size(), SYNTAX_MARK_FILEPATH);
+            }
+
+            ++i;
+        }
+    }};
+
 
     timer.reset();
     for (const auto& word : Syntax::operatorList) highlightWord(word, SYNTAX_MARK_OPERATOR, false);
@@ -318,6 +337,11 @@ void Buffer::updateHighlighting()
     highlightChar('(', SYNTAX_MARK_SPECCHAR);
     highlightChar(')', SYNTAX_MARK_SPECCHAR);
     Logger::dbg << "Highlighting special characters took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
+
+    timer.reset();
+    highlightFilePaths();
+    Logger::dbg << "Highlighting of paths took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
+
 
     Logger::log << "Syntax highlighting updated" << Logger::End;
 
@@ -647,6 +671,7 @@ void Buffer::render()
             case SYNTAX_MARK_CHARLIT:  charColor = SYNTAX_COLOR_CHARLIT;  charStyle = SYNTAX_STYLE_CHARLIT; break;
             case SYNTAX_MARK_PREPRO:   charColor = SYNTAX_COLOR_PREPRO;   charStyle = SYNTAX_STYLE_PREPRO; break;
             case SYNTAX_MARK_SPECCHAR: charColor = SYNTAX_COLOR_SPECCHAR; charStyle = SYNTAX_STYLE_SPECCHAR; break;
+            case SYNTAX_MARK_FILEPATH: charColor = SYNTAX_COLOR_FILEPATH; charStyle = SYNTAX_STYLE_FILEPATH; break;
             default:
                 Logger::err << "BUG: Invalid highlighting buffer value: " << m_highlightBuffer[charI] << Logger::End;
                 abort();
