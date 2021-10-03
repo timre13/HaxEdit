@@ -131,6 +131,28 @@ void Split::makeChildrenSizesEqual()
     });
 }
 
+void Split::setChildWidth(size_t index, int size)
+{
+    if (size < 10)
+        return;
+
+    auto& child1 = m_children[index];
+    auto& child2 = m_children[index+1];
+    if (std::holds_alternative<std::unique_ptr<Buffer>>(child1)
+     && std::holds_alternative<std::unique_ptr<Buffer>>(child2))
+    {
+        auto& child1P = std::get<std::unique_ptr<Buffer>>(child1);
+        auto& child2P = std::get<std::unique_ptr<Buffer>>(child2);
+
+        const int widthDiff = size-child1P->getWidth();
+        if (child2P->getWidth()-widthDiff < 10)
+            return;
+        child1P->setWidth(size);
+        child2P->setXPos(child2P->getXPos()+widthDiff);
+        child2P->setWidth(child2P->getWidth()-widthDiff);
+    }
+}
+
 Split::~Split()
 {
     Logger::log << "Destroyed a split (" << m_children.size() << " children)" << Logger::End;

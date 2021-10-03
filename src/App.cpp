@@ -2,6 +2,8 @@
 #include "Bindings.h"
 #include "../external/stb/stb_image.h"
 
+#define BUFFER_RESIZE_MAX_CURS_DIST 10
+
 static std::string s_selectedSaveDir = "";
 
 GLFWwindow* App::createWindow()
@@ -618,11 +620,26 @@ void App::cursorPosCB(GLFWwindow* window, double x, double y)
                 {
                     const auto& buffer = std::get<std::unique_ptr<Buffer>>(child);
 
+                    // If the cursor is near the vertical buffer border
+                    if (i != g_tabs.size()-1
+                        && std::abs(g_cursorX -
+                            (buffer->getXPos()+buffer->getWidth())) < BUFFER_RESIZE_MAX_CURS_DIST)
+                    {
+                        glfwSetCursor(window, glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR));
+                    }
+                    // If the cursor is near the horizontal buffer border
+                    else if (i != g_tabs.size()-1
+                        && std::abs(g_cursorY -
+                            (buffer->getYPos()+buffer->getHeight())) < BUFFER_RESIZE_MAX_CURS_DIST)
+                    {
+                        glfwSetCursor(window, glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR));
+                        break;
+                    }
                     // If the pointer is inside a buffer
-                    if (g_cursorX >= buffer->getXPos()
-                     && g_cursorX < buffer->getXPos()+buffer->getWidth()
-                     && g_cursorY >= buffer->getYPos()
-                     && g_cursorY < buffer->getYPos()+buffer->getHeight())
+                    else if (g_cursorX >= buffer->getXPos()
+                          && g_cursorX < buffer->getXPos()+buffer->getWidth()
+                          && g_cursorY >= buffer->getYPos()
+                          && g_cursorY < buffer->getYPos()+buffer->getHeight())
                     {
                         glfwSetCursor(window, glfwCreateStandardCursor(
                                     dynamic_cast<ImageBuffer*>(buffer.get()) == nullptr
@@ -646,6 +663,18 @@ void App::mouseButtonCB(GLFWwindow*, int btn, int act, int mods)
     Logger::dbg << "Mouse button " << btn << " (" << GlfwHelpers::mouseBtnToStr(btn) << ") "
         << GlfwHelpers::keyOrBtnActionToStr(act) << " at {"
         << g_cursorX << ", " << g_cursorY << '}' << Logger::End;
+
+    switch (btn)
+    {
+    case GLFW_MOUSE_BUTTON_LEFT:   g_isMouseBtnLPressed = (act == GLFW_PRESS); break;
+    case GLFW_MOUSE_BUTTON_RIGHT:  g_isMouseBtnRPressed = (act == GLFW_PRESS); break;
+    case GLFW_MOUSE_BUTTON_MIDDLE: g_isMouseBtnMPressed = (act == GLFW_PRESS); break;
+    }
+    if (btn == GLFW_MOUSE_BUTTON_LEFT && act == GLFW_PRESS)
+    {
+        g_mouseBtnLPressX = g_cursorX;
+        g_mouseBtnLPressY = g_cursorY;
+    }
 
     if (!g_dialogs.empty())
     {
@@ -682,11 +711,23 @@ void App::mouseButtonCB(GLFWwindow*, int btn, int act, int mods)
             {
                 const auto& buffer = std::get<std::unique_ptr<Buffer>>(child);
 
+                // If the buffer border has been dragged, resize the buffer
+                if (i != g_tabs.size()-1
+                    && act == GLFW_RELEASE && btn == GLFW_MOUSE_BUTTON_LEFT
+                    && std::abs(g_mouseBtnLPressX -
+                        (buffer->getXPos()+buffer->getWidth())) < BUFFER_RESIZE_MAX_CURS_DIST)
+                {
+                    g_tabs[g_currTabI]->setChildWidth(i,
+                            buffer->getWidth()+g_cursorX-(buffer->getXPos()+buffer->getWidth()));
+                    g_isRedrawNeeded = true;
+                    break;
+                }
+
                 // If the pointer is inside the buffer
                 if (g_cursorX >= buffer->getXPos()
-                 && g_cursorX < buffer->getXPos()+buffer->getWidth()
-                 && g_cursorY >= buffer->getYPos()
-                 && g_cursorY < buffer->getYPos()+buffer->getHeight())
+                      && g_cursorX < buffer->getXPos()+buffer->getWidth()
+                      && g_cursorY >= buffer->getYPos()
+                      && g_cursorY < buffer->getYPos()+buffer->getHeight())
                 {
                     // Activate the clicked buffer
                     g_tabs[g_currTabI]->setActiveChildI(i);

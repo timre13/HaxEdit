@@ -17,6 +17,11 @@ int g_windowWidth = 0;
 int g_windowHeight = 0;
 int g_cursorX = 0;
 int g_cursorY = 0;
+int g_mouseBtnLPressX = 0;
+int g_mouseBtnLPressY = 0;
+bool g_isMouseBtnLPressed = false;
+bool g_isMouseBtnRPressed = false;
+bool g_isMouseBtnMPressed = false;
 
 bool g_isRedrawNeeded = false;
 bool g_isTitleUpdateNeeded = true;
@@ -48,6 +53,11 @@ extern int g_windowWidth;
 extern int g_windowHeight;
 extern int g_cursorX;
 extern int g_cursorY;
+extern int g_mouseBtnLPressX;
+extern int g_mouseBtnLPressY;
+extern bool g_isMouseBtnLPressed;
+extern bool g_isMouseBtnRPressed;
+extern bool g_isMouseBtnMPressed;
 
 extern bool g_isRedrawNeeded;
 extern bool g_isTitleUpdateNeeded;
