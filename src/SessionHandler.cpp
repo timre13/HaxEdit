@@ -6,6 +6,11 @@
 #include <fstream>
 #include <string.h>
 
+SessionHandler::SessionHandler(const std::string& path)
+{
+    m_sessionFilePath = path;
+}
+
 static Split* loadTabRecursively(const cJSON* node)
 {
     Split* output = new Split{};
@@ -91,11 +96,6 @@ static Split* loadTabRecursively(const cJSON* node)
         }
     }
     return output;
-}
-
-SessionHandler::SessionHandler(const std::string& path)
-{
-    m_sessionFilePath = path;
 }
 
 void SessionHandler::loadFromFile()
@@ -223,8 +223,10 @@ static cJSON* storeTabRecursively(const Split* split)
             cJSON* childJson = cJSON_CreateObject();
             cJSON_AddStringToObject(childJson, "type", "buffer");
             cJSON_AddStringToObject(childJson, "file", buff->getFilePath().c_str());
-            cJSON_AddNumberToObject(childJson, "cursorLine", buff->getCursorLine());
-            cJSON_AddNumberToObject(childJson, "cursorCol", buff->getCursorCol());
+            if (buff->getCursorLine()) // Only save cursor line when not 0
+                cJSON_AddNumberToObject(childJson, "cursorLine", buff->getCursorLine());
+            if (buff->getCursorCol()) // Only save cursor col when not 0
+                cJSON_AddNumberToObject(childJson, "cursorCol", buff->getCursorCol());
             cJSON_AddItemToArray(childrenJson, childJson);
         }
         else if (std::holds_alternative<std::unique_ptr<Split>>(child))
