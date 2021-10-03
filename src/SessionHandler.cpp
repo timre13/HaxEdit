@@ -95,6 +95,15 @@ static Split* loadTabRecursively(const cJSON* node)
             return nullptr;
         }
     }
+    if (const cJSON* activeChildI = cJSON_GetObjectItemCaseSensitive(node, "activeChildI"))
+    {
+        if (activeChildI->valueint < 0 || activeChildI->valueint >= output->getNumOfChildren())
+        {
+            Logger::err << "Invalid value for 'activeChildI'" << Logger::End;
+            return nullptr;
+        }
+        output->setActiveChildI(activeChildI->valueint);
+    }
     return output;
 }
 
@@ -238,6 +247,8 @@ static cJSON* storeTabRecursively(const Split* split)
             assert(false);
         }
     }
+    if (split->getNumOfChildren() > 1)
+        cJSON_AddNumberToObject(output, "activeChildI", split->getActiveChildI());
     return output;
 }
 
