@@ -97,7 +97,7 @@ static Split* loadTabRecursively(const cJSON* node)
     }
     if (const cJSON* activeChildI = cJSON_GetObjectItemCaseSensitive(node, "activeChildI"))
     {
-        if (activeChildI->valueint < 0 || activeChildI->valueint >= output->getNumOfChildren())
+        if (activeChildI->valueint < 0 || (size_t)activeChildI->valueint >= output->getNumOfChildren())
         {
             Logger::err << "Invalid value for 'activeChildI'" << Logger::End;
             return nullptr;
