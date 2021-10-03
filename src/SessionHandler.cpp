@@ -5,6 +5,7 @@
 #include <sstream>
 #include <fstream>
 #include <string.h>
+#include <string>
 
 SessionHandler::SessionHandler(const std::string& path)
 {
@@ -282,7 +283,7 @@ success:
     {
         Logger::err << "Failed to write session: Open failed" << Logger::End;
     }
-    file.write(str, strlen(str));
+    file.write((std::string(str)+'\n').c_str(), strlen(str)+1);
     if (file.fail())
     {
         Logger::err << "Failed to write session" << Logger::End;
