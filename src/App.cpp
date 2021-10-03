@@ -129,6 +129,8 @@ void App::setupKeyBindings()
 
     Bindings::ctrlShiftMap[GLFW_KEY_S]      = Bindings::Callbacks::saveCurrentBufferAs;
     Bindings::ctrlShiftMap[GLFW_KEY_TAB]    = Bindings::Callbacks::goToPrevSplit;
+    Bindings::ctrlShiftMap[GLFW_KEY_RIGHT]  = Bindings::Callbacks::increaseActiveBufferWidth;
+    Bindings::ctrlShiftMap[GLFW_KEY_LEFT]   = Bindings::Callbacks::decreaseActiveBufferWidth;
 }
 
 void App::renderBuffers()
@@ -717,8 +719,8 @@ void App::mouseButtonCB(GLFWwindow*, int btn, int act, int mods)
                     && std::abs(g_mouseBtnLPressX -
                         (buffer->getXPos()+buffer->getWidth())) < BUFFER_RESIZE_MAX_CURS_DIST)
                 {
-                    g_tabs[g_currTabI]->setChildWidth(i,
-                            buffer->getWidth()+g_cursorX-(buffer->getXPos()+buffer->getWidth()));
+                    g_tabs[g_currTabI]->increaseChildWidth(i,
+                            g_cursorX-(buffer->getXPos()+buffer->getWidth()));
                     g_isRedrawNeeded = true;
                     break;
                 }

@@ -153,6 +153,26 @@ void goToPrevTab()
     g_isTitleUpdateNeeded = true;
 }
 
+void increaseActiveBufferWidth()
+{
+    if (g_tabs.size() > 1
+        && g_tabs[g_currTabI]->getActiveChildI()+1 < g_tabs[g_currTabI]->getNumOfChildren())
+    {
+        g_tabs[g_currTabI]->increaseChildWidth(g_tabs[g_currTabI]->getActiveChildI(), 10);
+        g_isRedrawNeeded = true;
+    }
+}
+
+void decreaseActiveBufferWidth()
+{
+    if (g_tabs.size() > 1
+        && g_tabs[g_currTabI]->getActiveChildI()+1 < g_tabs[g_currTabI]->getNumOfChildren())
+    {
+        g_tabs[g_currTabI]->increaseChildWidth(g_tabs[g_currTabI]->getActiveChildI(), -10);
+        g_isRedrawNeeded = true;
+    }
+}
+
 void goToNextSplit()
 {
     if (!g_activeBuff)

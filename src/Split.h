@@ -81,7 +81,7 @@ public:
 
     void makeChildrenSizesEqual();
 
-    void setChildWidth(size_t index, int size);
+    void increaseChildWidth(size_t index, int by);
 
     ~Split();
 };

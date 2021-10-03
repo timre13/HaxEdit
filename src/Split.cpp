@@ -131,10 +131,9 @@ void Split::makeChildrenSizesEqual()
     });
 }
 
-void Split::setChildWidth(size_t index, int size)
+void Split::increaseChildWidth(size_t index, int by)
 {
-    if (size < 10)
-        return;
+    assert(index+1 < m_children.size());
 
     auto& child1 = m_children[index];
     auto& child2 = m_children[index+1];
@@ -144,12 +143,13 @@ void Split::setChildWidth(size_t index, int size)
         auto& child1P = std::get<std::unique_ptr<Buffer>>(child1);
         auto& child2P = std::get<std::unique_ptr<Buffer>>(child2);
 
-        const int widthDiff = size-child1P->getWidth();
-        if (child2P->getWidth()-widthDiff < 10)
+        if (child1P->getWidth()+by < 10
+         || child2P->getWidth()-by < 10)
             return;
-        child1P->setWidth(size);
-        child2P->setXPos(child2P->getXPos()+widthDiff);
-        child2P->setWidth(child2P->getWidth()-widthDiff);
+
+        child1P->setWidth(child1P->getWidth()+by);
+        child2P->setXPos(child2P->getXPos()+by);
+        child2P->setWidth(child2P->getWidth()-by);
     }
 }
 
