@@ -2,6 +2,8 @@
 #include "Logger.h"
 #include "Split.h"
 #include "Buffer.h"
+#include "ImageBuffer.h"
+#include "MessageDialog.h"
 #include <sstream>
 #include <fstream>
 #include <string.h>
@@ -47,7 +49,6 @@ static Split* loadTabRecursively(const cJSON* node)
         }
         else if (strcmp(typeVal->valuestring, "buffer") == 0)
         {
-            Buffer* buff = new Buffer;
             const cJSON* fileVal = cJSON_GetObjectItemCaseSensitive(child, "file");
             if (!fileVal)
             {
@@ -59,7 +60,17 @@ static Split* loadTabRecursively(const cJSON* node)
                 Logger::err << "Invalid 'file' value, expected a string" << Logger::End;
                 return nullptr;
             }
-            buff->open(fileVal->valuestring);
+            Buffer* buff;
+            const std::string path = fileVal->valuestring;
+            if (isImageExtension(getFileExt(path))) buff = new ImageBuffer;
+            else buff = new Buffer;
+            if (buff->open(path))
+            {
+                g_dialogs.push_back(std::make_unique<MessageDialog>(
+                            "Failed to open file: \""+path+'"',
+                            MessageDialog::Type::Error));
+            }
+
             if (const cJSON* cursorLineVal = cJSON_GetObjectItemCaseSensitive(child, "cursorLine"))
             {
                 if (!cJSON_IsNumber(cursorLineVal) || cursorLineVal->valueint < 0)
