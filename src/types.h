@@ -65,6 +65,11 @@ inline std::string getFileExt(const std::string& path)
     return "";
 }
 
+inline std::string getParentPath(const std::string& path)
+{
+    return std::filesystem::path{path}.parent_path();
+}
+
 inline bool isValidFilePath(const std::string& str)
 {
     const auto path = std::filesystem::path{str};

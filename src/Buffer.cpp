@@ -275,6 +275,15 @@ void Buffer::updateHighlighting()
     }};
 
     auto highlightFilePaths{[&](){
+        auto _isValidFilePath{[&](const std::string& path){ // -> bool
+            if (path[0] == '/')
+                // Absolute path
+                return isValidFilePath(path);
+            else
+                // Relative path
+                return isValidFilePath(getParentPath(m_filePath)/std::filesystem::path{path});
+        }};
+
         for (size_t i{}; i < m_content.size();)
         {
             while (i < m_content.size() && (isspace(m_content[i]) || m_content[i] == '"'))
@@ -284,7 +293,7 @@ void Buffer::updateHighlighting()
             while (i < m_content.size() && !isspace(m_content[i]) && m_content[i] != '"')
                 word += m_content[i++];
 
-            if (isValidFilePath(word))
+            if (_isValidFilePath(word))
             {
                 m_highlightBuffer.replace(i-word.size(), word.size(), word.size(), SYNTAX_MARK_FILEPATH);
             }
