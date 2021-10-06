@@ -633,7 +633,6 @@ void Buffer::render()
         switch (c)
         {
         case '\n': // New line
-        case '\r': // Carriage return
             drawCursorIfNeeded(g_fontSizePx*0.7f);
             textX = initTextX;
             textY += g_fontSizePx;
@@ -641,6 +640,10 @@ void Buffer::render()
             isLeadingSpace = true;
             ++lineI;
             colI = 0;
+            continue;
+
+        case '\r': // Carriage return
+            // Don't render them or anything
             continue;
 
         case '\t': // Tab
