@@ -17,7 +17,10 @@ MessageDialog::MessageDialog(
     : m_id{id}, m_message{msg+'\n'}, m_type{type}, m_btnInfo{btns}
 {
     for (const auto& btn : m_btnInfo)
+    {
+        (void)btn; // Fix unused `btn` warning in release build
         assert(btn.key != GLFW_KEY_UNKNOWN);
+    }
 }
 
 static std::string getBtnText(const MessageDialog::BtnInfo& btn)
