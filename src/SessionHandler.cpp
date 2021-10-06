@@ -1,4 +1,5 @@
 #include "SessionHandler.h"
+#include "App.h"
 #include "Logger.h"
 #include "Split.h"
 #include "Buffer.h"
@@ -60,16 +61,8 @@ static Split* loadTabRecursively(const cJSON* node)
                 Logger::err << "Invalid 'file' value, expected a string" << Logger::End;
                 return nullptr;
             }
-            Buffer* buff;
             const std::string path = fileVal->valuestring;
-            if (isImageExtension(getFileExt(path))) buff = new ImageBuffer;
-            else buff = new Buffer;
-            if (buff->open(path))
-            {
-                g_dialogs.push_back(std::make_unique<MessageDialog>(
-                            "Failed to open file: \""+path+'"',
-                            MessageDialog::Type::Error));
-            }
+            Buffer* buff = App::openFileInNewBuffer(path);
 
             if (const cJSON* cursorLineVal = cJSON_GetObjectItemCaseSensitive(child, "cursorLine"))
             {

@@ -45,6 +45,9 @@ public:
     static void renderDialogs();
     static void renderStartupScreen();
 
+    // ----- Helper functions -----
+    [[nodiscard]] static Buffer* openFileInNewBuffer(const std::string& path);
+
 private:
     static void GLAPIENTRY glDebugMsgCB(
             GLenum source, GLenum type, GLuint, GLenum severity,

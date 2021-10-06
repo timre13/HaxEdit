@@ -38,22 +38,7 @@ int main(int argc, char** argv)
     for (int i{1}; i < argc; ++i)
     {
         const std::string path = argv[i];
-        Buffer* buffer;
-        if (isImageExtension(getFileExt(path)))
-        {
-            buffer = new ImageBuffer;
-        }
-        else
-        {
-            buffer = new Buffer;
-        }
-        if (buffer->open(path))
-        {
-            g_dialogs.push_back(std::make_unique<MessageDialog>(
-                        "Failed to open file: \""+path+'"',
-                        MessageDialog::Type::Error));
-        }
-        g_tabs.push_back(std::make_unique<Split>(buffer));
+        g_tabs.push_back(std::make_unique<Split>(App::openFileInNewBuffer(path)));
     }
     if (!g_tabs.empty())
     {

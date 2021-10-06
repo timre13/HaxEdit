@@ -281,6 +281,26 @@ void App::renderStartupScreen()
             {iconSize*iconRatio, iconSize});
 }
 
+Buffer* App::openFileInNewBuffer(const std::string& path)
+{
+    Buffer* buffer;
+    if (isImageExtension(getFileExt(path)))
+    {
+        buffer = new ImageBuffer;
+    }
+    else
+    {
+        buffer = new Buffer;
+    }
+    if (buffer->open(path))
+    {
+        g_dialogs.push_back(std::make_unique<MessageDialog>(
+                    "Failed to open file: \""+path+'"',
+                    MessageDialog::Type::Error));
+    }
+    return buffer;
+}
+
 void GLAPIENTRY App::glDebugMsgCB(
         GLenum source, GLenum type, GLuint, GLenum severity,
         GLsizei, const GLchar* message, const void*)
@@ -368,22 +388,7 @@ static void handleSaveAsDialog(FileDialog* fileDialog)
 static void handleOpenDialog(FileDialog* fileDialog)
 {
     auto path = fileDialog->getSelectedFilePath();
-
-    Buffer* buffer;
-    if (isImageExtension(getFileExt(path)))
-    {
-        buffer = new ImageBuffer;
-    }
-    else
-    {
-        buffer = new Buffer;
-    }
-    if (buffer->open(path))
-    {
-        g_dialogs.push_back(std::make_unique<MessageDialog>(
-                    "Failed to open file: \""+path+'"',
-                    MessageDialog::Type::Error));
-    }
+    Buffer* buffer = App::openFileInNewBuffer(path);
 
     if (fileDialog->getOpenMode() == FileDialog::OpenMode::NewTab || g_tabs.empty())
     {
