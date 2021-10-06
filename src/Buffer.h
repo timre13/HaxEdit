@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <string>
+#include <stack>
 #include <glm/glm.hpp>
 #include "Timer.h"
 #include "TextRenderer.h"
@@ -13,6 +14,69 @@
 namespace std_fs = std::filesystem;
 
 #define FILENAME_NEW "<new>"
+
+class BufferHistory final
+{
+public:
+    struct Entry
+    {
+        enum class Action
+        {
+            None,
+            Insert,
+            Delete,
+        } action;
+        size_t pos;
+        char arg;
+    };
+
+private:
+    std::stack<Entry> m_undoStack;
+    std::stack<Entry> m_redoStack;
+
+public:
+    BufferHistory() {}
+
+    inline void clear()
+    {
+        while (!m_undoStack.empty()) m_undoStack.pop();
+        while (!m_redoStack.empty()) m_redoStack.pop();
+    }
+
+    inline void add(const Entry& entry)
+    {
+        while (!m_redoStack.empty()) m_redoStack.pop(); // Clear the redo stack
+        m_undoStack.push(entry);
+    }
+
+    inline bool canGoBack() const
+    {
+        return !m_undoStack.empty();
+    }
+
+    inline Entry goBack()
+    {
+        assert(canGoBack());
+        Entry entry = m_undoStack.top();
+        m_undoStack.pop();
+        m_redoStack.push(entry);
+        return entry;
+    }
+
+    inline bool canGoForward() const
+    {
+        return !m_redoStack.empty();
+    }
+
+    inline Entry goForward()
+    {
+        assert(canGoForward());
+        Entry entry = m_redoStack.top();
+        m_redoStack.pop();
+        m_undoStack.push(entry);
+        return entry;
+    }
+};
 
 class Buffer
 {
@@ -58,6 +122,9 @@ protected:
         std::string str;
         size_t maxLen{};
     } m_statusLineStr{};
+
+    // To handle Undo and Redo
+    BufferHistory m_history;
 
     /*
      * Make the cursor visible by scrolling the viewport.
@@ -164,6 +231,9 @@ public:
     virtual inline const glm::ivec2& getSize() const final { return m_size; }
     virtual inline int getWidth() const final { return m_size.x; }
     virtual inline int getHeight() const final { return m_size.y; }
+
+    virtual void undo();
+    virtual void redo();
 
     virtual inline ~Buffer()
     {

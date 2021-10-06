@@ -14,6 +14,7 @@ int Buffer::open(const std::string& filePath)
 
     m_filePath = filePath;
     m_isReadOnly = false;
+    m_history.clear();
     Logger::dbg << "Opening file: " << filePath << Logger::End;
 
     try
@@ -722,6 +723,10 @@ void Buffer::insert(char character)
     assert(m_cursorCol >= 0);
     assert(m_cursorLine >= 0);
 
+    m_history.add(BufferHistory::Entry{
+            .action=BufferHistory::Entry::Action::Insert,
+            .pos=m_cursorCharPos,
+            .arg=character});
     m_content = m_content.insert(m_cursorCharPos, 1, character);
 
     if (character == '\n')
@@ -758,6 +763,10 @@ void Buffer::deleteCharBackwards()
     // If deleting at the beginning of the line and we have stuff to delete
     if (m_cursorCol == 0 && m_cursorLine != 0)
     {
+        m_history.add(BufferHistory::Entry{
+                .action=BufferHistory::Entry::Action::Delete,
+                .pos=m_cursorCharPos-1,
+                .arg=m_content[m_cursorCharPos-1]});
         --m_cursorLine;
         m_cursorCol = getLineLenAt(m_content, m_cursorLine);
         m_content.erase(m_cursorCharPos-1, 1);
@@ -767,6 +776,10 @@ void Buffer::deleteCharBackwards()
     // If deleting in the middle/end of the line and we have stuff to delete
     else if (m_cursorCharPos > 0)
     {
+        m_history.add(BufferHistory::Entry{
+                .action=BufferHistory::Entry::Action::Delete,
+                .pos=m_cursorCharPos-1,
+                .arg=m_content[m_cursorCharPos-1]});
         m_content.erase(m_cursorCharPos-1, 1);
         --m_cursorCol;
         --m_cursorCharPos;
@@ -798,6 +811,10 @@ void Buffer::deleteCharForward()
     // If deleting at the end of the line and we have stuff to delete
     if (m_cursorCol == lineLen && m_cursorLine < m_numOfLines)
     {
+        m_history.add(BufferHistory::Entry{
+                .action=BufferHistory::Entry::Action::Delete,
+                .pos=m_cursorCharPos,
+                .arg=m_content[m_cursorCharPos]});
         m_content.erase(m_cursorCharPos, 1);
         --m_numOfLines;
         m_isModified = true;
@@ -805,6 +822,10 @@ void Buffer::deleteCharForward()
     // If deleting in the middle/beginning of the line and we have stuff to delete
     else if (m_cursorCharPos != (size_t)lineLen && m_cursorCharPos < m_content.size())
     {
+        m_history.add(BufferHistory::Entry{
+                .action=BufferHistory::Entry::Action::Delete,
+                .pos=m_cursorCharPos,
+                .arg=m_content[m_cursorCharPos]});
         m_content.erase(m_cursorCharPos, 1);
         m_isModified = true;
     }
@@ -817,4 +838,64 @@ void Buffer::deleteCharForward()
     updateHighlighting();
 
     TIMER_END_FUNC();
+}
+
+void Buffer::undo()
+{
+    if (m_history.canGoBack())
+    {
+        auto entry = m_history.goBack();
+        switch (entry.action)
+        {
+        case BufferHistory::Entry::Action::None:
+            break;
+
+        case BufferHistory::Entry::Action::Insert:
+            m_content.erase(entry.pos, 1);
+            break;
+
+        case BufferHistory::Entry::Action::Delete:
+            m_content.insert(entry.pos, 1, entry.arg);
+            break;
+        }
+
+        updateHighlighting();
+        scrollViewportToCursor();
+        g_isRedrawNeeded = true;
+        Logger::dbg << "Went back in history" << Logger::End;
+    }
+    else
+    {
+        Logger::dbg << "Cannot go back in history" << Logger::End;
+    }
+}
+
+void Buffer::redo()
+{
+    if (m_history.canGoForward())
+    {
+        auto entry = m_history.goForward();
+        switch (entry.action)
+        {
+        case BufferHistory::Entry::Action::None:
+            break;
+
+        case BufferHistory::Entry::Action::Insert:
+            m_content.insert(entry.pos, 1, entry.arg);
+            break;
+
+        case BufferHistory::Entry::Action::Delete:
+            m_content.erase(entry.pos, 1);
+            break;
+        }
+
+        updateHighlighting();
+        scrollViewportToCursor();
+        g_isRedrawNeeded = true;
+        Logger::dbg << "Went forward in history" << Logger::End;
+    }
+    else
+    {
+        Logger::dbg << "Cannot go forward in history" << Logger::End;
+    }
 }

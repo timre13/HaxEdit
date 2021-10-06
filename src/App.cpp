@@ -126,11 +126,13 @@ void App::setupKeyBindings()
     Bindings::ctrlMap[GLFW_KEY_KP_SUBTRACT] = Bindings::Callbacks::decreaseFontSize;
     Bindings::ctrlMap[GLFW_KEY_EQUAL]       = Bindings::Callbacks::increaseFontSize;
     Bindings::ctrlMap[GLFW_KEY_KP_ADD]      = Bindings::Callbacks::increaseFontSize;
+    Bindings::ctrlMap[GLFW_KEY_Z]           = Bindings::Callbacks::undoActiveBufferChange;
 
     Bindings::ctrlShiftMap[GLFW_KEY_S]      = Bindings::Callbacks::saveCurrentBufferAs;
     Bindings::ctrlShiftMap[GLFW_KEY_TAB]    = Bindings::Callbacks::goToPrevSplit;
     Bindings::ctrlShiftMap[GLFW_KEY_RIGHT]  = Bindings::Callbacks::increaseActiveBufferWidth;
     Bindings::ctrlShiftMap[GLFW_KEY_LEFT]   = Bindings::Callbacks::decreaseActiveBufferWidth;
+    Bindings::ctrlShiftMap[GLFW_KEY_Z]      = Bindings::Callbacks::redoActiveBufferChange;
 }
 
 void App::renderBuffers()

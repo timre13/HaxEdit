@@ -42,6 +42,9 @@ void insertTabOrSpaces();
 void goToFirstChar();
 void goToLastChar();
 
+void undoActiveBufferChange();
+void redoActiveBufferChange();
+
 void increaseFontSize();
 void decreaseFontSize();
 

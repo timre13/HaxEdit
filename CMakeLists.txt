@@ -4,7 +4,7 @@ project(haxed VERSION 1.0)
 
 option(USE_SANITIZERS "Link with address, leak and UB sanitizers" OFF)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED true)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS true)

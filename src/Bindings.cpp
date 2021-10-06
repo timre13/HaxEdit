@@ -333,6 +333,22 @@ void goToLastChar()
     }
 }
 
+void undoActiveBufferChange()
+{
+    if (g_activeBuff)
+    {
+        g_activeBuff->undo();
+    }
+}
+
+void redoActiveBufferChange()
+{
+    if (g_activeBuff)
+    {
+        g_activeBuff->redo();
+    }
+}
+
 void increaseFontSize()
 {
     ++g_fontSizePx;
