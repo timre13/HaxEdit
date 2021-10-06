@@ -152,7 +152,7 @@ void Buffer::updateHighlighting()
 
     //Logger::log << "Updating syntax highlighting" << Logger::End;
 
-    m_highlightBuffer = std::string(m_content.length(), SYNTAX_MARK_NONE);
+    m_highlightBuffer = std::u8string(m_content.length(), Syntax::MARK_NONE);
 
 #if ENABLE_SYNTAX_HIGHLIGHTING
     auto highlightWord{[&](const std::string& word, char colorMark, bool shouldBeWholeWord){
@@ -175,11 +175,11 @@ void Buffer::updateHighlighting()
         bool isInsideString = false;
         for (size_t i{}; i < m_content.size(); ++i)
         {
-            if (m_highlightBuffer[i] == SYNTAX_MARK_NONE && m_content[i] == '"'
+            if (m_highlightBuffer[i] == Syntax::MARK_NONE && m_content[i] == '"'
                     && (i == 0 || (m_content[i-1] != '\\' || (i >= 2 && m_content[i-2] == '\\'))))
                 isInsideString = !isInsideString;
-            if (isInsideString || (m_highlightBuffer[i] == SYNTAX_MARK_NONE && m_content[i] == '"'))
-                m_highlightBuffer[i] = SYNTAX_MARK_STRING;
+            if (isInsideString || (m_highlightBuffer[i] == Syntax::MARK_NONE && m_content[i] == '"'))
+                m_highlightBuffer[i] = Syntax::MARK_STRING;
         }
     }};
 
@@ -192,7 +192,7 @@ void Buffer::updateHighlighting()
                 ++i;
             // Color the number
             while (i < m_content.size() && (isxdigit(m_content[i]) || m_content[i] == '.' || m_content[i] == 'x'))
-                m_highlightBuffer[i++] = SYNTAX_MARK_NUMBER;
+                m_highlightBuffer[i++] = Syntax::MARK_NUMBER;
         }
     }};
 
@@ -225,11 +225,11 @@ void Buffer::updateHighlighting()
             if (prefixPos != std::string::npos)
             {
                 const size_t beginning = charI+prefixPos;
-                if (m_highlightBuffer[beginning] == SYNTAX_MARK_NONE)
+                if (m_highlightBuffer[beginning] == Syntax::MARK_NONE)
                 {
                     const size_t preprocessorEnd = line.find_first_of(' ', prefixPos);
                     const size_t size = (preprocessorEnd != std::string::npos ? preprocessorEnd : line.size())-prefixPos;
-                    m_highlightBuffer.replace(beginning, size, size, SYNTAX_MARK_PREPRO);
+                    m_highlightBuffer.replace(beginning, size, size, Syntax::MARK_PREPRO);
                 }
             }
             charI += line.size()+1;
@@ -240,17 +240,17 @@ void Buffer::updateHighlighting()
         bool isInsideComment = false;
         for (size_t i{}; i < m_content.size(); ++i)
         {
-            if (m_highlightBuffer[i] != SYNTAX_MARK_STRING
+            if (m_highlightBuffer[i] != Syntax::MARK_STRING
                     && m_content.substr(i, Syntax::blockCommentBegin.size()) == Syntax::blockCommentBegin)
                 isInsideComment = true;
-            else if (m_highlightBuffer[i] != SYNTAX_MARK_STRING
+            else if (m_highlightBuffer[i] != Syntax::MARK_STRING
                     && m_content.substr(i, Syntax::blockCommentEnd.size()) == Syntax::blockCommentEnd)
                 isInsideComment = false;
             if (isInsideComment
-                    || (m_highlightBuffer[i] != SYNTAX_MARK_STRING
+                    || (m_highlightBuffer[i] != Syntax::MARK_STRING
                     && (m_content.substr(i, Syntax::blockCommentEnd.size()) == Syntax::blockCommentEnd
                     || (i > 0 && m_content.substr(i-1, Syntax::blockCommentEnd.size()) == Syntax::blockCommentEnd))))
-                m_highlightBuffer[i] = SYNTAX_MARK_COMMENT;
+                m_highlightBuffer[i] = Syntax::MARK_COMMENT;
         }
     }};
 
@@ -258,18 +258,18 @@ void Buffer::updateHighlighting()
         bool isInsideCharLit = false;
         for (size_t i{}; i < m_content.size(); ++i)
         {
-            if (m_highlightBuffer[i] == SYNTAX_MARK_NONE && m_content[i] == '\''
+            if (m_highlightBuffer[i] == Syntax::MARK_NONE && m_content[i] == '\''
                     && (i == 0 || (m_content[i-1] != '\\')))
                 isInsideCharLit = !isInsideCharLit;
-            if (isInsideCharLit || (m_highlightBuffer[i] == SYNTAX_MARK_NONE && m_content[i] == '\''))
-                m_highlightBuffer[i] = SYNTAX_MARK_CHARLIT;
+            if (isInsideCharLit || (m_highlightBuffer[i] == Syntax::MARK_NONE && m_content[i] == '\''))
+                m_highlightBuffer[i] = Syntax::MARK_CHARLIT;
         }
     }};
 
     auto highlightChar{[&](char c, char colorMark){
         for (size_t i{}; i < m_content.size(); ++i)
         {
-            if (m_highlightBuffer[i] != SYNTAX_MARK_STRING && m_highlightBuffer[i] != SYNTAX_MARK_COMMENT
+            if (m_highlightBuffer[i] != Syntax::MARK_STRING &&m_highlightBuffer[i] != Syntax::MARK_COMMENT
                     && m_content[i] == c)
                 m_highlightBuffer[i] = colorMark;
         }
@@ -296,7 +296,7 @@ void Buffer::updateHighlighting()
 
             if (_isValidFilePath(word))
             {
-                m_highlightBuffer.replace(i-word.size(), word.size(), word.size(), SYNTAX_MARK_FILEPATH);
+                m_highlightBuffer.replace(i-word.size(), word.size(), word.size(), Syntax::MARK_FILEPATH);
             }
 
             ++i;
@@ -305,15 +305,15 @@ void Buffer::updateHighlighting()
 
 
     timer.reset();
-    for (const auto& word : Syntax::operatorList) highlightWord(word, SYNTAX_MARK_OPERATOR, false);
+    for (const auto& word : Syntax::operatorList) highlightWord(word, Syntax::MARK_OPERATOR, false);
     Logger::dbg << "Highlighting of operators took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
     timer.reset();
-    for (const auto& word : Syntax::keywordList) highlightWord(word, SYNTAX_MARK_KEYWORD, true);
+    for (const auto& word : Syntax::keywordList) highlightWord(word, Syntax::MARK_KEYWORD, true);
     Logger::dbg << "Highlighting of keywords took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
     timer.reset();
-    for (const auto& word : Syntax::typeList) highlightWord(word, SYNTAX_MARK_TYPE, true);
+    for (const auto& word : Syntax::typeList) highlightWord(word, Syntax::MARK_TYPE, true);
     Logger::dbg << "Highlighting of types took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
     timer.reset();
@@ -321,7 +321,7 @@ void Buffer::updateHighlighting()
     Logger::dbg << "Highlighting of numbers took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
     timer.reset();
-    highlightPrefixed(Syntax::lineCommentPrefix, SYNTAX_MARK_COMMENT);
+    highlightPrefixed(Syntax::lineCommentPrefix, Syntax::MARK_COMMENT);
     Logger::dbg << "Highlighting of line comments took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
     timer.reset();
@@ -341,11 +341,11 @@ void Buffer::updateHighlighting()
     Logger::dbg << "Highlighting preprocessor directives took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
     timer.reset();
-    highlightChar(';', SYNTAX_MARK_SPECCHAR);
-    highlightChar('{', SYNTAX_MARK_SPECCHAR);
-    highlightChar('}', SYNTAX_MARK_SPECCHAR);
-    highlightChar('(', SYNTAX_MARK_SPECCHAR);
-    highlightChar(')', SYNTAX_MARK_SPECCHAR);
+    highlightChar(';', Syntax::MARK_SPECCHAR);
+    highlightChar('{', Syntax::MARK_SPECCHAR);
+    highlightChar('}', Syntax::MARK_SPECCHAR);
+    highlightChar('(', Syntax::MARK_SPECCHAR);
+    highlightChar(')', Syntax::MARK_SPECCHAR);
     Logger::dbg << "Highlighting special characters took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
     timer.reset();
@@ -670,25 +670,9 @@ void Buffer::render()
         uint advance{};
         if (isCharInsideViewport)
         {
-            FontStyle charStyle = FontStyle::Regular;
-            RGBColor charColor;
-            switch (m_highlightBuffer[charI])
-            {
-            case SYNTAX_MARK_NONE:     charColor = SYNTAX_COLOR_NONE;     charStyle = SYNTAX_STYLE_NONE; break;
-            case SYNTAX_MARK_KEYWORD:  charColor = SYNTAX_COLOR_KEYWORD;  charStyle = SYNTAX_STYLE_KEYWORD; break;
-            case SYNTAX_MARK_TYPE:     charColor = SYNTAX_COLOR_TYPE;     charStyle = SYNTAX_STYLE_TYPE; break;
-            case SYNTAX_MARK_OPERATOR: charColor = SYNTAX_COLOR_OPERATOR; charStyle = SYNTAX_STYLE_OPERATOR; break;
-            case SYNTAX_MARK_NUMBER:   charColor = SYNTAX_COLOR_NUMBER;   charStyle = SYNTAX_STYLE_NUMBER; break;
-            case SYNTAX_MARK_STRING:   charColor = SYNTAX_COLOR_STRING;   charStyle = SYNTAX_STYLE_STRING; break;
-            case SYNTAX_MARK_COMMENT:  charColor = SYNTAX_COLOR_COMMENT;  charStyle = SYNTAX_STYLE_COMMENT; break;
-            case SYNTAX_MARK_CHARLIT:  charColor = SYNTAX_COLOR_CHARLIT;  charStyle = SYNTAX_STYLE_CHARLIT; break;
-            case SYNTAX_MARK_PREPRO:   charColor = SYNTAX_COLOR_PREPRO;   charStyle = SYNTAX_STYLE_PREPRO; break;
-            case SYNTAX_MARK_SPECCHAR: charColor = SYNTAX_COLOR_SPECCHAR; charStyle = SYNTAX_STYLE_SPECCHAR; break;
-            case SYNTAX_MARK_FILEPATH: charColor = SYNTAX_COLOR_FILEPATH; charStyle = SYNTAX_STYLE_FILEPATH; break;
-            default:
-                Logger::err << "BUG: Invalid highlighting buffer value: " << m_highlightBuffer[charI] << Logger::End;
-                abort();
-            }
+            assert(m_highlightBuffer[charI] < Syntax::_SYNTAX_MARK_COUNT);
+            const RGBColor charColor = Syntax::syntaxColors[m_highlightBuffer[charI]];
+            const FontStyle charStyle = Syntax::syntaxStyles[m_highlightBuffer[charI]];
             g_textRenderer->setDrawingColor(charColor);
             advance = g_textRenderer->renderChar(c, {textX, textY}, charStyle).advance;
 

@@ -101,7 +101,8 @@ protected:
     bool m_isModified{};
     bool m_isReadOnly{};
 
-    std::string m_highlightBuffer;
+    // Note: We use uin8_t values
+    std::u8string m_highlightBuffer;
 
     glm::ivec2 m_position{0, TABLINE_HEIGHT_PX};
     glm::ivec2 m_size{};

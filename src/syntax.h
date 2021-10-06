@@ -1,46 +1,56 @@
 #pragma once
 
+#include "types.h"
+#include "TextRenderer.h"
 #include <array>
 #include <string>
 
-#define SYNTAX_MARK_NONE      ' '
-#define SYNTAX_MARK_KEYWORD   'k'
-#define SYNTAX_MARK_TYPE      't'
-#define SYNTAX_MARK_OPERATOR  'o'
-#define SYNTAX_MARK_NUMBER    'n'
-#define SYNTAX_MARK_STRING    's'
-#define SYNTAX_MARK_COMMENT   'c'
-#define SYNTAX_MARK_CHARLIT   'C'
-#define SYNTAX_MARK_PREPRO    'p'
-#define SYNTAX_MARK_SPECCHAR  ';'
-#define SYNTAX_MARK_FILEPATH  'P'
-
-#define SYNTAX_COLOR_NONE       RGBColor{1.000f, 1.000f, 1.000f}
-#define SYNTAX_COLOR_KEYWORD    RGBColor{0.000f, 0.400f, 0.800f}
-#define SYNTAX_COLOR_TYPE       RGBColor{0.900f, 0.900f, 0.000f}
-#define SYNTAX_COLOR_OPERATOR   RGBColor{1.000f, 0.100f, 0.100f}
-#define SYNTAX_COLOR_NUMBER     RGBColor{0.938f, 0.402f, 0.031f}
-#define SYNTAX_COLOR_STRING     RGBColor{0.200f, 0.900f, 0.300f}
-#define SYNTAX_COLOR_COMMENT    RGBColor{0.500f, 0.500f, 0.500f}
-#define SYNTAX_COLOR_CHARLIT    RGBColor{0.050f, 0.600f, 0.100f}
-#define SYNTAX_COLOR_PREPRO     RGBColor{0.000f, 0.600f, 0.200f}
-#define SYNTAX_COLOR_SPECCHAR   RGBColor{0.500f, 0.500f, 0.500f}
-#define SYNTAX_COLOR_FILEPATH   RGBColor{0.0800, 0.510f, 0.710f}
-
-#define SYNTAX_STYLE_NONE       FontStyle::Regular
-#define SYNTAX_STYLE_KEYWORD    FontStyle::Bold
-#define SYNTAX_STYLE_TYPE       FontStyle::Regular
-#define SYNTAX_STYLE_NUMBER     FontStyle::Regular
-#define SYNTAX_STYLE_OPERATOR   FontStyle::Regular
-#define SYNTAX_STYLE_STRING     FontStyle::Italic
-#define SYNTAX_STYLE_COMMENT    FontStyle::Regular
-#define SYNTAX_STYLE_CHARLIT    FontStyle::Regular
-#define SYNTAX_STYLE_PREPRO     FontStyle::Regular
-#define SYNTAX_STYLE_SPECCHAR   FontStyle::Bold
-#define SYNTAX_STYLE_FILEPATH   FontStyle::Italic // Should be "Underlined" in the future, when we support it
-
 namespace Syntax
 {
+
+enum SyntaxMarks: uint8_t
+{
+    MARK_NONE,
+    MARK_KEYWORD,
+    MARK_TYPE,
+    MARK_OPERATOR,
+    MARK_NUMBER,
+    MARK_STRING,
+    MARK_COMMENT,
+    MARK_CHARLIT,
+    MARK_PREPRO,
+    MARK_SPECCHAR,
+    MARK_FILEPATH,
+    _SYNTAX_MARK_COUNT,
+};
+
+constexpr RGBColor syntaxColors[_SYNTAX_MARK_COUNT] = {
+    RGBColor{1.000f, 1.000f, 1.000f}, // None, default
+    RGBColor{0.000f, 0.400f, 0.800f}, // Keyword
+    RGBColor{0.900f, 0.900f, 0.000f}, // Type
+    RGBColor{1.000f, 0.100f, 0.100f}, // Operator
+    RGBColor{0.938f, 0.402f, 0.031f}, // Number
+    RGBColor{0.200f, 0.900f, 0.300f}, // String
+    RGBColor{0.500f, 0.500f, 0.500f}, // Comment
+    RGBColor{0.050f, 0.600f, 0.100f}, // Character literal
+    RGBColor{0.000f, 0.600f, 0.200f}, // Preprocessor
+    RGBColor{0.500f, 0.500f, 0.500f}, // Special character
+    RGBColor{0.0800, 0.510f, 0.710f}, // Filepath
+};
+
+constexpr FontStyle syntaxStyles[_SYNTAX_MARK_COUNT] = {
+    FontStyle::Regular, // None, default
+    FontStyle::Bold,    // Keyword
+    FontStyle::Regular, // Type
+    FontStyle::Regular, // Operator
+    FontStyle::Regular, // Number
+    FontStyle::Italic,  // String
+    FontStyle::Regular, // Comment
+    FontStyle::Regular, // Character literal
+    FontStyle::Regular, // Preprocessor
+    FontStyle::Bold,    // Special character
+    FontStyle::Italic,  // Filepath - Should be "Underlined" in the future, when we support it
+};
 
 inline std::array<std::string, 85> keywordList{
         "alignas", "alignof", "and", "and_eq", "asm", "atomic_cancel", "atomic_commit", "atomic_noexcept",
