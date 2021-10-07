@@ -2,9 +2,43 @@
 #include "config.h"
 #include "Timer.h"
 #include "types.h"
-#include "syntax.h"
+#include "Syntax.h"
 #include <fstream>
 #include <sstream>
+#include <chrono>
+using namespace std::chrono_literals;
+
+Buffer::Buffer()
+{
+    /*
+     * This thread runs in the background while the buffer is alive.
+     * It constantly checks if an update is needed and if it does,
+     * it sets `m_isHighlightUpdateNeeded` to false and runs the updater function.
+     * The updater function constantly checks if the `m_isHighlightUpdateNeeded` has been
+     * set to true because it means that a new update has been requested and the current
+     * update is outdated, so the function exits and the loop executes it again.
+     */
+    m_highlighterThread = std::thread([&](){
+            Logger::dbg << "Syntax highlighter thread started (buffer: " << this << ')' << Logger::End;
+            while (m_shouldHighlighterLoopRun)
+            {
+                if (m_isHighlightUpdateNeeded)
+                {
+                    m_isHighlightUpdateNeeded = false;
+                    Logger::dbg << "[Highl. Thread]: Updating highlighting (buffer: "
+                        << this << ')' << Logger::End;
+                    _updateHighlighting();
+                }
+                else
+                {
+                    std::this_thread::sleep_for(1ms);
+                }
+            }
+            Logger::dbg << "Syntax highlighter thread exited (buffer: " << this << ')' << Logger::End;
+    });
+
+    Logger::log << "Created a buffer: " << this << Logger::End;
+}
 
 int Buffer::open(const std::string& filePath)
 {
@@ -29,7 +63,8 @@ int Buffer::open(const std::string& filePath)
         ss << file.rdbuf();
 
         m_content = ss.str();
-        updateHighlighting();
+        m_highlightBuffer = std::u8string(m_content.length(), Syntax::MARK_NONE);
+        m_isHighlightUpdateNeeded = true;
         m_numOfLines = strCountLines(m_content);
 
         Logger::dbg << "Read "
@@ -40,7 +75,8 @@ int Buffer::open(const std::string& filePath)
     catch (std::exception& e)
     {
         m_content.clear();
-        updateHighlighting();
+        m_highlightBuffer.clear();
+        m_isHighlightUpdateNeeded = true;
         m_numOfLines = 0;
 
         Logger::err << "Failed to open file: \"" << filePath << "\": " << e.what() << Logger::End;
@@ -143,30 +179,28 @@ void Buffer::scrollViewportToCursor()
     }
 }
 
-void Buffer::updateHighlighting()
+void Buffer::_updateHighlighting()
 {
-    if (m_content.empty())
-        return;
-
     Logger::dbg("Highighter");
+    Logger::log << "Updating syntax highlighting" << Logger::End;
 
-    //Logger::log << "Updating syntax highlighting" << Logger::End;
+    // This is the temporary buffer we are working with
+    // `m_highlightBuffer` is replaced with this at the end
+    auto highlightBuffer = std::u8string(m_content.length(), Syntax::MARK_NONE);
 
-    m_highlightBuffer = std::u8string(m_content.length(), Syntax::MARK_NONE);
-
-#if ENABLE_SYNTAX_HIGHLIGHTING
     auto highlightWord{[&](const std::string& word, char colorMark, bool shouldBeWholeWord){
         assert(!word.empty());
         size_t start{};
         while (true)
         {
+            if (m_isHighlightUpdateNeeded) break;
             size_t found = m_content.find(word, start);
             if (found == std::string::npos)
                 break;
             if (!shouldBeWholeWord |
                 ((found == 0 || !isalnum(m_content[found-1]))
                  && (found+word.size()-1 == m_content.size()-1 || !isalnum(m_content[found+word.size()]))))
-                m_highlightBuffer.replace(found, word.length(), word.length(), colorMark);
+                highlightBuffer.replace(found, word.length(), word.length(), colorMark);
             start = found+word.length();
         }
     }};
@@ -175,11 +209,12 @@ void Buffer::updateHighlighting()
         bool isInsideString = false;
         for (size_t i{}; i < m_content.size(); ++i)
         {
-            if (m_highlightBuffer[i] == Syntax::MARK_NONE && m_content[i] == '"'
+            if (m_isHighlightUpdateNeeded) break;
+            if (highlightBuffer[i] == Syntax::MARK_NONE && m_content[i] == '"'
                     && (i == 0 || (m_content[i-1] != '\\' || (i >= 2 && m_content[i-2] == '\\'))))
                 isInsideString = !isInsideString;
-            if (isInsideString || (m_highlightBuffer[i] == Syntax::MARK_NONE && m_content[i] == '"'))
-                m_highlightBuffer[i] = Syntax::MARK_STRING;
+            if (isInsideString || (highlightBuffer[i] == Syntax::MARK_NONE && m_content[i] == '"'))
+                highlightBuffer[i] = Syntax::MARK_STRING;
         }
     }};
 
@@ -187,12 +222,13 @@ void Buffer::updateHighlighting()
         size_t i{};
         while (i < m_content.size())
         {
+            if (m_isHighlightUpdateNeeded) break;
             // Go till a number
             while (i < m_content.size() && !isdigit(m_content[i]) && m_content[i] != '.')
                 ++i;
             // Color the number
             while (i < m_content.size() && (isxdigit(m_content[i]) || m_content[i] == '.' || m_content[i] == 'x'))
-                m_highlightBuffer[i++] = Syntax::MARK_NUMBER;
+                highlightBuffer[i++] = Syntax::MARK_NUMBER;
         }
     }};
 
@@ -203,12 +239,13 @@ void Buffer::updateHighlighting()
         std::string line;
         while (std::getline(ss, line))
         {
+            if (m_isHighlightUpdateNeeded) break;
             const size_t found = line.find(prefix);
             if (found != std::string::npos)
             {
                 const size_t beginning = charI+found;
                 const size_t size = line.size()-found;
-                m_highlightBuffer.replace(beginning, size, size, colorMark);
+                highlightBuffer.replace(beginning, size, size, colorMark);
             }
             charI += line.size()+1;
         }
@@ -221,15 +258,16 @@ void Buffer::updateHighlighting()
         std::string line;
         while (std::getline(ss, line))
         {
+            if (m_isHighlightUpdateNeeded) break;
             const size_t prefixPos = line.find(Syntax::preprocessorPrefix);
             if (prefixPos != std::string::npos)
             {
                 const size_t beginning = charI+prefixPos;
-                if (m_highlightBuffer[beginning] == Syntax::MARK_NONE)
+                if (highlightBuffer[beginning] == Syntax::MARK_NONE)
                 {
                     const size_t preprocessorEnd = line.find_first_of(' ', prefixPos);
                     const size_t size = (preprocessorEnd != std::string::npos ? preprocessorEnd : line.size())-prefixPos;
-                    m_highlightBuffer.replace(beginning, size, size, Syntax::MARK_PREPRO);
+                    highlightBuffer.replace(beginning, size, size, Syntax::MARK_PREPRO);
                 }
             }
             charI += line.size()+1;
@@ -240,17 +278,18 @@ void Buffer::updateHighlighting()
         bool isInsideComment = false;
         for (size_t i{}; i < m_content.size(); ++i)
         {
-            if (m_highlightBuffer[i] != Syntax::MARK_STRING
+            if (m_isHighlightUpdateNeeded) break;
+            if (highlightBuffer[i] != Syntax::MARK_STRING
                     && m_content.substr(i, Syntax::blockCommentBegin.size()) == Syntax::blockCommentBegin)
                 isInsideComment = true;
-            else if (m_highlightBuffer[i] != Syntax::MARK_STRING
+            else if (highlightBuffer[i] != Syntax::MARK_STRING
                     && m_content.substr(i, Syntax::blockCommentEnd.size()) == Syntax::blockCommentEnd)
                 isInsideComment = false;
             if (isInsideComment
-                    || (m_highlightBuffer[i] != Syntax::MARK_STRING
+                    || (highlightBuffer[i] != Syntax::MARK_STRING
                     && (m_content.substr(i, Syntax::blockCommentEnd.size()) == Syntax::blockCommentEnd
                     || (i > 0 && m_content.substr(i-1, Syntax::blockCommentEnd.size()) == Syntax::blockCommentEnd))))
-                m_highlightBuffer[i] = Syntax::MARK_COMMENT;
+                highlightBuffer[i] = Syntax::MARK_COMMENT;
         }
     }};
 
@@ -258,20 +297,22 @@ void Buffer::updateHighlighting()
         bool isInsideCharLit = false;
         for (size_t i{}; i < m_content.size(); ++i)
         {
-            if (m_highlightBuffer[i] == Syntax::MARK_NONE && m_content[i] == '\''
+            if (m_isHighlightUpdateNeeded) break;
+            if (highlightBuffer[i] == Syntax::MARK_NONE && m_content[i] == '\''
                     && (i == 0 || (m_content[i-1] != '\\')))
                 isInsideCharLit = !isInsideCharLit;
-            if (isInsideCharLit || (m_highlightBuffer[i] == Syntax::MARK_NONE && m_content[i] == '\''))
-                m_highlightBuffer[i] = Syntax::MARK_CHARLIT;
+            if (isInsideCharLit || (highlightBuffer[i] == Syntax::MARK_NONE && m_content[i] == '\''))
+                highlightBuffer[i] = Syntax::MARK_CHARLIT;
         }
     }};
 
     auto highlightChar{[&](char c, char colorMark){
         for (size_t i{}; i < m_content.size(); ++i)
         {
-            if (m_highlightBuffer[i] != Syntax::MARK_STRING &&m_highlightBuffer[i] != Syntax::MARK_COMMENT
+            if (m_isHighlightUpdateNeeded) break;
+            if (highlightBuffer[i] != Syntax::MARK_STRING &&highlightBuffer[i] != Syntax::MARK_COMMENT
                     && m_content[i] == c)
-                m_highlightBuffer[i] = colorMark;
+                highlightBuffer[i] = colorMark;
         }
     }};
 
@@ -287,6 +328,7 @@ void Buffer::updateHighlighting()
 
         for (size_t i{}; i < m_content.size();)
         {
+            if (m_isHighlightUpdateNeeded) break;
             while (i < m_content.size() && (isspace(m_content[i]) || m_content[i] == '"'))
                 ++i;
 
@@ -296,50 +338,59 @@ void Buffer::updateHighlighting()
 
             if (_isValidFilePath(word))
             {
-                m_highlightBuffer.replace(i-word.size(), word.size(), word.size(), Syntax::MARK_FILEPATH);
+                highlightBuffer.replace(i-word.size(), word.size(), word.size(), Syntax::MARK_FILEPATH);
             }
 
             ++i;
         }
     }};
 
-
+    if (m_isHighlightUpdateNeeded) return;
     timer.reset();
     for (const auto& word : Syntax::operatorList) highlightWord(word, Syntax::MARK_OPERATOR, false);
     Logger::dbg << "Highlighting of operators took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
+    if (m_isHighlightUpdateNeeded) return;
     timer.reset();
     for (const auto& word : Syntax::keywordList) highlightWord(word, Syntax::MARK_KEYWORD, true);
     Logger::dbg << "Highlighting of keywords took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
+    if (m_isHighlightUpdateNeeded) return;
     timer.reset();
     for (const auto& word : Syntax::typeList) highlightWord(word, Syntax::MARK_TYPE, true);
     Logger::dbg << "Highlighting of types took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
+    if (m_isHighlightUpdateNeeded) return;
     timer.reset();
     highlightNumbers();
     Logger::dbg << "Highlighting of numbers took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
+    if (m_isHighlightUpdateNeeded) return;
     timer.reset();
     highlightPrefixed(Syntax::lineCommentPrefix, Syntax::MARK_COMMENT);
     Logger::dbg << "Highlighting of line comments took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
+    if (m_isHighlightUpdateNeeded) return;
     timer.reset();
     highlightBlockComments();
     Logger::dbg << "Highlighting of block comments took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
+    if (m_isHighlightUpdateNeeded) return;
     timer.reset();
     highlightCharLiterals();
     Logger::dbg << "Highlighting of character literals took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
+    if (m_isHighlightUpdateNeeded) return;
     timer.reset();
     highlightStrings();
     Logger::dbg << "Highlighting of strings took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
+    if (m_isHighlightUpdateNeeded) return;
     timer.reset();
     highlightPreprocessors();
     Logger::dbg << "Highlighting preprocessor directives took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
+    if (m_isHighlightUpdateNeeded) return;
     timer.reset();
     highlightChar(';', Syntax::MARK_SPECCHAR);
     highlightChar('{', Syntax::MARK_SPECCHAR);
@@ -348,15 +399,18 @@ void Buffer::updateHighlighting()
     highlightChar(')', Syntax::MARK_SPECCHAR);
     Logger::dbg << "Highlighting special characters took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
+    if (m_isHighlightUpdateNeeded) return;
     timer.reset();
     highlightFilePaths();
     Logger::dbg << "Highlighting of paths took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
 
-    Logger::log << "Syntax highlighting updated" << Logger::End;
+    m_highlightBuffer = highlightBuffer;
 
+    Logger::log << "Syntax highlighting updated" << Logger::End;
     Logger::log(Logger::End);
-#endif
+
+    g_isRedrawNeeded = true;
 }
 
 void Buffer::updateCursor()
@@ -670,9 +724,19 @@ void Buffer::render()
         uint advance{};
         if (isCharInsideViewport)
         {
-            assert(m_highlightBuffer[charI] < Syntax::_SYNTAX_MARK_COUNT);
-            const RGBColor charColor = Syntax::syntaxColors[m_highlightBuffer[charI]];
-            const FontStyle charStyle = Syntax::syntaxStyles[m_highlightBuffer[charI]];
+            RGBColor charColor;
+            FontStyle charStyle;
+            if (m_highlightBuffer.size() <= m_content.size()
+             && m_highlightBuffer[charI] < Syntax::_SYNTAX_MARK_COUNT)
+            {
+                charColor = Syntax::syntaxColors[m_highlightBuffer[charI]];
+                charStyle = Syntax::syntaxStyles[m_highlightBuffer[charI]];
+            }
+            else
+            {
+                charColor = Syntax::syntaxColors[0];
+                charStyle = Syntax::syntaxStyles[0];
+            }
             g_textRenderer->setDrawingColor(charColor);
             advance = g_textRenderer->renderChar(c, {textX, textY}, charStyle).advance;
 
@@ -714,7 +778,8 @@ void Buffer::insert(char character)
             .action=BufferHistory::Entry::Action::Insert,
             .pos=m_cursorCharPos,
             .arg=character});
-    m_content = m_content.insert(m_cursorCharPos, 1, character);
+    m_content.insert(m_cursorCharPos, 1, character);
+    m_highlightBuffer.insert(m_cursorCharPos, 1, 0);
 
     if (character == '\n')
     {
@@ -731,7 +796,7 @@ void Buffer::insert(char character)
     m_isModified = true;
 
     m_isCursorShown = true;
-    updateHighlighting();
+    m_isHighlightUpdateNeeded = true;
     scrollViewportToCursor();
 
     TIMER_END_FUNC();
@@ -757,6 +822,7 @@ void Buffer::deleteCharBackwards()
         --m_cursorLine;
         m_cursorCol = getLineLenAt(m_content, m_cursorLine);
         m_content.erase(m_cursorCharPos-1, 1);
+        m_highlightBuffer.erase(m_cursorCharPos-1, 1);
         --m_cursorCharPos;
         m_isModified = true;
     }
@@ -768,6 +834,7 @@ void Buffer::deleteCharBackwards()
                 .pos=m_cursorCharPos-1,
                 .arg=m_content[m_cursorCharPos-1]});
         m_content.erase(m_cursorCharPos-1, 1);
+        m_highlightBuffer.erase(m_cursorCharPos-1, 1);
         --m_cursorCol;
         --m_cursorCharPos;
         m_isModified = true;
@@ -777,7 +844,7 @@ void Buffer::deleteCharBackwards()
     assert(m_cursorLine >= 0);
 
     m_isCursorShown = true;
-    updateHighlighting();
+    m_isHighlightUpdateNeeded = true;
     scrollViewportToCursor();
 
     TIMER_END_FUNC();
@@ -803,6 +870,7 @@ void Buffer::deleteCharForward()
                 .pos=m_cursorCharPos,
                 .arg=m_content[m_cursorCharPos]});
         m_content.erase(m_cursorCharPos, 1);
+        m_highlightBuffer.erase(m_cursorCharPos, 1);
         --m_numOfLines;
         m_isModified = true;
     }
@@ -814,6 +882,7 @@ void Buffer::deleteCharForward()
                 .pos=m_cursorCharPos,
                 .arg=m_content[m_cursorCharPos]});
         m_content.erase(m_cursorCharPos, 1);
+        m_highlightBuffer.erase(m_cursorCharPos, 1);
         m_isModified = true;
     }
 
@@ -822,7 +891,7 @@ void Buffer::deleteCharForward()
 
     m_isCursorShown = true;
     scrollViewportToCursor();
-    updateHighlighting();
+    m_isHighlightUpdateNeeded = true;
 
     TIMER_END_FUNC();
 }
@@ -839,14 +908,16 @@ void Buffer::undo()
 
         case BufferHistory::Entry::Action::Insert:
             m_content.erase(entry.pos, 1);
+            m_highlightBuffer.erase(entry.pos, 1);
             break;
 
         case BufferHistory::Entry::Action::Delete:
             m_content.insert(entry.pos, 1, entry.arg);
+            m_highlightBuffer.insert(entry.pos, 1, entry.arg);
             break;
         }
 
-        updateHighlighting();
+        m_isHighlightUpdateNeeded = true;
         scrollViewportToCursor();
         g_isRedrawNeeded = true;
         Logger::dbg << "Went back in history" << Logger::End;
@@ -869,14 +940,16 @@ void Buffer::redo()
 
         case BufferHistory::Entry::Action::Insert:
             m_content.insert(entry.pos, 1, entry.arg);
+            m_highlightBuffer.insert(entry.pos, 1, entry.arg);
             break;
 
         case BufferHistory::Entry::Action::Delete:
             m_content.erase(entry.pos, 1);
+            m_highlightBuffer.erase(entry.pos, 1);
             break;
         }
 
-        updateHighlighting();
+        m_isHighlightUpdateNeeded = true;
         scrollViewportToCursor();
         g_isRedrawNeeded = true;
         Logger::dbg << "Went forward in history" << Logger::End;
@@ -885,4 +958,12 @@ void Buffer::redo()
     {
         Logger::dbg << "Cannot go forward in history" << Logger::End;
     }
+}
+
+Buffer::~Buffer()
+{
+    m_isHighlightUpdateNeeded = true; // Exit the current update
+    m_shouldHighlighterLoopRun = false; // Signal the thread that we don't want more syntax updates
+    m_highlighterThread.join(); // Wait for the thread
+    Logger::log << "Destroyed a buffer: " << this << " (" << m_filePath << ')' << Logger::End;
 }

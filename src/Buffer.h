@@ -3,6 +3,8 @@
 #include <filesystem>
 #include <string>
 #include <stack>
+#include <thread>
+#include <future>
 #include <glm/glm.hpp>
 #include "Timer.h"
 #include "TextRenderer.h"
@@ -10,6 +12,7 @@
 #include "config.h"
 #include "Logger.h"
 #include "globals.h"
+#include "Syntax.h"
 
 namespace std_fs = std::filesystem;
 
@@ -101,8 +104,11 @@ protected:
     bool m_isModified{};
     bool m_isReadOnly{};
 
-    // Note: We use uin8_t values
+    // Note: We use uint8_t values
     std::u8string m_highlightBuffer;
+    bool m_isHighlightUpdateNeeded{};
+    std::thread m_highlighterThread;
+    bool m_shouldHighlighterLoopRun = true;
 
     glm::ivec2 m_position{0, TABLINE_HEIGHT_PX};
     glm::ivec2 m_size{};
@@ -132,12 +138,12 @@ protected:
      */
     virtual void scrollViewportToCursor();
 
-    virtual void updateHighlighting();
+    virtual void _updateHighlighting();
 
     friend class App;
 
 public:
-    inline Buffer() { Logger::log << "Created a buffer: " << this << Logger::End; }
+    Buffer();
 
     Buffer(const Buffer&) = delete;
     Buffer& operator=(const Buffer&) = delete;
@@ -236,8 +242,5 @@ public:
     virtual void undo();
     virtual void redo();
 
-    virtual inline ~Buffer()
-    {
-        Logger::log << "Destroyed a buffer: " << this << " (" << m_filePath << ')' << Logger::End;
-    }
+    virtual ~Buffer();
 };

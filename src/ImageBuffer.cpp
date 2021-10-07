@@ -3,7 +3,6 @@
 #include "config.h"
 #include "Timer.h"
 #include "types.h"
-#include "syntax.h"
 #include <fstream>
 #include <sstream>
 
