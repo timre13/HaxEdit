@@ -20,7 +20,7 @@ void TextRenderer::cleanUpGlyphs()
 
 static void loadGlyphs(
         FT_Library* library,
-        std::map<char, TextRenderer::Glyph>* glyphs,
+        std::map<Char, TextRenderer::Glyph>* glyphs,
         const std::string& fontPath,
         int fontSize)
 {
@@ -44,11 +44,11 @@ static void loadGlyphs(
 
     Logger::dbg << "Caching glyphs" << Logger::End;
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    for (int c{}; c < 128; ++c)
+    for (FT_ULong c{}; c < (FT_ULong)face->num_glyphs; ++c)
     {
         //Logger::dbg << "Caching: " << c << Logger::End;
 
-        if (FT_Error error = FT_Load_Char(face, (char)c, FT_LOAD_RENDER))
+        if (FT_Error error = FT_Load_Char(face, c, FT_LOAD_RENDER))
         {
             Logger::fatal << "Failed to load character: " << c << ": " << FT_Error_String(error)
                 << Logger::End;
@@ -193,7 +193,7 @@ static inline TextRenderer::GlyphDimensions renderGlyph(
 }
 
 
-std::map<char, TextRenderer::Glyph>* TextRenderer::getGlyphListFromStyle(FontStyle style)
+std::map<Char, TextRenderer::Glyph>* TextRenderer::getGlyphListFromStyle(FontStyle style)
 {
     switch (style)
     {
@@ -206,7 +206,7 @@ std::map<char, TextRenderer::Glyph>* TextRenderer::getGlyphListFromStyle(FontSty
 }
 
 TextRenderer::GlyphDimensions TextRenderer::renderChar(
-        char c,
+        Char c,
         const glm::ivec2& position,
         FontStyle style/*=FontStyle::Regular*/
     )

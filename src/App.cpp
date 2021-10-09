@@ -533,7 +533,7 @@ void App::windowCharCB(GLFWwindow*, uint codePoint)
 
     if (g_activeBuff)
     {
-        g_activeBuff->insert((char)codePoint);
+        g_activeBuff->insert(codePoint);
     }
     g_isRedrawNeeded = true;
 }

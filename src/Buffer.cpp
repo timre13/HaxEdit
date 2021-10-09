@@ -62,7 +62,21 @@ int Buffer::open(const std::string& filePath)
         std::stringstream ss;
         ss << file.rdbuf();
 
-        m_content = ss.str();
+        for (char c : ss.str())
+        {
+            if (c & 0b10000000)
+            {
+                // This is an unicode file, we don't support writing yet, so set file to read-only
+                Logger::log << "Unicode file detected: "+m_filePath+"\n"
+                            "Writing of Unicode "
+                            "files is not yet supported. Buffer is set to read-only."
+                            << Logger::End;
+                m_isReadOnly = true;
+                break;
+            }
+        }
+        m_content = strToUtf32(ss.str().c_str());
+        Logger::dbg << "Loaded:\n" << strToAscii(m_content) << Logger::End;
         m_highlightBuffer = std::u8string(m_content.length(), Syntax::MARK_NONE);
         m_isHighlightUpdateNeeded = true;
         m_numOfLines = strCountLines(m_content);
@@ -155,12 +169,15 @@ int Buffer::saveAsToFile(const std::string& filePath)
     return 0;
 }
 
-static int getLineLenAt(const std::string& str, int lineI)
+static size_t getLineLenAt(const String& str, int lineI)
 {
     int _lineI{};
-    std::string line;
-    std::stringstream ss; ss << str;
-    while (std::getline(ss, line) && _lineI != lineI) { ++_lineI; }
+    String line;
+    LineIterator it{str};
+    while (it.next(line) && _lineI != lineI)
+    {
+        ++_lineI;
+    }
     return line.length();
 }
 
@@ -188,18 +205,18 @@ void Buffer::_updateHighlighting()
     // `m_highlightBuffer` is replaced with this at the end
     auto highlightBuffer = std::u8string(m_content.length(), Syntax::MARK_NONE);
 
-    auto highlightWord{[&](const std::string& word, char colorMark, bool shouldBeWholeWord){
+    auto highlightWord{[&](const String& word, char colorMark, bool shouldBeWholeWord){
         assert(!word.empty());
         size_t start{};
         while (true)
         {
             if (m_isHighlightUpdateNeeded) break;
             size_t found = m_content.find(word, start);
-            if (found == std::string::npos)
+            if (found == String::npos)
                 break;
             if (!shouldBeWholeWord |
-                ((found == 0 || !isalnum(m_content[found-1]))
-                 && (found+word.size()-1 == m_content.size()-1 || !isalnum(m_content[found+word.size()]))))
+                ((found == 0 || !isalnum((uchar)m_content[found-1]))
+                 && (found+word.size()-1 == m_content.length()-1 || !isalnum((uchar)m_content[found+word.size()]))))
                 highlightBuffer.replace(found, word.length(), word.length(), colorMark);
             start = found+word.length();
         }
@@ -207,7 +224,7 @@ void Buffer::_updateHighlighting()
 
     auto highlightStrings{[&](){
         bool isInsideString = false;
-        for (size_t i{}; i < m_content.size(); ++i)
+        for (size_t i{}; i < m_content.length(); ++i)
         {
             if (m_isHighlightUpdateNeeded) break;
             if (highlightBuffer[i] == Syntax::MARK_NONE && m_content[i] == '"'
@@ -220,28 +237,27 @@ void Buffer::_updateHighlighting()
 
     auto highlightNumbers{[&](){
         size_t i{};
-        while (i < m_content.size())
+        while (i < m_content.length())
         {
             if (m_isHighlightUpdateNeeded) break;
             // Go till a number
-            while (i < m_content.size() && !isdigit(m_content[i]) && m_content[i] != '.')
+            while (i < m_content.length() && !isdigit((uchar)m_content[i]) && m_content[i] != '.')
                 ++i;
             // Color the number
-            while (i < m_content.size() && (isxdigit(m_content[i]) || m_content[i] == '.' || m_content[i] == 'x'))
+            while (i < m_content.length() && (isxdigit((uchar)m_content[i]) || m_content[i] == '.' || m_content[i] == 'x'))
                 highlightBuffer[i++] = Syntax::MARK_NUMBER;
         }
     }};
 
-    auto highlightPrefixed{[&](const std::string& prefix, char colorMark){
+    auto highlightPrefixed{[&](const String& prefix, char colorMark){
         size_t charI{};
-        std::stringstream ss;
-        ss << m_content;
-        std::string line;
-        while (std::getline(ss, line))
+        LineIterator it{m_content};
+        String line;
+        while (it.next(line))
         {
             if (m_isHighlightUpdateNeeded) break;
             const size_t found = line.find(prefix);
-            if (found != std::string::npos)
+            if (found != String::npos)
             {
                 const size_t beginning = charI+found;
                 const size_t size = line.size()-found;
@@ -253,20 +269,19 @@ void Buffer::_updateHighlighting()
 
     auto highlightPreprocessors{[&](){
         size_t charI{};
-        std::stringstream ss;
-        ss << m_content;
-        std::string line;
-        while (std::getline(ss, line))
+        LineIterator it{m_content};
+        String line;
+        while (it.next(line))
         {
             if (m_isHighlightUpdateNeeded) break;
             const size_t prefixPos = line.find(Syntax::preprocessorPrefix);
-            if (prefixPos != std::string::npos)
+            if (prefixPos != String::npos)
             {
                 const size_t beginning = charI+prefixPos;
                 if (highlightBuffer[beginning] == Syntax::MARK_NONE)
                 {
                     const size_t preprocessorEnd = line.find_first_of(' ', prefixPos);
-                    const size_t size = (preprocessorEnd != std::string::npos ? preprocessorEnd : line.size())-prefixPos;
+                    const size_t size = (preprocessorEnd != String::npos ? preprocessorEnd : line.size())-prefixPos;
                     highlightBuffer.replace(beginning, size, size, Syntax::MARK_PREPRO);
                 }
             }
@@ -276,7 +291,7 @@ void Buffer::_updateHighlighting()
 
     auto highlightBlockComments{[&](){
         bool isInsideComment = false;
-        for (size_t i{}; i < m_content.size(); ++i)
+        for (size_t i{}; i < m_content.length(); ++i)
         {
             if (m_isHighlightUpdateNeeded) break;
             if (highlightBuffer[i] != Syntax::MARK_STRING
@@ -295,7 +310,7 @@ void Buffer::_updateHighlighting()
 
     auto highlightCharLiterals{[&](){
         bool isInsideCharLit = false;
-        for (size_t i{}; i < m_content.size(); ++i)
+        for (size_t i{}; i < m_content.length(); ++i)
         {
             if (m_isHighlightUpdateNeeded) break;
             if (highlightBuffer[i] == Syntax::MARK_NONE && m_content[i] == '\''
@@ -307,17 +322,17 @@ void Buffer::_updateHighlighting()
     }};
 
     auto highlightChar{[&](char c, char colorMark){
-        for (size_t i{}; i < m_content.size(); ++i)
+        for (size_t i{}; i < m_content.length(); ++i)
         {
             if (m_isHighlightUpdateNeeded) break;
-            if (highlightBuffer[i] != Syntax::MARK_STRING &&highlightBuffer[i] != Syntax::MARK_COMMENT
+            if (highlightBuffer[i] != Syntax::MARK_STRING && highlightBuffer[i] != Syntax::MARK_COMMENT
                     && m_content[i] == c)
                 highlightBuffer[i] = colorMark;
         }
     }};
 
     auto highlightFilePaths{[&](){
-        auto _isValidFilePath{[&](const std::string& path){ // -> bool
+        auto _isValidFilePath{[&](const String& path){ // -> bool
             if (path[0] == '/')
                 // Absolute path
                 return isValidFilePath(path);
@@ -326,14 +341,14 @@ void Buffer::_updateHighlighting()
                 return isValidFilePath(getParentPath(m_filePath)/std::filesystem::path{path});
         }};
 
-        for (size_t i{}; i < m_content.size();)
+        for (size_t i{}; i < m_content.length();)
         {
             if (m_isHighlightUpdateNeeded) break;
-            while (i < m_content.size() && (isspace(m_content[i]) || m_content[i] == '"'))
+            while (i < m_content.length() && (isspace((uchar)m_content[i]) || m_content[i] == '"'))
                 ++i;
 
-            std::string word;
-            while (i < m_content.size() && !isspace(m_content[i]) && m_content[i] != '"')
+            String word;
+            while (i < m_content.length() && !isspace((uchar)m_content[i]) && m_content[i] != '"')
                 word += m_content[i++];
 
             if (_isValidFilePath(word))
@@ -503,7 +518,7 @@ void Buffer::updateCursor()
     case CursorMovCmd::LastChar:
         m_cursorLine = m_numOfLines == 0 ? 0 : m_numOfLines-1;
         m_cursorCol = getCursorLineLen();
-        m_cursorCharPos = m_content.size()-1;
+        m_cursorCharPos = m_content.length()-1;
         break;
 
     case CursorMovCmd::None:
@@ -530,7 +545,8 @@ void Buffer::updateRStatusLineStr()
     m_statusLineStr.str
         = std::to_string(m_cursorLine+1)
         +':'+std::to_string(m_cursorCol+1)
-        +" | "+std::to_string(m_cursorCharPos);
+        +" | "+std::to_string(m_cursorCharPos)
+        + " L"+std::to_string(getLineLenAt(m_content, m_cursorLine));
     m_statusLineStr.maxLen = std::max(size_t(4+1+3+3+7), m_statusLineStr.str.size());
 }
 
@@ -567,7 +583,7 @@ void Buffer::render()
     int lineI{};
     int colI{};
     size_t charI{(size_t)-1};
-    for (char c : m_content)
+    for (Char c : m_content)
     {
         // Don't draw the part of the buffer that is below the viewport
         if (textY > m_position.y+m_size.y)
@@ -577,7 +593,7 @@ void Buffer::render()
         const bool isCharInsideViewport = textY > -g_fontSizePx;
 
         ++charI;
-        if (!isspace(c))
+        if (!isspace((uchar)c))
             isLeadingSpace = false;
 
         if (isCharInsideViewport && BUFFER_DRAW_LINE_NUMS && isLineBeginning)
@@ -726,7 +742,7 @@ void Buffer::render()
         {
             RGBColor charColor;
             FontStyle charStyle;
-            if (m_highlightBuffer.size() <= m_content.size()
+            if (m_highlightBuffer.size() <= m_content.length()
              && m_highlightBuffer[charI] < Syntax::_SYNTAX_MARK_COUNT)
             {
                 charColor = Syntax::syntaxColors[m_highlightBuffer[charI]];
@@ -764,7 +780,7 @@ void Buffer::render()
     TIMER_END_FUNC();
 }
 
-void Buffer::insert(char character)
+void Buffer::insert(Char character)
 {
     if (m_isReadOnly)
         return;
@@ -875,7 +891,7 @@ void Buffer::deleteCharForward()
         m_isModified = true;
     }
     // If deleting in the middle/beginning of the line and we have stuff to delete
-    else if (m_cursorCharPos != (size_t)lineLen && m_cursorCharPos < m_content.size())
+    else if (m_cursorCharPos != (size_t)lineLen && m_cursorCharPos < m_content.length())
     {
         m_history.add(BufferHistory::Entry{
                 .action=BufferHistory::Entry::Action::Delete,

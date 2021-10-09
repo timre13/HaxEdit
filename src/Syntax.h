@@ -52,34 +52,34 @@ constexpr FontStyle syntaxStyles[_SYNTAX_MARK_COUNT] = {
     FontStyle::Italic,  // Filepath - Should be "Underlined" in the future, when we support it
 };
 
-inline std::array<std::string, 85> keywordList{
-        "alignas", "alignof", "and", "and_eq", "asm", "atomic_cancel", "atomic_commit", "atomic_noexcept",
-        "auto", "bitand", "bitor", "break", "case", "catch", "class", "compl", "concept", "const",
-        "consteval", "constexpr", "constinit", "const_cast", "continue", "co_await", "co_return",
-        "co_yield", "decltype", "default", "delete", "do", "dynamic_cast", "else", "enum", "explicit",
-        "export", "extern", "false", "for", "friend", "goto", "if", "inline", "mutable", "namespace",
-        "new", "noexcept", "not", "not_eq", "nullptr", "operator", "or", "or_eq", "private", "protected",
-        "public", "reflexpr", "register", "reinterpret_cast", "requires", "return", "signed", "sizeof",
-        "static", "static_assert", "static_cast", "struct", "switch", "synchronized", "template", "this",
-        "thread_local", "throw", "true", "try", "typedef", "typeid", "typename", "union", "unsigned",
-        "using", "virtual", "volatile", "while", "xor", "xor_eq",
+inline std::array<String, 85> keywordList{
+        U"alignas", U"alignof", U"and", U"and_eq", U"asm", U"atomic_cancel", U"atomic_commit", U"atomic_noexcept",
+        U"auto", U"bitand", U"bitor", U"break", U"case", U"catch", U"class", U"compl", U"concept", U"const",
+        U"consteval", U"constexpr", U"constinit", U"const_cast", U"continue", U"co_await", U"co_return",
+        U"co_yield", U"decltype", U"default", U"delete", U"do", U"dynamic_cast", U"else", U"enum", U"explicit",
+        U"export", U"extern", U"false", U"for", U"friend", U"goto", U"if", U"inline", U"mutable", U"namespace",
+        U"new", U"noexcept", U"not", U"not_eq", U"nullptr", U"operator", U"or", U"or_eq", U"private", U"protected",
+        U"public", U"reflexpr", U"register", U"reinterpret_cast", U"requires", U"return", U"signed", U"sizeof",
+        U"static", U"static_assert", U"static_cast", U"struct", U"switch", U"synchronized", U"template", U"this",
+        U"thread_local", U"throw", U"true", U"try", U"typedef", U"typeid", U"typename", U"union", U"unsigned",
+        U"using", U"virtual", U"volatile", U"while", U"xor", U"xor_eq",
 };
 
-inline std::array<std::string, 12> typeList{
-        "bool", "char", "char8_t", "char16_t", "char32_t", "double",
-        "float", "int", "long", "short", "void", "size_t"
+inline std::array<String, 12> typeList{
+        U"bool", U"char", U"char8_t", U"char16_t", U"char32_t", U"double",
+        U"float", U"int", U"long", U"short", U"void", U"size_t"
 };
 
-inline std::array<std::string, 27> operatorList{
-        ":", "+", "-", "type", "!", "~", "^", "|", "*", "/", "&", "sizeof", "co_await", "new", "delete",
-        "<", ">", "=", "?", "throw", "co_yield", "=", "%", ",", "[", "]", ".",
+inline std::array<String, 27> operatorList{
+        U":", U"+", U"-", U"type", U"!", U"~", U"^", U"|", U"*", U"/", U"&", U"sizeof", U"co_await", U"new", U"delete",
+        U"<", U">", U"=", U"?", U"throw", U"co_yield", U"=", U"%", U",", U"[", U"]", U".",
 };
 
-inline std::string lineCommentPrefix{"//"};
+inline String lineCommentPrefix{U"//"};
 
-inline std::string blockCommentBegin{"/*"};
-inline std::string blockCommentEnd{"*/"};
+inline String blockCommentBegin{U"/*"};
+inline String blockCommentEnd{U"*/"};
 
-inline std::string preprocessorPrefix{"#"};
+inline String preprocessorPrefix{U"#"};
 
 }

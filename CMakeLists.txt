@@ -12,12 +12,15 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS true)
 include_directories(
     /usr/include/freetype2
     /usr/include/libpng16
+    ../external/icu/icu4c/source/common
 )
 
-link_libraries(GLEW GL glfw freetype)
+find_library(ICUUC_LIB icuuc REQUIRED)
+find_library(ICUDATA_LIB icudata REQUIRED)
+link_libraries(GLEW GL glfw freetype ${ICUUC_LIB} ${ICUDATA_LIB})
 
 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic -g3")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic -g3 -pthread")
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     # Clang needs more flags to generate good debug info

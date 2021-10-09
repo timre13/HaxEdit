@@ -53,10 +53,10 @@ private:
     std::string m_italicFontPath;
     std::string m_boldItalicFontPath;
 
-    std::map<char, Glyph> m_regularGlyphs;
-    std::map<char, Glyph> m_boldGlyphs;
-    std::map<char, Glyph> m_italicGlyphs;
-    std::map<char, Glyph> m_boldItalicGlyphs;
+    std::map<Char, Glyph> m_regularGlyphs;
+    std::map<Char, Glyph> m_boldGlyphs;
+    std::map<Char, Glyph> m_italicGlyphs;
+    std::map<Char, Glyph> m_boldItalicGlyphs;
     uint m_fontVao;
     uint m_fontVbo;
 
@@ -76,13 +76,13 @@ private:
     void setDrawingColor(const RGBColor& color);
     // Step 3
     GlyphDimensions renderChar(
-            char c,
+            Char c,
             const glm::ivec2& position,
             FontStyle style=FontStyle::Regular
     );
     // ---------------------------------------------
 
-    std::map<char, Glyph>* getGlyphListFromStyle(FontStyle style);
+    std::map<Char, Glyph>* getGlyphListFromStyle(FontStyle style);
 
     void cleanUpGlyphs();
 

@@ -1,10 +1,8 @@
 #pragma once
 
 #include <filesystem>
-#include <string>
 #include <stack>
 #include <thread>
-#include <future>
 #include <glm/glm.hpp>
 #include "Timer.h"
 #include "TextRenderer.h"
@@ -30,7 +28,7 @@ public:
             Delete,
         } action;
         size_t pos;
-        char arg;
+        Char arg;
     };
 
 private:
@@ -99,7 +97,7 @@ public:
 
 protected:
     std::string m_filePath = FILENAME_NEW;
-    std::string m_content;
+    String m_content;
     int m_numOfLines{};
     bool m_isModified{};
     bool m_isReadOnly{};
@@ -159,7 +157,7 @@ public:
     virtual void render();
     virtual void setDimmed(bool val) final { m_isDimmed = val; }
 
-    virtual inline const std::string& getContent() const { return m_content; }
+    virtual inline const String& getContent() const { return m_content; }
     virtual inline const std::string& getFilePath() const final { return m_filePath; }
     virtual inline const std::string getFileName() const final {
          return std_fs::path{m_filePath}.filename().string(); }
@@ -191,16 +189,16 @@ public:
         }
         // Always show the last line when scrolling down
         // FIXME: Line wrapping makes the document longer, so this breaks
-        else if (m_scrollY < -(int)(m_numOfLines-1)*g_fontSizePx)
-        {
-            m_scrollY = -(int)(m_numOfLines-1)*g_fontSizePx;
-        }
+        //else if (m_scrollY < -(int)(m_numOfLines-1)*g_fontSizePx)
+        //{
+        //    m_scrollY = -(int)(m_numOfLines-1)*g_fontSizePx;
+        //}
 
         TIMER_END_FUNC();
     }
 
     // Text editing
-    virtual void insert(char character);
+    virtual void insert(Char character);
     virtual void deleteCharBackwards();
     virtual void deleteCharForward();
     virtual inline bool isModified() const final { return m_isModified; }
