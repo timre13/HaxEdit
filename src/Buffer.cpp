@@ -29,10 +29,7 @@ Buffer::Buffer()
                         << this << ')' << Logger::End;
                     _updateHighlighting();
                 }
-                else
-                {
-                    std::this_thread::sleep_for(1ms);
-                }
+                std::this_thread::sleep_for(10ms);
             }
             Logger::dbg << "Syntax highlighter thread exited (buffer: " << this << ')' << Logger::End;
     });
