@@ -52,17 +52,17 @@ constexpr FontStyle syntaxStyles[_SYNTAX_MARK_COUNT] = {
     FontStyle::Italic,  // Filepath - Should be "Underlined" in the future, when we support it
 };
 
-inline std::array<String, 85> keywordList{
+inline std::array<String, 87> keywordList{
         U"alignas", U"alignof", U"and", U"and_eq", U"asm", U"atomic_cancel", U"atomic_commit", U"atomic_noexcept",
         U"auto", U"bitand", U"bitor", U"break", U"case", U"catch", U"class", U"compl", U"concept", U"const",
         U"consteval", U"constexpr", U"constinit", U"const_cast", U"continue", U"co_await", U"co_return",
         U"co_yield", U"decltype", U"default", U"delete", U"do", U"dynamic_cast", U"else", U"enum", U"explicit",
-        U"export", U"extern", U"false", U"for", U"friend", U"goto", U"if", U"inline", U"mutable", U"namespace",
-        U"new", U"noexcept", U"not", U"not_eq", U"nullptr", U"operator", U"or", U"or_eq", U"private", U"protected",
+        U"export", U"extern", U"false", U"final", U"for", U"friend", U"goto", U"if", U"inline", U"mutable", U"namespace",
+        U"new", U"noexcept", U"not", U"not_eq", U"nullptr", U"operator", U"or", U"or_eq", U"override", U"private", U"protected",
         U"public", U"reflexpr", U"register", U"reinterpret_cast", U"requires", U"return", U"signed", U"sizeof",
         U"static", U"static_assert", U"static_cast", U"struct", U"switch", U"synchronized", U"template", U"this",
         U"thread_local", U"throw", U"true", U"try", U"typedef", U"typeid", U"typename", U"union", U"unsigned",
-        U"using", U"virtual", U"volatile", U"while", U"xor", U"xor_eq",
+        U"using", U"virtual", U"volatile", U"while", U"xor", U"xor_eq"
 };
 
 inline std::array<String, 12> typeList{
