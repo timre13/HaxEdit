@@ -212,12 +212,17 @@ TextRenderer::GlyphDimensions TextRenderer::renderChar(
     )
 {
     auto glyphs = getGlyphListFromStyle(style);
-
     const auto& glyphIt = glyphs->find(c);
-    if (glyphIt == glyphs->end())
-        return {};
+    return renderGlyph(
+            glyphIt == glyphs->end() ? glyphs->find(0)->second : glyphIt->second,
+            position.x, position.y, 1.0f, m_fontVbo);
+}
 
-    return renderGlyph(glyphIt->second, position.x, position.y, 1.0f, m_fontVbo);
+uint TextRenderer::getCharGlyphAdvance(Char c, FontStyle style/*=FontStyle::Regular*/)
+{
+    auto glyphs = getGlyphListFromStyle(style);
+    auto glyph = glyphs->find(c);
+    return glyph == glyphs->end() ? glyphs->find(0)->second.advance : glyph->second.advance;
 }
 
 void TextRenderer::renderString(
@@ -281,13 +286,6 @@ void TextRenderer::renderString(
 
         textX += (glyphIt->second.advance/64.0f) * scale;
     }
-}
-
-uint TextRenderer::getCharGlyphAdvance(char c, FontStyle style/*=FontStyle::Regular*/)
-{
-    auto glyphs = getGlyphListFromStyle(style);
-    auto glyph = glyphs->find(c);
-    return glyph == glyphs->end() ? 0 : glyph->second.advance;
 }
 
 TextRenderer::~TextRenderer()
