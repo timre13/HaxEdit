@@ -55,14 +55,18 @@ public:
         assert(index < m_children.size());
         {
             auto& activeChild = m_children[m_activeChildI];
+            // Dim the old active buffer
             if (std::holds_alternative<std::unique_ptr<Buffer>>(activeChild))
             {
-                std::get<std::unique_ptr<Buffer>>(activeChild)->setDimmed(true);
+                auto& buff = std::get<std::unique_ptr<Buffer>>(activeChild);
+                buff->setDimmed(true);
+                buff->setCursorVisibility(true);
             }
         }
         m_activeChildI = index;
         {
             auto& activeChild = m_children[m_activeChildI];
+            // Undim the active
             if (std::holds_alternative<std::unique_ptr<Buffer>>(activeChild))
             {
                 std::get<std::unique_ptr<Buffer>>(activeChild)->setDimmed(false);
