@@ -48,7 +48,7 @@ inline std::string strToAscii(const String& str)
 {
     std::string output;
     for (Char c : str)
-        output += (char)c;
+        output += char(c & 0b01111111);
     return output;
 }
 

@@ -65,16 +65,19 @@ int Buffer::open(const std::string& filePath)
             if (c & 0b10000000)
             {
                 // This is an unicode file, we don't support writing yet, so set file to read-only
-                Logger::log << "Unicode file detected: "+m_filePath+"\n"
-                            "Writing of Unicode "
-                            "files is not yet supported. Buffer is set to read-only."
-                            << Logger::End;
+                const std::string msg = "Unicode/binary file detected: "+m_filePath+"\n"
+                    "Writing of Unicode/binary files is not yet supported.\n"
+                    "Buffer is set to read-only.";
+                Logger::log << msg << Logger::End;
+                MessageDialog::create(Dialog::EMPTY_CB, nullptr,
+                        msg,
+                        MessageDialog::Type::Warning);
                 m_isReadOnly = true;
                 break;
             }
         }
         m_content = strToUtf32(ss.str().c_str());
-        Logger::dbg << "Loaded:\n" << strToAscii(m_content) << Logger::End;
+        //Logger::dbg << "Loaded:\n" << strToAscii(m_content) << Logger::End;
         m_highlightBuffer = std::u8string(m_content.length(), Syntax::MARK_NONE);
         m_isHighlightUpdateNeeded = true;
         m_numOfLines = strCountLines(m_content);
