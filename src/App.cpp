@@ -496,6 +496,16 @@ void App::windowCloseCB(GLFWwindow* window)
             return;
         }
     }
+
+    // Don't let the window close when there are open dialogs
+    for (const auto& dlg : g_dialogs)
+    {
+        if (!dlg->isClosed())
+        {
+            glfwSetWindowShouldClose(window, false);
+            return;
+        }
+    }
 }
 
 void App::cursorPosCB(GLFWwindow* window, double x, double y)
