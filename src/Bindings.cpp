@@ -58,6 +58,7 @@ static void askSaveFilenameDialogCb(int, Dialog* dlg, void* filePath)
                 MessageDialog::Type::Error);
     }
     delete[] _filePath;
+    g_isTitleUpdateNeeded = true;
 }
 
 static void saveAsDialogCb(int, Dialog* dlg, void*)
@@ -79,6 +80,7 @@ static void saveAsDialogCb(int, Dialog* dlg, void*)
                     MessageDialog::Type::Error);
         }
     }
+    g_isTitleUpdateNeeded = true;
 }
 
 void saveCurrentBuffer()
@@ -140,6 +142,7 @@ static void openDialogCb(int openMode, Dialog* dlg, void*)
         g_tabs[g_currTabI]->addChild(buffer);
         g_activeBuff = g_tabs[g_currTabI]->getActiveBufferRecursively();
     }
+    g_isTitleUpdateNeeded = true;
 }
 
 void openFile()
