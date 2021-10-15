@@ -112,6 +112,8 @@ int main(int argc, char** argv)
 
     Logger::log << "Shutting down!" << Logger::End;
     sessHndlr.writeToFile();
+    g_tabs.clear();
+    // Last thing to do, we keep alive the window while cleaning up buffers
     glfwDestroyWindow(g_window);
     glfwTerminate();
     return 0;

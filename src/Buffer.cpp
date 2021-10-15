@@ -979,8 +979,10 @@ void Buffer::redo()
 
 Buffer::~Buffer()
 {
+    glfwSetCursor(g_window, Cursors::busy);
     m_isHighlightUpdateNeeded = true; // Exit the current update
     m_shouldHighlighterLoopRun = false; // Signal the thread that we don't want more syntax updates
     m_highlighterThread.join(); // Wait for the thread
     Logger::log << "Destroyed a buffer: " << this << " (" << m_filePath << ')' << Logger::End;
+    glfwSetCursor(g_window, nullptr);
 }
