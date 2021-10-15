@@ -3,16 +3,11 @@
 #include <vector>
 #include "Dialog.h"
 #include "glstuff.h"
+#include "globals.h"
 
 class MessageDialog final : public Dialog
 {
 public:
-    enum class Id
-    {
-        Generic,
-        AskSaveCloseActiveBuffer,
-    };
-
     enum class Type
     {
         Information,
@@ -22,16 +17,14 @@ public:
 
     struct BtnInfo
     {
-    std::string label; // Label
-    int key{}; // GLFW Keycode to press
+        std::string label; // Label
+        int key{}; // GLFW Keycode to press
     };
 
 private:
-    Id m_id;
     std::string m_message;
     Type m_type{Type::Information};
     std::vector<BtnInfo> m_btnInfo;
-    int m_pressedBtnI{-1};
 
     Dimensions m_msgTextDims;
     std::vector<Dimensions> m_btnDims;
@@ -39,21 +32,34 @@ private:
 
     virtual void recalculateDimensions() override;
 
-public:
+    /*
+     * Use MessageDialog::create() to create a dialog and place it in the
+     * global container.
+     */
     MessageDialog(
+            callback_t cb,
+            void* cbUserData,
             const std::string& msg,
             Type type,
-            Id id=Id::Generic,
-            const std::vector<BtnInfo>& btns={{"OK", GLFW_KEY_ENTER}}
+            const std::vector<BtnInfo>& btns
             );
+
+public:
+    static inline void create(
+        Dialog::callback_t cb,
+        void* cbUserData,
+        const std::string& msg,
+        MessageDialog::Type type,
+        const std::vector<MessageDialog::BtnInfo>& btns={{"OK", GLFW_KEY_ENTER}}
+        )
+    {
+        g_dialogs.push_back(std::unique_ptr<MessageDialog>(
+                    new MessageDialog{cb, cbUserData, msg, type, btns}));
+    }
 
     virtual void render() override;
     virtual void handleKey(int key, int mods) override;
     virtual void handleChar(uint) override {}
-    virtual bool isInsideButton(const glm::ivec2& pos) override;
+    virtual bool isInsideButton(const glm::ivec2& pos) const override;
     virtual void pressButtonAt(const glm::ivec2 pos) override;
-    inline int getPressedBtnI() const { return m_pressedBtnI; }
-    inline int getPressedKey() const {
-        return m_pressedBtnI >= 0 ? m_btnInfo[m_pressedBtnI].key : 0; }
-    inline Id getId() const { return m_id; }
 };

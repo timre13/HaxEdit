@@ -9,13 +9,15 @@
 #include <algorithm>
 
 MessageDialog::MessageDialog(
+        callback_t cb,
+        void* cbUserData,
         const std::string& msg,
         Type type,
-        Id id,
-        const std::vector<BtnInfo>& btns/*={{"OK", GLFW_KEY_ENTER}}*/
+        const std::vector<BtnInfo>& btns
         )
-    : m_id{id}, m_message{msg+'\n'}, m_type{type}, m_btnInfo{btns}
+    : Dialog{cb, cbUserData}, m_message{msg+'\n'}, m_type{type}, m_btnInfo{btns}
 {
+    Logger::dbg << "Opened a message dialog with message: " << quoteStr(msg) << Logger::End;
     for (const auto& btn : m_btnInfo)
     {
         (void)btn; // Fix unused `btn` warning in release build
@@ -151,14 +153,15 @@ void MessageDialog::handleKey(int key, int mods)
     {
         if (key == m_btnInfo[i].key)
         {
-            m_pressedBtnI = i;
             m_isClosed = true;
+            if (m_callback)
+                m_callback(i, this, m_cbUserData);
             break;
         }
     }
 }
 
-bool MessageDialog::isInsideButton(const glm::ivec2& pos)
+bool MessageDialog::isInsideButton(const glm::ivec2& pos) const
 {
     for (const auto& btn : m_btnDims)
     {
@@ -183,8 +186,9 @@ void MessageDialog::pressButtonAt(const glm::ivec2 pos)
          && pos.y >= btn.yPos
          && pos.y < btn.yPos+btn.height)
         {
-            m_pressedBtnI = i;
             m_isClosed = true;
+            if (m_callback)
+                m_callback(i, this, m_cbUserData);
             break;
         }
     }

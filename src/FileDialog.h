@@ -5,6 +5,7 @@
 #include <memory>
 #include <filesystem>
 #include "Dialog.h"
+#include "globals.h"
 
 class FileDialog final : public Dialog
 {
@@ -12,19 +13,18 @@ public:
     enum class Type
     {
         Open,
-        SaveAs,
+        Save,
     };
 
-    enum class OpenMode
+    enum OpenMode
     {
-        NewTab,
-        Split,
+        OPENMODE_NEWTAB,
+        OPENMODE_SPLIT,
     };
 
 private:
     std::string m_dirPath;
     Type m_type{};
-    OpenMode m_openMode{};
     int m_selectedFileI{};
     int m_scrollPx{};
     struct FileEntry
@@ -53,8 +53,24 @@ private:
             --m_selectedFileI;
     }
 
+    FileDialog(
+            callback_t cb,
+            void* cbUserData,
+            const std::string& dirPath,
+            Type type
+            );
+
 public:
-    FileDialog(const std::string& dirPath, Type type);
+    static inline void create(
+            callback_t cb,
+            void* cbUserData,
+            const std::string& dirPath,
+            Type type
+            )
+    {
+        g_dialogs.push_back(std::unique_ptr<FileDialog>(
+                    new FileDialog{cb, cbUserData, dirPath, type}));
+    }
 
     virtual void render() override;
     virtual void handleKey(int key, int mods) override;
@@ -74,7 +90,4 @@ public:
     {
         return m_fileList.empty() || m_fileList[m_selectedFileI]->name == ".";
     }
-
-    inline Type getType() const { return m_type; }
-    inline OpenMode getOpenMode() const { return m_openMode; }
 };

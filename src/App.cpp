@@ -4,8 +4,6 @@
 
 #define BUFFER_RESIZE_MAX_CURS_DIST 10
 
-static std::string s_selectedSaveDir = "";
-
 GLFWwindow* App::createWindow()
 {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -294,9 +292,9 @@ Buffer* App::openFileInNewBuffer(const std::string& path)
     }
     if (buffer->open(path))
     {
-        g_dialogs.push_back(std::make_unique<MessageDialog>(
-                    "Failed to open file: \""+path+'"',
-                    MessageDialog::Type::Error));
+        MessageDialog::create(MessageDialog::EMPTY_CB, nullptr,
+                "Failed to open file: \""+path+'"',
+                MessageDialog::Type::Error);
     }
     return buffer;
 }
@@ -364,105 +362,10 @@ void App::windowResizeCB(GLFWwindow*, int width, int height)
     }
 }
 
-static void handleSaveAsDialog(FileDialog* fileDialog)
-{
-    const std::string path = fileDialog->getSelectedFilePath();
-    if (fileDialog->isDirSelected()) // ask filename
-    {
-        s_selectedSaveDir = path;
-        g_dialogs.insert(g_dialogs.begin()+g_dialogs.size()-1, std::make_unique<AskerDialog>(
-                    "Filename:",
-                    AskerDialog::Id::AskSaveFileName));
-    }
-    else // Save to an existing file
-    {
-        if (g_activeBuff->saveAsToFile(path))
-        {
-            g_dialogs.push_back(std::make_unique<MessageDialog>(
-                        "Failed to save file: \""+fileDialog->getSelectedFilePath()+'"',
-                        MessageDialog::Type::Error));
-        }
-    }
-}
-
-static void handleOpenDialog(FileDialog* fileDialog)
-{
-    auto path = fileDialog->getSelectedFilePath();
-    Buffer* buffer = App::openFileInNewBuffer(path);
-
-    if (fileDialog->getOpenMode() == FileDialog::OpenMode::NewTab || g_tabs.empty())
-    {
-        if (g_tabs.empty())
-        {
-            g_tabs.push_back(std::make_unique<Split>(buffer));
-            g_activeBuff = buffer;
-            g_currTabI = 0;
-        }
-        else
-        {
-            // Insert the buffer next to the current one
-            g_tabs.insert(g_tabs.begin()+g_currTabI+1, std::make_unique<Split>(buffer));
-            g_activeBuff = buffer;
-            ++g_currTabI; // Go to the current buffer
-        }
-    }
-    else
-    {
-        g_tabs[g_currTabI]->addChild(buffer);
-        g_activeBuff = g_tabs[g_currTabI]->getActiveBufferRecursively();
-    }
-}
-
 static void handleDialogClose()
 {
     if (g_dialogs.back()->isClosed())
     {
-        if (auto* fileDialog = dynamic_cast<FileDialog*>(g_dialogs.back().get()))
-        {
-            if (fileDialog->getType() == FileDialog::Type::SaveAs) // Save as dialog
-            {
-                handleSaveAsDialog(fileDialog);
-            }
-            else if (fileDialog->getType() == FileDialog::Type::Open) // Open dialog
-            {
-                handleOpenDialog(fileDialog);
-            }
-            g_isTitleUpdateNeeded = true;
-        }
-        else if (auto* msgDialog = dynamic_cast<MessageDialog*>(g_dialogs.back().get()))
-        {
-            if (msgDialog->getId() == MessageDialog::Id::AskSaveCloseActiveBuffer)
-            {
-                if (msgDialog->getPressedBtnI() == 0) // If pressed "Yes"
-                {
-                    Bindings::Callbacks::saveCurrentBuffer();
-                    Bindings::Callbacks::closeActiveBuffer();
-                }
-                else if (msgDialog->getPressedBtnI() == 1) // Pressed "No"
-                {
-                    g_activeBuff->setModified(false); // Drop changes
-                    Bindings::Callbacks::closeActiveBuffer();
-                }
-                else
-                {
-                    // Do nothing
-                }
-            }
-        }
-        else if (auto* askerDialog = dynamic_cast<AskerDialog*>(g_dialogs.back().get()))
-        {
-            if (askerDialog->getId() == AskerDialog::Id::AskSaveFileName)
-            {
-                assert(g_activeBuff);
-                if (g_activeBuff->saveAsToFile(
-                            std_fs::path{s_selectedSaveDir}/std_fs::path{askerDialog->getValue()}))
-                {
-                    g_dialogs.insert(g_dialogs.begin()+g_dialogs.size()-1, std::make_unique<MessageDialog>(
-                                "Failed to save file: \""+fileDialog->getSelectedFilePath()+'"',
-                                MessageDialog::Type::Error));
-                }
-            }
-        }
         g_dialogs.pop_back();
         g_shouldIgnoreNextChar = true;
         g_isRedrawNeeded = true;
@@ -586,9 +489,9 @@ void App::windowCloseCB(GLFWwindow* window)
         if (hasModifiedBuffer(tab.get()))
         {
             glfwSetWindowShouldClose(window, false);
-            g_dialogs.push_back(std::make_unique<MessageDialog>(
-                        "Please save or close all modified buffers",
-                        MessageDialog::Type::Information));
+            MessageDialog::create(Dialog::EMPTY_CB, nullptr,
+                    "Please save or close all modified buffers",
+                    MessageDialog::Type::Information);
             Logger::log << "Window close aborted" << Logger::End;
             return;
         }

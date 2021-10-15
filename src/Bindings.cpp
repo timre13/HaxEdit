@@ -10,6 +10,7 @@
 #include "config.h"
 #include <vector>
 #include <memory>
+#include <cstring>
 
 namespace Bindings
 {
@@ -45,6 +46,41 @@ void createBufferInNewTab()
     g_isTitleUpdateNeeded = true;
 }
 
+static void askSaveFilenameDialogCb(int, Dialog* dlg, void* filePath)
+{
+    char* _filePath = (char*)filePath;
+    auto askerDialog = dynamic_cast<AskerDialog*>(dlg);
+    if (g_activeBuff->saveAsToFile(
+                std_fs::path{_filePath}/std_fs::path{askerDialog->getValue()}))
+    {
+        MessageDialog::create(MessageDialog::EMPTY_CB, nullptr,
+                "Failed to save file: \""+std::string(_filePath)+'"',
+                MessageDialog::Type::Error);
+    }
+    delete[] _filePath;
+}
+
+static void saveAsDialogCb(int, Dialog* dlg, void*)
+{
+    auto fileDialog = dynamic_cast<FileDialog*>(dlg);
+    const std::string path = fileDialog->getSelectedFilePath();
+    if (fileDialog->isDirSelected()) // ask filename
+    {
+        char* _path = new char[path.size()+1]{};
+        strncpy(_path, path.data(), path.size());
+        AskerDialog::create(askSaveFilenameDialogCb, (void*)_path, "Filename:");
+    }
+    else // Save to an existing file
+    {
+        if (g_activeBuff->saveAsToFile(path))
+        {
+            MessageDialog::create(MessageDialog::EMPTY_CB, nullptr,
+                    "Failed to save file: \""+fileDialog->getSelectedFilePath()+'"',
+                    MessageDialog::Type::Error);
+        }
+    }
+}
+
 void saveCurrentBuffer()
 {
     if (g_activeBuff)
@@ -52,15 +88,15 @@ void saveCurrentBuffer()
         if (g_activeBuff->isNewFile())
         {
             // Open a save as dialog
-            g_dialogs.push_back(std::make_unique<FileDialog>(".", FileDialog::Type::SaveAs));
+            FileDialog::create(saveAsDialogCb, nullptr, ".", FileDialog::Type::Save);
         }
         else
         {
             if (g_activeBuff->saveToFile())
             {
-                g_dialogs.push_back(std::make_unique<MessageDialog>(
-                            "Failed to save file",
-                            MessageDialog::Type::Error));
+                MessageDialog::create(MessageDialog::EMPTY_CB, nullptr,
+                        "Failed to save file",
+                        MessageDialog::Type::Error);
             }
         }
         g_isRedrawNeeded = true;
@@ -72,15 +108,58 @@ void saveCurrentBufferAs()
     if (g_activeBuff)
     {
         // Open a save as dialog
-        g_dialogs.push_back(std::make_unique<FileDialog>(".", FileDialog::Type::SaveAs));
+        FileDialog::create(saveAsDialogCb, nullptr, ".", FileDialog::Type::Save);
         g_isRedrawNeeded = true;
+    }
+}
+
+static void openDialogCb(int openMode, Dialog* dlg, void*)
+{
+    auto fileDialog = dynamic_cast<FileDialog*>(dlg);
+    auto path = fileDialog->getSelectedFilePath();
+    Buffer* buffer = App::openFileInNewBuffer(path);
+
+    if (openMode == FileDialog::OPENMODE_NEWTAB || g_tabs.empty()) // Open in new tab
+    {
+        if (g_tabs.empty())
+        {
+            g_tabs.push_back(std::make_unique<Split>(buffer));
+            g_activeBuff = buffer;
+            g_currTabI = 0;
+        }
+        else
+        {
+            // Insert the buffer next to the current one
+            g_tabs.insert(g_tabs.begin()+g_currTabI+1, std::make_unique<Split>(buffer));
+            g_activeBuff = buffer;
+            ++g_currTabI; // Go to the current buffer
+        }
+    }
+    else // Open in split
+    {
+        g_tabs[g_currTabI]->addChild(buffer);
+        g_activeBuff = g_tabs[g_currTabI]->getActiveBufferRecursively();
     }
 }
 
 void openFile()
 {
-    g_dialogs.push_back(std::make_unique<FileDialog>(".", FileDialog::Type::Open));
+    FileDialog::create(openDialogCb, nullptr, ".", FileDialog::Type::Open);
     g_isRedrawNeeded = true;
+}
+
+static void askSaveCloseDialogCb(int btn, Dialog*, void*)
+{
+    if (btn == 0) // If pressed "Yes"
+    {
+        Bindings::Callbacks::saveCurrentBuffer();
+        Bindings::Callbacks::closeActiveBuffer();
+    }
+    else if (btn == 1) // Pressed "No"
+    {
+        g_activeBuff->setModified(false); // Drop changes
+        Bindings::Callbacks::closeActiveBuffer();
+    }
 }
 
 void closeActiveBuffer()
@@ -90,12 +169,13 @@ void closeActiveBuffer()
 
     if (g_activeBuff->isModified())
     {
-        g_dialogs.push_back(std::make_unique<MessageDialog>(
-                    "Save?",
-                    MessageDialog::Type::Information,
-                    MessageDialog::Id::AskSaveCloseActiveBuffer,
-                    std::vector<MessageDialog::BtnInfo>{{"Yes", GLFW_KEY_Y}, {"No", GLFW_KEY_N}, {"Cancel", GLFW_KEY_C}}
-        ));
+        MessageDialog::create(
+                askSaveCloseDialogCb, nullptr,
+                "Save?",
+                MessageDialog::Type::Information,
+                std::vector<MessageDialog::BtnInfo>{
+                {"Yes", GLFW_KEY_Y}, {"No", GLFW_KEY_N}, {"Cancel", GLFW_KEY_C}}
+                );
     }
     else
     {

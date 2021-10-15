@@ -14,16 +14,16 @@
 
 namespace std_fs = std::filesystem;
 
-FileDialog::FileDialog(const std::string& dirPath, Type type)
-    : m_dirPath{dirPath}, m_type{type}
+FileDialog::FileDialog(
+        callback_t cb,
+        void* cbUserData,
+        const std::string& dirPath,
+        Type type
+        )
+    : Dialog{cb, cbUserData}, m_dirPath{dirPath}, m_type{type}
 {
-    Logger::dbg << "Opened a file dialog of type ";
-    switch (type)
-    {
-    case Type::Open: Logger::dbg << "\"Open\""; break;
-    case Type::SaveAs: Logger::dbg << "\"Save as\""; break;
-    }
-    Logger::dbg << Logger::End;
+    Logger::dbg << "Created a " << (type == Type::Open ? "file" : "directory")
+        << " chooser dialog inside the dir.: " << quoteStr(dirPath) << Logger::End;
 
     genFileList();
 }
@@ -154,7 +154,7 @@ void FileDialog::genFileList()
         parentDirEntry->permissionStr = "";
         m_fileList.push_back(std::move(parentDirEntry));
     }
-    if (m_type == Type::SaveAs)
+    if (m_type == Type::Save)
     {
         // Add entry to go the current directory
         auto currentDirEntry = std::make_unique<FileEntry>();
@@ -225,19 +225,23 @@ void FileDialog::handleKey(int key, int mods)
         if (!m_fileList.empty() && m_fileList[m_selectedFileI]->name == ".")
         {
             Logger::dbg << "FileDialog: Selected a directory" << Logger::End;
-            m_openMode = OpenMode::NewTab;
+            if (m_callback)
+                m_callback(OPENMODE_NEWTAB, this, m_cbUserData);
             m_isClosed = true;
         }
         else if (m_fileList.empty() || !m_fileList[m_selectedFileI]->isDirectory)
         {
-            Logger::dbg << "FileDialog: Opened a file: " << m_fileList[m_selectedFileI]->name << Logger::End;
+            Logger::dbg << "FileDialog: Opened a file: " <<
+                m_fileList[m_selectedFileI]->name << Logger::End;
             // If the list is empty or a file was opened, we are done
-            m_openMode = OpenMode::NewTab;
+            if (m_callback)
+                m_callback(OPENMODE_NEWTAB, this, m_cbUserData);
             m_isClosed = true;
         }
         else
         {
-            Logger::dbg << "FileDialog: Opened a directory: " << m_fileList[m_selectedFileI]->name << Logger::End;
+            Logger::dbg << "FileDialog: Opened a directory: "
+                << m_fileList[m_selectedFileI]->name << Logger::End;
             // If a directory was opened, go into it
             m_dirPath = std_fs::path{m_dirPath}/m_fileList[m_selectedFileI]->name;
             m_selectedFileI = 0;
@@ -250,13 +254,16 @@ void FileDialog::handleKey(int key, int mods)
         if (!m_fileList.empty() && m_fileList[m_selectedFileI]->name == ".")
         {
             Logger::dbg << "FileDialog: Selected a directory" << Logger::End;
-            m_openMode = OpenMode::Split;
+            if (m_callback)
+                m_callback(OPENMODE_SPLIT, this, m_cbUserData);
             m_isClosed = true;
         }
         else if (m_fileList.empty() || !m_fileList[m_selectedFileI]->isDirectory)
         {
-            Logger::dbg << "FileDialog: Opened a file: " << m_fileList[m_selectedFileI]->name << Logger::End;
-            m_openMode = OpenMode::Split;
+            Logger::dbg << "FileDialog: Opened a file: "
+                << m_fileList[m_selectedFileI]->name << Logger::End;
+            if (m_callback)
+                m_callback(OPENMODE_SPLIT, this, m_cbUserData);
             m_isClosed = true;
         }
     }

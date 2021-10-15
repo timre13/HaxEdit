@@ -112,6 +112,9 @@ inline bool isValidFilePath(const T& str)
     );
 }
 
+inline std::string quoteStr(const std::string& str) { return '"'+str+'"'; }
+inline String quoteStr(const String& str) { return U'"'+str+U'"'; }
+
 inline size_t operator "" _st(unsigned long long val) { return val; }
 
 class LineIterator

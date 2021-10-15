@@ -6,12 +6,13 @@
 #include <memory>
 
 AskerDialog::AskerDialog(
-            const std::string& msg,
-            Id id/*=Id::Generic*/
-            )
-    : m_id{id}, m_msg{msg}
+        callback_t cb,
+        void* cbUserData,
+        const std::string& msg
+        )
+    : Dialog{cb, cbUserData}, m_msg{msg}
 {
-    Logger::dbg << "Opened an asker dialog with message \"" << msg << '"' << Logger::End;
+    Logger::dbg << "Opened an asker dialog with message: " << quoteStr(msg) << Logger::End;
     m_isClosed = false;
 }
 
@@ -91,6 +92,8 @@ void AskerDialog::handleKey(int key, int mods)
 
         case GLFW_KEY_ENTER:
             m_isClosed = true;
+            if (m_callback)
+                m_callback(0, this, m_cbUserData);
             break;
         }
     }
