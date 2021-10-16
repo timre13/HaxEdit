@@ -172,6 +172,29 @@ public:
 
     virtual inline void moveCursor(CursorMovCmd cmd) { m_cursorMovCmd = cmd; }
 
+    virtual inline int getCursorWordBeginning()
+    {
+        int begin = m_cursorCharPos;
+        if (isspace((uchar)m_content[begin]))
+            return -1;
+
+        // Go to beginning
+        while (begin >= 0 && !isspace((uchar)m_content[begin]))
+            --begin;
+        return begin < 0 ? 0 : begin;
+    }
+
+    virtual inline int getCursorWordEnd()
+    {
+        int end = m_cursorCharPos;
+        if (isspace((uchar)m_content[end]))
+            return -1;
+        // Go to end
+        while (end < (int)m_content.size() && !isspace((uchar)m_content[end]))
+            ++end;
+        return end;
+    }
+
     virtual inline void setCursorVisibility(bool isVisible) {
         m_isCursorShown = isVisible; }
     virtual inline void toggleCursorVisibility() {

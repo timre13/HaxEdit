@@ -575,6 +575,9 @@ void Buffer::render()
     g_textRenderer->prepareForDrawing();
     g_textRenderer->setDrawingColor({1.0f, 1.0f, 1.0f});
 
+    const size_t wordBeg = getCursorWordBeginning();
+    const size_t wordEnd = getCursorWordEnd();
+
     bool isLineBeginning = true;
     bool isLeadingSpace = true;
     int lineI{};
@@ -696,6 +699,18 @@ void Buffer::render()
             }
         };
 
+        if (isCharInsideViewport && !isspace((uchar)c))
+        {
+            if (charI > wordBeg && charI < wordEnd)
+            {
+                g_uiRenderer->renderFilledRectangle(
+                        {textX, initTextY+textY-m_scrollY-m_position.y+g_fontSizePx+2-g_fontSizePx*0.1f},
+                        {textX+g_fontSizePx*0.75f, initTextY+textY-m_scrollY-m_position.y+g_fontSizePx+2},
+                        {0.4f, 0.4f, 0.4f, 1.0f}
+                );
+                g_textRenderer->prepareForDrawing();
+            }
+        }
 
         switch (c)
         {
