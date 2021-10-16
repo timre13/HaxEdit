@@ -52,16 +52,29 @@ int Buffer::open(const std::string& filePath)
 
     try
     {
-        std::fstream file;
+        std::ifstream file;
         file.open(filePath, std::ios::in | std::ios::binary);
         if (file.fail())
         {
             throw std::runtime_error{"Open failed"};
         }
-        std::stringstream ss;
-        ss << file.rdbuf();
+        std::vector<uint8_t> input;
+        file.seekg(0, std::ios::end);
+        input.reserve(file.tellg());
+        file.seekg(0, std::ios::beg);
+        input.assign(std::istreambuf_iterator<char>(file),
+                     std::istreambuf_iterator<char>());
 
-        m_content = strToUtf32(ss.str().c_str());
+        const auto icuString = icu::UnicodeString{(const char*)input.data(), (int32_t)input.size()};
+        if (icuString.isBogus())
+        {
+            MessageDialog::create(Dialog::EMPTY_CB, nullptr,
+                    "Invalid Unicode content in file",
+                    MessageDialog::Type::Error
+                    );
+            m_isReadOnly = true;
+        }
+        m_content = strToUtf32(icuString);
         //Logger::dbg << "Loaded:\n" << strToAscii(m_content) << Logger::End;
         m_highlightBuffer = std::u8string(m_content.length(), Syntax::MARK_NONE);
         m_isHighlightUpdateNeeded = true;
