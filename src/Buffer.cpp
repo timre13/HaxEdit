@@ -4,6 +4,7 @@
 #include "types.h"
 #include "Syntax.h"
 #include "MessageDialog.h"
+#include "unicode/ustdio.h"
 #include <fstream>
 #include <sstream>
 #include <chrono>
@@ -52,7 +53,7 @@ int Buffer::open(const std::string& filePath)
     try
     {
         std::fstream file;
-        file.open(filePath, std::ios::in);
+        file.open(filePath, std::ios::in | std::ios::binary);
         if (file.fail())
         {
             throw std::runtime_error{"Open failed"};
@@ -60,22 +61,6 @@ int Buffer::open(const std::string& filePath)
         std::stringstream ss;
         ss << file.rdbuf();
 
-        for (char c : ss.str())
-        {
-            if (c & 0b10000000)
-            {
-                // This is an unicode file, we don't support writing yet, so set file to read-only
-                const std::string msg = "Unicode/binary file detected: "+m_filePath+"\n"
-                    "Writing of Unicode/binary files is not yet supported.\n"
-                    "Buffer is set to read-only.";
-                Logger::log << msg << Logger::End;
-                MessageDialog::create(Dialog::EMPTY_CB, nullptr,
-                        msg,
-                        MessageDialog::Type::Warning);
-                m_isReadOnly = true;
-                break;
-            }
-        }
         m_content = strToUtf32(ss.str().c_str());
         //Logger::dbg << "Loaded:\n" << strToAscii(m_content) << Logger::End;
         m_highlightBuffer = std::u8string(m_content.length(), Syntax::MARK_NONE);
@@ -122,24 +107,21 @@ int Buffer::saveToFile()
     TIMER_BEGIN_FUNC();
 
     Logger::dbg << "Writing buffer to file: " << m_filePath << Logger::End;
-
     try
     {
-        std::fstream file;
-        file.open(m_filePath, std::ios::out);
-        if (file.fail())
+        const icu::UnicodeString str = icu::UnicodeString::fromUTF32(
+                (const UChar32*)m_content.data(), m_content.length());
+        UFILE* outFile = u_fopen(m_filePath.c_str(), "w", NULL, NULL);
+        if (!outFile)
         {
-            throw std::runtime_error{"Open failed"};
+            throw std::runtime_error{"Call to `u_fopen()` failed"};
         }
-        file.write(m_content.c_str(), m_content.length());
-        if (file.fail())
+        if (u_file_write(str.getBuffer(), str.length(), outFile) != str.length())
         {
-            throw std::runtime_error{"Call to write() failed"};
+            u_fclose(outFile);
+            throw std::runtime_error{"Call to `u_file_write()` failed"};
         }
-        file.close();
-        Logger::dbg << "Wrote "
-            << m_content.length() << " characters ("
-            << m_numOfLines << " lines) to file" << Logger::End;
+        u_fclose(outFile);
     }
     catch (std::exception& e)
     {
@@ -147,6 +129,7 @@ int Buffer::saveToFile()
         TIMER_END_FUNC();
         return 1;
     }
+    Logger::log << "Wrote " << m_content.size() << " characters" << Logger::End;
 
     m_isModified = false;
     m_isReadOnly = false;

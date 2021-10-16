@@ -13,11 +13,15 @@ include_directories(
     /usr/include/freetype2
     /usr/include/libpng16
     ../external/icu/icu4c/source/common
+    ../external/icu/icu4c/source/io
 )
 
 find_library(ICUUC_LIB icuuc REQUIRED)
 find_library(ICUDATA_LIB icudata REQUIRED)
-link_libraries(GLEW GL glfw freetype ${ICUUC_LIB} ${ICUDATA_LIB})
+find_library(ICUIO_LIB icuio  REQUIRED)
+find_library(ICUI18N_LIB icui18n  REQUIRED)
+
+link_libraries(GLEW GL glfw freetype ${ICUUC_LIB} ${ICUDATA_LIB} ${ICUIO_LIB} ${ICUI18N_LIB})
 
 
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic -g3 -pthread")
