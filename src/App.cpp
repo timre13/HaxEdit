@@ -125,6 +125,7 @@ void App::setupKeyBindings()
     Bindings::ctrlMap[GLFW_KEY_EQUAL]       = Bindings::Callbacks::increaseFontSize;
     Bindings::ctrlMap[GLFW_KEY_KP_ADD]      = Bindings::Callbacks::increaseFontSize;
     Bindings::ctrlMap[GLFW_KEY_Z]           = Bindings::Callbacks::undoActiveBufferChange;
+    Bindings::ctrlMap[GLFW_KEY_ENTER]       = Bindings::Callbacks::openPathAtCursor;
 
     Bindings::ctrlShiftMap[GLFW_KEY_S]      = Bindings::Callbacks::saveCurrentBufferAs;
     Bindings::ctrlShiftMap[GLFW_KEY_TAB]    = Bindings::Callbacks::goToPrevSplit;

@@ -214,6 +214,41 @@ void closeActiveBuffer()
     g_isRedrawNeeded = true;
 }
 
+void openPathAtCursor()
+{
+    if (g_activeBuff)
+    {
+        std::string path = strToAscii(g_activeBuff->getCursorWord());
+        if (path.empty())
+            return;
+        if (path[0] == '"') path = path.substr(1);
+        if (path[path.size()-1] == '"') path = path.substr(0, path.size()-1);
+
+        if (path[0] != '/')
+            path = getParentPath(g_activeBuff->getFilePath())/std::filesystem::path{path};
+
+        Logger::dbg << "Checking path: " << path << Logger::End;
+        if (!isValidFilePath(path))
+            return;
+
+        auto* buffer = App::openFileInNewBuffer(path);
+        if (g_tabs.empty())
+        {
+            g_tabs.push_back(std::make_unique<Split>(buffer));
+            g_activeBuff = buffer;
+            g_currTabI = 0;
+        }
+        else
+        {
+            // Insert the buffer next to the current one
+            g_tabs.insert(g_tabs.begin()+g_currTabI+1, std::make_unique<Split>(buffer));
+            g_activeBuff = buffer;
+            ++g_currTabI; // Go to the current buffer
+        }
+        g_isRedrawNeeded = true;
+    }
+}
+
 void goToNextTab()
 {
     if (!g_tabs.empty() && g_currTabI < g_tabs.size()-1)

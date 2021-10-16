@@ -699,7 +699,7 @@ void Buffer::render()
             }
         };
 
-        if (isCharInsideViewport && !isspace((uchar)c))
+        if (isCharInsideViewport)
         {
             if (charI > wordBeg && charI < wordEnd)
             {

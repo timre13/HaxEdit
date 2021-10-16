@@ -181,7 +181,7 @@ public:
         // Go to beginning
         while (begin >= 0 && !isspace((uchar)m_content[begin]))
             --begin;
-        return begin < 0 ? 0 : begin;
+        return begin+1;
     }
 
     virtual inline int getCursorWordEnd()
@@ -193,6 +193,14 @@ public:
         while (end < (int)m_content.size() && !isspace((uchar)m_content[end]))
             ++end;
         return end;
+    }
+    virtual inline String getCursorWord()
+    {
+        int wordBegin = g_activeBuff->getCursorWordBeginning();
+        int wordEnd = g_activeBuff->getCursorWordEnd();
+        if (wordBegin < 0 || wordEnd < 0)
+            return U"";
+        return m_content.substr(wordBegin, wordEnd-wordBegin);
     }
 
     virtual inline void setCursorVisibility(bool isVisible) {
