@@ -175,33 +175,38 @@ void App::renderTabLine()
     // Draw tabline background
     g_uiRenderer->renderFilledRectangle({0, 0}, {g_windowWidth, TABLINE_HEIGHT_PX},
             RGB_COLOR_TO_RGBA(TABLINE_BG_COLOR));
-    uint tabI{};
+    const int tabPageSize = roundf((float)g_windowWidth/TABLINE_TAB_WIDTH_PX);
+
     // Draw tabs
-    for (const auto& tab : g_tabs)
+    for (size_t i{}; i < g_tabs.size(); ++i)
     {
-        const int tabX = TABLINE_TAB_WIDTH_PX*tabI;
+        const auto& tab = g_tabs[i];
+        const int tabX = i%tabPageSize*TABLINE_TAB_WIDTH_PX;;
         const auto& buffer = tab->getActiveBufferRecursively();
 
-        // Stop rendering if we go out of the screen
-        if (tabX > g_windowWidth)
+        // Only render if visible
+        if (i/tabPageSize < g_currTabI/tabPageSize)
+            continue;
+        if (i/tabPageSize > g_currTabI/tabPageSize)
             break;
 
         // Render a tab, use a differenct color when it is the current tab
         g_uiRenderer->renderFilledRectangle(
                 {tabX, 0},
-                {TABLINE_TAB_WIDTH_PX*(tabI+1)-2, TABLINE_HEIGHT_PX},
+                {tabX+TABLINE_TAB_WIDTH_PX-2, TABLINE_HEIGHT_PX},
                 RGB_COLOR_TO_RGBA((
-                        tabI == g_currTabI ?
+                        i == g_currTabI ?
                         TABLINE_ACTIVE_TAB_COLOR :
                         TABLINE_TAB_COLOR)));
+
         // Render the filename, use orange color when the buffer is modified since the last save
         g_textRenderer->renderString(buffer->getFileName().substr(0, TABLINE_TAB_MAX_TEXT_LEN),
                 {tabX+20, -2},
-                tabI == g_currTabI ? FontStyle::BoldItalic : FontStyle::Regular,
+                i == g_currTabI ? FontStyle::BoldItalic : FontStyle::Regular,
                 (buffer->isModified() ? RGBColor{1.0f, 0.5f, 0.0f} : RGBColor{1.0f, 1.0, 1.0f}));
 
+        // Render icon
         g_fileTypeHandler->getIconFromFilename(buffer->getFileName(), false)->render({tabX+2, 2}, {16, 16});
-        ++tabI;
     }
 }
 
