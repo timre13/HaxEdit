@@ -11,6 +11,7 @@
 #include "Logger.h"
 #include "globals.h"
 #include "Syntax.h"
+#include "autocomp/Popup.h"
 
 namespace std_fs = std::filesystem;
 
@@ -119,6 +120,8 @@ protected:
     int m_cursorLine{};
     int m_cursorCol{};
     size_t m_cursorCharPos{};
+    int m_cursorXPx{};
+    int m_cursorYPx{};
     bool m_isCursorShown{true}; // Used to blink the cursor
     CursorMovCmd m_cursorMovCmd{CursorMovCmd::None};
 
@@ -130,6 +133,10 @@ protected:
 
     // To handle Undo and Redo
     BufferHistory m_history;
+
+    std::unique_ptr<Autocomp::Popup> m_autocompPopup;
+
+    virtual void renderAutocompPopup();
 
     /*
      * Make the cursor visible by scrolling the viewport.
@@ -270,6 +277,10 @@ public:
 
     virtual void undo();
     virtual void redo();
+
+    virtual void triggerAutocompPopupOrSelectNextItem();
+    virtual void triggerAutocompPopupOrSelectPrevItem();
+    virtual void hideAutocompPopup();
 
     virtual ~Buffer();
 };

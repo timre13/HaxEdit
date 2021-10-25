@@ -52,6 +52,10 @@ void decreaseFontSize();
 void zoomInBufferIfImage();
 void zoomOutBufferIfImage();
 
+void triggerAutocompPopupOrSelectNextItem();
+void triggerAutocompPopupOrSelectPrevItem();
+void hideAutocompPopup();
+
 }
 
 extern bindingMap_t noModMap;

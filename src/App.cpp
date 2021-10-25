@@ -110,6 +110,7 @@ void App::setupKeyBindings()
     Bindings::noModMap[GLFW_KEY_KP_SUBTRACT]= Bindings::Callbacks::zoomOutBufferIfImage;
     Bindings::noModMap[GLFW_KEY_EQUAL]      = Bindings::Callbacks::zoomInBufferIfImage;
     Bindings::noModMap[GLFW_KEY_KP_ADD]     = Bindings::Callbacks::zoomInBufferIfImage;
+    Bindings::noModMap[GLFW_KEY_ESCAPE]     = Bindings::Callbacks::hideAutocompPopup;
 
     Bindings::ctrlMap[GLFW_KEY_N]           = Bindings::Callbacks::createBufferInNewTab;
     Bindings::ctrlMap[GLFW_KEY_S]           = Bindings::Callbacks::saveCurrentBuffer;
@@ -126,12 +127,14 @@ void App::setupKeyBindings()
     Bindings::ctrlMap[GLFW_KEY_KP_ADD]      = Bindings::Callbacks::increaseFontSize;
     Bindings::ctrlMap[GLFW_KEY_Z]           = Bindings::Callbacks::undoActiveBufferChange;
     Bindings::ctrlMap[GLFW_KEY_ENTER]       = Bindings::Callbacks::openPathAtCursor;
+    Bindings::ctrlMap[GLFW_KEY_SPACE]       = Bindings::Callbacks::triggerAutocompPopupOrSelectNextItem;
 
     Bindings::ctrlShiftMap[GLFW_KEY_S]      = Bindings::Callbacks::saveCurrentBufferAs;
     Bindings::ctrlShiftMap[GLFW_KEY_TAB]    = Bindings::Callbacks::goToPrevSplit;
     Bindings::ctrlShiftMap[GLFW_KEY_RIGHT]  = Bindings::Callbacks::increaseActiveBufferWidth;
     Bindings::ctrlShiftMap[GLFW_KEY_LEFT]   = Bindings::Callbacks::decreaseActiveBufferWidth;
     Bindings::ctrlShiftMap[GLFW_KEY_Z]      = Bindings::Callbacks::redoActiveBufferChange;
+    Bindings::ctrlShiftMap[GLFW_KEY_SPACE]  = Bindings::Callbacks::triggerAutocompPopupOrSelectPrevItem;
 }
 
 void App::renderBuffers()

@@ -507,6 +507,33 @@ void zoomOutBufferIfImage()
     g_isRedrawNeeded = true;
 }
 
+void triggerAutocompPopupOrSelectNextItem()
+{
+    if (!g_activeBuff)
+        return;
+
+    g_activeBuff->triggerAutocompPopupOrSelectNextItem();
+    g_isRedrawNeeded = true;
+}
+
+void triggerAutocompPopupOrSelectPrevItem()
+{
+    if (!g_activeBuff)
+        return;
+
+    g_activeBuff->triggerAutocompPopupOrSelectPrevItem();
+    g_isRedrawNeeded = true;
+}
+
+void hideAutocompPopup()
+{
+    if (!g_activeBuff)
+        return;
+
+    g_activeBuff->hideAutocompPopup();
+    g_isRedrawNeeded = true;
+}
+
 } // Namespace Callbacks
 
 bindingMap_t noModMap = {};

@@ -36,6 +36,16 @@ Buffer::Buffer()
             Logger::dbg << "Syntax highlighter thread exited (buffer: " << this << ')' << Logger::End;
     });
 
+    m_autocompPopup = std::make_unique<Autocomp::Popup>();
+    // FIXME: ONLY FOR TESTING
+    m_autocompPopup->addItem(new Autocomp::Popup::Item{Autocomp::Popup::Item::Type::Word, U"foo"});
+    m_autocompPopup->addItem(new Autocomp::Popup::Item{Autocomp::Popup::Item::Type::Word, U"bar"});
+    m_autocompPopup->addItem(new Autocomp::Popup::Item{Autocomp::Popup::Item::Type::Word, U"baz"});
+    m_autocompPopup->addItem(new Autocomp::Popup::Item{Autocomp::Popup::Item::Type::Word, U"foobar"});
+    m_autocompPopup->addItem(new Autocomp::Popup::Item{Autocomp::Popup::Item::Type::Word, U"void"});
+    m_autocompPopup->addItem(new Autocomp::Popup::Item{Autocomp::Popup::Item::Type::Word, U"while"});
+    m_autocompPopup->addItem(new Autocomp::Popup::Item{Autocomp::Popup::Item::Type::Word, U"true"});
+
     Logger::log << "Created a buffer: " << this << Logger::End;
 }
 
@@ -176,6 +186,13 @@ static size_t getLineLenAt(const String& str, int lineI)
         ++_lineI;
     }
     return line.length();
+}
+
+void Buffer::renderAutocompPopup()
+{
+    m_autocompPopup->setPos(
+            {m_cursorXPx+2, m_cursorYPx+g_fontSizePx+4});
+    m_autocompPopup->render();
 }
 
 void Buffer::scrollViewportToCursor()
@@ -670,6 +687,12 @@ void Buffer::render()
         auto drawCursorIfNeeded{
             [&](int width)
             {
+                if (charI == m_cursorCharPos)
+                {
+                    m_cursorXPx = textX;
+                    m_cursorYPx = initTextY+textY-m_scrollY-m_position.y;
+                }
+
                 if ((m_cursorMovCmd != CursorMovCmd::None || m_isCursorShown) && charI == m_cursorCharPos)
                 {
 #if CURSOR_DRAW_BLOCK
@@ -787,6 +810,10 @@ void Buffer::render()
                 {m_position.x+m_size.x, m_position.y+m_size.y},
                 {UNPACK_RGB_COLOR(BG_COLOR), 0.5f}
         );
+    }
+    else
+    {
+        renderAutocompPopup();
     }
 
     TIMER_END_FUNC();
@@ -986,6 +1013,35 @@ void Buffer::redo()
     {
         Logger::dbg << "Cannot go forward in history" << Logger::End;
     }
+}
+
+void Buffer::triggerAutocompPopupOrSelectNextItem()
+{
+    if (m_autocompPopup->isVisible())
+    {
+        m_autocompPopup->selectNextItem();
+    }
+    else
+    {
+        m_autocompPopup->setVisibility(true);
+    }
+}
+
+void Buffer::triggerAutocompPopupOrSelectPrevItem()
+{
+    if (m_autocompPopup->isVisible())
+    {
+        m_autocompPopup->selectPrevItem();
+    }
+    else
+    {
+        m_autocompPopup->setVisibility(true);
+    }
+}
+
+void Buffer::hideAutocompPopup()
+{
+    m_autocompPopup->setVisibility(false);
 }
 
 Buffer::~Buffer()
