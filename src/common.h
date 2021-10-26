@@ -19,3 +19,11 @@ public:
  * Throws `InvalidUnicodeError` when the file contains invalid Unicode values.
  */
 String loadUnicodeFile(const std::string& filePath);
+
+
+/*
+ * Loads an ASCII encoded text file and returns the content as `std::string`.
+ *
+ * Throws `std::runtime_error` when `std::fstream.open()` fails.
+ */
+std::string loadAsciiFile(const std::string& filePath);

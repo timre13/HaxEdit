@@ -2,36 +2,27 @@
 #include "Logger.h"
 #include "config.h"
 #include "paths.h"
+#include "common.h"
 #include <fstream>
 #include <sstream>
 #include <algorithm>
 #include <filesystem>
 
-static std::string loadFile(const std::string& filePath)
-{
-    try
-    {
-        std::fstream file;
-        file.open(filePath, std::ios::in);
-        if (file.fail())
-        {
-            throw std::runtime_error{"Open failed"};
-        }
-        std::stringstream ss;
-        ss << file.rdbuf();
-        return ss.str();
-    }
-    catch (std::exception& e)
-    {
-        Logger::fatal << "Failed to open file: " << filePath << ": " << e.what() << Logger::End;
-        return "";
-    }
-}
-
 void FileTypeHandler::loadFileTypes(const std::string& databasePath)
 {
     Logger::log << "Loading file icon database: " << databasePath << Logger::End;
-    std::stringstream ss; ss << loadFile(databasePath);
+    std::stringstream ss;
+    try
+    {
+        std::string content = loadAsciiFile(databasePath);
+        ss << content;
+    }
+    catch (std::exception& e)
+    {
+        Logger::fatal << "Failed to open file type database: " << quoteStr(databasePath)
+            << ": " << e.what() << Logger::End;
+    }
+
     std::string line;
     std::getline(ss, line); // Skip header
     while (std::getline(ss, line))
@@ -115,7 +106,17 @@ void FileTypeHandler::loadFileTypes(const std::string& databasePath)
 void FileTypeHandler::loadFolderTypes(const std::string& databasePath)
 {
     Logger::log << "Loading folder icon database: " << databasePath << Logger::End;
-    std::stringstream ss; ss << loadFile(databasePath);
+    std::stringstream ss;
+    try
+    {
+        std::string content = loadAsciiFile(databasePath);
+        ss << content;
+    }
+    catch (std::exception& e)
+    {
+        Logger::fatal << "Failed to open folder icon database: " << quoteStr(databasePath)
+            << ": " << e.what() << Logger::End;
+    }
     std::string line;
     std::getline(ss, line); // Skip header
     while (std::getline(ss, line))

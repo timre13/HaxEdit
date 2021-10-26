@@ -5,6 +5,7 @@
 #include "Buffer.h"
 #include "ImageBuffer.h"
 #include "MessageDialog.h"
+#include "common.h"
 #include <sstream>
 #include <fstream>
 #include <string.h>
@@ -119,22 +120,28 @@ void SessionHandler::loadFromFile()
     g_activeBuff = nullptr;
 
     Logger::log("SessionHandler");
-    std::fstream file;
-    file.open(m_sessionFilePath, std::ios::in);
-    if (file.fail())
+    std::stringstream ss0;
+    try
     {
-        Logger::err << "Failed to load session file: " << m_sessionFilePath << Logger::End;
+        std::string content = loadAsciiFile(m_sessionFilePath);
+        ss0 << content;
+    }
+    catch (std::exception& e)
+    {
+        Logger::err << "Failed to open session file: " << quoteStr(m_sessionFilePath)
+            << ": " << e.what() << Logger::End;
         Logger::log(Logger::End);
         return;
     }
-    std::stringstream ss;
+
     std::string line;
-    while (std::getline(file, line))
+    std::stringstream ss1;
+    while (std::getline(ss0, line))
     {
         if (!line.empty() && line[0] != '#')
-            ss << line+'\n';
+            ss1 << line+'\n';
     }
-    const std::string str = ss.str();
+    const std::string str = ss1.str();
     const char* cstr = str.c_str();
 
     cJSON* json = cJSON_Parse(cstr);

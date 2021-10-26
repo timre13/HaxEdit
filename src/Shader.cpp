@@ -1,34 +1,22 @@
 #include "Shader.h"
+#include "common.h"
 #include <fstream>
 #include <sstream>
 #include <assert.h>
 #include "Logger.h"
 
-static std::string loadFile(const std::string& filePath)
-{
-    try
-    {
-        std::fstream file;
-        file.open(filePath, std::ios::in);
-        if (file.fail())
-        {
-            throw std::runtime_error{"Open failed"};
-        }
-        std::stringstream ss;
-        ss << file.rdbuf();
-        return ss.str();
-    }
-    catch (std::exception& e)
-    {
-        Logger::fatal << "Failed to open file: " << filePath << ": " << e.what() << Logger::End;
-        return "";
-    }
-}
-
 static uint setUpShader(const std::string& filePath, bool isVert)
 {
     Logger::dbg << "Loading " << (isVert ? "vertex" : "fragment") << " shader: " << filePath << Logger::End;
-    auto shaderCode = loadFile(filePath);
+    std::string shaderCode;
+    try
+    {
+        shaderCode = loadAsciiFile(filePath);
+    }
+    catch (std::exception& e)
+    {
+        Logger::fatal << "Failed to load shader: " << quoteStr(filePath) << ": " << e.what() << Logger::End;
+    }
     //Logger::dbg << "Shader code:\n" << shaderCode << Logger::End;
     const char* shaderCodeCS = shaderCode.c_str();
 
