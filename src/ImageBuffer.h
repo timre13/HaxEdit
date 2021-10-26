@@ -47,7 +47,7 @@ public:
     ImageBuffer(ImageBuffer&& other) = default;
     ImageBuffer& operator=(ImageBuffer&& other) = default;
 
-    virtual int open(const std::string& filePath) override;
+    virtual void open(const std::string& filePath) override;
     virtual int saveToFile() override { return 1; }
     virtual int saveAsToFile(const std::string&) override { return 1; }
 

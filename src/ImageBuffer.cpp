@@ -1,4 +1,5 @@
 #include "ImageBuffer.h"
+#include "MessageDialog.h"
 #include <cassert>
 #include "config.h"
 #include "Timer.h"
@@ -6,7 +7,7 @@
 #include <fstream>
 #include <sstream>
 
-int ImageBuffer::open(const std::string& filePath)
+void ImageBuffer::open(const std::string& filePath)
 {
     TIMER_BEGIN_FUNC();
     glfwSetCursor(g_window, Cursors::busy);
@@ -18,9 +19,17 @@ int ImageBuffer::open(const std::string& filePath)
     Logger::dbg << "Opening image file: " << filePath << Logger::End;
     m_image = std::make_unique<Image>(filePath, GL_NEAREST, GL_NEAREST);
 
+    if (m_image->isOpenFailed())
+    {
+        // TODO: Show reason
+        Logger::err << "Failed to open image file: " << quoteStr(filePath) << Logger::End;
+        MessageDialog::create(Dialog::EMPTY_CB, nullptr,
+                "Failed to open image file: "+quoteStr(filePath),
+                MessageDialog::Type::Error);
+    }
+
     glfwSetCursor(g_window, nullptr);
     TIMER_END_FUNC();
-    return 0;
 }
 
 void ImageBuffer::updateRStatusLineStr()

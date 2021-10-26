@@ -299,12 +299,7 @@ Buffer* App::openFileInNewBuffer(const std::string& path)
     {
         buffer = new Buffer;
     }
-    if (buffer->open(path))
-    {
-        MessageDialog::create(MessageDialog::EMPTY_CB, nullptr,
-                "Failed to open file: \""+path+'"',
-                MessageDialog::Type::Error);
-    }
+    buffer->open(path);
     return buffer;
 }
 

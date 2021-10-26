@@ -5,6 +5,7 @@
 #include "Syntax.h"
 #include "MessageDialog.h"
 #include "unicode/ustdio.h"
+#include "common.h"
 #include <fstream>
 #include <sstream>
 #include <chrono>
@@ -49,7 +50,7 @@ Buffer::Buffer()
     Logger::log << "Created a buffer: " << this << Logger::End;
 }
 
-int Buffer::open(const std::string& filePath)
+void Buffer::open(const std::string& filePath)
 {
     TIMER_BEGIN_FUNC();
 
@@ -62,30 +63,7 @@ int Buffer::open(const std::string& filePath)
 
     try
     {
-        std::ifstream file;
-        file.open(filePath, std::ios::in | std::ios::binary);
-        if (file.fail())
-        {
-            throw std::runtime_error{"Open failed"};
-        }
-        std::vector<uint8_t> input;
-        file.seekg(0, std::ios::end);
-        input.reserve(file.tellg());
-        file.seekg(0, std::ios::beg);
-        input.assign(std::istreambuf_iterator<char>(file),
-                     std::istreambuf_iterator<char>());
-
-        const auto icuString = icu::UnicodeString{(const char*)input.data(), (int32_t)input.size()};
-        if (icuString.isBogus())
-        {
-            MessageDialog::create(Dialog::EMPTY_CB, nullptr,
-                    "Invalid Unicode content in file",
-                    MessageDialog::Type::Error
-                    );
-            m_isReadOnly = true;
-        }
-        m_content = strToUtf32(icuString);
-        //Logger::dbg << "Loaded:\n" << strToAscii(m_content) << Logger::End;
+        m_content = loadUnicodeFile(filePath);
         m_highlightBuffer = std::u8string(m_content.length(), Syntax::MARK_NONE);
         m_isHighlightUpdateNeeded = true;
         m_numOfLines = strCountLines(m_content);
@@ -93,7 +71,17 @@ int Buffer::open(const std::string& filePath)
         Logger::dbg << "Read "
             << m_content.length() << " characters ("
             << m_numOfLines << " lines) from file" << Logger::End;
-        file.close();
+    }
+    catch (InvalidUnicodeError& e)
+    {
+        Logger::err << "Error while opening file: " << quoteStr(filePath)
+            << ": " << e.what() << Logger::End;
+        MessageDialog::create(Dialog::EMPTY_CB, nullptr,
+                "Error while opening file: "+quoteStr(filePath)+": "+e.what(),
+                MessageDialog::Type::Error);
+
+        // Not a fatal error, so just set the buffer to read-only and continue
+        m_isReadOnly = true;
     }
     catch (std::exception& e)
     {
@@ -102,10 +90,14 @@ int Buffer::open(const std::string& filePath)
         m_isHighlightUpdateNeeded = true;
         m_numOfLines = 0;
 
-        Logger::err << "Failed to open file: \"" << filePath << "\": " << e.what() << Logger::End;
+        Logger::err << "Failed to open file: " << quoteStr(filePath) << ": " << e.what() << Logger::End;
+        MessageDialog::create(Dialog::EMPTY_CB, nullptr,
+                "Failed to open file: "+quoteStr(filePath)+": "+e.what(),
+                MessageDialog::Type::Error);
+
         glfwSetCursor(g_window, nullptr);
         TIMER_END_FUNC();
-        return 1;
+        return;
     }
 
     // Try to open the file as writable. If fails, read-only file.
@@ -122,7 +114,6 @@ int Buffer::open(const std::string& filePath)
 
     glfwSetCursor(g_window, nullptr);
     TIMER_END_FUNC();
-    return 0;
 }
 
 int Buffer::saveToFile()
