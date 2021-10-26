@@ -33,8 +33,6 @@ private:
     glm::ivec2 m_position{};
 
 public:
-    //Popup();
-
     void render();
 
     inline void setVisibility(bool val) { m_isVisible = val; }

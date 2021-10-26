@@ -57,3 +57,6 @@
                               "OpenGL Vendor: %GL_VENDOR% | Renderer: %GL_RENDERER%"
 
 #define IMG_BUF_ZOOM_STEP 0.05f
+
+//#define DICTIONARY_FILE_PATH "/usr/share/dict/words"
+#define DICTIONARY_FILE_PATH "../dictionary.txt"

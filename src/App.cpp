@@ -92,6 +92,11 @@ FileTypeHandler* App::createFileTypeHandler()
     return new FileTypeHandler{"../icons/file_icon_index.txt", "../icons/folder_icon_index.txt"};
 }
 
+void App::createAutocompleteProviders()
+{
+    Autocomp::dictProvider.reset(new Autocomp::DictionaryProvider{});
+}
+
 void App::setupKeyBindings()
 {
     Bindings::noModMap[GLFW_KEY_RIGHT]      = Bindings::Callbacks::moveCursorRight;

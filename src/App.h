@@ -21,6 +21,7 @@
 #include "ImageBuffer.h"
 #include "Split.h"
 #include "globals.h"
+#include "autocomp/DictionaryProvider.h"
 
 class App final
 {
@@ -36,6 +37,7 @@ public:
     static std::unique_ptr<Image> loadProgramIcon();
     static void loadCursors();
     static FileTypeHandler* createFileTypeHandler();
+    static void createAutocompleteProviders();
     static void setupKeyBindings();
 
     // ----- Renderer functions -----

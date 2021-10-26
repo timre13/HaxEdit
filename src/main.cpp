@@ -33,6 +33,7 @@ int main(int argc, char** argv)
     g_textRenderer.reset(App::createTextRenderer());
     g_uiRenderer.reset(App::createUiRenderer());
     g_fileTypeHandler.reset(App::createFileTypeHandler());
+    App::createAutocompleteProviders();
     glfwPollEvents();
 
     for (int i{1}; i < argc; ++i)

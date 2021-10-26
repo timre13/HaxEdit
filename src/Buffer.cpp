@@ -38,14 +38,7 @@ Buffer::Buffer()
     });
 
     m_autocompPopup = std::make_unique<Autocomp::Popup>();
-    // FIXME: ONLY FOR TESTING
-    m_autocompPopup->addItem(new Autocomp::Popup::Item{Autocomp::Popup::Item::Type::Word, U"foo"});
-    m_autocompPopup->addItem(new Autocomp::Popup::Item{Autocomp::Popup::Item::Type::Word, U"bar"});
-    m_autocompPopup->addItem(new Autocomp::Popup::Item{Autocomp::Popup::Item::Type::Word, U"baz"});
-    m_autocompPopup->addItem(new Autocomp::Popup::Item{Autocomp::Popup::Item::Type::Word, U"foobar"});
-    m_autocompPopup->addItem(new Autocomp::Popup::Item{Autocomp::Popup::Item::Type::Word, U"void"});
-    m_autocompPopup->addItem(new Autocomp::Popup::Item{Autocomp::Popup::Item::Type::Word, U"while"});
-    m_autocompPopup->addItem(new Autocomp::Popup::Item{Autocomp::Popup::Item::Type::Word, U"true"});
+    Autocomp::dictProvider->get(m_autocompPopup.get());
 
     Logger::log << "Created a buffer: " << this << Logger::End;
 }

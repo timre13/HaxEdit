@@ -2,6 +2,7 @@
 #include <memory>
 #include "glstuff.h"
 #include "config.h"
+#include "autocomp/DictionaryProvider.h"
 
 class Dialog;
 class Split;
@@ -46,6 +47,11 @@ namespace Cursors
 GLFWcursor* busy{};
 }
 
+namespace Autocomp
+{
+std::unique_ptr<Autocomp::DictionaryProvider> dictProvider;
+}
+
 #else // ----------------------------------------------------------------------
 
 extern GLFWwindow* g_window;
@@ -75,6 +81,11 @@ extern int g_fontSizePx;
 namespace Cursors
 {
 extern GLFWcursor* busy;
+}
+
+namespace Autocomp
+{
+extern std::unique_ptr<Autocomp::DictionaryProvider> dictProvider;
 }
 
 #endif

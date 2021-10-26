@@ -2,6 +2,8 @@
 #include "../globals.h"
 #include "../UiRenderer.h"
 #include "../TextRenderer.h"
+#include "../Timer.h"
+#include "../Logger.h"
 #include <algorithm>
 
 namespace Autocomp
@@ -12,6 +14,8 @@ void Popup::render()
     if (!isRendered())
         return;
 
+    TIMER_BEGIN_FUNC();
+
     if (m_isItemSortingNeeded)
     {
         std::sort(m_items.begin(), m_items.end(),
@@ -19,6 +23,7 @@ void Popup::render()
                     return a->value < b->value;
                 }
         );
+        m_isItemSortingNeeded = false;
     }
 
     const int popupW = [&](){ // Note: Nasty lambda trick
@@ -30,7 +35,7 @@ void Popup::render()
         }
         return maxItemValLen;
     }()*g_fontSizePx*0.75f;
-    const int popupH = std::min(m_items.size()*g_fontSizePx, 400_st);
+    const int popupH = std::min(m_items.size()*g_fontSizePx, 800_st);
 
     g_uiRenderer->renderRectangleOutline(
             {m_position.x-1, m_position.y-1},
@@ -43,6 +48,10 @@ void Popup::render()
 
     for (int i{}; i < (int)m_items.size(); ++i)
     {
+        // Stop if out of screen or popup
+        if (m_position.y+(i+1)*g_fontSizePx > g_windowHeight || (i+1)*g_fontSizePx > popupH)
+            break;
+
         if (i == m_selectedItemI)
         {
             g_uiRenderer->renderFilledRectangle(
@@ -60,6 +69,8 @@ void Popup::render()
                 // (https://github.com/tomasr/molokai/blob/master/colors/molokai.vim#L69)
                 {0.4f, 0.851f, 0.937f});
     }
+
+    TIMER_END_FUNC();
 }
 
 }

@@ -62,5 +62,6 @@ add_executable(haxed
     src/AskerDialog.cpp
     src/SessionHandler.cpp
     src/autocomp/Popup.cpp
+    src/autocomp/DictionaryProvider.cpp
     external/cJSON/cJSON.c
 )

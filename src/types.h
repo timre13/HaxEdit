@@ -119,6 +119,10 @@ inline size_t operator "" _st(unsigned long long val) { return val; }
 
 class LineIterator
 {
+private:
+    const String& m_strR;
+    size_t m_charI{};
+
 public:
     LineIterator(const String& str)
         : m_strR{str}
@@ -136,8 +140,4 @@ public:
         ++m_charI;
         return true;
     }
-
-private:
-    const String& m_strR;
-    size_t m_charI{};
 };
