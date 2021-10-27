@@ -6,9 +6,17 @@
 namespace Bindings
 {
 
-using bindingMap_t = std::function<void()>[GLFW_KEY_LAST];
+struct BindingMapSet
+{
+    using bindingFunc_t = std::function<void()>;
+    using bindingMap_t = bindingFunc_t[GLFW_KEY_LAST];
 
-void runBinding(bindingMap_t& map, int binding);
+    bindingMap_t noMod;
+    bindingMap_t ctrl;
+    bindingMap_t ctrlShift;
+};
+
+void runBinding(BindingMapSet& map, int mods, int key);
 
 namespace Callbacks
 {
@@ -58,8 +66,6 @@ void hideAutocompPopup();
 
 }
 
-extern bindingMap_t noModMap;
-extern bindingMap_t ctrlMap;
-extern bindingMap_t ctrlShiftMap;
+extern BindingMapSet mappings;
 
 }

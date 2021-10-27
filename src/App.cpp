@@ -99,47 +99,50 @@ void App::createAutocompleteProviders()
 
 void App::setupKeyBindings()
 {
-    Bindings::noModMap[GLFW_KEY_RIGHT]      = Bindings::Callbacks::moveCursorRight;
-    Bindings::noModMap[GLFW_KEY_LEFT]       = Bindings::Callbacks::moveCursorLeft;
-    Bindings::noModMap[GLFW_KEY_DOWN]       = Bindings::Callbacks::moveCursorDown;
-    Bindings::noModMap[GLFW_KEY_UP]         = Bindings::Callbacks::moveCursorUp;
-    Bindings::noModMap[GLFW_KEY_HOME]       = Bindings::Callbacks::moveCursorToLineBeginning;
-    Bindings::noModMap[GLFW_KEY_END]        = Bindings::Callbacks::moveCursorToLineEnd;
-    Bindings::noModMap[GLFW_KEY_ENTER]      = Bindings::Callbacks::putEnter;
-    Bindings::noModMap[GLFW_KEY_KP_ENTER]   = Bindings::Callbacks::putEnter;
-    Bindings::noModMap[GLFW_KEY_BACKSPACE]  = Bindings::Callbacks::deleteCharBackwards;
-    Bindings::noModMap[GLFW_KEY_DELETE]     = Bindings::Callbacks::deleteCharForward;
-    Bindings::noModMap[GLFW_KEY_KP_DECIMAL] = Bindings::Callbacks::deleteCharForward;
-    Bindings::noModMap[GLFW_KEY_TAB]        = Bindings::Callbacks::insertTabOrSpaces;
-    Bindings::noModMap[GLFW_KEY_MINUS]      = Bindings::Callbacks::zoomOutBufferIfImage;
-    Bindings::noModMap[GLFW_KEY_KP_SUBTRACT]= Bindings::Callbacks::zoomOutBufferIfImage;
-    Bindings::noModMap[GLFW_KEY_EQUAL]      = Bindings::Callbacks::zoomInBufferIfImage;
-    Bindings::noModMap[GLFW_KEY_KP_ADD]     = Bindings::Callbacks::zoomInBufferIfImage;
-    Bindings::noModMap[GLFW_KEY_ESCAPE]     = Bindings::Callbacks::hideAutocompPopup;
+    // `mappings` and `Callbacks` are from the `Bindings` namespace
+    using namespace Bindings;
 
-    Bindings::ctrlMap[GLFW_KEY_N]           = Bindings::Callbacks::createBufferInNewTab;
-    Bindings::ctrlMap[GLFW_KEY_S]           = Bindings::Callbacks::saveCurrentBuffer;
-    Bindings::ctrlMap[GLFW_KEY_O]           = Bindings::Callbacks::openFile;
-    Bindings::ctrlMap[GLFW_KEY_Q]           = Bindings::Callbacks::closeActiveBuffer;
-    Bindings::ctrlMap[GLFW_KEY_PAGE_UP]     = Bindings::Callbacks::goToPrevTab;
-    Bindings::ctrlMap[GLFW_KEY_PAGE_DOWN]   = Bindings::Callbacks::goToNextTab;
-    Bindings::ctrlMap[GLFW_KEY_TAB]         = Bindings::Callbacks::goToNextSplit;
-    Bindings::ctrlMap[GLFW_KEY_HOME]        = Bindings::Callbacks::goToFirstChar;
-    Bindings::ctrlMap[GLFW_KEY_END]         = Bindings::Callbacks::goToLastChar;
-    Bindings::ctrlMap[GLFW_KEY_MINUS]       = Bindings::Callbacks::decreaseFontSize;
-    Bindings::ctrlMap[GLFW_KEY_KP_SUBTRACT] = Bindings::Callbacks::decreaseFontSize;
-    Bindings::ctrlMap[GLFW_KEY_EQUAL]       = Bindings::Callbacks::increaseFontSize;
-    Bindings::ctrlMap[GLFW_KEY_KP_ADD]      = Bindings::Callbacks::increaseFontSize;
-    Bindings::ctrlMap[GLFW_KEY_Z]           = Bindings::Callbacks::undoActiveBufferChange;
-    Bindings::ctrlMap[GLFW_KEY_ENTER]       = Bindings::Callbacks::openPathAtCursor;
-    Bindings::ctrlMap[GLFW_KEY_SPACE]       = Bindings::Callbacks::triggerAutocompPopupOrSelectNextItem;
+    mappings.noMod[GLFW_KEY_RIGHT]      = Callbacks::moveCursorRight;
+    mappings.noMod[GLFW_KEY_LEFT]       = Callbacks::moveCursorLeft;
+    mappings.noMod[GLFW_KEY_DOWN]       = Callbacks::moveCursorDown;
+    mappings.noMod[GLFW_KEY_UP]         = Callbacks::moveCursorUp;
+    mappings.noMod[GLFW_KEY_HOME]       = Callbacks::moveCursorToLineBeginning;
+    mappings.noMod[GLFW_KEY_END]        = Callbacks::moveCursorToLineEnd;
+    mappings.noMod[GLFW_KEY_ENTER]      = Callbacks::putEnter;
+    mappings.noMod[GLFW_KEY_KP_ENTER]   = Callbacks::putEnter;
+    mappings.noMod[GLFW_KEY_BACKSPACE]  = Callbacks::deleteCharBackwards;
+    mappings.noMod[GLFW_KEY_DELETE]     = Callbacks::deleteCharForward;
+    mappings.noMod[GLFW_KEY_KP_DECIMAL] = Callbacks::deleteCharForward;
+    mappings.noMod[GLFW_KEY_TAB]        = Callbacks::insertTabOrSpaces;
+    mappings.noMod[GLFW_KEY_MINUS]      = Callbacks::zoomOutBufferIfImage;
+    mappings.noMod[GLFW_KEY_KP_SUBTRACT]= Callbacks::zoomOutBufferIfImage;
+    mappings.noMod[GLFW_KEY_EQUAL]      = Callbacks::zoomInBufferIfImage;
+    mappings.noMod[GLFW_KEY_KP_ADD]     = Callbacks::zoomInBufferIfImage;
+    mappings.noMod[GLFW_KEY_ESCAPE]     = Callbacks::hideAutocompPopup;
 
-    Bindings::ctrlShiftMap[GLFW_KEY_S]      = Bindings::Callbacks::saveCurrentBufferAs;
-    Bindings::ctrlShiftMap[GLFW_KEY_TAB]    = Bindings::Callbacks::goToPrevSplit;
-    Bindings::ctrlShiftMap[GLFW_KEY_RIGHT]  = Bindings::Callbacks::increaseActiveBufferWidth;
-    Bindings::ctrlShiftMap[GLFW_KEY_LEFT]   = Bindings::Callbacks::decreaseActiveBufferWidth;
-    Bindings::ctrlShiftMap[GLFW_KEY_Z]      = Bindings::Callbacks::redoActiveBufferChange;
-    Bindings::ctrlShiftMap[GLFW_KEY_SPACE]  = Bindings::Callbacks::triggerAutocompPopupOrSelectPrevItem;
+    mappings.ctrl[GLFW_KEY_N]           = Callbacks::createBufferInNewTab;
+    mappings.ctrl[GLFW_KEY_S]           = Callbacks::saveCurrentBuffer;
+    mappings.ctrl[GLFW_KEY_O]           = Callbacks::openFile;
+    mappings.ctrl[GLFW_KEY_Q]           = Callbacks::closeActiveBuffer;
+    mappings.ctrl[GLFW_KEY_PAGE_UP]     = Callbacks::goToPrevTab;
+    mappings.ctrl[GLFW_KEY_PAGE_DOWN]   = Callbacks::goToNextTab;
+    mappings.ctrl[GLFW_KEY_TAB]         = Callbacks::goToNextSplit;
+    mappings.ctrl[GLFW_KEY_HOME]        = Callbacks::goToFirstChar;
+    mappings.ctrl[GLFW_KEY_END]         = Callbacks::goToLastChar;
+    mappings.ctrl[GLFW_KEY_MINUS]       = Callbacks::decreaseFontSize;
+    mappings.ctrl[GLFW_KEY_KP_SUBTRACT] = Callbacks::decreaseFontSize;
+    mappings.ctrl[GLFW_KEY_EQUAL]       = Callbacks::increaseFontSize;
+    mappings.ctrl[GLFW_KEY_KP_ADD]      = Callbacks::increaseFontSize;
+    mappings.ctrl[GLFW_KEY_Z]           = Callbacks::undoActiveBufferChange;
+    mappings.ctrl[GLFW_KEY_ENTER]       = Callbacks::openPathAtCursor;
+    mappings.ctrl[GLFW_KEY_SPACE]       = Callbacks::triggerAutocompPopupOrSelectNextItem;
+
+    mappings.ctrlShift[GLFW_KEY_S]      = Callbacks::saveCurrentBufferAs;
+    mappings.ctrlShift[GLFW_KEY_TAB]    = Callbacks::goToPrevSplit;
+    mappings.ctrlShift[GLFW_KEY_RIGHT]  = Callbacks::increaseActiveBufferWidth;
+    mappings.ctrlShift[GLFW_KEY_LEFT]   = Callbacks::decreaseActiveBufferWidth;
+    mappings.ctrlShift[GLFW_KEY_Z]      = Callbacks::redoActiveBufferChange;
+    mappings.ctrlShift[GLFW_KEY_SPACE]  = Callbacks::triggerAutocompPopupOrSelectPrevItem;
 }
 
 void App::renderBuffers()
@@ -412,18 +415,7 @@ void App::windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods)
         return;
     }
 
-    if (mods == GLFW_MOD_CONTROL)
-    {
-        Bindings::runBinding(Bindings::ctrlMap, key);
-    }
-    else if (mods == 0)
-    {
-        Bindings::runBinding(Bindings::noModMap, key);
-    }
-    else if (mods == (GLFW_MOD_CONTROL | GLFW_MOD_SHIFT))
-    {
-        Bindings::runBinding(Bindings::ctrlShiftMap, key);
-    }
+    Bindings::runBinding(Bindings::mappings, mods, key);
 
     TIMER_END_FUNC();
 }

@@ -15,12 +15,19 @@
 namespace Bindings
 {
 
-void runBinding(bindingMap_t& map, int binding)
+void runBinding(BindingMapSet& map, int mods, int key)
 {
-    auto found = map[binding];
-    if (found)
+    BindingMapSet::bindingFunc_t func;
+    switch (mods)
     {
-        found();
+    case 0: /* No mod */                    func = map.noMod[key]; break;
+    case GLFW_MOD_CONTROL:                  func = map.ctrl[key]; break;
+    case GLFW_MOD_CONTROL | GLFW_MOD_SHIFT: func = map.ctrlShift[key]; break;
+    default: break;
+    }
+    if (func)
+    {
+        func();
     }
 }
 
@@ -536,8 +543,6 @@ void hideAutocompPopup()
 
 } // Namespace Callbacks
 
-bindingMap_t noModMap = {};
-bindingMap_t ctrlMap = {};
-bindingMap_t ctrlShiftMap = {};
+BindingMapSet mappings = {};
 
 } // Namespace Bindings
