@@ -59,10 +59,15 @@ void ImageBuffer::render()
     const float zoomedW = m_image->getPhysicalSize().x*m_zoom;
     const float zoomedH = m_image->getPhysicalSize().y*m_zoom;
 
+    glEnable(GL_SCISSOR_TEST);
+    // Only draw inside the bounding box,
+    // don't draw over the neighbouring buffer (when there are multiple splits)
+    glScissor(m_position.x, m_position.y, m_size.x, m_size.y);
     m_image->render(
             {m_position.x+m_size.x/2-zoomedW/2,
              m_position.y+m_size.y/2-zoomedH/2},
             {zoomedW, zoomedH});
+    glDisable(GL_SCISSOR_TEST);
 
     TIMER_END_FUNC();
 }
