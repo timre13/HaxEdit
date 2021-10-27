@@ -105,6 +105,8 @@ TextRenderer::TextRenderer(
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
+    setDrawingColor({0.0f, 0.0f, 0.0f});
+
     Logger::dbg << "Text renderer setup done" << Logger::End;
 }
 
@@ -156,6 +158,7 @@ void TextRenderer::setDrawingColor(const RGBColor& color)
     {
         return;
     }
+    m_currentTextColor = color;
 
     glUniform3f(glGetUniformLocation(m_glyphShader.getId(), "textColor"), UNPACK_RGB_COLOR(color));
 }
