@@ -297,6 +297,7 @@ public:
     virtual void triggerAutocompPopupOrSelectNextItem();
     virtual void triggerAutocompPopupOrSelectPrevItem();
     virtual void hideAutocompPopup();
+    virtual bool isAutocompPopupShown() { return m_autocompPopup->isVisible(); }
 
     virtual void startSelection(Selection::Mode mode);
     virtual void closeSelection();

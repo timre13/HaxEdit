@@ -118,7 +118,7 @@ void App::setupKeyBindings()
     mappings.noMod[GLFW_KEY_KP_SUBTRACT]= Callbacks::zoomOutBufferIfImage;
     mappings.noMod[GLFW_KEY_EQUAL]      = Callbacks::zoomInBufferIfImage;
     mappings.noMod[GLFW_KEY_KP_ADD]     = Callbacks::zoomInBufferIfImage;
-    mappings.noMod[GLFW_KEY_ESCAPE]     = Callbacks::hideAutocompPopup;
+    mappings.noMod[GLFW_KEY_ESCAPE]     = Callbacks::hideAutocompPopupOrEndSelection;
 
     mappings.ctrl[GLFW_KEY_N]           = Callbacks::createBufferInNewTab;
     mappings.ctrl[GLFW_KEY_S]           = Callbacks::saveCurrentBuffer;

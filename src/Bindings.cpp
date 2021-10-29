@@ -532,12 +532,27 @@ void triggerAutocompPopupOrSelectPrevItem()
     g_isRedrawNeeded = true;
 }
 
-void hideAutocompPopup()
+void hideAutocompPopupOrEndSelection()
 {
     if (!g_activeBuff)
         return;
 
-    g_activeBuff->hideAutocompPopup();
+    /*
+     * This function is bound to <Escape>, which is used to cancel
+     * different things based on the editor state.
+     * If the autocomplete popup is shown, close it. Else, end selection.
+     *
+     * Maybe more things will be added in this function in the future.
+     */
+
+    if (g_activeBuff->isAutocompPopupShown())
+    {
+        g_activeBuff->hideAutocompPopup();
+    }
+    else
+    {
+        g_activeBuff->closeSelection();
+    }
     g_isRedrawNeeded = true;
 }
 
