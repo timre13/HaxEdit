@@ -722,6 +722,7 @@ void Buffer::render()
         switch (c)
         {
         case '\n': // New line
+        case '\v': // Vertical tab
             drawCursorIfNeeded(g_fontSizePx*0.7f);
             textX = initTextX;
             textY += g_fontSizePx;
@@ -739,14 +740,6 @@ void Buffer::render()
             drawCursorIfNeeded(g_fontSizePx*0.7f);
             textX += g_fontSizePx*4;
             ++colI;
-            continue;
-
-        case '\v': // Vertical tab
-            drawCursorIfNeeded(g_fontSizePx*0.7f);
-            textX = initTextX;
-            textY += g_fontSizePx * 4;
-            colI = 0;
-            ++lineI;
             continue;
         }
 
