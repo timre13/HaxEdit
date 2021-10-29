@@ -615,7 +615,16 @@ void Buffer::render()
             }
             break;
 
-            // TODO: Line selection
+        case Selection::Mode::Line:
+            if (m_selection.fromLine < m_cursorLine)
+            {
+                isSelectedChar = lineI >= m_selection.fromLine && lineI <= m_cursorLine;
+            }
+            else
+            {
+                isSelectedChar = lineI <= m_selection.fromLine && lineI >= m_cursorLine;
+            }
+            break;
 
             // TODO: Block selection
         }
@@ -1073,6 +1082,8 @@ void Buffer::hideAutocompPopup()
 
 void Buffer::startSelection(Selection::Mode mode)
 {
+    assert(mode != Selection::Mode::Block); // Unimplemented
+
     m_selection.mode = mode;
     m_selection.fromCol = m_cursorCol;
     m_selection.fromLine = m_cursorLine;

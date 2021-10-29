@@ -65,6 +65,7 @@ void triggerAutocompPopupOrSelectPrevItem();
 void hideAutocompPopupOrEndSelection();
 
 void bufferStartNormalSelection();
+void bufferStartLineSelection();
 
 }
 

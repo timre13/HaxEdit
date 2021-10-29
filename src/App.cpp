@@ -144,6 +144,7 @@ void App::setupKeyBindings()
     mappings.ctrlShift[GLFW_KEY_LEFT]   = Callbacks::decreaseActiveBufferWidth;
     mappings.ctrlShift[GLFW_KEY_Z]      = Callbacks::redoActiveBufferChange;
     mappings.ctrlShift[GLFW_KEY_SPACE]  = Callbacks::triggerAutocompPopupOrSelectPrevItem;
+    mappings.ctrlShift[GLFW_KEY_V]      = Callbacks::bufferStartLineSelection;
 }
 
 void App::renderBuffers()
