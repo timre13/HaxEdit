@@ -64,6 +64,8 @@ void triggerAutocompPopupOrSelectNextItem();
 void triggerAutocompPopupOrSelectPrevItem();
 void hideAutocompPopup();
 
+void bufferStartNormalSelection();
+
 }
 
 extern BindingMapSet mappings;

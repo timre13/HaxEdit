@@ -136,6 +136,7 @@ void App::setupKeyBindings()
     mappings.ctrl[GLFW_KEY_Z]           = Callbacks::undoActiveBufferChange;
     mappings.ctrl[GLFW_KEY_ENTER]       = Callbacks::openPathAtCursor;
     mappings.ctrl[GLFW_KEY_SPACE]       = Callbacks::triggerAutocompPopupOrSelectNextItem;
+    mappings.ctrl[GLFW_KEY_V]           = Callbacks::bufferStartNormalSelection;
 
     mappings.ctrlShift[GLFW_KEY_S]      = Callbacks::saveCurrentBufferAs;
     mappings.ctrlShift[GLFW_KEY_TAB]    = Callbacks::goToPrevSplit;

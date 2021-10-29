@@ -96,6 +96,20 @@ public:
         LastChar,
     };
 
+    struct Selection
+    {
+        enum class Mode
+        {
+            None, // No selection is in progress, `fromCol`, `fromLine` and `fromCharI` should be ignored
+            Normal, // The classic selection mode, used by most software
+            Line, // Selection of whole lines
+            Block // Selection of rectangular region of characters
+        } mode;
+        int fromCol{};
+        int fromLine{};
+        size_t fromCharI{};
+    };
+
 protected:
     std::string m_filePath = FILENAME_NEW;
     String m_content;
@@ -135,6 +149,8 @@ protected:
     BufferHistory m_history;
 
     std::unique_ptr<Autocomp::Popup> m_autocompPopup;
+
+    Selection m_selection{};
 
     virtual void renderAutocompPopup();
 
@@ -281,6 +297,9 @@ public:
     virtual void triggerAutocompPopupOrSelectNextItem();
     virtual void triggerAutocompPopupOrSelectPrevItem();
     virtual void hideAutocompPopup();
+
+    virtual void startSelection(Selection::Mode mode);
+    virtual void closeSelection();
 
     virtual ~Buffer();
 };

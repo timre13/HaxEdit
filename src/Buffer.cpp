@@ -597,6 +597,29 @@ void Buffer::render()
         if (!isspace((uchar)c))
             isLeadingSpace = false;
 
+        bool isSelectedChar = false;
+        switch (m_selection.mode)
+        {
+        case Selection::Mode::None:
+            isSelectedChar = false;
+            break;
+
+        case Selection::Mode::Normal:
+            if (m_selection.fromCharI < m_cursorCharPos)
+            {
+                isSelectedChar = charI >= m_selection.fromCharI && charI <= m_cursorCharPos;
+            }
+            else
+            {
+                isSelectedChar = charI <= m_selection.fromCharI && charI >= m_cursorCharPos;
+            }
+            break;
+
+            // TODO: Line selection
+
+            // TODO: Block selection
+        }
+
         if (isCharInsideViewport && BUFFER_DRAW_LINE_NUMS && isLineBeginning)
         {
             g_textRenderer->setDrawingColor(
@@ -706,6 +729,30 @@ void Buffer::render()
             }
         };
 
+        /*
+         * Draws the selection rectangle around the current character if it is selected.
+         */
+        auto drawCharSelectionMarkIfNeeded{[&](int width){
+            if (isSelectedChar)
+            {
+                g_uiRenderer->renderFilledRectangle(
+                        {textX, initTextY+textY-m_scrollY-m_position.y},
+                        {textX+width, initTextY+textY-m_scrollY-m_position.y+g_fontSizePx},
+                        {0.156f, 0.541f, 0.862f, 0.2f}
+                );
+
+                g_uiRenderer->renderRectangleOutline(
+                        {textX, initTextY+textY-m_scrollY-m_position.y},
+                        {textX+width, initTextY+textY-m_scrollY-m_position.y+g_fontSizePx},
+                        {0.156f, 0.541f, 0.862f},
+                        1
+                );
+
+                // Bind the text renderer shader again
+                g_textRenderer->prepareForDrawing();
+            }
+        }};
+
         if (isCharInsideViewport)
         {
             if (charI > wordBeg && charI < wordEnd)
@@ -724,6 +771,7 @@ void Buffer::render()
         case '\n': // New line
         case '\v': // Vertical tab
             drawCursorIfNeeded(g_fontSizePx*0.7f);
+            drawCharSelectionMarkIfNeeded(g_fontSizePx*0.7f);
             textX = initTextX;
             textY += g_fontSizePx;
             isLineBeginning = true;
@@ -733,12 +781,13 @@ void Buffer::render()
             continue;
 
         case '\r': // Carriage return
-            // Don't render them or anything
+            // Don't render them or do anything
             continue;
 
         case '\t': // Tab
-            drawCursorIfNeeded(g_fontSizePx*0.7f);
-            textX += g_fontSizePx*4;
+            drawCursorIfNeeded(g_fontSizePx*4*0.7f);
+            drawCharSelectionMarkIfNeeded(g_fontSizePx*4*0.7f);
+            textX += g_fontSizePx*0.7f*4;
             ++colI;
             continue;
         }
@@ -769,6 +818,7 @@ void Buffer::render()
             advance = g_textRenderer->renderChar(c, {textX, textY}, charStyle).advance;
 
             drawCursorIfNeeded(advance/64.f);
+            drawCharSelectionMarkIfNeeded(advance/64.f);
         }
         else
         {
@@ -1019,6 +1069,19 @@ void Buffer::triggerAutocompPopupOrSelectPrevItem()
 void Buffer::hideAutocompPopup()
 {
     m_autocompPopup->setVisibility(false);
+}
+
+void Buffer::startSelection(Selection::Mode mode)
+{
+    m_selection.mode = mode;
+    m_selection.fromCol = m_cursorCol;
+    m_selection.fromLine = m_cursorLine;
+    m_selection.fromCharI = m_cursorCharPos;
+}
+
+void Buffer::closeSelection()
+{
+    m_selection.mode = Selection::Mode::None;
 }
 
 Buffer::~Buffer()

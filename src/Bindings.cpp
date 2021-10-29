@@ -541,6 +541,15 @@ void hideAutocompPopup()
     g_isRedrawNeeded = true;
 }
 
+void bufferStartNormalSelection()
+{
+    if (!g_activeBuff)
+        return;
+
+    g_activeBuff->startSelection(Buffer::Selection::Mode::Normal);
+    g_isRedrawNeeded = true;
+}
+
 } // Namespace Callbacks
 
 BindingMapSet mappings = {};
