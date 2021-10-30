@@ -1106,10 +1106,15 @@ void Buffer::hideAutocompPopup()
 
 void Buffer::startSelection(Selection::Mode mode)
 {
+    // If there is no selection in progress, start a new selection.
+    // Otherwise, just switch the selection mode
+    if (m_selection.mode == Selection::Mode::None)
+    {
+        m_selection.fromCol = m_cursorCol;
+        m_selection.fromLine = m_cursorLine;
+        m_selection.fromCharI = m_cursorCharPos;
+    }
     m_selection.mode = mode;
-    m_selection.fromCol = m_cursorCol;
-    m_selection.fromLine = m_cursorLine;
-    m_selection.fromCharI = m_cursorCharPos;
 }
 
 void Buffer::closeSelection()
