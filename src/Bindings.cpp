@@ -574,6 +574,15 @@ void bufferStartLineSelection()
     g_isRedrawNeeded = true;
 }
 
+void bufferStartBlockSelection()
+{
+    if (!g_activeBuff)
+        return;
+
+    g_activeBuff->startSelection(Buffer::Selection::Mode::Block);
+    g_isRedrawNeeded = true;
+}
+
 } // Namespace Callbacks
 
 BindingMapSet mappings = {};

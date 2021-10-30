@@ -597,36 +597,60 @@ void Buffer::render()
         if (!isspace((uchar)c))
             isLeadingSpace = false;
 
-        bool isSelectedChar = false;
+        bool isCharSelected = false;
         switch (m_selection.mode)
         {
         case Selection::Mode::None:
-            isSelectedChar = false;
+            isCharSelected = false;
             break;
 
         case Selection::Mode::Normal:
             if (m_selection.fromCharI < m_cursorCharPos)
             {
-                isSelectedChar = charI >= m_selection.fromCharI && charI <= m_cursorCharPos;
+                isCharSelected = charI >= m_selection.fromCharI && charI <= m_cursorCharPos;
             }
             else
             {
-                isSelectedChar = charI <= m_selection.fromCharI && charI >= m_cursorCharPos;
+                isCharSelected = charI <= m_selection.fromCharI && charI >= m_cursorCharPos;
             }
             break;
 
         case Selection::Mode::Line:
             if (m_selection.fromLine < m_cursorLine)
             {
-                isSelectedChar = lineI >= m_selection.fromLine && lineI <= m_cursorLine;
+                isCharSelected = lineI >= m_selection.fromLine && lineI <= m_cursorLine;
             }
             else
             {
-                isSelectedChar = lineI <= m_selection.fromLine && lineI >= m_cursorLine;
+                isCharSelected = lineI <= m_selection.fromLine && lineI >= m_cursorLine;
             }
             break;
 
-            // TODO: Block selection
+        case Selection::Mode::Block:
+        {
+            bool isLineOk = false;
+            if (m_selection.fromLine < m_cursorLine)
+            {
+                isLineOk = lineI >= m_selection.fromLine && lineI <= m_cursorLine;
+            }
+            else
+            {
+                isLineOk = lineI <= m_selection.fromLine && lineI >= m_cursorLine;
+            }
+
+            bool isColOk = false;
+            if (m_selection.fromCol < m_cursorCol)
+            {
+                isColOk = colI >= m_selection.fromCol && colI <= m_cursorCol;
+            }
+            else
+            {
+                isColOk = colI <= m_selection.fromCol && colI >= m_cursorCol;
+            }
+
+            isCharSelected = isLineOk && isColOk;
+            break;
+        }
         }
 
         if (isCharInsideViewport && BUFFER_DRAW_LINE_NUMS && isLineBeginning)
@@ -742,7 +766,7 @@ void Buffer::render()
          * Draws the selection rectangle around the current character if it is selected.
          */
         auto drawCharSelectionMarkIfNeeded{[&](int width){
-            if (isSelectedChar)
+            if (isCharSelected)
             {
                 g_uiRenderer->renderFilledRectangle(
                         {textX, initTextY+textY-m_scrollY-m_position.y},
@@ -1082,8 +1106,6 @@ void Buffer::hideAutocompPopup()
 
 void Buffer::startSelection(Selection::Mode mode)
 {
-    assert(mode != Selection::Mode::Block); // Unimplemented
-
     m_selection.mode = mode;
     m_selection.fromCol = m_cursorCol;
     m_selection.fromLine = m_cursorLine;
