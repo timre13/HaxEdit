@@ -540,12 +540,46 @@ void Buffer::updateCursor()
 
 void Buffer::updateRStatusLineStr()
 {
-    m_statusLineStr.str
-        = std::to_string(m_cursorLine+1)
-        +':'+std::to_string(m_cursorCol+1)
-        +" | "+std::to_string(m_cursorCharPos)
-        + " L"+std::to_string(getLineLenAt(m_content, m_cursorLine));
-    m_statusLineStr.maxLen = std::max(size_t(4+1+3+3+7), m_statusLineStr.str.size());
+    if (m_selection.mode == Selection::Mode::None)
+    {
+        m_statusLineStr.str
+            = std::to_string(m_cursorLine+1)
+            +':'+std::to_string(m_cursorCol+1)
+            +" | "+std::to_string(m_cursorCharPos);
+        m_statusLineStr.maxLen = std::max(size_t(4+1+3+3+7), m_statusLineStr.str.size());
+    }
+    else
+    {
+        bool showSizeInLines = (m_selection.mode == Selection::Mode::Line)
+                            || (m_selection.mode == Selection::Mode::Block);
+        bool showSizeInCols = m_selection.mode == Selection::Mode::Block;
+        bool showSizeInChars = m_selection.mode == Selection::Mode::Normal;
+
+        m_statusLineStr.str.clear();
+
+        if (showSizeInCols)
+            m_statusLineStr.str +=
+                std::to_string(abs(m_cursorCol-m_selection.fromCol)+1); // Size in columns
+
+        if (showSizeInLines && showSizeInCols)
+            m_statusLineStr.str += 'x';
+
+        if (showSizeInLines)
+            m_statusLineStr.str +=
+                std::to_string(abs(m_cursorLine-m_selection.fromLine)+1); // Size in lines
+
+        if (showSizeInChars)
+            m_statusLineStr.str +=
+                std::to_string(abs((int)m_cursorCharPos-(int)m_selection.fromCharI)+1); // Size in chars
+
+        m_statusLineStr.maxLen = std::max(
+                size_t(
+                    (showSizeInCols ? 3 : 0)
+                    + (showSizeInLines && showSizeInCols ? 1 : 0)
+                    + (showSizeInLines ? 4 : 0)
+                    + (showSizeInChars ? 7 : 0)),
+                m_statusLineStr.str.size());
+    }
 }
 
 void Buffer::render()

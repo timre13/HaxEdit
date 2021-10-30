@@ -181,7 +181,9 @@ void App::renderStatusLine()
     g_textRenderer->renderString(
             g_activeBuff->m_statusLineStr.str,
             {winW-g_fontSizePx*g_activeBuff->m_statusLineStr.maxLen*0.7f,
-             winH-g_fontSizePx-4});
+             winH-g_fontSizePx-4},
+             FontStyle::Regular,
+             g_activeBuff->isSelectionInProgress() ? RGBColor{0.3f, 0.9f, 0.6f} : RGBColor{1.f, 1.f, 1.f});
 }
 
 void App::renderTabLine()
