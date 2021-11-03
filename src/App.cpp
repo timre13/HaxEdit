@@ -111,8 +111,8 @@ void App::setupKeyBindings()
     mappings.noMod[GLFW_KEY_ENTER]      = Callbacks::putEnter;
     mappings.noMod[GLFW_KEY_KP_ENTER]   = Callbacks::putEnter;
     mappings.noMod[GLFW_KEY_BACKSPACE]  = Callbacks::deleteCharBackwards;
-    mappings.noMod[GLFW_KEY_DELETE]     = Callbacks::deleteCharForward;
-    mappings.noMod[GLFW_KEY_KP_DECIMAL] = Callbacks::deleteCharForward;
+    mappings.noMod[GLFW_KEY_DELETE]     = Callbacks::deleteCharForwardOrSelection;
+    mappings.noMod[GLFW_KEY_KP_DECIMAL] = Callbacks::deleteCharForwardOrSelection;
     mappings.noMod[GLFW_KEY_TAB]        = Callbacks::insertTabOrSpaces;
     mappings.noMod[GLFW_KEY_MINUS]      = Callbacks::zoomOutBufferIfImage;
     mappings.noMod[GLFW_KEY_KP_SUBTRACT]= Callbacks::zoomOutBufferIfImage;

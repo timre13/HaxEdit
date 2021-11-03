@@ -27,9 +27,10 @@ public:
             None,
             Insert,
             Delete,
+            DeleteNormalSelection,
         } action;
         size_t pos;
-        Char arg;
+        String arg;
     };
 
 private:
@@ -56,7 +57,7 @@ public:
         return !m_undoStack.empty();
     }
 
-    inline Entry goBack()
+    [[nodiscard]] inline Entry goBack()
     {
         assert(canGoBack());
         Entry entry = m_undoStack.top();
@@ -70,7 +71,7 @@ public:
         return !m_redoStack.empty();
     }
 
-    inline Entry goForward()
+    [[nodiscard]] inline Entry goForward()
     {
         assert(canGoForward());
         Entry entry = m_redoStack.top();
@@ -158,6 +159,8 @@ protected:
      * Make the cursor visible by scrolling the viewport.
      */
     virtual void scrollViewportToCursor();
+
+    virtual void deleteSelectedChars();
 
     virtual void _updateHighlighting();
 
@@ -254,7 +257,7 @@ public:
     // Text editing
     virtual void insert(Char character);
     virtual void deleteCharBackwards();
-    virtual void deleteCharForward();
+    virtual void deleteCharForwardOrSelected();
     virtual inline bool isModified() const final { return m_isModified; }
     virtual inline void setModified(bool isModified) final { m_isModified = isModified; }
 
@@ -302,6 +305,7 @@ public:
     virtual void startSelection(Selection::Mode mode);
     virtual void closeSelection();
     virtual bool isSelectionInProgress() const { return m_selection.mode != Selection::Mode::None; }
+    virtual bool isCharSelected(int lineI, int colI, size_t charI) const;
 
     virtual ~Buffer();
 };

@@ -582,6 +582,66 @@ void Buffer::updateRStatusLineStr()
     }
 }
 
+bool Buffer::isCharSelected(int lineI, int colI, size_t charI) const
+{
+    bool isSelected = false;
+    switch (m_selection.mode)
+    {
+    case Selection::Mode::None:
+        isSelected = false;
+        break;
+
+    case Selection::Mode::Normal:
+        if (m_selection.fromCharI < m_cursorCharPos)
+        {
+            isSelected = charI >= m_selection.fromCharI && charI <= m_cursorCharPos;
+        }
+        else
+        {
+            isSelected = charI <= m_selection.fromCharI && charI >= m_cursorCharPos;
+        }
+        break;
+
+    case Selection::Mode::Line:
+        if (m_selection.fromLine < m_cursorLine)
+        {
+            isSelected = lineI >= m_selection.fromLine && lineI <= m_cursorLine;
+        }
+        else
+        {
+            isSelected = lineI <= m_selection.fromLine && lineI >= m_cursorLine;
+        }
+        break;
+
+    case Selection::Mode::Block:
+    {
+        bool isLineOk = false;
+        if (m_selection.fromLine < m_cursorLine)
+        {
+            isLineOk = lineI >= m_selection.fromLine && lineI <= m_cursorLine;
+        }
+        else
+        {
+            isLineOk = lineI <= m_selection.fromLine && lineI >= m_cursorLine;
+        }
+
+        bool isColOk = false;
+        if (m_selection.fromCol < m_cursorCol)
+        {
+            isColOk = colI >= m_selection.fromCol && colI <= m_cursorCol;
+        }
+        else
+        {
+            isColOk = colI <= m_selection.fromCol && colI >= m_cursorCol;
+        }
+
+        isSelected = isLineOk && isColOk;
+        break;
+    }
+    }
+    return isSelected;
+}
+
 void Buffer::render()
 {
     TIMER_BEGIN_FUNC();
@@ -631,62 +691,7 @@ void Buffer::render()
         if (!isspace((uchar)c))
             isLeadingSpace = false;
 
-        bool isCharSelected = false;
-        switch (m_selection.mode)
-        {
-        case Selection::Mode::None:
-            isCharSelected = false;
-            break;
-
-        case Selection::Mode::Normal:
-            if (m_selection.fromCharI < m_cursorCharPos)
-            {
-                isCharSelected = charI >= m_selection.fromCharI && charI <= m_cursorCharPos;
-            }
-            else
-            {
-                isCharSelected = charI <= m_selection.fromCharI && charI >= m_cursorCharPos;
-            }
-            break;
-
-        case Selection::Mode::Line:
-            if (m_selection.fromLine < m_cursorLine)
-            {
-                isCharSelected = lineI >= m_selection.fromLine && lineI <= m_cursorLine;
-            }
-            else
-            {
-                isCharSelected = lineI <= m_selection.fromLine && lineI >= m_cursorLine;
-            }
-            break;
-
-        case Selection::Mode::Block:
-        {
-            bool isLineOk = false;
-            if (m_selection.fromLine < m_cursorLine)
-            {
-                isLineOk = lineI >= m_selection.fromLine && lineI <= m_cursorLine;
-            }
-            else
-            {
-                isLineOk = lineI <= m_selection.fromLine && lineI >= m_cursorLine;
-            }
-
-            bool isColOk = false;
-            if (m_selection.fromCol < m_cursorCol)
-            {
-                isColOk = colI >= m_selection.fromCol && colI <= m_cursorCol;
-            }
-            else
-            {
-                isColOk = colI <= m_selection.fromCol && colI >= m_cursorCol;
-            }
-
-            isCharSelected = isLineOk && isColOk;
-            break;
-        }
-        }
-
+        const bool isCharSel = isCharSelected(lineI, colI, charI);
         if (isCharInsideViewport && BUFFER_DRAW_LINE_NUMS && isLineBeginning)
         {
             g_textRenderer->setDrawingColor(
@@ -800,7 +805,7 @@ void Buffer::render()
          * Draws the selection rectangle around the current character if it is selected.
          */
         auto drawCharSelectionMarkIfNeeded{[&](int width){
-            if (isCharSelected)
+            if (isCharSel)
             {
                 g_uiRenderer->renderFilledRectangle(
                         {textX, initTextY+textY-m_scrollY-m_position.y},
@@ -926,7 +931,7 @@ void Buffer::insert(Char character)
     m_history.add(BufferHistory::Entry{
             .action=BufferHistory::Entry::Action::Insert,
             .pos=m_cursorCharPos,
-            .arg=character});
+            .arg=charToStr(character)});
     m_content.insert(m_cursorCharPos, 1, character);
     m_highlightBuffer.insert(m_cursorCharPos, 1, 0);
 
@@ -967,7 +972,7 @@ void Buffer::deleteCharBackwards()
         m_history.add(BufferHistory::Entry{
                 .action=BufferHistory::Entry::Action::Delete,
                 .pos=m_cursorCharPos-1,
-                .arg=m_content[m_cursorCharPos-1]});
+                .arg=charToStr(m_content[m_cursorCharPos-1])});
         --m_cursorLine;
         m_cursorCol = getLineLenAt(m_content, m_cursorLine);
         m_content.erase(m_cursorCharPos-1, 1);
@@ -981,7 +986,7 @@ void Buffer::deleteCharBackwards()
         m_history.add(BufferHistory::Entry{
                 .action=BufferHistory::Entry::Action::Delete,
                 .pos=m_cursorCharPos-1,
-                .arg=m_content[m_cursorCharPos-1]});
+                .arg=charToStr(m_content[m_cursorCharPos-1])});
         m_content.erase(m_cursorCharPos-1, 1);
         m_highlightBuffer.erase(m_cursorCharPos-1, 1);
         --m_cursorCol;
@@ -999,10 +1004,16 @@ void Buffer::deleteCharBackwards()
     TIMER_END_FUNC();
 }
 
-void Buffer::deleteCharForward()
+void Buffer::deleteCharForwardOrSelected()
 {
     if (m_isReadOnly)
         return;
+
+    if (m_selection.mode != Selection::Mode::None)
+    {
+        deleteSelectedChars();
+        return;
+    }
 
     TIMER_BEGIN_FUNC();
 
@@ -1017,7 +1028,7 @@ void Buffer::deleteCharForward()
         m_history.add(BufferHistory::Entry{
                 .action=BufferHistory::Entry::Action::Delete,
                 .pos=m_cursorCharPos,
-                .arg=m_content[m_cursorCharPos]});
+                .arg=charToStr(m_content[m_cursorCharPos])});
         m_content.erase(m_cursorCharPos, 1);
         m_highlightBuffer.erase(m_cursorCharPos, 1);
         --m_numOfLines;
@@ -1029,7 +1040,7 @@ void Buffer::deleteCharForward()
         m_history.add(BufferHistory::Entry{
                 .action=BufferHistory::Entry::Action::Delete,
                 .pos=m_cursorCharPos,
-                .arg=m_content[m_cursorCharPos]});
+                .arg=charToStr(m_content[m_cursorCharPos])});
         m_content.erase(m_cursorCharPos, 1);
         m_highlightBuffer.erase(m_cursorCharPos, 1);
         m_isModified = true;
@@ -1061,8 +1072,8 @@ void Buffer::undo()
             break;
 
         case BufferHistory::Entry::Action::Delete:
-            m_content.insert(entry.pos, 1, entry.arg);
-            m_highlightBuffer.insert(entry.pos, 1, entry.arg);
+            m_content.insert(entry.pos, 1, entry.arg[0]);
+            m_highlightBuffer.insert(entry.pos, 1, Syntax::MARK_NONE);
             break;
         }
 
@@ -1088,8 +1099,8 @@ void Buffer::redo()
             break;
 
         case BufferHistory::Entry::Action::Insert:
-            m_content.insert(entry.pos, 1, entry.arg);
-            m_highlightBuffer.insert(entry.pos, 1, entry.arg);
+            m_content.insert(entry.pos, 1, entry.arg[0]);
+            m_highlightBuffer.insert(entry.pos, 1, Syntax::MARK_NONE);
             break;
 
         case BufferHistory::Entry::Action::Delete:
@@ -1154,6 +1165,75 @@ void Buffer::startSelection(Selection::Mode mode)
 void Buffer::closeSelection()
 {
     m_selection.mode = Selection::Mode::None;
+}
+
+void Buffer::deleteSelectedChars()
+{
+    if (m_isReadOnly)
+        return;
+
+    if (m_selection.mode == Selection::Mode::None)
+        return;
+
+    assert(m_selection.mode == Selection::Mode::Normal);
+
+    std::vector<size_t> charsToDel;
+    int lineI{};
+    int colI{};
+    for (size_t charI{}; charI < m_content.size(); ++charI)
+    {
+        if (isCharSelected(lineI, colI, charI))
+        {
+            charsToDel.push_back(charI);
+            m_isModified = true;
+        }
+
+        switch (m_content[charI])
+        {
+        case '\n': // New line
+        case '\v': // Vertical tab
+            ++lineI;
+            colI = 0;
+            continue;
+
+        case '\r': // Carriage return
+            continue;
+
+        case '\t': // Tab
+            ++colI;
+            continue;
+        }
+
+        ++colI;
+    }
+
+    assert(!charsToDel.empty());
+    String deletedStr;
+    for (size_t i{charsToDel.size()-1}; i != -1_st; --i)
+    {
+        size_t toDel = charsToDel[i];
+        deletedStr += m_content[toDel];
+        m_content.erase(toDel, 1);
+        m_highlightBuffer.erase(toDel, 1);
+    }
+    m_history.add(BufferHistory::Entry{
+            .action=BufferHistory::Entry::Action::DeleteNormalSelection,
+            .arg=deletedStr
+            });
+
+    // Jump the cursor to the right place
+    if (m_cursorCharPos > m_selection.fromCharI)
+    {
+        m_cursorCol = m_selection.fromCol;
+        m_cursorLine = m_selection.fromLine;
+        m_cursorCharPos = m_selection.fromCharI;
+    }
+
+    m_selection.mode = Selection::Mode::None;
+    m_isCursorShown = true;
+    scrollViewportToCursor();
+    m_isHighlightUpdateNeeded = true;
+    g_isRedrawNeeded = true;
 }
 
 Buffer::~Buffer()

@@ -412,11 +412,11 @@ void deleteCharBackwards()
     }
 }
 
-void deleteCharForward()
+void deleteCharForwardOrSelection()
 {
     if (g_activeBuff)
     {
-        g_activeBuff->deleteCharForward();
+        g_activeBuff->deleteCharForwardOrSelected();
         g_isRedrawNeeded = true;
     }
 }

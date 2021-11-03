@@ -45,7 +45,7 @@ void moveCursorToLineEnd();
 
 void putEnter();
 void deleteCharBackwards();
-void deleteCharForward();
+void deleteCharForwardOrSelection();
 void insertTabOrSpaces();
 
 void goToFirstChar();
