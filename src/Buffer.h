@@ -28,9 +28,15 @@ public:
             Insert,
             Delete,
             DeleteNormalSelection,
-        } action;
-        size_t pos;
-        String arg;
+        } action{};
+        String values;
+        size_t cursorPos{};
+        // Selection-only values
+        int selCursLine{};
+        int selCursCol{};
+        size_t selBeginPos{};
+        int selBeginLine{};
+        int selBeginCol{};
     };
 
 private:
