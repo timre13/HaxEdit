@@ -1082,6 +1082,7 @@ void Buffer::undo()
             break;
 
         case BufferHistory::Entry::Action::DeleteNormalSelection:
+        case BufferHistory::Entry::Action::DeleteLineSelection:
             m_content.insert(std::min(entry.cursorPos, entry.selBeginPos), entry.values);
             m_highlightBuffer.insert(std::min(entry.cursorPos, entry.selBeginPos), entry.values.size(), Syntax::MARK_NONE);
             break;
@@ -1185,7 +1186,8 @@ void Buffer::deleteSelectedChars()
     if (m_selection.mode == Selection::Mode::None)
         return;
 
-    assert(m_selection.mode == Selection::Mode::Normal);
+    assert(m_selection.mode == Selection::Mode::Normal
+        || m_selection.mode == Selection::Mode::Line);
 
     std::vector<size_t> charsToDel;
     int lineI{};
@@ -1229,16 +1231,33 @@ void Buffer::deleteSelectedChars()
         m_content.erase(toDel, 1);
         m_highlightBuffer.erase(toDel, 1);
     }
-    m_history.add(BufferHistory::Entry{
-            .action=BufferHistory::Entry::Action::DeleteNormalSelection,
-            .values=deletedStr,
-            .cursorPos=m_cursorCharPos,
-            .selCursLine=m_cursorLine,
-            .selCursCol=m_cursorCol,
-            .selBeginPos=m_selection.fromCharI,
-            .selBeginLine=m_selection.fromLine,
-            .selBeginCol=m_selection.fromCol,
-            });
+    BufferHistory::Entry::Action action{};
+    switch (m_selection.mode)
+    {
+        case Selection::Mode::Normal:
+            m_history.add(BufferHistory::Entry{
+                    .action=BufferHistory::Entry::Action::DeleteNormalSelection,
+                    .values=deletedStr,
+                    .cursorPos=m_cursorCharPos,
+                    .selCursLine=m_cursorLine,
+                    .selCursCol=m_cursorCol,
+                    .selBeginPos=m_selection.fromCharI,
+                    .selBeginLine=m_selection.fromLine,
+                    .selBeginCol=m_selection.fromCol,
+                    });
+            break;
+
+        case Selection::Mode::Line:
+            m_history.add(BufferHistory::Entry{
+                    .action=BufferHistory::Entry::Action::DeleteLineSelection,
+                    .values=deletedStr,
+                    .cursorPos=m_cursorCharPos-m_cursorCol, // Calculate line beginning
+                    .selCursLine=m_cursorLine,
+                    .selBeginPos=m_selection.fromCharI-m_selection.fromCol, // Calculate line beginning
+                    .selBeginLine=m_selection.fromLine,
+                    });
+            break;
+    }
 
     // Jump the cursor to the right place
     if (m_cursorCharPos > m_selection.fromCharI)

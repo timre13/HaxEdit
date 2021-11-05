@@ -28,6 +28,7 @@ public:
             Insert,
             Delete,
             DeleteNormalSelection,
+            DeleteLineSelection,
         } action{};
         String values;
         size_t cursorPos{};
