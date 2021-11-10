@@ -335,12 +335,19 @@ void Buffer::_updateHighlighting()
 
     auto highlightFilePaths{[&](){
         auto _isValidFilePath{[&](const String& path){ // -> bool
-            if (path[0] == '/')
-                // Absolute path
-                return isValidFilePath(path);
-            else
-                // Relative path
-                return isValidFilePath(getParentPath(m_filePath)/std::filesystem::path{path});
+            try
+            {
+                if (path[0] == '/')
+                    // Absolute path
+                    return isValidFilePath(path);
+                else
+                    // Relative path
+                    return isValidFilePath(getParentPath(m_filePath)/std::filesystem::path{path});
+            }
+            catch (std::exception&)
+            {
+                return false;
+            }
         }};
 
         for (size_t i{}; i < m_content.length();)
