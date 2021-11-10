@@ -548,19 +548,20 @@ void App::cursorPosCB(GLFWwindow* window, double x, double y)
                 {
                     const auto& buffer = std::get<std::unique_ptr<Buffer>>(child);
 
+                    // If the current split is being resized
+                    if ((int)i == g_mouseHResSplitI)
+                    {
+                        // Set the size to the new value
+                        g_tabs[g_currTabI]->increaseChildWidth(i,
+                                g_cursorX-(buffer->getXPos()+buffer->getWidth()));
+                        g_isRedrawNeeded = true;
+                    }
+
                     // If the cursor is near the vertical buffer border
-                    if (i != g_tabs.size()-1
-                        && std::abs(g_cursorX -
-                            (buffer->getXPos()+buffer->getWidth())) < BUFFER_RESIZE_MAX_CURS_DIST)
+                    if (std::abs(g_cursorX - (buffer->getXPos()+buffer->getWidth()))
+                            < BUFFER_RESIZE_MAX_CURS_DIST)
                     {
                         glfwSetCursor(window, glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR));
-                    }
-                    // If the cursor is near the horizontal buffer border
-                    else if (i != g_tabs.size()-1
-                        && std::abs(g_cursorY -
-                            (buffer->getYPos()+buffer->getHeight())) < BUFFER_RESIZE_MAX_CURS_DIST)
-                    {
-                        glfwSetCursor(window, glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR));
                         break;
                     }
                     // If the pointer is inside a buffer
@@ -598,11 +599,29 @@ void App::mouseButtonCB(GLFWwindow*, int btn, int act, int mods)
     case GLFW_MOUSE_BUTTON_RIGHT:  g_isMouseBtnRPressed = (act == GLFW_PRESS); break;
     case GLFW_MOUSE_BUTTON_MIDDLE: g_isMouseBtnMPressed = (act == GLFW_PRESS); break;
     }
-    if (btn == GLFW_MOUSE_BUTTON_LEFT && act == GLFW_PRESS)
+
+    g_mouseHResSplitI = -1;
+    if (act == GLFW_PRESS && btn == GLFW_MOUSE_BUTTON_LEFT && !g_tabs.empty())
     {
-        g_mouseBtnLPressX = g_cursorX;
-        g_mouseBtnLPressY = g_cursorY;
+        // TODO: Nested splits are not well supported
+        for (size_t i{}; i < g_tabs[g_currTabI]->getChildren().size()-1; ++i)
+        {
+            const auto& child = g_tabs[g_currTabI]->getChildren()[i];
+            if (std::holds_alternative<std::unique_ptr<Buffer>>(child))
+            {
+                const auto& buffer = std::get<std::unique_ptr<Buffer>>(child);
+
+                // If the cursor is near the vertical buffer border
+                if (std::abs(g_cursorX - (buffer->getXPos()+buffer->getWidth()))
+                        < BUFFER_RESIZE_MAX_CURS_DIST)
+                {
+                    g_mouseHResSplitI = i;
+                    break;
+                }
+            }
+        }
     }
+
 
     if (!g_dialogs.empty())
     {
@@ -638,18 +657,6 @@ void App::mouseButtonCB(GLFWwindow*, int btn, int act, int mods)
             if (std::holds_alternative<std::unique_ptr<Buffer>>(child))
             {
                 const auto& buffer = std::get<std::unique_ptr<Buffer>>(child);
-
-                // If the buffer border has been dragged, resize the buffer
-                if (i != g_tabs.size()-1
-                    && act == GLFW_RELEASE && btn == GLFW_MOUSE_BUTTON_LEFT
-                    && std::abs(g_mouseBtnLPressX -
-                        (buffer->getXPos()+buffer->getWidth())) < BUFFER_RESIZE_MAX_CURS_DIST)
-                {
-                    g_tabs[g_currTabI]->increaseChildWidth(i,
-                            g_cursorX-(buffer->getXPos()+buffer->getWidth()));
-                    g_isRedrawNeeded = true;
-                    break;
-                }
 
                 // If the pointer is inside the buffer
                 if (g_cursorX >= buffer->getXPos()
