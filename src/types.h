@@ -83,7 +83,7 @@ inline std::string strToAscii(const String& str)
 {
     std::string output;
     for (Char c : str)
-        output += char(c & 0b01111111);
+        output += toascii(c);
     return output;
 }
 

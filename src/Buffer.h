@@ -29,6 +29,7 @@ public:
             Delete,
             DeleteNormalSelection,
             DeleteLineSelection,
+            DeleteBlockSelection,
         } action{};
         String values;
         size_t cursorPos{};

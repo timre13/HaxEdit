@@ -11,6 +11,10 @@
 #include <chrono>
 using namespace std::chrono_literals;
 
+// Separates lines in a block selection delete BufferHistory::Entry
+#define BLOCK_SEL_HIST_ENTRY_LINE_SEP_CHAR ((uint32_t)-1)
+#define BLOCK_SEL_HIST_ENTRY_LINE_SEP_INDEX ((size_t)-1)
+
 Buffer::Buffer()
 {
     /*
@@ -1086,6 +1090,43 @@ void Buffer::undo()
             m_content.insert(std::min(entry.cursorPos, entry.selBeginPos), entry.values);
             m_highlightBuffer.insert(std::min(entry.cursorPos, entry.selBeginPos), entry.values.size(), Syntax::MARK_NONE);
             break;
+
+        case BufferHistory::Entry::Action::DeleteBlockSelection:
+        {
+            assert(!entry.values.empty());
+
+            // FIXME: When selection starts at the bottom left or top right corner,
+            //        the block gets messed up
+
+            int blockSepCount = 0;
+            String line;
+            int insertLine = std::min(entry.selCursLine, entry.selBeginLine);
+            int insertCol = std::min(entry.selBeginCol, entry.selCursCol);
+            int insertPos = std::min(entry.cursorPos, entry.selBeginPos);
+            for (Char c : entry.values)
+            {
+                if (c == BLOCK_SEL_HIST_ENTRY_LINE_SEP_CHAR)
+                {
+                    m_content.insert(insertPos, line);
+                    m_highlightBuffer.insert(insertPos, line.size(), Syntax::MARK_NONE);
+                    Logger::log << "INSERTED LINE: " << strToAscii(line) << Logger::End;
+                    // BUG?
+                    insertPos += getLineLenAt(m_content, insertLine)+1;
+                    line.clear();
+                    ++insertLine;
+                    ++blockSepCount;
+                }
+                else
+                {
+                    line += c;
+                }
+            }
+
+            Logger::log << "Undone a block selection of " << entry.values.size()-blockSepCount
+                << " characters and " << blockSepCount << " block separators" << Logger::End;
+
+            break;
+        }
         }
 
         m_isHighlightUpdateNeeded = true;
@@ -1186,17 +1227,17 @@ void Buffer::deleteSelectedChars()
     if (m_selection.mode == Selection::Mode::None)
         return;
 
-    assert(m_selection.mode == Selection::Mode::Normal
-        || m_selection.mode == Selection::Mode::Line);
-
-    std::vector<size_t> charsToDel;
+    std::vector<size_t> charIndicesToDel;
     int lineI{};
     int colI{};
     for (size_t charI{}; charI < m_content.size(); ++charI)
     {
         if (isCharSelected(lineI, colI, charI))
         {
-            charsToDel.push_back(charI);
+            charIndicesToDel.push_back(charI);
+            // If we are in block selection mode and this is at the right border of the selection
+            if (m_selection.mode == Selection::Mode::Block && colI == std::max(m_selection.fromCol, m_cursorCol))
+                charIndicesToDel.push_back(BLOCK_SEL_HIST_ENTRY_LINE_SEP_INDEX); // End of block line
         }
 
         switch (m_content[charI])
@@ -1218,22 +1259,39 @@ void Buffer::deleteSelectedChars()
         ++colI;
     }
 
-    assert(!charsToDel.empty());
+    assert(!charIndicesToDel.empty());
+
     // Save the deleted chars first
     String deletedStr;
-    for (size_t toDel : charsToDel)
+    for (size_t toDel : charIndicesToDel)
     {
-        deletedStr += m_content[toDel];
+        if (toDel == BLOCK_SEL_HIST_ENTRY_LINE_SEP_INDEX)
+            deletedStr += BLOCK_SEL_HIST_ENTRY_LINE_SEP_CHAR;
+        else
+            deletedStr += m_content[toDel];
     }
-    for (size_t i{charsToDel.size()-1}; i != -1_st; --i)
+
+    int blockSepCount = 0;
+    // Do the delete
+    for (size_t i{charIndicesToDel.size()-1}; i != -1_st; --i)
     {
-        size_t toDel = charsToDel[i];
+        size_t toDel = charIndicesToDel[i];
+        if (toDel == BLOCK_SEL_HIST_ENTRY_LINE_SEP_INDEX)
+        {
+            ++blockSepCount;
+            continue;
+        }
         m_content.erase(toDel, 1);
         m_highlightBuffer.erase(toDel, 1);
     }
-    BufferHistory::Entry::Action action{};
+
+    Logger::dbg << "Deleted " << deletedStr.size()-blockSepCount << " characters (block has "
+        << blockSepCount << " separators)" << Logger::End;
+
     switch (m_selection.mode)
     {
+        case Selection::Mode::None: break; // Unreachable
+
         case Selection::Mode::Normal:
             m_history.add(BufferHistory::Entry{
                     .action=BufferHistory::Entry::Action::DeleteNormalSelection,
@@ -1257,6 +1315,20 @@ void Buffer::deleteSelectedChars()
                     .selBeginLine=m_selection.fromLine,
                     });
             break;
+
+        case Selection::Mode::Block:
+            m_history.add(BufferHistory::Entry{
+                    .action=BufferHistory::Entry::Action::DeleteBlockSelection,
+                    .values=deletedStr,
+                    .cursorPos=m_cursorCharPos,
+                    .selCursLine=m_cursorLine,
+                    .selCursCol=m_cursorCol,
+                    .selBeginPos=m_selection.fromCharI,
+                    .selBeginLine=m_selection.fromLine,
+                    .selBeginCol=m_selection.fromCol,
+                    });
+            break;
+
     }
 
     // Jump the cursor to the right place
