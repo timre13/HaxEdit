@@ -208,13 +208,13 @@ void SessionHandler::loadFromFile()
                 Logger::err << "Invalid value for 'activeTabI', expected a number" << Logger::End;
                 goto error;
             }
-            if (activeTabVal->valueint < 0 || (size_t)activeTabVal->valueint >= g_tabs.size())
+            if (!g_tabs.empty() && (activeTabVal->valueint < 0 || (size_t)activeTabVal->valueint >= g_tabs.size()))
             {
                 Logger::err << "Invalid value for 'activeTabI', should be 0 <= x < numOfTabs"
                     << Logger::End;
                 goto error;
             }
-            g_currTabI = activeTabVal->valueint;
+            g_currTabI = g_tabs.empty() ? 0 : activeTabVal->valueint;
         }
     }
 
