@@ -22,6 +22,7 @@ MessageDialog::MessageDialog(
     {
         (void)btn; // Fix unused `btn` warning in release build
         assert(btn.key != GLFW_KEY_UNKNOWN);
+        assert(btn.key != GLFW_KEY_ESCAPE); // Escape is a special key that cancels the dialog
     }
 }
 
@@ -148,6 +149,13 @@ void MessageDialog::handleKey(int key, int mods)
 {
     if (mods != 0)
         return;
+
+    if (key == GLFW_KEY_ESCAPE)
+    {
+        Logger::dbg << "MessageDialog: Cancelled" << Logger::End;
+        m_isClosed = true;
+        return;
+    }
 
     for (size_t i{}; i < m_btnInfo.size(); ++i)
     {

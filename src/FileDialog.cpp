@@ -212,6 +212,13 @@ void FileDialog::handleKey(int key, int mods)
     if (mods != 0)
         return;
 
+    if (key == GLFW_KEY_ESCAPE)
+    {
+        Logger::dbg << "FileDialog: Cancelled" << Logger::End;
+        m_isClosed = true;
+        return;
+    }
+
     if (key == GLFW_KEY_UP)
     {
         selectPrevFile();

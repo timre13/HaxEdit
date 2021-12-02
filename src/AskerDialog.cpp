@@ -84,6 +84,13 @@ void AskerDialog::handleKey(int key, int mods)
 {
     if (mods == 0)
     {
+        if (key == GLFW_KEY_ESCAPE)
+        {
+            Logger::dbg << "AskerDialog: Cancelled" << Logger::End;
+            m_isClosed = true;
+            return;
+        }
+
         switch (key)
         {
         case GLFW_KEY_BACKSPACE:
