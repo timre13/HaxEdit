@@ -3,9 +3,9 @@
 #include "Buffer.h"
 #include "TextRenderer.h"
 #include "UiRenderer.h"
-#include "Dialog.h"
-#include "FileDialog.h"
-#include "MessageDialog.h"
+#include "dialogs/Dialog.h"
+#include "dialogs/FileDialog.h"
+#include "dialogs/MessageDialog.h"
 #include "globals.h"
 #include "config.h"
 #include <vector>

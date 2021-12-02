@@ -2,8 +2,8 @@
 
 #include <vector>
 #include "Dialog.h"
-#include "glstuff.h"
-#include "globals.h"
+#include "../glstuff.h"
+#include "../globals.h"
 
 class MessageDialog final : public Dialog
 {

@@ -1,5 +1,5 @@
 #include "ImageBuffer.h"
-#include "MessageDialog.h"
+#include "dialogs/MessageDialog.h"
 #include <cassert>
 #include "config.h"
 #include "Timer.h"

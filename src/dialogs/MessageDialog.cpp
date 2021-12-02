@@ -1,11 +1,11 @@
 #include "MessageDialog.h"
-#include "UiRenderer.h"
-#include "TextRenderer.h"
-#include "Logger.h"
-#include "Timer.h"
-#include "config.h"
-#include "types.h"
-#include "globals.h"
+#include "../UiRenderer.h"
+#include "../TextRenderer.h"
+#include "../Logger.h"
+#include "../Timer.h"
+#include "../config.h"
+#include "../types.h"
+#include "../globals.h"
 #include <algorithm>
 
 MessageDialog::MessageDialog(

@@ -1,7 +1,7 @@
 #include "AskerDialog.h"
-#include "Logger.h"
-#include "Buffer.h"
-#include "globals.h"
+#include "../Logger.h"
+#include "../Buffer.h"
+#include "../globals.h"
 #include <vector>
 #include <memory>
 

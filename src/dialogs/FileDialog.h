@@ -5,7 +5,7 @@
 #include <memory>
 #include <filesystem>
 #include "Dialog.h"
-#include "globals.h"
+#include "../globals.h"
 
 class FileDialog final : public Dialog
 {

@@ -56,10 +56,10 @@ add_executable(haxed
     src/Split.cpp
     src/Image.cpp
     src/Timer.cpp
-    src/Dialog.cpp
-    src/MessageDialog.cpp
-    src/FileDialog.cpp
-    src/AskerDialog.cpp
+    src/dialogs/Dialog.cpp
+    src/dialogs/MessageDialog.cpp
+    src/dialogs/FileDialog.cpp
+    src/dialogs/AskerDialog.cpp
     src/SessionHandler.cpp
     src/autocomp/Popup.cpp
     src/autocomp/DictionaryProvider.cpp

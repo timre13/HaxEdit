@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Dialog.h"
-#include "globals.h"
+#include "../globals.h"
 
 class AskerDialog final : public Dialog
 {

@@ -4,7 +4,7 @@
 #include "Split.h"
 #include "Buffer.h"
 #include "ImageBuffer.h"
-#include "MessageDialog.h"
+#include "dialogs/MessageDialog.h"
 #include "common.h"
 #include <sstream>
 #include <fstream>

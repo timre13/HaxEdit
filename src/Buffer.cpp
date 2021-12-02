@@ -3,7 +3,7 @@
 #include "Timer.h"
 #include "types.h"
 #include "Syntax.h"
-#include "MessageDialog.h"
+#include "dialogs/MessageDialog.h"
 #include "unicode/ustdio.h"
 #include "common.h"
 #include <fstream>
