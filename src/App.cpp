@@ -125,6 +125,7 @@ void App::setupKeyBindings()
         nmap.noMod[GLFW_KEY_EQUAL]      = Callbacks::zoomInBufferIfImage;
         nmap.noMod[GLFW_KEY_KP_ADD]     = Callbacks::zoomInBufferIfImage;
         nmap.noMod[GLFW_KEY_ESCAPE]     = Callbacks::hideAutocompPopupOrEndSelection;
+        nmap.noMod[GLFW_KEY_U]          = Callbacks::undoActiveBufferChange;
         nmap.noMod[GLFW_KEY_V]          = Callbacks::bufferStartNormalSelection;
 
         nmap.ctrl[GLFW_KEY_N]           = Callbacks::createBufferInNewTab;
@@ -140,7 +141,6 @@ void App::setupKeyBindings()
         nmap.ctrl[GLFW_KEY_KP_SUBTRACT] = Callbacks::decreaseFontSize;
         nmap.ctrl[GLFW_KEY_EQUAL]       = Callbacks::increaseFontSize;
         nmap.ctrl[GLFW_KEY_KP_ADD]      = Callbacks::increaseFontSize;
-        nmap.ctrl[GLFW_KEY_Z]           = Callbacks::undoActiveBufferChange;
         nmap.ctrl[GLFW_KEY_ENTER]       = Callbacks::openPathAtCursor;
         nmap.ctrl[GLFW_KEY_V]           = Callbacks::bufferStartBlockSelection;
         nmap.ctrl[GLFW_KEY_R]           = Callbacks::redoActiveBufferChange;
@@ -150,6 +150,7 @@ void App::setupKeyBindings()
         nmap.ctrlShift[GLFW_KEY_RIGHT]  = Callbacks::increaseActiveBufferWidth;
         nmap.ctrlShift[GLFW_KEY_LEFT]   = Callbacks::decreaseActiveBufferWidth;
 
+        nmap.shift[GLFW_KEY_R]          = Callbacks::switchToReplaceMode;
         nmap.shift[GLFW_KEY_V]          = Callbacks::bufferStartLineSelection;
         nmap.shift[GLFW_KEY_I]          = Callbacks::moveCursorToLineBeginningAndEnterInsertMode;
         nmap.shift[GLFW_KEY_A]          = Callbacks::moveCursorToLineEndAndEnterInsertMode;
@@ -473,15 +474,26 @@ void App::windowCharCB(GLFWwindow*, uint codePoint)
         return;
     }
 
-    if (g_editorMode.get() != EditorMode::_EditorMode::Insert)
+    switch (g_editorMode.get())
     {
-        return; // Only insert in insert mode
+        case EditorMode::_EditorMode::Normal:
+            return;
+
+        case EditorMode::_EditorMode::Insert:
+            if (g_activeBuff)
+            {
+                g_activeBuff->insert(codePoint);
+            }
+            break;
+
+        case EditorMode::_EditorMode::Replace:
+            if (g_activeBuff)
+            {
+                g_activeBuff->replaceChar(codePoint);
+            }
+            break;
     }
 
-    if (g_activeBuff)
-    {
-        g_activeBuff->insert(codePoint);
-    }
     g_isRedrawNeeded = true;
 }
 

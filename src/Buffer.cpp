@@ -801,9 +801,16 @@ void Buffer::render()
                                 {1.0f, 0.0f, 0.0f, 0.4f}
                         );
                     }
+                    else if (g_editorMode.get() == EditorMode::_EditorMode::Replace)
+                    {
+                        g_uiRenderer->renderFilledRectangle(
+                                {textX-2,       initTextY+textY-m_scrollY-m_position.y+g_fontSizePx-2},
+                                {textX+width+2, initTextY+textY-m_scrollY-m_position.y+g_fontSizePx+2},
+                                {1.0f, 0.0f, 0.0f, 1.0f}
+                        );
+                    }
                     else
                     {
-                        (void)width;
                         g_uiRenderer->renderFilledRectangle(
                                 {textX-1, initTextY+textY-m_scrollY-m_position.y-2},
                                 {textX+1, initTextY+textY-m_scrollY-m_position.y+g_fontSizePx+2},
@@ -973,6 +980,41 @@ void Buffer::insert(Char character)
     TIMER_END_FUNC();
 }
 
+void Buffer::replaceChar(Char character)
+{
+    if (m_isReadOnly)
+        return;
+
+    TIMER_BEGIN_FUNC();
+
+    assert(m_cursorCol >= 0);
+    assert(m_cursorLine >= 0);
+
+    // Disallow replacing a newline or replacing a char by a newline
+    if (character == '\n' || m_content[m_cursorCharPos] == '\n')
+    {
+        TIMER_END_FUNC();
+        return;
+    }
+
+    m_history.add(BufferHistory::Entry{
+            .action=BufferHistory::Entry::Action::Replace,
+            .values=charToStr(m_content[m_cursorCharPos])+charToStr(character),
+            .cursorPos=m_cursorCharPos
+            });
+    m_content[m_cursorCharPos] = character;
+
+    ++m_cursorCol;
+    ++m_cursorCharPos;
+    m_isModified = true;
+
+    m_isCursorShown = true;
+    m_isHighlightUpdateNeeded = true;
+    scrollViewportToCursor();
+
+    TIMER_END_FUNC();
+}
+
 void Buffer::deleteCharBackwards()
 {
     if (m_isReadOnly)
@@ -1092,6 +1134,10 @@ void Buffer::undo()
             m_highlightBuffer.erase(entry.cursorPos, 1);
             break;
 
+        case BufferHistory::Entry::Action::Replace:
+            m_content[entry.cursorPos] = entry.values[0];
+            break;
+
         case BufferHistory::Entry::Action::Delete:
             m_content.insert(entry.cursorPos, 1, entry.values[0]);
             m_highlightBuffer.insert(entry.cursorPos, 1, Syntax::MARK_NONE);
@@ -1165,6 +1211,10 @@ void Buffer::redo()
         case BufferHistory::Entry::Action::Insert:
             m_content.insert(entry.cursorPos, 1, entry.values[0]);
             m_highlightBuffer.insert(entry.cursorPos, 1, Syntax::MARK_NONE);
+            break;
+
+        case BufferHistory::Entry::Action::Replace:
+            m_content[entry.cursorPos] = entry.values[1];
             break;
 
         case BufferHistory::Entry::Action::Delete:

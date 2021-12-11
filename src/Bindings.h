@@ -24,6 +24,7 @@ namespace Callbacks
 
 void switchToNormalMode();
 void switchToInsertMode();
+void switchToReplaceMode();
 
 void createBufferInNewTab();
 void saveCurrentBuffer();

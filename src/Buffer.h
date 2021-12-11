@@ -26,6 +26,7 @@ public:
         {
             None,
             Insert,
+            Replace,
             Delete,
             DeleteNormalSelection,
             DeleteLineSelection,
@@ -264,6 +265,7 @@ public:
 
     // Text editing
     virtual void insert(Char character);
+    virtual void replaceChar(Char character);
     virtual void deleteCharBackwards();
     virtual void deleteCharForwardOrSelected();
     virtual inline bool isModified() const final { return m_isModified; }

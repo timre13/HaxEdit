@@ -54,6 +54,15 @@ void switchToInsertMode()
         g_isRedrawNeeded = true;
     }
 }
+void switchToReplaceMode()
+{
+    g_editorMode.set(EditorMode::_EditorMode::Replace);
+    if (g_activeBuff)
+    {
+        g_activeBuff->setCursorVisibility(true);
+        g_isRedrawNeeded = true;
+    }
+}
 
 void createBufferInNewTab()
 {

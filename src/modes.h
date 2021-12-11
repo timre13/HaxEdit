@@ -2,7 +2,7 @@
 
 #include "Logger.h"
 
-#define EDITMODE_STATLINE_STR_LEN 14
+#define EDITMODE_STATLINE_STR_LEN 15
 
 class EditorMode final
 {
@@ -11,6 +11,7 @@ public:
     {
         Normal,
         Insert,
+        Replace,
     };
 
 private:
