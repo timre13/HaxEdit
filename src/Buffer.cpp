@@ -787,7 +787,7 @@ void Buffer::render()
 
                 if ((m_cursorMovCmd != CursorMovCmd::None || m_isCursorShown) && charI == m_cursorCharPos)
                 {
-                    if (g_editorMode.get() == EditorMode::_EditorMode::Normal)
+                    if (g_editorMode.get() == EditorMode::_EditorMode::Normal || m_isDimmed)
                     {
                         g_uiRenderer->renderRectangleOutline(
                                 {textX-2, initTextY+textY-m_scrollY-m_position.y-2},
