@@ -42,3 +42,14 @@ std::string EditorMode::asString()
     case _EditorMode::Insert: return "Insert";
     }
 }
+
+std::string EditorMode::asStatLineStr()
+{
+    // Note: Adjust `EDITMODE_STATLINE_STR_LEN` if needed
+
+    switch (m_editorMode)
+    {
+    case _EditorMode::Normal: return "--- NORMAL ---";
+    case _EditorMode::Insert: return "--- INSERT ---";
+    }
+}

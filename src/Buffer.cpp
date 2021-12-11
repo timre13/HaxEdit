@@ -2,6 +2,7 @@
 #include "config.h"
 #include "Timer.h"
 #include "types.h"
+#include "modes.h"
 #include "Syntax.h"
 #include "dialogs/MessageDialog.h"
 #include "unicode/ustdio.h"
@@ -554,11 +555,11 @@ void Buffer::updateRStatusLineStr()
     if (m_selection.mode == Selection::Mode::None)
     {
         m_statusLineStr.str
-            = std::string{g_editorMode.asChar()}
-            +"         "+std::to_string(m_cursorLine+1)
+            = g_editorMode.asStatLineStr()
+            +"        "+std::to_string(m_cursorLine+1)
             +':'+std::to_string(m_cursorCol+1)
             +" | "+std::to_string(m_cursorCharPos);
-        m_statusLineStr.maxLen = std::max(size_t(12+4+1+3+3+7), m_statusLineStr.str.size());
+        m_statusLineStr.maxLen = std::max(size_t(EDITMODE_STATLINE_STR_LEN+8+4+1+3+3+7), m_statusLineStr.str.size());
     }
     else
     {

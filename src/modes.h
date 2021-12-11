@@ -2,6 +2,8 @@
 
 #include "Logger.h"
 
+#define EDITMODE_STATLINE_STR_LEN 14
+
 class EditorMode final
 {
 public:
@@ -22,4 +24,5 @@ public:
 
     char asChar();
     std::string asString();
+    std::string asStatLineStr();
 };
