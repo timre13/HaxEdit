@@ -2,6 +2,7 @@
 #include <memory>
 #include "glstuff.h"
 #include "config.h"
+#include "modes.h"
 #include "autocomp/DictionaryProvider.h"
 
 class Dialog;
@@ -51,6 +52,8 @@ namespace Autocomp
 std::unique_ptr<Autocomp::DictionaryProvider> dictProvider;
 }
 
+EditorMode g_editorMode;
+
 #else // ----------------------------------------------------------------------
 
 extern GLFWwindow* g_window;
@@ -85,5 +88,7 @@ namespace Autocomp
 {
 extern std::unique_ptr<Autocomp::DictionaryProvider> dictProvider;
 }
+
+extern EditorMode g_editorMode;
 
 #endif

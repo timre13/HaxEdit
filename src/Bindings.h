@@ -14,12 +14,16 @@ struct BindingMapSet
     bindingMap_t noMod;
     bindingMap_t ctrl;
     bindingMap_t ctrlShift;
+    bindingMap_t shift;
 };
 
-void runBinding(BindingMapSet& map, int mods, int key);
+void runBinding(int mods, int key);
 
 namespace Callbacks
 {
+
+void switchToNormalMode();
+void switchToInsertMode();
 
 void createBufferInNewTab();
 void saveCurrentBuffer();
@@ -37,11 +41,14 @@ void increaseActiveBufferWidth();
 void decreaseActiveBufferWidth();
 
 void moveCursorRight();
+void moveCursorRightAndEnterInsertMode();
 void moveCursorLeft();
 void moveCursorDown();
 void moveCursorUp();
 void moveCursorToLineBeginning();
 void moveCursorToLineEnd();
+void moveCursorToLineBeginningAndEnterInsertMode();
+void moveCursorToLineEndAndEnterInsertMode();
 
 void putEnter();
 void deleteCharBackwards();
@@ -70,6 +77,9 @@ void bufferStartBlockSelection();
 
 }
 
-extern BindingMapSet mappings;
+extern BindingMapSet nmap; // Normal mode mapping
+extern BindingMapSet imap; // Insert mode mapping
+
+extern Bindings::BindingMapSet* bindingsP;
 
 }

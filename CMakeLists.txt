@@ -43,6 +43,7 @@ endif()
 add_executable(haxed
     src/main.cpp
     src/common.cpp
+    src/modes.cpp
     src/App.cpp
     src/Logger.cpp
     src/Shader.cpp

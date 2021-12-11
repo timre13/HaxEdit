@@ -554,10 +554,11 @@ void Buffer::updateRStatusLineStr()
     if (m_selection.mode == Selection::Mode::None)
     {
         m_statusLineStr.str
-            = std::to_string(m_cursorLine+1)
+            = std::string{g_editorMode.asChar()}
+            +"         "+std::to_string(m_cursorLine+1)
             +':'+std::to_string(m_cursorCol+1)
             +" | "+std::to_string(m_cursorCharPos);
-        m_statusLineStr.maxLen = std::max(size_t(4+1+3+3+7), m_statusLineStr.str.size());
+        m_statusLineStr.maxLen = std::max(size_t(12+4+1+3+3+7), m_statusLineStr.str.size());
     }
     else
     {
@@ -785,26 +786,29 @@ void Buffer::render()
 
                 if ((m_cursorMovCmd != CursorMovCmd::None || m_isCursorShown) && charI == m_cursorCharPos)
                 {
-#if CURSOR_DRAW_BLOCK
-                    g_uiRenderer->renderRectangleOutline(
-                            {textX-2, initTextY+textY-m_scrollY-m_position.y-2},
-                            {textX+width+2, initTextY+textY-m_scrollY-m_position.y+g_fontSizePx+2},
-                            {1.0f, 0.0f, 0.0f},
-                            2
-                    );
-                    g_uiRenderer->renderFilledRectangle(
-                            {textX-2, initTextY+textY-m_scrollY-m_position.y-2},
-                            {textX+width+2, initTextY+textY-m_scrollY-m_position.y+g_fontSizePx+2},
-                            {1.0f, 0.0f, 0.0f, 0.4f}
-                    );
-#else
-                    (void)width;
-                    g_uiRenderer->renderFilledRectangle(
-                            {textX-1, initTextY+textY-m_scrollY-m_position.y-2},
-                            {textX+1, initTextY+textY-m_scrollY-m_position.y+g_fontSizePx+2},
-                            {1.0f, 0.0f, 0.0f}
-                    );
-#endif
+                    if (g_editorMode.get() == EditorMode::_EditorMode::Normal)
+                    {
+                        g_uiRenderer->renderRectangleOutline(
+                                {textX-2, initTextY+textY-m_scrollY-m_position.y-2},
+                                {textX+width+2, initTextY+textY-m_scrollY-m_position.y+g_fontSizePx+2},
+                                {1.0f, 0.0f, 0.0f},
+                                2
+                        );
+                        g_uiRenderer->renderFilledRectangle(
+                                {textX-2, initTextY+textY-m_scrollY-m_position.y-2},
+                                {textX+width+2, initTextY+textY-m_scrollY-m_position.y+g_fontSizePx+2},
+                                {1.0f, 0.0f, 0.0f, 0.4f}
+                        );
+                    }
+                    else
+                    {
+                        (void)width;
+                        g_uiRenderer->renderFilledRectangle(
+                                {textX-1, initTextY+textY-m_scrollY-m_position.y-2},
+                                {textX+1, initTextY+textY-m_scrollY-m_position.y+g_fontSizePx+2},
+                                {1.0f, 0.0f, 0.0f}
+                        );
+                    }
 
                     // Bind the text renderer shader again
                     g_textRenderer->prepareForDrawing();

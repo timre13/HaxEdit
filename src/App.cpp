@@ -99,53 +99,86 @@ void App::createAutocompleteProviders()
 
 void App::setupKeyBindings()
 {
-    // `mappings` and `Callbacks` are from the `Bindings` namespace
+    // `nmap`, 'imap' and `Callbacks` are from the `Bindings` namespace
     using namespace Bindings;
 
-    mappings.noMod[GLFW_KEY_RIGHT]      = Callbacks::moveCursorRight;
-    mappings.noMod[GLFW_KEY_LEFT]       = Callbacks::moveCursorLeft;
-    mappings.noMod[GLFW_KEY_DOWN]       = Callbacks::moveCursorDown;
-    mappings.noMod[GLFW_KEY_UP]         = Callbacks::moveCursorUp;
-    mappings.noMod[GLFW_KEY_HOME]       = Callbacks::moveCursorToLineBeginning;
-    mappings.noMod[GLFW_KEY_END]        = Callbacks::moveCursorToLineEnd;
-    mappings.noMod[GLFW_KEY_ENTER]      = Callbacks::putEnter;
-    mappings.noMod[GLFW_KEY_KP_ENTER]   = Callbacks::putEnter;
-    mappings.noMod[GLFW_KEY_BACKSPACE]  = Callbacks::deleteCharBackwards;
-    mappings.noMod[GLFW_KEY_DELETE]     = Callbacks::deleteCharForwardOrSelection;
-    mappings.noMod[GLFW_KEY_KP_DECIMAL] = Callbacks::deleteCharForwardOrSelection;
-    mappings.noMod[GLFW_KEY_TAB]        = Callbacks::insertTabOrSpaces;
-    mappings.noMod[GLFW_KEY_MINUS]      = Callbacks::zoomOutBufferIfImage;
-    mappings.noMod[GLFW_KEY_KP_SUBTRACT]= Callbacks::zoomOutBufferIfImage;
-    mappings.noMod[GLFW_KEY_EQUAL]      = Callbacks::zoomInBufferIfImage;
-    mappings.noMod[GLFW_KEY_KP_ADD]     = Callbacks::zoomInBufferIfImage;
-    mappings.noMod[GLFW_KEY_ESCAPE]     = Callbacks::hideAutocompPopupOrEndSelection;
+    { // Normal mode mappings
+        nmap.noMod[GLFW_KEY_I]          = Callbacks::switchToInsertMode;
+        nmap.noMod[GLFW_KEY_A]          = Callbacks::moveCursorRightAndEnterInsertMode;
+        nmap.noMod[GLFW_KEY_INSERT]     = Callbacks::switchToInsertMode;
+        nmap.noMod[GLFW_KEY_RIGHT]      = Callbacks::moveCursorRight;
+        nmap.noMod[GLFW_KEY_L]          = Callbacks::moveCursorRight;
+        nmap.noMod[GLFW_KEY_LEFT]       = Callbacks::moveCursorLeft;
+        nmap.noMod[GLFW_KEY_H]          = Callbacks::moveCursorLeft;
+        nmap.noMod[GLFW_KEY_DOWN]       = Callbacks::moveCursorDown;
+        nmap.noMod[GLFW_KEY_J]          = Callbacks::moveCursorDown;
+        nmap.noMod[GLFW_KEY_UP]         = Callbacks::moveCursorUp;
+        nmap.noMod[GLFW_KEY_K]          = Callbacks::moveCursorUp;
+        nmap.noMod[GLFW_KEY_HOME]       = Callbacks::moveCursorToLineBeginning;
+        nmap.noMod[GLFW_KEY_0]          = Callbacks::moveCursorToLineBeginning;
+        nmap.noMod[GLFW_KEY_END]        = Callbacks::moveCursorToLineEnd;
+        nmap.noMod[GLFW_KEY_BACKSPACE]  = Callbacks::deleteCharBackwards;
+        nmap.noMod[GLFW_KEY_DELETE]     = Callbacks::deleteCharForwardOrSelection;
+        nmap.noMod[GLFW_KEY_KP_DECIMAL] = Callbacks::deleteCharForwardOrSelection;
+        nmap.noMod[GLFW_KEY_MINUS]      = Callbacks::zoomOutBufferIfImage;
+        nmap.noMod[GLFW_KEY_KP_SUBTRACT]= Callbacks::zoomOutBufferIfImage;
+        nmap.noMod[GLFW_KEY_EQUAL]      = Callbacks::zoomInBufferIfImage;
+        nmap.noMod[GLFW_KEY_KP_ADD]     = Callbacks::zoomInBufferIfImage;
+        nmap.noMod[GLFW_KEY_ESCAPE]     = Callbacks::hideAutocompPopupOrEndSelection;
+        nmap.noMod[GLFW_KEY_V]          = Callbacks::bufferStartNormalSelection;
 
-    mappings.ctrl[GLFW_KEY_N]           = Callbacks::createBufferInNewTab;
-    mappings.ctrl[GLFW_KEY_S]           = Callbacks::saveCurrentBuffer;
-    mappings.ctrl[GLFW_KEY_O]           = Callbacks::openFile;
-    mappings.ctrl[GLFW_KEY_Q]           = Callbacks::closeActiveBuffer;
-    mappings.ctrl[GLFW_KEY_PAGE_UP]     = Callbacks::goToPrevTab;
-    mappings.ctrl[GLFW_KEY_PAGE_DOWN]   = Callbacks::goToNextTab;
-    mappings.ctrl[GLFW_KEY_TAB]         = Callbacks::goToNextSplit;
-    mappings.ctrl[GLFW_KEY_HOME]        = Callbacks::goToFirstChar;
-    mappings.ctrl[GLFW_KEY_END]         = Callbacks::goToLastChar;
-    mappings.ctrl[GLFW_KEY_MINUS]       = Callbacks::decreaseFontSize;
-    mappings.ctrl[GLFW_KEY_KP_SUBTRACT] = Callbacks::decreaseFontSize;
-    mappings.ctrl[GLFW_KEY_EQUAL]       = Callbacks::increaseFontSize;
-    mappings.ctrl[GLFW_KEY_KP_ADD]      = Callbacks::increaseFontSize;
-    mappings.ctrl[GLFW_KEY_Z]           = Callbacks::undoActiveBufferChange;
-    mappings.ctrl[GLFW_KEY_ENTER]       = Callbacks::openPathAtCursor;
-    mappings.ctrl[GLFW_KEY_SPACE]       = Callbacks::triggerAutocompPopupOrSelectNextItem;
-    mappings.ctrl[GLFW_KEY_V]           = Callbacks::bufferStartNormalSelection;
-    mappings.ctrl[GLFW_KEY_B]           = Callbacks::bufferStartBlockSelection;
+        nmap.ctrl[GLFW_KEY_N]           = Callbacks::createBufferInNewTab;
+        nmap.ctrl[GLFW_KEY_S]           = Callbacks::saveCurrentBuffer;
+        nmap.ctrl[GLFW_KEY_O]           = Callbacks::openFile;
+        nmap.ctrl[GLFW_KEY_Q]           = Callbacks::closeActiveBuffer;
+        nmap.ctrl[GLFW_KEY_PAGE_UP]     = Callbacks::goToPrevTab;
+        nmap.ctrl[GLFW_KEY_PAGE_DOWN]   = Callbacks::goToNextTab;
+        nmap.ctrl[GLFW_KEY_TAB]         = Callbacks::goToNextSplit;
+        nmap.ctrl[GLFW_KEY_HOME]        = Callbacks::goToFirstChar;
+        nmap.ctrl[GLFW_KEY_END]         = Callbacks::goToLastChar;
+        nmap.ctrl[GLFW_KEY_MINUS]       = Callbacks::decreaseFontSize;
+        nmap.ctrl[GLFW_KEY_KP_SUBTRACT] = Callbacks::decreaseFontSize;
+        nmap.ctrl[GLFW_KEY_EQUAL]       = Callbacks::increaseFontSize;
+        nmap.ctrl[GLFW_KEY_KP_ADD]      = Callbacks::increaseFontSize;
+        nmap.ctrl[GLFW_KEY_Z]           = Callbacks::undoActiveBufferChange;
+        nmap.ctrl[GLFW_KEY_ENTER]       = Callbacks::openPathAtCursor;
+        nmap.ctrl[GLFW_KEY_V]           = Callbacks::bufferStartBlockSelection;
+        nmap.ctrl[GLFW_KEY_R]           = Callbacks::redoActiveBufferChange;
 
-    mappings.ctrlShift[GLFW_KEY_S]      = Callbacks::saveCurrentBufferAs;
-    mappings.ctrlShift[GLFW_KEY_TAB]    = Callbacks::goToPrevSplit;
-    mappings.ctrlShift[GLFW_KEY_RIGHT]  = Callbacks::increaseActiveBufferWidth;
-    mappings.ctrlShift[GLFW_KEY_LEFT]   = Callbacks::decreaseActiveBufferWidth;
-    mappings.ctrlShift[GLFW_KEY_Z]      = Callbacks::redoActiveBufferChange;
-    mappings.ctrlShift[GLFW_KEY_SPACE]  = Callbacks::triggerAutocompPopupOrSelectPrevItem;
-    mappings.ctrlShift[GLFW_KEY_V]      = Callbacks::bufferStartLineSelection;
+        nmap.ctrlShift[GLFW_KEY_S]      = Callbacks::saveCurrentBufferAs;
+        nmap.ctrlShift[GLFW_KEY_TAB]    = Callbacks::goToPrevSplit;
+        nmap.ctrlShift[GLFW_KEY_RIGHT]  = Callbacks::increaseActiveBufferWidth;
+        nmap.ctrlShift[GLFW_KEY_LEFT]   = Callbacks::decreaseActiveBufferWidth;
+
+        nmap.shift[GLFW_KEY_V]          = Callbacks::bufferStartLineSelection;
+        nmap.shift[GLFW_KEY_I]          = Callbacks::moveCursorToLineBeginningAndEnterInsertMode;
+        nmap.shift[GLFW_KEY_A]          = Callbacks::moveCursorToLineEndAndEnterInsertMode;
+    }
+
+
+    { // Insert mode mappings
+        imap.noMod[GLFW_KEY_ESCAPE]     = Callbacks::switchToNormalMode;
+        imap.noMod[GLFW_KEY_RIGHT]      = Callbacks::moveCursorRight;
+        imap.noMod[GLFW_KEY_LEFT]       = Callbacks::moveCursorLeft;
+        imap.noMod[GLFW_KEY_DOWN]       = Callbacks::moveCursorDown;
+        imap.noMod[GLFW_KEY_UP]         = Callbacks::moveCursorUp;
+        imap.noMod[GLFW_KEY_HOME]       = Callbacks::moveCursorToLineBeginning;
+        imap.noMod[GLFW_KEY_END]        = Callbacks::moveCursorToLineEnd;
+        imap.noMod[GLFW_KEY_ENTER]      = Callbacks::putEnter;
+        imap.noMod[GLFW_KEY_KP_ENTER]   = Callbacks::putEnter;
+        imap.noMod[GLFW_KEY_BACKSPACE]  = Callbacks::deleteCharBackwards;
+        imap.noMod[GLFW_KEY_DELETE]     = Callbacks::deleteCharForwardOrSelection;
+        imap.noMod[GLFW_KEY_KP_DECIMAL] = Callbacks::deleteCharForwardOrSelection;
+        imap.noMod[GLFW_KEY_TAB]        = Callbacks::insertTabOrSpaces;
+        imap.noMod[GLFW_KEY_MINUS]      = Callbacks::zoomOutBufferIfImage;
+        imap.noMod[GLFW_KEY_KP_SUBTRACT]= Callbacks::zoomOutBufferIfImage;
+        imap.noMod[GLFW_KEY_EQUAL]      = Callbacks::zoomInBufferIfImage;
+        imap.noMod[GLFW_KEY_KP_ADD]     = Callbacks::zoomInBufferIfImage;
+        //imap.noMod[GLFW_KEY_ESCAPE]     = Callbacks::hideAutocompPopupOrEndSelection;
+    }
+
+    // Start in normal mode
+    g_editorMode.set(EditorMode::_EditorMode::Normal);
 }
 
 void App::renderBuffers()
@@ -420,7 +453,7 @@ void App::windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods)
         return;
     }
 
-    Bindings::runBinding(Bindings::mappings, mods, key);
+    Bindings::runBinding(mods, key);
 
     TIMER_END_FUNC();
 }
@@ -438,6 +471,11 @@ void App::windowCharCB(GLFWwindow*, uint codePoint)
     {
         g_shouldIgnoreNextChar = false;
         return;
+    }
+
+    if (g_editorMode.get() != EditorMode::_EditorMode::Insert)
+    {
+        return; // Only insert in insert mode
     }
 
     if (g_activeBuff)

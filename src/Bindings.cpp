@@ -15,14 +15,15 @@
 namespace Bindings
 {
 
-void runBinding(BindingMapSet& map, int mods, int key)
+void runBinding(int mods, int key)
 {
     BindingMapSet::bindingFunc_t func;
     switch (mods)
     {
-    case 0: /* No mod */                    func = map.noMod[key]; break;
-    case GLFW_MOD_CONTROL:                  func = map.ctrl[key]; break;
-    case GLFW_MOD_CONTROL | GLFW_MOD_SHIFT: func = map.ctrlShift[key]; break;
+    case 0: /* No mod */                    func = bindingsP->noMod[key]; break;
+    case GLFW_MOD_CONTROL:                  func = bindingsP->ctrl[key]; break;
+    case GLFW_MOD_CONTROL | GLFW_MOD_SHIFT: func = bindingsP->ctrlShift[key]; break;
+    case GLFW_MOD_SHIFT:                    func = bindingsP->shift[key]; break;
     default: break;
     }
     if (func)
@@ -33,6 +34,26 @@ void runBinding(BindingMapSet& map, int mods, int key)
 
 namespace Callbacks
 {
+
+void switchToNormalMode()
+{
+    g_editorMode.set(EditorMode::_EditorMode::Normal);
+    if (g_activeBuff)
+    {
+        g_activeBuff->setCursorVisibility(true);
+        g_isRedrawNeeded = true;
+    }
+}
+
+void switchToInsertMode()
+{
+    g_editorMode.set(EditorMode::_EditorMode::Insert);
+    if (g_activeBuff)
+    {
+        g_activeBuff->setCursorVisibility(true);
+        g_isRedrawNeeded = true;
+    }
+}
 
 void createBufferInNewTab()
 {
@@ -353,6 +374,12 @@ void moveCursorRight()
     }
 }
 
+void moveCursorRightAndEnterInsertMode()
+{
+    moveCursorRight();
+    g_editorMode.set(EditorMode::_EditorMode::Insert);
+}
+
 void moveCursorLeft()
 {
     if (g_activeBuff)
@@ -396,6 +423,18 @@ void moveCursorToLineEnd()
         g_activeBuff->moveCursor(Buffer::CursorMovCmd::LineEnd);
         g_isRedrawNeeded = true;
     }
+}
+
+void moveCursorToLineBeginningAndEnterInsertMode()
+{
+    moveCursorToLineBeginning();
+    g_editorMode.set(EditorMode::_EditorMode::Insert);
+}
+
+void moveCursorToLineEndAndEnterInsertMode()
+{
+    moveCursorToLineEnd();
+    g_editorMode.set(EditorMode::_EditorMode::Insert);
 }
 
 void putEnter()
@@ -585,6 +624,8 @@ void bufferStartBlockSelection()
 
 } // Namespace Callbacks
 
-BindingMapSet mappings = {};
+BindingMapSet nmap = {};
+BindingMapSet imap = {};
+Bindings::BindingMapSet* bindingsP = nullptr;
 
 } // Namespace Bindings
