@@ -954,8 +954,10 @@ void Buffer::insert(Char character)
     m_history.add(BufferHistory::Entry{
             .action=BufferHistory::Entry::Action::Insert,
             .values=charToStr(character),
-            .cursorPos=m_cursorCharPos
-            });
+            .cursPos=m_cursorCharPos,
+            .cursLine=m_cursorLine,
+            .cursCol=m_cursorCol,
+    });
     m_content.insert(m_cursorCharPos, 1, character);
     m_highlightBuffer.insert(m_cursorCharPos, 1, 0);
 
@@ -1000,8 +1002,10 @@ void Buffer::replaceChar(Char character)
     m_history.add(BufferHistory::Entry{
             .action=BufferHistory::Entry::Action::Replace,
             .values=charToStr(m_content[m_cursorCharPos])+charToStr(character),
-            .cursorPos=m_cursorCharPos
-            });
+            .cursPos=m_cursorCharPos,
+            .cursLine=m_cursorLine,
+            .cursCol=m_cursorCol,
+    });
     m_content[m_cursorCharPos] = character;
 
     ++m_cursorCol;
@@ -1031,8 +1035,10 @@ void Buffer::deleteCharBackwards()
         m_history.add(BufferHistory::Entry{
                 .action=BufferHistory::Entry::Action::Delete,
                 .values=charToStr(m_content[m_cursorCharPos-1]),
-                .cursorPos=m_cursorCharPos-1
-                });
+                .cursPos=m_cursorCharPos-1,
+                .cursLine=m_cursorLine,
+                .cursCol=m_cursorCol-1,
+        });
         --m_cursorLine;
         m_cursorCol = getLineLenAt(m_content, m_cursorLine);
         m_content.erase(m_cursorCharPos-1, 1);
@@ -1046,8 +1052,10 @@ void Buffer::deleteCharBackwards()
         m_history.add(BufferHistory::Entry{
                 .action=BufferHistory::Entry::Action::Delete,
                 .values=charToStr(m_content[m_cursorCharPos-1]),
-                .cursorPos=m_cursorCharPos-1
-                });
+                .cursPos=m_cursorCharPos-1,
+                .cursLine=m_cursorLine,
+                .cursCol=m_cursorCol-1,
+        });
         m_content.erase(m_cursorCharPos-1, 1);
         m_highlightBuffer.erase(m_cursorCharPos-1, 1);
         --m_cursorCol;
@@ -1089,8 +1097,10 @@ void Buffer::deleteCharForwardOrSelected()
         m_history.add(BufferHistory::Entry{
                 .action=BufferHistory::Entry::Action::Delete,
                 .values=charToStr(m_content[m_cursorCharPos]),
-                .cursorPos=m_cursorCharPos
-                });
+                .cursPos=m_cursorCharPos,
+                .cursLine=m_cursorLine,
+                .cursCol=m_cursorCol,
+        });
         m_content.erase(m_cursorCharPos, 1);
         m_highlightBuffer.erase(m_cursorCharPos, 1);
         --m_numOfLines;
@@ -1102,8 +1112,10 @@ void Buffer::deleteCharForwardOrSelected()
         m_history.add(BufferHistory::Entry{
                 .action=BufferHistory::Entry::Action::Delete,
                 .values=charToStr(m_content[m_cursorCharPos]),
-                .cursorPos=m_cursorCharPos
-                });
+                .cursPos=m_cursorCharPos,
+                .cursLine=m_cursorLine,
+                .cursCol=m_cursorCol,
+        });
         m_content.erase(m_cursorCharPos, 1);
         m_highlightBuffer.erase(m_cursorCharPos, 1);
         m_isModified = true;
@@ -1127,26 +1139,27 @@ void Buffer::undo()
         switch (entry.action)
         {
         case BufferHistory::Entry::Action::None:
-            break;
+            assert(false);
+            return;
 
         case BufferHistory::Entry::Action::Insert:
-            m_content.erase(entry.cursorPos, 1);
-            m_highlightBuffer.erase(entry.cursorPos, 1);
+            m_content.erase(entry.cursPos, 1);
+            m_highlightBuffer.erase(entry.cursPos, 1);
             break;
 
         case BufferHistory::Entry::Action::Replace:
-            m_content[entry.cursorPos] = entry.values[0];
+            m_content[entry.cursPos] = entry.values[0];
             break;
 
         case BufferHistory::Entry::Action::Delete:
-            m_content.insert(entry.cursorPos, 1, entry.values[0]);
-            m_highlightBuffer.insert(entry.cursorPos, 1, Syntax::MARK_NONE);
+            m_content.insert(entry.cursPos, 1, entry.values[0]);
+            m_highlightBuffer.insert(entry.cursPos, 1, Syntax::MARK_NONE);
             break;
 
         case BufferHistory::Entry::Action::DeleteNormalSelection:
         case BufferHistory::Entry::Action::DeleteLineSelection:
-            m_content.insert(std::min(entry.cursorPos, entry.selBeginPos), entry.values);
-            m_highlightBuffer.insert(std::min(entry.cursorPos, entry.selBeginPos), entry.values.size(), Syntax::MARK_NONE);
+            m_content.insert(std::min(entry.cursPos, entry.selBeginPos), entry.values);
+            m_highlightBuffer.insert(std::min(entry.cursPos, entry.selBeginPos), entry.values.size(), Syntax::MARK_NONE);
             break;
 
         case BufferHistory::Entry::Action::DeleteBlockSelection:
@@ -1158,9 +1171,9 @@ void Buffer::undo()
 
             int blockSepCount = 0;
             String line;
-            int insertLine = std::min(entry.selCursLine, entry.selBeginLine);
-            int insertCol = std::min(entry.selBeginCol, entry.selCursCol);
-            int insertPos = std::min(entry.cursorPos, entry.selBeginPos);
+            int insertLine = std::min(entry.cursLine, entry.selBeginLine);
+            int insertCol = std::min(entry.selBeginCol, entry.cursCol);
+            int insertPos = std::min(entry.cursPos, entry.selBeginPos);
             for (Char c : entry.values)
             {
                 if (c == BLOCK_SEL_HIST_ENTRY_LINE_SEP_CHAR)
@@ -1187,8 +1200,14 @@ void Buffer::undo()
         }
         }
 
-        m_isHighlightUpdateNeeded = true;
+        assert(entry.cursPos != -1_st);
+        assert(entry.cursLine != -1);
+        assert(entry.cursCol != -1);
+        m_cursorCharPos = entry.cursPos;
+        m_cursorLine = entry.cursLine;
+        m_cursorCol = entry.cursCol;
         scrollViewportToCursor();
+        m_isHighlightUpdateNeeded = true;
         g_isRedrawNeeded = true;
         Logger::dbg << "Went back in history" << Logger::End;
     }
@@ -1206,23 +1225,45 @@ void Buffer::redo()
         switch (entry.action)
         {
         case BufferHistory::Entry::Action::None:
-            break;
+            assert(false);
+            return;
 
         case BufferHistory::Entry::Action::Insert:
-            m_content.insert(entry.cursorPos, 1, entry.values[0]);
-            m_highlightBuffer.insert(entry.cursorPos, 1, Syntax::MARK_NONE);
+            m_content.insert(entry.cursPos, 1, entry.values[0]);
+            m_highlightBuffer.insert(entry.cursPos, 1, Syntax::MARK_NONE);
             break;
 
         case BufferHistory::Entry::Action::Replace:
-            m_content[entry.cursorPos] = entry.values[1];
+            m_content[entry.cursPos] = entry.values[1];
             break;
 
         case BufferHistory::Entry::Action::Delete:
-            m_content.erase(entry.cursorPos, 1);
-            m_highlightBuffer.erase(entry.cursorPos, 1);
+            m_content.erase(entry.cursPos, 1);
+            m_highlightBuffer.erase(entry.cursPos, 1);
+            break;
+
+        case BufferHistory::Entry::Action::DeleteNormalSelection:
+#pragma message("TODO")
+            assert(false);
+            break;
+
+        case BufferHistory::Entry::Action::DeleteLineSelection:
+#pragma message("TODO")
+            assert(false);
+            break;
+
+        case BufferHistory::Entry::Action::DeleteBlockSelection:
+#pragma message("TODO")
+            assert(false);
             break;
         }
 
+        assert(entry.cursPos != -1_st);
+        assert(entry.cursLine != -1);
+        assert(entry.cursCol != -1);
+        m_cursorCharPos = entry.cursPos;
+        m_cursorLine = entry.cursLine;
+        m_cursorCol = entry.cursCol;
         m_isHighlightUpdateNeeded = true;
         scrollViewportToCursor();
         g_isRedrawNeeded = true;
@@ -1358,37 +1399,38 @@ void Buffer::deleteSelectedChars()
             m_history.add(BufferHistory::Entry{
                     .action=BufferHistory::Entry::Action::DeleteNormalSelection,
                     .values=deletedStr,
-                    .cursorPos=m_cursorCharPos,
-                    .selCursLine=m_cursorLine,
-                    .selCursCol=m_cursorCol,
+                    .cursPos=m_cursorCharPos,
+                    .cursLine=m_cursorLine,
+                    .cursCol=m_cursorCol,
                     .selBeginPos=m_selection.fromCharI,
                     .selBeginLine=m_selection.fromLine,
                     .selBeginCol=m_selection.fromCol,
-                    });
+            });
             break;
 
         case Selection::Mode::Line:
             m_history.add(BufferHistory::Entry{
                     .action=BufferHistory::Entry::Action::DeleteLineSelection,
                     .values=deletedStr,
-                    .cursorPos=m_cursorCharPos-m_cursorCol, // Calculate line beginning
-                    .selCursLine=m_cursorLine,
+                    .cursPos=m_cursorCharPos-m_cursorCol, // Calculate line beginning
+                    .cursLine=m_cursorLine,
+                    .cursCol=0,
                     .selBeginPos=m_selection.fromCharI-m_selection.fromCol, // Calculate line beginning
                     .selBeginLine=m_selection.fromLine,
-                    });
+            });
             break;
 
         case Selection::Mode::Block:
             m_history.add(BufferHistory::Entry{
                     .action=BufferHistory::Entry::Action::DeleteBlockSelection,
                     .values=deletedStr,
-                    .cursorPos=m_cursorCharPos,
-                    .selCursLine=m_cursorLine,
-                    .selCursCol=m_cursorCol,
+                    .cursPos=m_cursorCharPos,
+                    .cursLine=m_cursorLine,
+                    .cursCol=m_cursorCol,
                     .selBeginPos=m_selection.fromCharI,
                     .selBeginLine=m_selection.fromLine,
                     .selBeginCol=m_selection.fromCol,
-                    });
+            });
             break;
 
     }

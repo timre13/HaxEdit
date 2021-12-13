@@ -31,15 +31,15 @@ public:
             DeleteNormalSelection,
             DeleteLineSelection,
             DeleteBlockSelection,
-        } action{};
-        String values;
-        size_t cursorPos{};
+        }       action{};
+        String  values;
+        size_t  cursPos  = -1;
+        int     cursLine = -1;
+        int     cursCol  = -1;
         // Selection-only values
-        int selCursLine{};
-        int selCursCol{};
-        size_t selBeginPos{};
-        int selBeginLine{};
-        int selBeginCol{};
+        size_t  selBeginPos{};
+        int     selBeginLine{};
+        int     selBeginCol{};
     };
 
 private:
