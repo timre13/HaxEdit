@@ -34,8 +34,26 @@ void ImageBuffer::open(const std::string& filePath)
 
 void ImageBuffer::updateRStatusLineStr()
 {
-    m_statusLineStr.str = std::to_string((int)std::round(m_zoom*100.0f))+"%";
-    m_statusLineStr.maxLen = std::max((size_t)4, m_statusLineStr.str.length());
+    const int imgPW = m_image->getPhysicalSize().x;
+    const float zoomedW = imgPW*m_zoom;
+    const int imgX = m_position.x+m_size.x/2-zoomedW/2;
+    const int imgCursorX = (g_cursorX-imgX)/m_zoom;
+
+    const int imgPH = m_image->getPhysicalSize().y;
+    const float zoomedH = imgPH*m_zoom;
+    const int imgY = m_position.y+m_size.y/2-zoomedH/2;
+    const int imgCursorY = (g_cursorY-imgY)/m_zoom;
+
+    m_statusLineStr.str
+        = "W: "+std::to_string(m_image->getPhysicalSize().x)
+        + "  H: "+std::to_string(m_image->getPhysicalSize().y)
+        + " | "
+        + "Z: "+std::to_string((int)std::round(m_zoom*100.0f))+"%"
+        + " | "
+        + (imgCursorX < 0 || imgCursorX > imgPW || imgCursorY < 0 || imgCursorY > imgPW
+                ? ""
+                : "Cur: "+std::to_string(imgCursorX)+'x'+std::to_string(imgCursorY));
+    m_statusLineStr.maxLen = std::max((size_t)43, m_statusLineStr.str.length());
 }
 
 void ImageBuffer::render()
