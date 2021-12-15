@@ -56,7 +56,7 @@ public:
     virtual void render() override;
 
     virtual inline void moveCursor(CursorMovCmd) override {}
-    virtual inline void scrollBy(int) override {}
+    virtual inline void scrollBy(int val) override { zoomBy(val/100.0); }
     virtual inline void setReadOnly(bool) override {}
 
     virtual inline void zoomBy(float val)
