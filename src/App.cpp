@@ -594,9 +594,17 @@ void App::cursorPosCB(GLFWwindow* window, double x, double y)
             for (size_t i{}; i < g_tabs[g_currTabI]->getChildren().size(); ++i)
             {
                 const auto& child = g_tabs[g_currTabI]->getChildren()[i];
+
                 if (std::holds_alternative<std::unique_ptr<Buffer>>(child))
                 {
                     const auto& buffer = std::get<std::unique_ptr<Buffer>>(child);
+
+                    // Redraw on move when we have a visible `ImageBuffer`, so the cursor
+                    // position gets updated on the status bar
+                    if (dynamic_cast<ImageBuffer*>(buffer.get()))
+                    {
+                        g_isRedrawNeeded = true;
+                    }
 
                     // If the current split is being resized
                     if ((int)i == g_mouseHResSplitI)
