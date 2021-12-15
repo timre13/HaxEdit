@@ -50,6 +50,8 @@ void moveCursorToLineBeginning();
 void moveCursorToLineEnd();
 void moveCursorToLineBeginningAndEnterInsertMode();
 void moveCursorToLineEndAndEnterInsertMode();
+void putLineBreakAfterLineAndEnterInsertMode();
+void putLineBreakBeforeLineAndEnterInsertMode();
 
 void putEnter();
 void deleteCharBackwards();

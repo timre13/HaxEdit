@@ -99,6 +99,8 @@ void App::createAutocompleteProviders()
 
 void App::setupKeyBindings()
 {
+    Logger::dbg << "Setting up keybindings" << Logger::End;
+
     // `nmap`, 'imap' and `Callbacks` are from the `Bindings` namespace
     using namespace Bindings;
 
@@ -127,6 +129,8 @@ void App::setupKeyBindings()
         nmap.noMod[GLFW_KEY_ESCAPE]     = Callbacks::hideAutocompPopupOrEndSelection;
         nmap.noMod[GLFW_KEY_U]          = Callbacks::undoActiveBufferChange;
         nmap.noMod[GLFW_KEY_V]          = Callbacks::bufferStartNormalSelection;
+        nmap.noMod[GLFW_KEY_X]          = Callbacks::deleteCharForwardOrSelection;
+        nmap.noMod[GLFW_KEY_O]          = Callbacks::putLineBreakAfterLineAndEnterInsertMode;
 
         nmap.ctrl[GLFW_KEY_N]           = Callbacks::createBufferInNewTab;
         nmap.ctrl[GLFW_KEY_S]           = Callbacks::saveCurrentBuffer;
@@ -154,6 +158,7 @@ void App::setupKeyBindings()
         nmap.shift[GLFW_KEY_V]          = Callbacks::bufferStartLineSelection;
         nmap.shift[GLFW_KEY_I]          = Callbacks::moveCursorToLineBeginningAndEnterInsertMode;
         nmap.shift[GLFW_KEY_A]          = Callbacks::moveCursorToLineEndAndEnterInsertMode;
+        nmap.shift[GLFW_KEY_O]          = Callbacks::putLineBreakBeforeLineAndEnterInsertMode;
     }
 
 

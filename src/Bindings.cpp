@@ -446,6 +446,30 @@ void moveCursorToLineEndAndEnterInsertMode()
     g_editorMode.set(EditorMode::_EditorMode::Insert);
 }
 
+void putLineBreakAfterLineAndEnterInsertMode()
+{
+    if (g_activeBuff)
+    {
+        g_activeBuff->moveCursor(Buffer::CursorMovCmd::LineEnd);
+        g_activeBuff->updateCursor();
+        g_activeBuff->insert('\n');
+        g_editorMode.set(EditorMode::_EditorMode::Insert);
+    }
+}
+
+void putLineBreakBeforeLineAndEnterInsertMode()
+{
+    if (g_activeBuff)
+    {
+        g_activeBuff->moveCursor(Buffer::CursorMovCmd::LineBeginning);
+        g_activeBuff->updateCursor();
+        g_activeBuff->insert('\n');
+        g_activeBuff->moveCursor(Buffer::CursorMovCmd::Up);
+        g_activeBuff->updateCursor();
+        g_editorMode.set(EditorMode::_EditorMode::Insert);
+    }
+}
+
 void putEnter()
 {
     App::windowCharCB(nullptr, '\n');
