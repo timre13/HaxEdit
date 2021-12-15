@@ -74,8 +74,15 @@ void ImageBuffer::render()
             1
     );
 
-    const float zoomedW = m_image->getPhysicalSize().x*m_zoom;
-    const float zoomedH = m_image->getPhysicalSize().y*m_zoom;
+    const int imgPW = m_image->getPhysicalSize().x;
+    const float zoomedW = imgPW*m_zoom;
+    const int imgX = m_position.x+m_size.x/2-zoomedW/2;
+    const int imgCursorX = (g_cursorX-imgX)/m_zoom;
+
+    const int imgPH = m_image->getPhysicalSize().y;
+    const float zoomedH = imgPH*m_zoom;
+    const int imgY = m_position.y+m_size.y/2-zoomedH/2;
+    const int imgCursorY = (g_cursorY-imgY)/m_zoom;
 
     // Fill transparent part of image
     g_uiRenderer->renderFilledRectangle(
@@ -95,6 +102,22 @@ void ImageBuffer::render()
              m_position.y+m_size.y/2-zoomedH/2},
             {zoomedW, zoomedH});
     glDisable(GL_SCISSOR_TEST);
+
+    // If the cursor is inside the image
+    if (imgCursorX >= 0 && imgCursorX < imgPW && imgCursorY >= 0 && imgCursorY < imgPW)
+    {
+        // Render a border around the hovered pixel
+        g_uiRenderer->renderRectangleOutline(
+                {imgX+int(imgCursorX)*m_zoom,        imgY+int(imgCursorY)*m_zoom},
+                {imgX+int(imgCursorX)*m_zoom+m_zoom, imgY+int(imgCursorY)*m_zoom+m_zoom},
+                {1, 1, 1, 1},
+                1);
+        g_uiRenderer->renderRectangleOutline(
+                {imgX+int(imgCursorX)*m_zoom+1,        imgY+int(imgCursorY)*m_zoom+1},
+                {imgX+int(imgCursorX)*m_zoom+1+m_zoom, imgY+int(imgCursorY)*m_zoom+1+m_zoom},
+                {0, 0, 0, 1},
+                1);
+    }
 
     TIMER_END_FUNC();
 }
