@@ -14,6 +14,7 @@ GLFWwindow* App::createWindow()
     {
         Logger::fatal << "Failed to create window" << Logger::End;
     }
+    glfwSetWindowSizeLimits(window, 200, 100, GLFW_DONT_CARE, GLFW_DONT_CARE);
     glfwSetWindowSizeCallback(window, App::windowResizeCB);
     glfwSetWindowRefreshCallback(window, App::windowRefreshCB);
     glfwSetKeyCallback(window, App::windowKeyCB);
