@@ -787,18 +787,34 @@ void Buffer::render()
 
                 if ((m_cursorMovCmd != CursorMovCmd::None || m_isCursorShown) && charI == m_cursorCharPos)
                 {
+                    RGBColor cursColor{};
+                    switch (g_editorMode.get())
+                    {
+                    case EditorMode::_EditorMode::Normal:
+                        cursColor = {0.2f, 0.4f, 1.0f};
+                        break;
+
+                    case EditorMode::_EditorMode::Insert:
+                        cursColor = {0.0f, 1.0f, 0.0f};
+                        break;
+
+                    case EditorMode::_EditorMode::Replace:
+                        cursColor = {1.0f, 0.0f, 0.0f};
+                        break;
+                    }
+
                     if (g_editorMode.get() == EditorMode::_EditorMode::Normal || m_isDimmed)
                     {
                         g_uiRenderer->renderRectangleOutline(
                                 {textX-2, initTextY+textY-m_scrollY-m_position.y-2},
                                 {textX+width+2, initTextY+textY-m_scrollY-m_position.y+g_fontSizePx+2},
-                                {1.0f, 0.0f, 0.0f},
+                                {UNPACK_RGB_COLOR(cursColor), 1.0f},
                                 2
                         );
                         g_uiRenderer->renderFilledRectangle(
                                 {textX-2, initTextY+textY-m_scrollY-m_position.y-2},
                                 {textX+width+2, initTextY+textY-m_scrollY-m_position.y+g_fontSizePx+2},
-                                {1.0f, 0.0f, 0.0f, 0.4f}
+                                {UNPACK_RGB_COLOR(cursColor), 0.4f}
                         );
                     }
                     else if (g_editorMode.get() == EditorMode::_EditorMode::Replace)
@@ -806,7 +822,7 @@ void Buffer::render()
                         g_uiRenderer->renderFilledRectangle(
                                 {textX-2,       initTextY+textY-m_scrollY-m_position.y+g_fontSizePx-2},
                                 {textX+width+2, initTextY+textY-m_scrollY-m_position.y+g_fontSizePx+2},
-                                {1.0f, 0.0f, 0.0f, 1.0f}
+                                {UNPACK_RGB_COLOR(cursColor), 1.0f}
                         );
                     }
                     else
@@ -814,7 +830,7 @@ void Buffer::render()
                         g_uiRenderer->renderFilledRectangle(
                                 {textX-1, initTextY+textY-m_scrollY-m_position.y-2},
                                 {textX+1, initTextY+textY-m_scrollY-m_position.y+g_fontSizePx+2},
-                                {1.0f, 0.0f, 0.0f}
+                                {UNPACK_RGB_COLOR(cursColor), 0.4f}
                         );
                     }
 
