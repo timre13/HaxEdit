@@ -928,6 +928,30 @@ void Buffer::render()
             g_textRenderer->setDrawingColor(charColor);
             advance = g_textRenderer->renderChar(c, {textX, textY}, charStyle).advance;
 
+
+#if DRAW_INDENT_RAINBOW
+            // Render indent rainbow
+            static constexpr int indentColorCount = 6;
+            static constexpr RGBAColor indentColors[indentColorCount]{
+                {1.0f, 0.7f, 0.0f, 0.1f},
+                {1.0f, 1.0f, 0.0f, 0.1f},
+                {0.0f, 0.5f, 0.0f, 0.1f},
+                {0.0f, 0.0f, 1.0f, 0.1f},
+                {0.3f, 0.0f, 0.5f, 0.1f},
+                {0.9f, 0.5f, 0.9f, 0.1f}
+            };
+            if (TAB_SPACE_COUNT > 0 && isLeadingSpace)
+            {
+                g_uiRenderer->renderFilledRectangle(
+                        {textX,            initTextY+textY-m_scrollY-m_position.y+2},
+                        {textX+advance/64, initTextY+textY-m_scrollY-m_position.y+2+g_fontSizePx},
+                        indentColors[colI/TAB_SPACE_COUNT%indentColorCount]
+                );
+                g_textRenderer->prepareForDrawing();
+            }
+#endif
+
+
             drawCursorIfNeeded(advance/64.f);
             drawCharSelectionMarkIfNeeded(advance/64.f);
         }
