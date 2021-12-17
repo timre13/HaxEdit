@@ -898,6 +898,15 @@ void Buffer::render()
         case '\t': // Tab
             drawCursorIfNeeded(g_fontSizePx*4*0.7f);
             drawCharSelectionMarkIfNeeded(g_fontSizePx*4*0.7f);
+            // Draw a horizontal line to mark the character
+            g_uiRenderer->renderFilledRectangle(
+                    {textX+g_fontSizePx*0.3f,
+                     initTextY+textY-m_scrollY-m_position.y+g_fontSizePx/2.0f+2},
+                    {textX+g_fontSizePx*0.3f+(g_fontSizePx*0.7f)*4-g_fontSizePx*0.6f,
+                     initTextY+textY-m_scrollY-m_position.y+g_fontSizePx/2.0f+4},
+                    {0.8f, 0.8f, 0.8f, 0.2f}
+            );
+            g_textRenderer->prepareForDrawing();
             textX += g_fontSizePx*0.7f*4;
             ++colI;
             continue;
