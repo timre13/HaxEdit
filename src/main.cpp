@@ -13,6 +13,8 @@ int main(int argc, char** argv)
         Logger::fatal << "Failed to initialize GLFW" << Logger::End;
     }
 
+    double appStartTime = glfwGetTime();
+
     g_window = App::createWindow();
     Logger::dbg << "Created GLFW window" << Logger::End;
 
@@ -69,7 +71,9 @@ int main(int argc, char** argv)
         }
     };
 
-    g_statMsg.set("Welcome to HaxorEdit!");
+    g_statMsg.set("Welcome to HaxorEdit!\t"
+            "(Launched in "+std::to_string(glfwGetTime()-appStartTime)+"s"
+            ", loaded "+std::to_string(g_tabs.size())+" files)");
 
     float framesUntilCursorBlinking = CURSOR_BLINK_FRAMES;
     while (!glfwWindowShouldClose(g_window))
