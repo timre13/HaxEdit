@@ -69,9 +69,13 @@ int main(int argc, char** argv)
         }
     };
 
+    g_statMsg.set("Welcome to HaxorEdit!");
+
     float framesUntilCursorBlinking = CURSOR_BLINK_FRAMES;
     while (!glfwWindowShouldClose(g_window))
     {
+        double startTime = glfwGetTime();
+
         glfwPollEvents();
 
         if (CURSOR_BLINK_FRAMES >= 0 && framesUntilCursorBlinking <= 0 && g_activeBuff)
@@ -108,7 +112,9 @@ int main(int argc, char** argv)
         }
 
         glfwSwapBuffers(g_window);
+        double frameTime = glfwGetTime()-startTime;
         --framesUntilCursorBlinking;
+        g_statMsg.tick(frameTime);
     }
 
     Logger::log << "Shutting down!" << Logger::End;

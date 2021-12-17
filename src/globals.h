@@ -3,6 +3,7 @@
 #include "glstuff.h"
 #include "config.h"
 #include "modes.h"
+#include "StatusMsg.h"
 #include "autocomp/DictionaryProvider.h"
 
 class Dialog;
@@ -53,6 +54,7 @@ std::unique_ptr<Autocomp::DictionaryProvider> dictProvider;
 }
 
 EditorMode g_editorMode;
+StatusMsg g_statMsg;
 
 #else // ----------------------------------------------------------------------
 
@@ -90,5 +92,6 @@ extern std::unique_ptr<Autocomp::DictionaryProvider> dictProvider;
 }
 
 extern EditorMode g_editorMode;
+extern StatusMsg g_statMsg;
 
 #endif

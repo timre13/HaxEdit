@@ -210,11 +210,15 @@ void App::renderStatusLine()
             {winW, winH},
             RGB_COLOR_TO_RGBA(STATUSBAR_BG_COLOR));
 
+    std::string leftStr;
+    if (g_statMsg.isEmpty())
+        leftStr = g_activeBuff->m_filePath+(g_activeBuff->m_isReadOnly ? " [RO]" : "");
 
-    const std::string leftStr = g_activeBuff->m_filePath+(g_activeBuff->m_isReadOnly ? " [RO]" : "");
     g_textRenderer->renderString(
-            leftStr,
-            {0, winH-g_fontSizePx-4});
+            g_statMsg.isEmpty() ? leftStr : g_statMsg.get(),
+            {g_statMsg.isEmpty() ? 0 : g_fontSizePx*4, winH-g_fontSizePx-4},
+            g_statMsg.isEmpty() ? FontStyle::Regular : FontStyle::BoldItalic,
+            g_statMsg.isEmpty() ? RGBColor{1.0f, 1.0f, 1.0f} : RGBColor{0.3f, 1.0f, 0.5f});
 
     g_activeBuff->updateRStatusLineStr();
     assert(g_activeBuff->m_statusLineStr.maxLen > 0);
