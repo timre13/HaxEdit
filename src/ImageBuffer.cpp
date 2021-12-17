@@ -23,10 +23,13 @@ void ImageBuffer::open(const std::string& filePath)
     {
         // TODO: Show reason
         Logger::err << "Failed to open image file: " << quoteStr(filePath) << Logger::End;
+        g_statMsg.set("Failed to open image file: "+quoteStr(filePath));
         MessageDialog::create(Dialog::EMPTY_CB, nullptr,
                 "Failed to open image file: "+quoteStr(filePath),
                 MessageDialog::Type::Error);
     }
+
+    g_statMsg.set("Opened image file: "+quoteStr(filePath));
 
     glfwSetCursor(g_window, nullptr);
     TIMER_END_FUNC();
