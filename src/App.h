@@ -36,6 +36,7 @@ public:
     static UiRenderer* createUiRenderer();
     static std::unique_ptr<Image> loadProgramIcon();
     static void loadCursors();
+    static void loadSignImages();
     static FileTypeHandler* createFileTypeHandler();
     static void createAutocompleteProviders();
     static void setupKeyBindings();

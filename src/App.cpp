@@ -82,10 +82,17 @@ std::unique_ptr<Image> App::loadProgramIcon()
 
 void App::loadCursors()
 {
+    Logger::dbg << "Loading cursors" << Logger::End;
+
     GLFWimage image;
     image.pixels = stbi_load("../img/busy_cursor.png", &image.width, &image.height, nullptr, 4);
     Cursors::busy = glfwCreateCursor(&image, 0, 0);
     stbi_image_free(image.pixels); // glfwCreateCursor() copies the data, so free the original
+}
+
+void App::loadSignImages()
+{
+    loadSigns();
 }
 
 FileTypeHandler* App::createFileTypeHandler()

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="512"
+   height="512"
+   viewBox="0 0 135.46666 135.46666"
+   version="1.1"
+   id="svg8"
+   inkscape:version="1.0.2 (e86c870879, 2021-01-15)"
+   sodipodi:docname="git_mod.svg"
+   inkscape:export-filename="/home/mike/programming/cpp/opengl_text_editor/img/signs/git_mod.png"
+   inkscape:export-xdpi="3.0000002"
+   inkscape:export-ydpi="3.0000002">
+  <defs
+     id="defs2" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.4"
+     inkscape:cx="247.39186"
+     inkscape:cy="213.39592"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer1"
+     inkscape:document-rotation="0"
+     showgrid="false"
+     units="px"
+     inkscape:pagecheckerboard="true"
+     borderlayer="false"
+     showborder="true"
+     inkscape:window-width="1916"
+     inkscape:window-height="1058"
+     inkscape:window-x="1920"
+     inkscape:window-y="20"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       aria-label="~"
+       id="text2104"
+       style="font-size:38.1px;line-height:1.25;font-family:FreeMono;-inkscape-font-specification:FreeMono;letter-spacing:0px;word-spacing:0px;stroke-width:0.264583"
+       transform="matrix(12.659302,0,0,12.659302,-168.48031,-374.49788)" />
+    <text
+       xml:space="preserve"
+       style="font-size:10.5833px;line-height:1.25;font-family:FreeSans;-inkscape-font-specification:FreeSans;letter-spacing:0px;word-spacing:0px;stroke-width:0.264583;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;"
+       x="59.859924"
+       y="72.849831"
+       id="text2111"><tspan
+         sodipodi:role="line"
+         id="tspan2109"
+         x="59.859924"
+         y="72.849831"
+         style="stroke-width:0.264583;-inkscape-font-specification:FreeSans;font-family:FreeSans;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;" /></text>
+    <g
+       aria-label="~"
+       id="text2115"
+       style="font-size:303.868px;line-height:1.25;font-family:FreeMono;-inkscape-font-specification:FreeMono;letter-spacing:0px;word-spacing:0px;fill:#ffd42a;stroke:#aa8800;stroke-width:3.79487"
+       transform="matrix(1.040416,0,0,1.040416,-6.8384909,8.3811158)">
+      <path
+         d="m 97.807657,65.287638 c 10.847773,-1.089293 17.850693,-9.879461 24.005573,-17.624345 3.02914,-3.93186 7.2612,-7.831529 11.24312,-3.950284 1.21547,1.012893 1.8232,2.329655 1.8232,3.950284 0,3.848995 -4.15286,9.825066 -12.45858,17.928213 -8.30573,8.103147 -16.2063,12.15472 -23.701709,12.15472 C 76.391463,77.817026 62.194189,49.951502 44.934623,48.878765 31.858654,49.554314 27.598414,60.801995 20.625182,68.630186 17.219229,71.894726 13.775637,73.858082 10.29367,70.453394 9.0781977,69.237922 8.4704616,67.921161 8.4704616,66.50311 c 0,-3.443838 3.8489944,-9.31862 11.5469844,-17.624345 C 27.715435,40.57304 36.021161,36.420177 44.934623,36.420177 67.72936,34.672259 78.253152,64.760006 97.807657,65.287638 Z"
+         style="font-size:303.868px;fill:#ffd42a;stroke:#aa8800;stroke-width:3.79487"
+         id="path2117"
+         sodipodi:nodetypes="cccssccccsscc" />
+    </g>
+  </g>
+</svg>

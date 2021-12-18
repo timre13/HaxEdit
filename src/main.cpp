@@ -27,6 +27,7 @@ int main(int argc, char** argv)
     App::setupKeyBindings();
 
     App::loadCursors();
+    App::loadSignImages();
 
     glClear(GL_COLOR_BUFFER_BIT);
     glClearColor(UNPACK_RGB_COLOR(BG_COLOR), 1.0f);

@@ -740,6 +740,20 @@ void Buffer::render()
 
             // Reset color
             g_textRenderer->setDrawingColor({1.0f, 1.0f, 1.0f});
+
+
+            for (const auto& pair : m_signs)
+            {
+                // If there is a sign in the current line
+                if (pair.first == lineI)
+                {
+                    // Render the sign
+                    signImages[(int)pair.second]->render(
+                            {m_position.x+LINEN_BAR_WIDTH*g_fontSizePx-16*(getSignColumn(pair.second)+1), textY},
+                            {16, 16});
+                    g_textRenderer->prepareForDrawing();
+                }
+            }
         }
 
         // Render the cursor line highlight

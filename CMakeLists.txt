@@ -53,6 +53,7 @@ add_executable(haxed
     src/Bindings.cpp
     src/UiRenderer.cpp
     src/TextRenderer.cpp
+    src/signs.cpp
     src/Buffer.cpp
     src/ImageBuffer.cpp
     src/Split.cpp

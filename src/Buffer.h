@@ -11,6 +11,7 @@
 #include "Logger.h"
 #include "globals.h"
 #include "Syntax.h"
+#include "signs.h"
 #include "autocomp/Popup.h"
 
 namespace std_fs = std::filesystem;
@@ -161,6 +162,9 @@ protected:
     std::unique_ptr<Autocomp::Popup> m_autocompPopup;
 
     Selection m_selection{};
+
+    // Line number : Sign
+    std::vector<std::pair<int, Sign>> m_signs;
 
     virtual void renderAutocompPopup();
 
