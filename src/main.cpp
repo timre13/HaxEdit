@@ -101,9 +101,9 @@ int main(int argc, char** argv)
             else
             {
                 App::renderBuffers();
-                App::renderStatusLine();
                 App::renderTabLine();
             }
+            App::renderStatusLine();
             App::renderDialogs();
 
             g_isRedrawNeeded = false;

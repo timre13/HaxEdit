@@ -199,7 +199,7 @@ void App::renderBuffers()
 
 void App::renderStatusLine()
 {
-    if (!g_activeBuff)
+    if (!g_activeBuff && g_statMsg.isEmpty())
         return;
 
     const int winW = g_textRenderer->getWindowWidth();
@@ -220,14 +220,17 @@ void App::renderStatusLine()
             g_statMsg.isEmpty() ? FontStyle::Regular : FontStyle::BoldItalic,
             g_statMsg.isEmpty() ? RGBColor{1.0f, 1.0f, 1.0f} : RGBColor{0.3f, 1.0f, 0.5f});
 
-    g_activeBuff->updateRStatusLineStr();
-    assert(g_activeBuff->m_statusLineStr.maxLen > 0);
-    g_textRenderer->renderString(
-            g_activeBuff->m_statusLineStr.str,
-            {winW-g_fontSizePx*g_activeBuff->m_statusLineStr.maxLen*0.7f,
-             winH-g_fontSizePx-4},
-             FontStyle::Regular,
-             g_activeBuff->isSelectionInProgress() ? RGBColor{0.3f, 0.9f, 0.6f} : RGBColor{1.f, 1.f, 1.f});
+    if (g_activeBuff)
+    {
+        g_activeBuff->updateRStatusLineStr();
+        assert(g_activeBuff->m_statusLineStr.maxLen > 0);
+        g_textRenderer->renderString(
+                g_activeBuff->m_statusLineStr.str,
+                {winW-g_fontSizePx*g_activeBuff->m_statusLineStr.maxLen*0.7f,
+                 winH-g_fontSizePx-4},
+                 FontStyle::Regular,
+                 g_activeBuff->isSelectionInProgress() ? RGBColor{0.3f, 0.9f, 0.6f} : RGBColor{1.f, 1.f, 1.f});
+    }
 }
 
 void App::renderTabLine()
