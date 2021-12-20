@@ -1,6 +1,7 @@
 #include "Git.h"
 #include "Logger.h"
 #include <cassert>
+#include <algorithm>
 
 namespace Git
 {
@@ -57,6 +58,7 @@ static int lineDiffCallback(const git_diff_delta*, const git_diff_hunk*, const g
 
     static bool isFileToDiff = false;
     static std::string currentFile;
+    static std::vector<int> changedLines{};
 
     if (line->origin == 'F')
     {
@@ -75,6 +77,7 @@ static int lineDiffCallback(const git_diff_delta*, const git_diff_hunk*, const g
         {
             Logger::dbg << "End of file to diff, exiting" << Logger::End;
             isFileToDiff = false;
+            changedLines.clear();
             return 1;
         }
     }
@@ -82,9 +85,23 @@ static int lineDiffCallback(const git_diff_delta*, const git_diff_hunk*, const g
     {
         const int changedLine = (line->origin == '+' ? line->new_lineno : line->old_lineno);
         assert(changedLine != -1);
-        Logger::dbg << (line->origin == '+' ? "New" : "Deleted") << " line: " << changedLine << Logger::End;
-        const ChangeType changeType = (line->origin == '+' ? ChangeType::Add : ChangeType::Delete);
-        output->push_back({changedLine, changeType});
+        if (std::find(changedLines.begin(), changedLines.end(), changedLine) != changedLines.end())
+        {
+            Logger::dbg << "Modified line: " << changedLine << Logger::End;
+            auto found = std::find_if(output->begin(), output->end(),
+                    [&](std::pair<int, ChangeType> x){ return x.first == changedLine; }
+            );
+            *found = std::pair<int, ChangeType>{found->first, ChangeType::Modify};
+        }
+        else
+        {
+            ChangeType changeType;
+            Logger::dbg << (line->origin == '+' ? "New" : "Deleted")
+                << " line: " << changedLine << Logger::End;
+            changeType = (line->origin == '+' ? ChangeType::Add : ChangeType::Delete);
+            output->push_back({changedLine, changeType});
+            changedLines.push_back(changedLine);
+        }
     }
     return 0;
 }

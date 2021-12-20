@@ -452,9 +452,10 @@ void Buffer::_updateHighlighting()
 
 void Buffer::updateGitDiff()
 {
+    const std::string relPath = m_filePath.substr(m_gitRepo->getRepoRoot().size());
     Logger::dbg << "Git repo root: " << m_gitRepo->getRepoRoot()
-        << "\n       file path relative to root: " << m_filePath << Logger::End;
-    auto diff = m_gitRepo->getDiff(m_filePath.substr(m_gitRepo->getRepoRoot().size()));
+        << "\n       file path relative to root: " << relPath << Logger::End;
+    auto diff = m_gitRepo->getDiff(relPath);
     for (const auto& pair : diff)
     {
         Sign sign;
