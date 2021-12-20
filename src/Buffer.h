@@ -12,6 +12,7 @@
 #include "globals.h"
 #include "Syntax.h"
 #include "signs.h"
+#include "Git.h"
 #include "autocomp/Popup.h"
 
 namespace std_fs = std::filesystem;
@@ -165,6 +166,7 @@ protected:
 
     // Line number : Sign
     std::vector<std::pair<int, Sign>> m_signs;
+    std::unique_ptr<Git::Repo> m_gitRepo;
 
     virtual void renderAutocompPopup();
 
@@ -176,6 +178,7 @@ protected:
     virtual void deleteSelectedChars();
 
     virtual void _updateHighlighting();
+    virtual void updateGitDiff();
 
     friend class App;
 

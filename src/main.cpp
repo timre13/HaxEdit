@@ -26,6 +26,7 @@ int main(int argc, char** argv)
 
     App::setupKeyBindings();
 
+    App::initGit();
     App::loadCursors();
     App::loadSignImages();
 
@@ -128,6 +129,7 @@ int main(int argc, char** argv)
     // Last thing to do, we keep alive the window while cleaning up buffers
     glfwDestroyWindow(g_window);
     glfwTerminate();
+    Git::shutdown();
     return 0;
 }
 

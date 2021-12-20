@@ -21,7 +21,7 @@ find_library(ICUDATA_LIB icudata REQUIRED)
 find_library(ICUIO_LIB icuio  REQUIRED)
 find_library(ICUI18N_LIB icui18n  REQUIRED)
 
-link_libraries(GLEW GL glfw freetype ${ICUUC_LIB} ${ICUDATA_LIB} ${ICUIO_LIB} ${ICUI18N_LIB})
+link_libraries(GLEW GL glfw freetype ${ICUUC_LIB} ${ICUDATA_LIB} ${ICUIO_LIB} ${ICUI18N_LIB} git2)
 
 
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic -g3 -pthread")
@@ -66,5 +66,6 @@ add_executable(haxed
     src/SessionHandler.cpp
     src/autocomp/Popup.cpp
     src/autocomp/DictionaryProvider.cpp
+    src/Git.cpp
     external/cJSON/cJSON.c
 )

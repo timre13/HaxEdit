@@ -1,6 +1,7 @@
 #include "App.h"
 #include "Bindings.h"
 #include "../external/stb/stb_image.h"
+#include "Git.h"
 
 #define BUFFER_RESIZE_MAX_CURS_DIST 10
 
@@ -193,6 +194,11 @@ void App::setupKeyBindings()
 
     // Start in normal mode
     g_editorMode.set(EditorMode::_EditorMode::Normal);
+}
+
+void App::initGit()
+{
+    Git::init();
 }
 
 void App::renderBuffers()

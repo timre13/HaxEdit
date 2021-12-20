@@ -57,6 +57,8 @@ void Buffer::open(const std::string& filePath)
     m_filePath = filePath;
     m_isReadOnly = false;
     m_history.clear();
+    m_gitRepo.reset();
+    m_signs.clear();
     Logger::dbg << "Opening file: " << filePath << Logger::End;
 
     try
@@ -65,6 +67,8 @@ void Buffer::open(const std::string& filePath)
         m_highlightBuffer = std::u8string(m_content.length(), Syntax::MARK_NONE);
         m_isHighlightUpdateNeeded = true;
         m_numOfLines = strCountLines(m_content);
+        m_gitRepo = std::make_unique<Git::Repo>(filePath);
+        updateGitDiff();
 
         Logger::dbg << "Read "
             << m_content.length() << " characters ("
@@ -87,6 +91,8 @@ void Buffer::open(const std::string& filePath)
         m_highlightBuffer.clear();
         m_isHighlightUpdateNeeded = true;
         m_numOfLines = 0;
+        m_gitRepo.reset();
+        m_signs.clear();
 
         Logger::err << "Failed to open file: " << quoteStr(filePath) << ": " << e.what() << Logger::End;
         g_statMsg.set("Failed to open file: "+quoteStr(filePath)+": "+e.what());
@@ -150,6 +156,7 @@ int Buffer::saveToFile()
 
     m_isModified = false;
     m_isReadOnly = false;
+    updateGitDiff();
 
     TIMER_END_FUNC();
     return 0;
@@ -441,6 +448,25 @@ void Buffer::_updateHighlighting()
     Logger::log(Logger::End);
 
     g_isRedrawNeeded = true;
+}
+
+void Buffer::updateGitDiff()
+{
+    Logger::dbg << "Git repo root: " << m_gitRepo->getRepoRoot()
+        << "\n       file path relative to root: " << m_filePath << Logger::End;
+    auto diff = m_gitRepo->getDiff(m_filePath.substr(m_gitRepo->getRepoRoot().size()));
+    for (const auto& pair : diff)
+    {
+        Sign sign;
+        switch (pair.second)
+        {
+        case Git::ChangeType::Add: sign = Sign::GitAdd; break;
+        case Git::ChangeType::Delete: sign = Sign::GitRemove; break;
+        case Git::ChangeType::Modify: sign = Sign::GitModify; break;
+        default: assert(false);
+        }
+        m_signs.push_back({pair.first, sign});
+    }
 }
 
 void Buffer::updateCursor()

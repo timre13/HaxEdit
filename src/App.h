@@ -40,6 +40,7 @@ public:
     static FileTypeHandler* createFileTypeHandler();
     static void createAutocompleteProviders();
     static void setupKeyBindings();
+    static void initGit();
 
     // ----- Renderer functions -----
     static void renderBuffers();
