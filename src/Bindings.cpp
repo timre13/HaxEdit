@@ -282,6 +282,7 @@ void openPathAtCursor()
             g_activeBuff = buffer;
             ++g_currTabI; // Go to the current buffer
         }
+        g_isTitleUpdateNeeded = true;
         g_isRedrawNeeded = true;
     }
 }
