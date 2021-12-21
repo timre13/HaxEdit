@@ -42,9 +42,16 @@ void runBinding(int mods, int key)
     case GLFW_MOD_SHIFT:                    func = bindingsP->shift[key]; break;
     default: break;
     }
+
     if (func)
     {
         func();
+    }
+    else if (!(g_editorMode.get() == EditorMode::_EditorMode::Insert
+                && (mods == GLFW_MOD_SHIFT || mods == 0)))
+    {
+        g_statMsg.set("Not bound", StatusMsg::Type::Error);
+        g_isRedrawNeeded = true;
     }
 }
 
