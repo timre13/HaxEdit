@@ -219,16 +219,19 @@ void FileDialog::handleKey(int key, int mods)
         return;
     }
 
-    if (key == GLFW_KEY_UP)
+    switch (key)
     {
+    case GLFW_KEY_UP:
+    case GLFW_KEY_K:
         selectPrevFile();
-    }
-    else if (key == GLFW_KEY_DOWN)
-    {
+        break;
+
+    case GLFW_KEY_DOWN:
+    case GLFW_KEY_J:
         selectNextFile();
-    }
-    else if (key == GLFW_KEY_ENTER)
-    {
+        break;
+
+    case GLFW_KEY_ENTER:
         if (!m_fileList.empty() && m_fileList[m_selectedFileI]->name == ".")
         {
             Logger::dbg << "FileDialog: Selected a directory" << Logger::End;
@@ -255,9 +258,9 @@ void FileDialog::handleKey(int key, int mods)
             genFileList();
             recalculateDimensions();
         }
-    }
-    else if (key == GLFW_KEY_S)
-    {
+        break;
+
+    case GLFW_KEY_S:
         if (!m_fileList.empty() && m_fileList[m_selectedFileI]->name == ".")
         {
             Logger::dbg << "FileDialog: Selected a directory" << Logger::End;
@@ -273,5 +276,6 @@ void FileDialog::handleKey(int key, int mods)
                 m_callback(OPENMODE_SPLIT, this, m_cbUserData);
             m_isClosed = true;
         }
+        break;
     }
 }
