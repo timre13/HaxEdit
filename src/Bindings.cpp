@@ -17,6 +17,22 @@ namespace Bindings
 
 void runBinding(int mods, int key)
 {
+    switch (key)
+    {
+    case GLFW_KEY_CAPS_LOCK:
+    case GLFW_KEY_SCROLL_LOCK:
+    case GLFW_KEY_NUM_LOCK:
+    case GLFW_KEY_LEFT_SHIFT:
+    case GLFW_KEY_LEFT_CONTROL:
+    case GLFW_KEY_LEFT_ALT:
+    case GLFW_KEY_LEFT_SUPER:
+    case GLFW_KEY_RIGHT_SHIFT:
+    case GLFW_KEY_RIGHT_CONTROL:
+    case GLFW_KEY_RIGHT_ALT:
+    case GLFW_KEY_RIGHT_SUPER:
+        return; // Ignore modifier presses
+    }
+
     BindingMapSet::bindingFunc_t func;
     switch (mods)
     {
