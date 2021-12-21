@@ -80,6 +80,7 @@ void bufferStartBlockSelection();
 
 void bufferPasteClipboard();
 void bufferCopySelectionToClipboard();
+void bufferCutSelectionToClipboard();
 
 }
 

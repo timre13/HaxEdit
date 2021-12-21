@@ -159,6 +159,7 @@ void App::setupKeyBindings()
         nmap.ctrl[GLFW_KEY_ENTER]       = Callbacks::openPathAtCursor;
         nmap.ctrl[GLFW_KEY_V]           = Callbacks::bufferStartBlockSelection;
         nmap.ctrl[GLFW_KEY_R]           = Callbacks::redoActiveBufferChange;
+        nmap.ctrl[GLFW_KEY_X]           = Callbacks::bufferCutSelectionToClipboard;
 
         nmap.ctrlShift[GLFW_KEY_S]      = Callbacks::saveCurrentBufferAs;
         nmap.ctrlShift[GLFW_KEY_TAB]    = Callbacks::goToPrevSplit;

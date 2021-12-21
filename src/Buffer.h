@@ -325,7 +325,8 @@ public:
     virtual bool isCharSelected(int lineI, int colI, size_t charI) const;
 
     virtual void pasteFromClipboard();
-    virtual void copySelectionToClipboard();
+    virtual size_t copySelectionToClipboard(bool shouldUnselect=true);
+    virtual void cutSelectionToClipboard();
 
     virtual ~Buffer();
 };

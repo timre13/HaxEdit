@@ -710,10 +710,10 @@ void Buffer::pasteFromClipboard()
     }
 }
 
-void Buffer::copySelectionToClipboard()
+size_t Buffer::copySelectionToClipboard(bool shouldUnselect/*=true*/)
 {
     if (m_selection.mode == Selection::Mode::None)
-        return;
+        return 0;
 
     // Note: Mostly copied from `deleteSelectedChars()`
 
@@ -758,17 +758,28 @@ void Buffer::copySelectionToClipboard()
         assert((c & 0b10000000) == 0); // Detect non-ASCII chars
         _toCopy += c;
     }
+    Logger::dbg << "Copying: " << quoteStr(_toCopy) << Logger::End;
 
     Clipboard::set(_toCopy);
 
-    m_selection.mode = Selection::Mode::None; // Cancel the selection
+    if (shouldUnselect)
+        m_selection.mode = Selection::Mode::None; // Cancel the selection
     m_isCursorShown = true;
     scrollViewportToCursor();
 
     g_statMsg.set("Copied text to clipboard ("+std::to_string(_toCopy.size())+" chars)",
             StatusMsg::Type::Info);
 
-    g_isRedrawNeeded = true;
+    return toCopy.size();
+}
+
+void Buffer::cutSelectionToClipboard()
+{
+    const size_t selLen = copySelectionToClipboard(false);
+    deleteSelectedChars();
+
+    g_statMsg.set("Moved text to clipboard ("+std::to_string(selLen)+" chars)",
+            StatusMsg::Type::Info);
 }
 
 void Buffer::render()

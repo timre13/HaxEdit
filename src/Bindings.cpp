@@ -695,6 +695,14 @@ void bufferCopySelectionToClipboard()
     g_activeBuff->copySelectionToClipboard();
 }
 
+void bufferCutSelectionToClipboard()
+{
+    if (!g_activeBuff)
+        return;
+
+    g_activeBuff->cutSelectionToClipboard();
+}
+
 } // Namespace Callbacks
 
 BindingMapSet nmap = {};
