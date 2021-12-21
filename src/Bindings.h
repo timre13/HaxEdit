@@ -78,6 +78,9 @@ void bufferStartNormalSelection();
 void bufferStartLineSelection();
 void bufferStartBlockSelection();
 
+void bufferPasteClipboard();
+void bufferCopySelectionToClipboard();
+
 }
 
 extern BindingMapSet nmap; // Normal mode mapping

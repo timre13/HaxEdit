@@ -140,6 +140,8 @@ void App::setupKeyBindings()
         nmap.noMod[GLFW_KEY_V]          = Callbacks::bufferStartNormalSelection;
         nmap.noMod[GLFW_KEY_X]          = Callbacks::deleteCharForwardOrSelection;
         nmap.noMod[GLFW_KEY_O]          = Callbacks::putLineBreakAfterLineAndEnterInsertMode;
+        nmap.noMod[GLFW_KEY_P]          = Callbacks::bufferPasteClipboard;
+        nmap.noMod[GLFW_KEY_Y]          = Callbacks::bufferCopySelectionToClipboard;
 
         nmap.ctrl[GLFW_KEY_N]           = Callbacks::createBufferInNewTab;
         nmap.ctrl[GLFW_KEY_S]           = Callbacks::saveCurrentBuffer;

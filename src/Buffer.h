@@ -324,5 +324,8 @@ public:
     virtual bool isSelectionInProgress() const { return m_selection.mode != Selection::Mode::None; }
     virtual bool isCharSelected(int lineI, int colI, size_t charI) const;
 
+    virtual void pasteFromClipboard();
+    virtual void copySelectionToClipboard();
+
     virtual ~Buffer();
 };

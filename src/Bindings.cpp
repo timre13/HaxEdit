@@ -679,6 +679,22 @@ void bufferStartBlockSelection()
     g_isRedrawNeeded = true;
 }
 
+void bufferPasteClipboard()
+{
+    if (!g_activeBuff)
+        return;
+
+    g_activeBuff->pasteFromClipboard();
+}
+
+void bufferCopySelectionToClipboard()
+{
+    if (!g_activeBuff)
+        return;
+
+    g_activeBuff->copySelectionToClipboard();
+}
+
 } // Namespace Callbacks
 
 BindingMapSet nmap = {};

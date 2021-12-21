@@ -7,6 +7,7 @@
 #include "dialogs/MessageDialog.h"
 #include "unicode/ustdio.h"
 #include "common.h"
+#include "Clipboard.h"
 #include <fstream>
 #include <sstream>
 #include <chrono>
@@ -686,6 +687,88 @@ bool Buffer::isCharSelected(int lineI, int colI, size_t charI) const
     }
     }
     return isSelected;
+}
+
+void Buffer::pasteFromClipboard()
+{
+    // TODO: Unicode support
+    const std::string aClipbText = Clipboard::get();
+    if (!aClipbText.empty())
+    {
+        Logger::dbg << "Pasting: " << quoteStr(aClipbText) << Logger::End;
+        for (char c : aClipbText)
+        {
+            assert((c & 0b10000000) == 0); // Detect non-ASCII chars
+            insert(c);
+        }
+        g_statMsg.set("Pasted text from clipboard ("+std::to_string(aClipbText.size())+" chars)",
+                StatusMsg::Type::Info);
+    }
+    else
+    {
+        g_statMsg.set("Nothing to paste", StatusMsg::Type::Error);
+    }
+}
+
+void Buffer::copySelectionToClipboard()
+{
+    if (m_selection.mode == Selection::Mode::None)
+        return;
+
+    // Note: Mostly copied from `deleteSelectedChars()`
+
+    String toCopy;
+    int lineI{};
+    int colI{};
+    for (size_t charI{}; charI < m_content.size(); ++charI)
+    {
+        if (isCharSelected(lineI, colI, charI))
+        {
+            toCopy += m_content[charI];
+            // If we are in block selection mode and this is at the right border of the selection
+            if (m_selection.mode == Selection::Mode::Block && colI == std::max(m_selection.fromCol, m_cursorCol))
+                toCopy.push_back('\n'); // End of block line
+        }
+
+        switch (m_content[charI])
+        {
+        case '\n': // New line
+        case '\v': // Vertical tab
+            ++lineI;
+            colI = 0;
+            continue;
+
+        case '\r': // Carriage return
+            continue;
+
+        case '\t': // Tab
+            ++colI;
+            continue;
+        }
+
+        ++colI;
+    }
+
+    assert(!toCopy.empty());
+
+    // TODO: Unicode support
+    std::string _toCopy;
+    for (Char c : toCopy)
+    {
+        assert((c & 0b10000000) == 0); // Detect non-ASCII chars
+        _toCopy += c;
+    }
+
+    Clipboard::set(_toCopy);
+
+    m_selection.mode = Selection::Mode::None; // Cancel the selection
+    m_isCursorShown = true;
+    scrollViewportToCursor();
+
+    g_statMsg.set("Copied text to clipboard ("+std::to_string(_toCopy.size())+" chars)",
+            StatusMsg::Type::Info);
+
+    g_isRedrawNeeded = true;
 }
 
 void Buffer::render()
