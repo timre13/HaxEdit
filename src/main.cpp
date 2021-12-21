@@ -75,7 +75,7 @@ int main(int argc, char** argv)
 
     g_statMsg.set("Welcome to HaxorEdit!\t"
             "(Launched in "+std::to_string(glfwGetTime()-appStartTime)+"s"
-            ", loaded "+std::to_string(g_tabs.size())+" files)");
+            ", loaded "+std::to_string(g_tabs.size())+" files)", StatusMsg::Type::Info);
 
     float framesUntilCursorBlinking = CURSOR_BLINK_FRAMES;
     while (!glfwWindowShouldClose(g_window))

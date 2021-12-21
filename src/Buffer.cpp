@@ -95,7 +95,7 @@ void Buffer::open(const std::string& filePath)
         m_signs.clear();
 
         Logger::err << "Failed to open file: " << quoteStr(filePath) << ": " << e.what() << Logger::End;
-        g_statMsg.set("Failed to open file: "+quoteStr(filePath)+": "+e.what());
+        g_statMsg.set("Failed to open file: "+quoteStr(filePath)+": "+e.what(), StatusMsg::Type::Error);
         MessageDialog::create(Dialog::EMPTY_CB, nullptr,
                 "Failed to open file: "+quoteStr(filePath)+": "+e.what(),
                 MessageDialog::Type::Error);
@@ -117,7 +117,8 @@ void Buffer::open(const std::string& filePath)
         file.close();
     }
 
-    g_statMsg.set("Opened file"+std::string(m_isReadOnly ? " (read-only)" : "")+": \""+filePath+"\"");
+    g_statMsg.set("Opened file"+std::string(m_isReadOnly ? " (read-only)" : "")+": \""+filePath+"\"",
+            StatusMsg::Type::Info);
 
     glfwSetCursor(g_window, nullptr);
     TIMER_END_FUNC();
@@ -147,12 +148,12 @@ int Buffer::saveToFile()
     catch (std::exception& e)
     {
         Logger::err << "Failed to write to file: \"" << m_filePath << "\": " << e.what() << Logger::End;
-        g_statMsg.set("Failed to write to file: \""+m_filePath+"\": "+e.what());
+        g_statMsg.set("Failed to write to file: \""+m_filePath+"\": "+e.what(), StatusMsg::Type::Error);
         TIMER_END_FUNC();
         return 1;
     }
     Logger::log << "Wrote " << m_content.size() << " characters" << Logger::End;
-    g_statMsg.set("Wrote buffer to file: \""+m_filePath+"\"");
+    g_statMsg.set("Wrote buffer to file: \""+m_filePath+"\"", StatusMsg::Type::Info);
 
     m_isModified = false;
     m_isReadOnly = false;

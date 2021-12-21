@@ -231,7 +231,7 @@ void App::renderStatusLine()
             g_statMsg.isEmpty() ? leftStr : g_statMsg.get(),
             {g_statMsg.isEmpty() ? 0 : g_fontSizePx*4, winH-g_fontSizePx-4},
             g_statMsg.isEmpty() ? FontStyle::Regular : FontStyle::BoldItalic,
-            g_statMsg.isEmpty() ? RGBColor{1.0f, 1.0f, 1.0f} : RGBColor{0.3f, 1.0f, 0.5f});
+            g_statMsg.isEmpty() ? RGBColor{1.0f, 1.0f, 1.0f} : g_statMsg.getTypeColor());
 
     if (g_activeBuff)
     {
