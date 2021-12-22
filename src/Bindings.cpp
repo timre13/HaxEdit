@@ -47,7 +47,8 @@ void runBinding(int mods, int key)
     {
         func();
     }
-    else if (!(g_editorMode.get() == EditorMode::_EditorMode::Insert
+    else if (!((g_editorMode.get() == EditorMode::_EditorMode::Insert
+                    || g_editorMode.get() == EditorMode::_EditorMode::Replace)
                 && (mods == GLFW_MOD_SHIFT || mods == 0)))
     {
         g_statMsg.set("Not bound", StatusMsg::Type::Error);
@@ -63,6 +64,8 @@ void switchToNormalMode()
     g_editorMode.set(EditorMode::_EditorMode::Normal);
     if (g_activeBuff)
     {
+        g_activeBuff->closeSelection();
+        g_activeBuff->hideAutocompPopup();
         g_activeBuff->setCursorVisibility(true);
         g_isRedrawNeeded = true;
     }
@@ -73,15 +76,20 @@ void switchToInsertMode()
     g_editorMode.set(EditorMode::_EditorMode::Insert);
     if (g_activeBuff)
     {
+        g_activeBuff->closeSelection();
+        g_activeBuff->hideAutocompPopup();
         g_activeBuff->setCursorVisibility(true);
         g_isRedrawNeeded = true;
     }
 }
+
 void switchToReplaceMode()
 {
     g_editorMode.set(EditorMode::_EditorMode::Replace);
     if (g_activeBuff)
     {
+        g_activeBuff->closeSelection();
+        g_activeBuff->hideAutocompPopup();
         g_activeBuff->setCursorVisibility(true);
         g_isRedrawNeeded = true;
     }
@@ -628,27 +636,12 @@ void triggerAutocompPopupOrSelectPrevItem()
     g_isRedrawNeeded = true;
 }
 
-void hideAutocompPopupOrEndSelection()
+void bufferCancelSelection()
 {
     if (!g_activeBuff)
         return;
 
-    /*
-     * This function is bound to <Escape>, which is used to cancel
-     * different things based on the editor state.
-     * If the autocomplete popup is shown, close it. Else, end selection.
-     *
-     * Maybe more things will be added in this function in the future.
-     */
-
-    if (g_activeBuff->isAutocompPopupShown())
-    {
-        g_activeBuff->hideAutocompPopup();
-    }
-    else
-    {
-        g_activeBuff->closeSelection();
-    }
+    g_activeBuff->closeSelection();
     g_isRedrawNeeded = true;
 }
 

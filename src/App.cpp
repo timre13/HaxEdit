@@ -114,6 +114,7 @@ void App::setupKeyBindings()
     using namespace Bindings;
 
     { // Normal mode mappings
+        nmap.noMod[GLFW_KEY_ESCAPE]     = Callbacks::bufferCancelSelection;
         nmap.noMod[GLFW_KEY_I]          = Callbacks::switchToInsertMode;
         nmap.noMod[GLFW_KEY_A]          = Callbacks::moveCursorRightAndEnterInsertMode;
         nmap.noMod[GLFW_KEY_INSERT]     = Callbacks::switchToInsertMode;
@@ -135,7 +136,6 @@ void App::setupKeyBindings()
         nmap.noMod[GLFW_KEY_KP_SUBTRACT]= Callbacks::zoomOutBufferIfImage;
         nmap.noMod[GLFW_KEY_EQUAL]      = Callbacks::zoomInBufferIfImage;
         nmap.noMod[GLFW_KEY_KP_ADD]     = Callbacks::zoomInBufferIfImage;
-        nmap.noMod[GLFW_KEY_ESCAPE]     = Callbacks::hideAutocompPopupOrEndSelection;
         nmap.noMod[GLFW_KEY_U]          = Callbacks::undoActiveBufferChange;
         nmap.noMod[GLFW_KEY_V]          = Callbacks::bufferStartNormalSelection;
         nmap.noMod[GLFW_KEY_X]          = Callbacks::deleteCharForwardOrSelection;
@@ -192,7 +192,6 @@ void App::setupKeyBindings()
         imap.noMod[GLFW_KEY_KP_SUBTRACT]= Callbacks::zoomOutBufferIfImage;
         imap.noMod[GLFW_KEY_EQUAL]      = Callbacks::zoomInBufferIfImage;
         imap.noMod[GLFW_KEY_KP_ADD]     = Callbacks::zoomInBufferIfImage;
-        //imap.noMod[GLFW_KEY_ESCAPE]     = Callbacks::hideAutocompPopupOrEndSelection;
     }
 
     // Start in normal mode

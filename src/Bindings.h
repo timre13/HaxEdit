@@ -72,8 +72,8 @@ void zoomOutBufferIfImage();
 
 void triggerAutocompPopupOrSelectNextItem();
 void triggerAutocompPopupOrSelectPrevItem();
-void hideAutocompPopupOrEndSelection();
 
+void bufferCancelSelection();
 void bufferStartNormalSelection();
 void bufferStartLineSelection();
 void bufferStartBlockSelection();
