@@ -4,6 +4,7 @@
 #include "../globals.h"
 #include <vector>
 #include <memory>
+#include <algorithm>
 #include <glm/glm.hpp>
 
 namespace Autocomp
@@ -12,8 +13,9 @@ namespace Autocomp
 class Popup final
 {
 public:
-    struct Item
+    class Item
     {
+    public:
         enum class Type
         {
             Misc,
@@ -22,6 +24,11 @@ public:
         } type;
 
         String value;
+
+        friend inline bool operator==(const Item& a, const Item& b)
+        {
+            return a.type == b.type && a.value == b.value;
+        }
     };
 
 private:
@@ -44,9 +51,12 @@ public:
     inline bool isVisible() const { return m_isVisible; }
     inline bool isRendered() const { return m_isVisible && !m_items.empty(); }
 
-    inline void addItem(Item* item)
+    inline void addItem(Item item)
     {
-        m_items.push_back(std::unique_ptr<Item>{item});
+        // Only append item if not already in list
+        if (std::find_if(m_items.begin(), m_items.end(),
+                    [&](const std::unique_ptr<Item>& x){ return *x == item; }) == m_items.end())
+            m_items.push_back(std::make_unique<Item>(item));
         m_isItemSortingNeeded = true;
     }
 

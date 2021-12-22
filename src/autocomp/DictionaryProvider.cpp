@@ -46,7 +46,7 @@ void DictionaryProvider::get(Popup* popupP)
 {
     for (const auto& word : m_words)
     {
-        popupP->addItem(new Popup::Item{
+        popupP->addItem(Popup::Item{
                 Popup::Item::Type::Word,
                 word});
     }
