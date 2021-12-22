@@ -1,6 +1,7 @@
 #pragma once
 
 #include "unicode/unistr.h"
+#include "unicode/uchar.h"
 #include <cassert>
 #include <string>
 #include <sstream>
@@ -117,6 +118,13 @@ inline std::string strToLower(std::string str)
 {
     for (char& c : str)
         c = tolower(c);
+    return str;
+}
+
+inline String strToLower(String str)
+{
+    for (Char& c : str)
+        c = u_tolower(c);
     return str;
 }
 

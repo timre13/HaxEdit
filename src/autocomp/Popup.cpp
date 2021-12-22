@@ -34,7 +34,16 @@ void Popup::render()
     {
         std::sort(m_items.begin(), m_items.end(),
                 [](const std::unique_ptr<Item>& a, const std::unique_ptr<Item>& b) {
-                    return a->value < b->value;
+                    auto la = strToLower(a->value);
+                    auto lb = strToLower(b->value);
+                    // Generally case is ignored
+                    if (la < lb)
+                        return true;
+                    // If the two strings only differ in the case, don't ignore it
+                    else if (la == lb)
+                        return a->value < b->value;
+                    else
+                        return false;
                 }
         );
         m_isItemSortingNeeded = false;
