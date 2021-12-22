@@ -1,11 +1,12 @@
 #pragma once
 
 #include <vector>
-#include "Popup.h"
 #include "../types.h"
 
 namespace Autocomp
 {
+
+class Popup;
 
 class DictionaryProvider final
 {

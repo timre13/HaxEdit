@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../types.h"
+#include "../globals.h"
 #include <vector>
 #include <memory>
 #include <glm/glm.hpp>
@@ -31,6 +32,10 @@ private:
     int m_selectedItemI{};
 
     glm::ivec2 m_position{};
+    glm::ivec2 m_size{};
+    int m_scrollByItems{};
+
+    void recalcSize();
 
 public:
     void render();
@@ -47,12 +52,44 @@ public:
 
     inline void selectNextItem()
     {
-        m_selectedItemI = std::min((int)m_items.size()-1, m_selectedItemI+1);
+        ++m_selectedItemI;
+        if (m_selectedItemI >= (int)m_items.size())
+        {
+            m_selectedItemI = m_items.size()-1;
+        }
+
+        recalcSize();
+        // Scroll to reveal more items when reaching the bottom
+        if ((m_selectedItemI+m_scrollByItems+1)*g_fontSizePx > m_size.y)
+        {
+            m_scrollByItems -= m_size.y/g_fontSizePx-5;
+        }
+
+        if (m_scrollByItems < -int(m_items.size()-m_size.y/g_fontSizePx))
+        {
+            m_scrollByItems = -int(m_items.size()-m_size.y/g_fontSizePx);
+        }
     }
 
     inline void selectPrevItem()
     {
-        m_selectedItemI = std::max(0, m_selectedItemI-1);
+        --m_selectedItemI;
+        if (m_selectedItemI < 0)
+        {
+            m_selectedItemI = 0;
+        }
+
+        recalcSize();
+        // Scroll to reveal more items when reaching the top
+        if ((m_selectedItemI+m_scrollByItems)*g_fontSizePx < 0)
+        {
+            m_scrollByItems += m_size.y/g_fontSizePx+5;
+        }
+
+        if (m_scrollByItems > 0)
+        {
+            m_scrollByItems = 0;
+        }
     }
 
     inline const Item* getSelectedItem() const

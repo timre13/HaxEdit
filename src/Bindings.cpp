@@ -623,7 +623,14 @@ void triggerAutocompPopupOrSelectNextItem()
     if (!g_activeBuff)
         return;
 
-    g_activeBuff->triggerAutocompPopupOrSelectNextItem();
+    if (g_activeBuff->isAutocompPopupShown())
+    {
+        g_activeBuff->autocompPopupSelectNextItem();
+    }
+    else
+    {
+        g_activeBuff->triggerAutocompPopup();
+    }
     g_isRedrawNeeded = true;
 }
 
@@ -632,7 +639,14 @@ void triggerAutocompPopupOrSelectPrevItem()
     if (!g_activeBuff)
         return;
 
-    g_activeBuff->triggerAutocompPopupOrSelectPrevItem();
+    if (g_activeBuff->isAutocompPopupShown())
+    {
+        g_activeBuff->autocompPopupSelectPrevItem();
+    }
+    else
+    {
+        g_activeBuff->triggerAutocompPopup();
+    }
     g_isRedrawNeeded = true;
 }
 

@@ -3,6 +3,7 @@
 #include "../common.h"
 #include "../types.h"
 #include "../config.h"
+#include "Popup.h"
 
 namespace Autocomp
 {

@@ -1481,28 +1481,22 @@ void Buffer::redo()
     }
 }
 
-void Buffer::triggerAutocompPopupOrSelectNextItem()
+void Buffer::triggerAutocompPopup()
 {
-    if (m_autocompPopup->isVisible())
-    {
-        m_autocompPopup->selectNextItem();
-    }
-    else
-    {
-        m_autocompPopup->setVisibility(true);
-    }
+    m_autocompPopup->setVisibility(true);
+    g_isRedrawNeeded = true;
 }
 
-void Buffer::triggerAutocompPopupOrSelectPrevItem()
+void Buffer::autocompPopupSelectNextItem()
 {
-    if (m_autocompPopup->isVisible())
-    {
-        m_autocompPopup->selectPrevItem();
-    }
-    else
-    {
-        m_autocompPopup->setVisibility(true);
-    }
+    m_autocompPopup->selectNextItem();
+    g_isRedrawNeeded = true;
+}
+
+void Buffer::autocompPopupSelectPrevItem()
+{
+    m_autocompPopup->selectPrevItem();
+    g_isRedrawNeeded = true;
 }
 
 void Buffer::hideAutocompPopup()

@@ -314,8 +314,9 @@ public:
     virtual void undo();
     virtual void redo();
 
-    virtual void triggerAutocompPopupOrSelectNextItem();
-    virtual void triggerAutocompPopupOrSelectPrevItem();
+    virtual void triggerAutocompPopup();
+    virtual void autocompPopupSelectNextItem();
+    virtual void autocompPopupSelectPrevItem();
     virtual void hideAutocompPopup();
     virtual bool isAutocompPopupShown() const { return m_autocompPopup->isVisible(); }
 
