@@ -56,8 +56,8 @@ std::string EditorMode::asStatLineStr()
 
     switch (m_editorMode)
     {
-    case _EditorMode::Normal: return "--- NORMAL --- ";
-    case _EditorMode::Insert: return "--- INSERT --- ";
-    case _EditorMode::Replace: return "--- REPLACE ---";
+    case _EditorMode::Normal:  return "NORMAL ";
+    case _EditorMode::Insert:  return "INSERT ";
+    case _EditorMode::Replace: return "REPLACE";
     }
 }

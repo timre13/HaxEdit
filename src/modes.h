@@ -2,7 +2,7 @@
 
 #include "Logger.h"
 
-#define EDITMODE_STATLINE_STR_LEN 15
+#define EDITMODE_STATLINE_STR_LEN 7
 
 class EditorMode final
 {
