@@ -192,6 +192,10 @@ void App::setupKeyBindings()
         imap.noMod[GLFW_KEY_KP_SUBTRACT]= Callbacks::zoomOutBufferIfImage;
         imap.noMod[GLFW_KEY_EQUAL]      = Callbacks::zoomInBufferIfImage;
         imap.noMod[GLFW_KEY_KP_ADD]     = Callbacks::zoomInBufferIfImage;
+
+        imap.ctrl[GLFW_KEY_SPACE]       = Callbacks::triggerAutocompPopupOrSelectNextItem;
+
+        imap.ctrlShift[GLFW_KEY_SPACE]  = Callbacks::triggerAutocompPopupOrSelectPrevItem;
     }
 
     // Start in normal mode
