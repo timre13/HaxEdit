@@ -23,6 +23,8 @@ public:
     };
 
 private:
+    static std::string s_lastDir;
+
     std::string m_dirPath;
     Type m_type{};
     int m_selectedFileI{};
@@ -56,20 +58,18 @@ private:
     FileDialog(
             callback_t cb,
             void* cbUserData,
-            const std::string& dirPath,
             Type type
-            );
+    );
 
 public:
     static inline void create(
             callback_t cb,
             void* cbUserData,
-            const std::string& dirPath,
             Type type
-            )
+    )
     {
         g_dialogs.push_back(std::unique_ptr<FileDialog>(
-                    new FileDialog{cb, cbUserData, dirPath, type}));
+                    new FileDialog{cb, cbUserData, type}));
     }
 
     virtual void render() override;

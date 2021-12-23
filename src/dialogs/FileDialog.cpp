@@ -14,16 +14,28 @@
 
 namespace std_fs = std::filesystem;
 
+std::string FileDialog::s_lastDir = "";
+
 FileDialog::FileDialog(
         callback_t cb,
         void* cbUserData,
-        const std::string& dirPath,
         Type type
         )
-    : Dialog{cb, cbUserData}, m_dirPath{dirPath}, m_type{type}
+    : Dialog{cb, cbUserData}, m_type{type}
 {
+    if (!s_lastDir.empty() && std_fs::is_directory(s_lastDir))
+    {
+        m_dirPath = s_lastDir;
+        Logger::dbg << "Last dir " << quoteStr(s_lastDir) << " is used as current path " << Logger::End;
+    }
+    else
+    {
+        m_dirPath = ".";
+        Logger::dbg << "Last dir " << quoteStr(s_lastDir) << " won't be used, defaulting to "
+            << quoteStr(m_dirPath) << Logger::End;
+    }
     Logger::dbg << "Created a " << (type == Type::Open ? "file" : "directory")
-        << " chooser dialog inside the dir.: " << quoteStr(dirPath) << Logger::End;
+        << " chooser dialog inside the dir.: " << quoteStr(m_dirPath) << Logger::End;
 
     genFileList();
 }
@@ -139,8 +151,9 @@ void FileDialog::render()
 void FileDialog::genFileList()
 {
     TIMER_BEGIN_FUNC();
+    Logger::dbg << "Listing directory: " << quoteStr(m_dirPath) << Logger::End;
     m_dirPath = std_fs::canonical(m_dirPath);
-    Logger::dbg << "Listing directory: " << m_dirPath << Logger::End;
+    Logger::dbg << "..., as canonical: " << quoteStr(m_dirPath) << Logger::End;
 
     m_fileList.clear();
 
@@ -238,6 +251,7 @@ void FileDialog::handleKey(int key, int mods)
             if (m_callback)
                 m_callback(OPENMODE_NEWTAB, this, m_cbUserData);
             m_isClosed = true;
+            s_lastDir = m_dirPath;
         }
         else if (m_fileList.empty() || !m_fileList[m_selectedFileI]->isDirectory)
         {
@@ -247,6 +261,7 @@ void FileDialog::handleKey(int key, int mods)
             if (m_callback)
                 m_callback(OPENMODE_NEWTAB, this, m_cbUserData);
             m_isClosed = true;
+            s_lastDir = m_dirPath;
         }
         else
         {
@@ -267,6 +282,7 @@ void FileDialog::handleKey(int key, int mods)
             if (m_callback)
                 m_callback(OPENMODE_SPLIT, this, m_cbUserData);
             m_isClosed = true;
+            s_lastDir = m_dirPath;
         }
         else if (m_fileList.empty() || !m_fileList[m_selectedFileI]->isDirectory)
         {
@@ -275,6 +291,7 @@ void FileDialog::handleKey(int key, int mods)
             if (m_callback)
                 m_callback(OPENMODE_SPLIT, this, m_cbUserData);
             m_isClosed = true;
+            s_lastDir = m_dirPath;
         }
         break;
     }

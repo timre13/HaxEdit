@@ -158,7 +158,7 @@ void saveCurrentBuffer()
         if (g_activeBuff->isNewFile())
         {
             // Open a save as dialog
-            FileDialog::create(saveAsDialogCb, nullptr, ".", FileDialog::Type::Save);
+            FileDialog::create(saveAsDialogCb, nullptr, FileDialog::Type::Save);
         }
         else
         {
@@ -178,7 +178,7 @@ void saveCurrentBufferAs()
     if (g_activeBuff)
     {
         // Open a save as dialog
-        FileDialog::create(saveAsDialogCb, nullptr, ".", FileDialog::Type::Save);
+        FileDialog::create(saveAsDialogCb, nullptr, FileDialog::Type::Save);
         g_isRedrawNeeded = true;
     }
 }
@@ -215,7 +215,7 @@ static void openDialogCb(int openMode, Dialog* dlg, void*)
 
 void openFile()
 {
-    FileDialog::create(openDialogCb, nullptr, ".", FileDialog::Type::Open);
+    FileDialog::create(openDialogCb, nullptr, FileDialog::Type::Open);
     g_isRedrawNeeded = true;
 }
 
