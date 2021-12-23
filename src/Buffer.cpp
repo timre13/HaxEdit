@@ -11,6 +11,7 @@
 #include <fstream>
 #include <sstream>
 #include <chrono>
+#include <filesystem>
 using namespace std::chrono_literals;
 
 // Separates lines in a block selection delete BufferHistory::Entry
@@ -55,7 +56,7 @@ void Buffer::open(const std::string& filePath)
 
     glfwSetCursor(g_window, Cursors::busy);
 
-    m_filePath = filePath;
+    m_filePath = std::filesystem::canonical(filePath);
     m_isReadOnly = false;
     m_history.clear();
     m_gitRepo.reset();
@@ -455,8 +456,9 @@ void Buffer::_updateHighlighting()
 void Buffer::updateGitDiff()
 {
     const std::string relPath = m_filePath.substr(m_gitRepo->getRepoRoot().size());
-    Logger::dbg << "Git repo root: " << m_gitRepo->getRepoRoot()
-        << "\n       file path relative to root: " << relPath << Logger::End;
+    Logger::dbg << "Filepath: " << m_filePath
+        << ", git repo root: " << m_gitRepo->getRepoRoot()
+        << ", relative path: " << relPath << Logger::End;
     auto diff = m_gitRepo->getDiff(relPath);
     for (const auto& pair : diff)
     {
