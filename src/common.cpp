@@ -1,4 +1,6 @@
 #include "common.h"
+#include "config.h"
+#include "Logger.h"
 #include <fstream>
 #include <vector>
 #include <stdint.h>
@@ -14,9 +16,18 @@ String loadUnicodeFile(const std::string& filePath)
         throw std::runtime_error{std::strerror(errno)};
     }
 
+    auto fileSize = file.tellg();
+    Logger::dbg << "Loading a Unicode file (\"" << filePath << "\") of " << fileSize
+        << '/' << std::hex << fileSize << std::dec << " bytes" << Logger::End;
+    if (fileSize > MAX_FILE_SIZE)
+    {
+        Logger::err << "File is too large, not opening it" << Logger::End;
+        return {};
+    }
+
     std::vector<uint8_t> input;
     file.seekg(0, std::ios::end);
-    input.reserve(file.tellg());
+    input.reserve(fileSize);
     file.seekg(0, std::ios::beg);
     input.assign(std::istreambuf_iterator<char>(file),
                  std::istreambuf_iterator<char>());
@@ -40,9 +51,18 @@ std::string loadAsciiFile(const std::string& filePath)
         throw std::runtime_error{std::strerror(errno)};
     }
 
+    auto fileSize = file.tellg();
+    Logger::dbg << "Loading an ASCII file (\"" << filePath << "\") of " << fileSize
+        << '/' << std::hex << fileSize << std::dec << " bytes" << Logger::End;
+    if (fileSize > MAX_FILE_SIZE)
+    {
+        Logger::err << "File is too large, not opening it" << Logger::End;
+        return {};
+    }
+
     std::vector<char> input;
     file.seekg(0, std::ios::end);
-    input.reserve(file.tellg());
+    input.reserve(fileSize);
     file.seekg(0, std::ios::beg);
     input.assign(std::istreambuf_iterator<char>(file),
                  std::istreambuf_iterator<char>());
