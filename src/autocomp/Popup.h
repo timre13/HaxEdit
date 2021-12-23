@@ -53,10 +53,7 @@ public:
 
     inline void addItem(Item item)
     {
-        // Only append item if not already in list
-        if (std::find_if(m_items.begin(), m_items.end(),
-                    [&](const std::unique_ptr<Item>& x){ return *x == item; }) == m_items.end())
-            m_items.push_back(std::make_unique<Item>(item));
+        m_items.push_back(std::make_unique<Item>(item));
         m_isItemSortingNeeded = true;
     }
 

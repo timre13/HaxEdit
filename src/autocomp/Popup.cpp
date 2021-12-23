@@ -46,6 +46,10 @@ void Popup::render()
                         return false;
                 }
         );
+
+        // Remove duplicates
+        m_items.erase(std::unique(m_items.begin(), m_items.end()), m_items.end());
+
         m_isItemSortingNeeded = false;
     }
 

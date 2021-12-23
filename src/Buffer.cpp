@@ -44,6 +44,7 @@ Buffer::Buffer()
             Logger::dbg << "Syntax highlighter thread exited (buffer: " << this << ')' << Logger::End;
     });
 
+    Logger::dbg << "Setting up autocomplete for buffer: " << this << Logger::End;
     m_autocompPopup = std::make_unique<Autocomp::Popup>();
     Autocomp::dictProvider->get(m_autocompPopup.get());
 
