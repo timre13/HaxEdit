@@ -3,6 +3,7 @@
 #undef _DEF_GLOBALS_
 #include "App.h"
 #include "SessionHandler.h"
+#include <filesystem>
 
 int main(int argc, char** argv)
 {
@@ -43,6 +44,8 @@ int main(int argc, char** argv)
     for (int i{1}; i < argc; ++i)
     {
         const std::string path = argv[i];
+        if (std::filesystem::is_directory(path))
+            continue;
         g_tabs.push_back(std::make_unique<Split>(App::openFileInNewBuffer(path)));
     }
     if (!g_tabs.empty())
