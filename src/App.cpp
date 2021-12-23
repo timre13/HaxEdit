@@ -332,9 +332,13 @@ static const std::string genWelcomeMsg(std::string templ)
 #else
                 "???";
 #endif
-    map["COMPILER_NAME"] = __VERSION__;
-    map["GL_VENDOR"] = (const char*)glGetString(GL_VENDOR);
-    map["GL_RENDERER"] = (const char*)glGetString(GL_RENDERER);
+    map["COMPILER_NAME"]            = __VERSION__;
+    map["GL_VENDOR"]                = (const char*)glGetString(GL_VENDOR);
+    map["GL_RENDERER"]              = (const char*)glGetString(GL_RENDERER);
+    map["FONT_FAMILY_REGULAR"]      = FONT_FAMILY_REGULAR;
+    map["FONT_FAMILY_BOLD"]         = FONT_FAMILY_BOLD;
+    map["FONT_FAMILY_ITALIC"]       = FONT_FAMILY_ITALIC;
+    map["FONT_FAMILY_BOLDITALIC"]   = FONT_FAMILY_BOLDITALIC;
 
     for (const auto& pair : map)
     {
@@ -591,6 +595,7 @@ void App::windowCloseCB(GLFWwindow* window)
         if (!dlg->isClosed())
         {
             glfwSetWindowShouldClose(window, false);
+            Logger::log << "Window close request ignored, there are open dialogs" << Logger::End;
             return;
         }
     }
