@@ -33,19 +33,22 @@ public:
 
 private:
     bool m_isVisible = false;
-    bool m_isItemSortingNeeded{};
-
-    std::vector<std::unique_ptr<Item>> m_items;
-
-    // Selected item index.
-    // -1 = No item selected, `getSelectedItem()` returns `nullptr`
-    int m_selectedItemI{};
 
     glm::ivec2 m_position{};
     glm::ivec2 m_size{};
     int m_scrollByItems{};
 
+    std::vector<std::unique_ptr<Item>> m_items;
+    bool m_isItemSortingNeeded{};
+    int m_selectedItemI{};
+
+    String m_filterBuffer;
+    std::vector<Item*> m_filteredItems;
+    bool m_isFilteringNeeded{};
+
     void recalcSize();
+    void sortItems();
+    void filterItems();
 
 public:
     void render();
@@ -53,23 +56,31 @@ public:
     inline void setVisibility(bool val)
     {
         m_isVisible = val;
-        m_selectedItemI = -1; // Reset selected item
+        m_selectedItemI = 0; // Reset selected item
+        m_filterBuffer.clear();
+        m_isFilteringNeeded = true;
     }
-    inline bool isVisible() const { return m_isVisible; }
-    inline bool isRendered() const { return m_isVisible && !m_items.empty(); }
+    inline bool isEnabled() const { return m_isVisible; }
+    inline bool isRendered() const { return m_isVisible && !m_filteredItems.empty(); }
 
     inline void addItem(Item item)
     {
         m_items.push_back(std::make_unique<Item>(item));
         m_isItemSortingNeeded = true;
+        m_isFilteringNeeded = true;
     }
 
     inline void selectNextItem()
     {
+        if (m_isItemSortingNeeded)
+            sortItems();
+        if (m_isFilteringNeeded)
+            filterItems();
+
         ++m_selectedItemI;
-        if (m_selectedItemI >= (int)m_items.size())
+        if (m_selectedItemI >= m_filteredItems.size())
         {
-            m_selectedItemI = m_items.size()-1;
+            m_selectedItemI = m_filteredItems.size()-1;
         }
 
         recalcSize();
@@ -79,18 +90,23 @@ public:
             m_scrollByItems -= m_size.y/g_fontSizePx-5;
         }
 
-        if (m_scrollByItems < -int(m_items.size()-m_size.y/g_fontSizePx))
+        if (m_scrollByItems < -int(m_filteredItems.size()-m_size.y/g_fontSizePx))
         {
-            m_scrollByItems = -int(m_items.size()-m_size.y/g_fontSizePx);
+            m_scrollByItems = -int(m_filteredItems.size()-m_size.y/g_fontSizePx);
         }
     }
 
     inline void selectPrevItem()
     {
+        if (m_isItemSortingNeeded)
+            sortItems();
+        if (m_isFilteringNeeded)
+            filterItems();
+
         --m_selectedItemI;
-        if (m_selectedItemI < -1)
+        if (m_selectedItemI < 0)
         {
-            m_selectedItemI = -1;
+            m_selectedItemI = 0;
         }
 
         recalcSize();
@@ -110,14 +126,32 @@ public:
 
     inline const Item* getSelectedItem() const
     {
-        if (m_selectedItemI < 0)
+        if (m_selectedItemI < 0 || m_filteredItems.empty())
             return nullptr;
-        return m_items[m_selectedItemI].get();
+        return m_filteredItems[m_selectedItemI];
     }
 
     inline void setPos(const glm::vec2& pos)
     {
         m_position = pos;
+    }
+
+    inline void appendToFilter(Char c)
+    {
+        m_selectedItemI = 0;
+        m_filterBuffer += c;
+        m_isFilteringNeeded = true;
+    }
+    inline void removeLastCharFromFilter()
+    {
+        if (!m_filterBuffer.empty())
+            m_filterBuffer.pop_back();
+        m_selectedItemI = 0;
+        m_isFilteringNeeded = true;
+    }
+    inline size_t getFilterLen()
+    {
+        return m_filterBuffer.length();
     }
 };
 

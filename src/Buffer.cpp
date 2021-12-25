@@ -1188,6 +1188,15 @@ void Buffer::insert(Char character)
     m_isHighlightUpdateNeeded = true;
     scrollViewportToCursor();
 
+    if (m_autocompPopup->isRendered())
+    {
+        m_autocompPopup->appendToFilter(character);
+    }
+    else
+    {
+        m_autocompPopup->setVisibility(false);
+    }
+
     TIMER_END_FUNC();
 }
 
@@ -1278,6 +1287,9 @@ void Buffer::deleteCharBackwards()
     m_isCursorShown = true;
     m_isHighlightUpdateNeeded = true;
     scrollViewportToCursor();
+
+    if (m_autocompPopup->isRendered())
+        m_autocompPopup->removeLastCharFromFilter();
 
     TIMER_END_FUNC();
 }
@@ -1493,45 +1505,20 @@ void Buffer::triggerAutocompPopup()
 
 void Buffer::autocompPopupSelectNextItem()
 {
-    // When selecting the next item, delete the old one
-    if (m_autocompPopup->getSelectedItemI() != -1)
-    {
-        const size_t prevSelectedValLen = m_autocompPopup->getSelectedItem()->value.length();
-        m_content.erase(m_cursorCharPos, prevSelectedValLen);
-    }
     m_autocompPopup->selectNextItem();
-    // Insert the currently selected one
-    m_content.insert(m_cursorCharPos, m_autocompPopup->getSelectedItem()->value);
     m_isCursorShown = true;
     g_isRedrawNeeded = true;
 }
 
 void Buffer::autocompPopupSelectPrevItem()
 {
-    if (m_autocompPopup->getSelectedItemI() != -1)
-    {
-        // When selecting the previous item, delete the old one
-        const size_t prevSelectedValLen = m_autocompPopup->getSelectedItem()->value.length();
-        m_content.erase(m_cursorCharPos, prevSelectedValLen);
-    }
     m_autocompPopup->selectPrevItem();
-    if (m_autocompPopup->getSelectedItemI() != -1)
-    {
-        // Insert the currently selected one
-        m_content.insert(m_cursorCharPos, m_autocompPopup->getSelectedItem()->value);
-    }
     m_isCursorShown = true;
     g_isRedrawNeeded = true;
 }
 
 void Buffer::autocompPopupHide()
 {
-    if (m_autocompPopup->getSelectedItemI() != -1)
-    {
-        // Remove the selected item before hiding the popup
-        const size_t selectedValLen = m_autocompPopup->getSelectedItem()->value.length();
-        m_content.erase(m_cursorCharPos, selectedValLen);
-    }
     m_autocompPopup->setVisibility(false);
     m_isCursorShown = true;
     g_isRedrawNeeded = true;
@@ -1539,12 +1526,14 @@ void Buffer::autocompPopupHide()
 
 void Buffer::autocompPopupInsert()
 {
-    if (m_autocompPopup->getSelectedItemI() != -1)
+    if (m_autocompPopup->isRendered())
     {
-        // Hide the popup without deleting the selected value
-        const String selectedVal = m_autocompPopup->getSelectedItem()->value;
-        m_cursorCharPos += selectedVal.length();
-        m_cursorCol += selectedVal.length();
+        // Hide the popup and insert the current item
+        const String toInsert = m_autocompPopup->getSelectedItem()->value
+            .substr(m_autocompPopup->getFilterLen());
+        m_content.insert(m_cursorCharPos, toInsert);
+        m_cursorCharPos += toInsert.length();
+        m_cursorCol += toInsert.length();
     }
     m_autocompPopup->setVisibility(false);
     m_isCursorShown = true;
