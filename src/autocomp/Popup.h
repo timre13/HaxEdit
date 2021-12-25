@@ -59,6 +59,14 @@ public:
         m_selectedItemI = 0; // Reset selected item
         m_filterBuffer.clear();
         m_isFilteringNeeded = true;
+
+        if (val)
+        {
+            if (m_isItemSortingNeeded)
+                sortItems();
+            if (m_isFilteringNeeded)
+                filterItems();
+        }
     }
     inline bool isEnabled() const { return m_isEnabled; }
     inline bool isRendered() const { return m_isEnabled && !m_filteredItems.empty(); }
