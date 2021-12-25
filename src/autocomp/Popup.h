@@ -36,6 +36,9 @@ private:
     bool m_isItemSortingNeeded{};
 
     std::vector<std::unique_ptr<Item>> m_items;
+
+    // Selected item index.
+    // -1 = No item selected, `getSelectedItem()` returns `nullptr`
     int m_selectedItemI{};
 
     glm::ivec2 m_position{};
@@ -47,7 +50,11 @@ private:
 public:
     void render();
 
-    inline void setVisibility(bool val) { m_isVisible = val; }
+    inline void setVisibility(bool val)
+    {
+        m_isVisible = val;
+        m_selectedItemI = -1; // Reset selected item
+    }
     inline bool isVisible() const { return m_isVisible; }
     inline bool isRendered() const { return m_isVisible && !m_items.empty(); }
 
@@ -81,9 +88,9 @@ public:
     inline void selectPrevItem()
     {
         --m_selectedItemI;
-        if (m_selectedItemI < 0)
+        if (m_selectedItemI < -1)
         {
-            m_selectedItemI = 0;
+            m_selectedItemI = -1;
         }
 
         recalcSize();
@@ -98,6 +105,8 @@ public:
             m_scrollByItems = 0;
         }
     }
+
+    inline int getSelectedItemI() const { return m_selectedItemI; }
 
     inline const Item* getSelectedItem() const
     {

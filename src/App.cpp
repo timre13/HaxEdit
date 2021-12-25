@@ -182,8 +182,8 @@ void App::setupKeyBindings()
         imap.noMod[GLFW_KEY_UP]         = Callbacks::moveCursorUp;
         imap.noMod[GLFW_KEY_HOME]       = Callbacks::moveCursorToLineBeginning;
         imap.noMod[GLFW_KEY_END]        = Callbacks::moveCursorToLineEnd;
-        imap.noMod[GLFW_KEY_ENTER]      = Callbacks::putEnter;
-        imap.noMod[GLFW_KEY_KP_ENTER]   = Callbacks::putEnter;
+        imap.noMod[GLFW_KEY_ENTER]      = Callbacks::bufferPutEnterOrInsertAutocomplete;
+        imap.noMod[GLFW_KEY_KP_ENTER]   = Callbacks::bufferPutEnterOrInsertAutocomplete;
         imap.noMod[GLFW_KEY_BACKSPACE]  = Callbacks::deleteCharBackwards;
         imap.noMod[GLFW_KEY_DELETE]     = Callbacks::deleteCharForwardOrSelection;
         imap.noMod[GLFW_KEY_KP_DECIMAL] = Callbacks::deleteCharForwardOrSelection;

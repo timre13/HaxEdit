@@ -1487,24 +1487,68 @@ void Buffer::redo()
 void Buffer::triggerAutocompPopup()
 {
     m_autocompPopup->setVisibility(true);
+    m_isCursorShown = true;
     g_isRedrawNeeded = true;
 }
 
 void Buffer::autocompPopupSelectNextItem()
 {
+    // When selecting the next item, delete the old one
+    if (m_autocompPopup->getSelectedItemI() != -1)
+    {
+        const size_t prevSelectedValLen = m_autocompPopup->getSelectedItem()->value.length();
+        m_content.erase(m_cursorCharPos, prevSelectedValLen);
+    }
     m_autocompPopup->selectNextItem();
+    // Insert the currently selected one
+    m_content.insert(m_cursorCharPos, m_autocompPopup->getSelectedItem()->value);
+    m_isCursorShown = true;
     g_isRedrawNeeded = true;
 }
 
 void Buffer::autocompPopupSelectPrevItem()
 {
+    if (m_autocompPopup->getSelectedItemI() != -1)
+    {
+        // When selecting the previous item, delete the old one
+        const size_t prevSelectedValLen = m_autocompPopup->getSelectedItem()->value.length();
+        m_content.erase(m_cursorCharPos, prevSelectedValLen);
+    }
     m_autocompPopup->selectPrevItem();
+    if (m_autocompPopup->getSelectedItemI() != -1)
+    {
+        // Insert the currently selected one
+        m_content.insert(m_cursorCharPos, m_autocompPopup->getSelectedItem()->value);
+    }
+    m_isCursorShown = true;
     g_isRedrawNeeded = true;
 }
 
-void Buffer::hideAutocompPopup()
+void Buffer::autocompPopupHide()
 {
+    if (m_autocompPopup->getSelectedItemI() != -1)
+    {
+        // Remove the selected item before hiding the popup
+        const size_t selectedValLen = m_autocompPopup->getSelectedItem()->value.length();
+        m_content.erase(m_cursorCharPos, selectedValLen);
+    }
     m_autocompPopup->setVisibility(false);
+    m_isCursorShown = true;
+    g_isRedrawNeeded = true;
+}
+
+void Buffer::autocompPopupInsert()
+{
+    if (m_autocompPopup->getSelectedItemI() != -1)
+    {
+        // Hide the popup without deleting the selected value
+        const String selectedVal = m_autocompPopup->getSelectedItem()->value;
+        m_cursorCharPos += selectedVal.length();
+        m_cursorCol += selectedVal.length();
+    }
+    m_autocompPopup->setVisibility(false);
+    m_isCursorShown = true;
+    g_isRedrawNeeded = true;
 }
 
 void Buffer::startSelection(Selection::Mode mode)

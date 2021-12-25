@@ -53,7 +53,6 @@ void moveCursorToLineEndAndEnterInsertMode();
 void putLineBreakAfterLineAndEnterInsertMode();
 void putLineBreakBeforeLineAndEnterInsertMode();
 
-void putEnter();
 void deleteCharBackwards();
 void deleteCharForwardOrSelection();
 void insertTabOrSpaces();
@@ -72,6 +71,7 @@ void zoomOutBufferIfImage();
 
 void triggerAutocompPopupOrSelectNextItem();
 void triggerAutocompPopupOrSelectPrevItem();
+void bufferPutEnterOrInsertAutocomplete();
 
 void bufferCancelSelection();
 void bufferStartNormalSelection();

@@ -65,7 +65,7 @@ void switchToNormalMode()
     if (g_activeBuff)
     {
         g_activeBuff->closeSelection();
-        g_activeBuff->hideAutocompPopup();
+        g_activeBuff->autocompPopupHide();
         g_activeBuff->setCursorVisibility(true);
         g_isRedrawNeeded = true;
     }
@@ -77,7 +77,7 @@ void switchToInsertMode()
     if (g_activeBuff)
     {
         g_activeBuff->closeSelection();
-        g_activeBuff->hideAutocompPopup();
+        g_activeBuff->autocompPopupHide();
         g_activeBuff->setCursorVisibility(true);
         g_isRedrawNeeded = true;
     }
@@ -89,7 +89,7 @@ void switchToReplaceMode()
     if (g_activeBuff)
     {
         g_activeBuff->closeSelection();
-        g_activeBuff->hideAutocompPopup();
+        g_activeBuff->autocompPopupHide();
         g_activeBuff->setCursorVisibility(true);
         g_isRedrawNeeded = true;
     }
@@ -502,11 +502,6 @@ void putLineBreakBeforeLineAndEnterInsertMode()
     }
 }
 
-void putEnter()
-{
-    App::windowCharCB(nullptr, '\n');
-}
-
 void deleteCharBackwards()
 {
     if (g_activeBuff)
@@ -648,6 +643,17 @@ void triggerAutocompPopupOrSelectPrevItem()
         g_activeBuff->triggerAutocompPopup();
     }
     g_isRedrawNeeded = true;
+}
+
+void bufferPutEnterOrInsertAutocomplete()
+{
+    if (!g_activeBuff)
+        return;
+
+    if (g_activeBuff->isAutocompPopupShown())
+        g_activeBuff->autocompPopupInsert();
+    else
+        App::windowCharCB(nullptr, '\n');
 }
 
 void bufferCancelSelection()
