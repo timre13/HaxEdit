@@ -1534,6 +1534,7 @@ void Buffer::autocompPopupInsert()
         m_content.insert(m_cursorCharPos, toInsert);
         m_cursorCharPos += toInsert.length();
         m_cursorCol += toInsert.length();
+        m_isHighlightUpdateNeeded = true;
     }
     m_autocompPopup->setVisibility(false);
     m_isCursorShown = true;
