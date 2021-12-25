@@ -32,7 +32,7 @@ public:
     };
 
 private:
-    bool m_isVisible = false;
+    bool m_isEnabled = false;
 
     glm::ivec2 m_position{};
     glm::ivec2 m_size{};
@@ -55,13 +55,13 @@ public:
 
     inline void setVisibility(bool val)
     {
-        m_isVisible = val;
+        m_isEnabled = val;
         m_selectedItemI = 0; // Reset selected item
         m_filterBuffer.clear();
         m_isFilteringNeeded = true;
     }
-    inline bool isEnabled() const { return m_isVisible; }
-    inline bool isRendered() const { return m_isVisible && !m_filteredItems.empty(); }
+    inline bool isEnabled() const { return m_isEnabled; }
+    inline bool isRendered() const { return m_isEnabled && !m_filteredItems.empty(); }
 
     inline void addItem(Item item)
     {
@@ -78,7 +78,7 @@ public:
             filterItems();
 
         ++m_selectedItemI;
-        if (m_selectedItemI >= m_filteredItems.size())
+        if (m_selectedItemI >= (int)m_filteredItems.size())
         {
             m_selectedItemI = m_filteredItems.size()-1;
         }

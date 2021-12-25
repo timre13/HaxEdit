@@ -59,17 +59,20 @@ void Popup::filterItems()
 
 void Popup::render()
 {
-    if (!isRendered())
+    if (!m_isEnabled)
         return;
 
     TIMER_BEGIN_FUNC();
-
-    recalcSize();
 
     if (m_isItemSortingNeeded)
         sortItems();
     if (m_isFilteringNeeded)
         filterItems();
+
+    if (m_filteredItems.empty())
+        return;
+
+    recalcSize();
 
     g_uiRenderer->renderRectangleOutline(
             {m_position.x-1, m_position.y-1},
