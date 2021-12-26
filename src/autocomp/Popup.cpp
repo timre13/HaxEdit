@@ -39,7 +39,11 @@ void Popup::sortItems()
     );
 
     // Remove duplicates
-    m_items.erase(std::unique(m_items.begin(), m_items.end()), m_items.end());
+    m_items.erase(std::unique(m_items.begin(), m_items.end(),
+                [](const std::unique_ptr<Item>& a, const std::unique_ptr<Item>& b){
+                    return a->type == b->type && a->value == b->value;
+                }),
+            m_items.end());
 
     m_isItemSortingNeeded = false;
 }
