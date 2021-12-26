@@ -298,7 +298,10 @@ void openPathAtCursor()
 
         Logger::dbg << "Checking path: " << path << Logger::End;
         if (!isValidFilePath(path))
+        {
+            g_statMsg.set("Not a valid file path: "+quoteStr(path), StatusMsg::Type::Error);
             return;
+        }
 
         auto* buffer = App::openFileInNewBuffer(path);
         if (g_tabs.empty())
