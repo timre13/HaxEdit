@@ -342,22 +342,22 @@ static const std::string genWelcomeMsg(std::string templ)
     map["BUILD_DATE"] = __DATE__ " at " __TIME__;
     map["BUILD_TYPE"] =
 #ifdef NDEBUG
-                "Release";
+                "\033[32mRelease\033[0m";
 #else
-                "Debug";
+                "\033[33mDebug\033[0m";
 #endif
     map["BUILD_IS_OPTIMIZED"] =
 #ifdef __OPTIMIZE__
-                "ON";
+                "\033[32mON\033[0m";
 #else
-                "OFF";
+                "\033[31mOFF\033[0m";
 #endif
     map["BUILD_IS_ASAN_ON"] =
 #ifdef __has_feature
 #   if __has_feature(address_sanitizer)
-                "ON";
+                "\033[32mON\033[0m";
 #   else
-                "OFF";
+                "\033[31mOFF\033[0m";
 #   endif
 #else
                 "???";

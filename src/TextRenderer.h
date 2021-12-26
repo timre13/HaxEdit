@@ -103,12 +103,25 @@ public:
 
     /*
      * Render a string to the window.
+     *
+     * Some ANSI escape sequences are supported to change the current style and color.
+     * The settings are not preserved across function calls.
+     * If a wrong sequence is received, the behaviour is undefined.
+     * Supported ANSI escape sequences:
+     *  + 4-bit foreground color modifiers (3?, 9?)
+     *
+     * Args:
+     *  + str: The string to render. It can contain ANSI escape sequences.
+     *  + position: Textbox position.
+     *  + initStyle: The initial style, can be changed with ANSI sequences.
+     *  + initColor: The initial foreground color, can be changed with ANSI sequences.
+     *  + shouldWrap: If true, a new line is started when reaching the end of the screen.
      */
     void renderString(
             const std::string& str,
             const glm::ivec2& position,
-            FontStyle style=FontStyle::Regular,
-            const RGBColor& color={1.0f, 1.0f, 1.0f},
+            FontStyle initStyle=FontStyle::Regular,
+            const RGBColor& initColor={1.0f, 1.0f, 1.0f},
             bool shouldWrap=false
     );
 

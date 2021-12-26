@@ -228,16 +228,52 @@ uint TextRenderer::getCharGlyphAdvance(Char c, FontStyle style/*=FontStyle::Regu
     return glyph == glyphs->end() ? glyphs->find(0)->second.advance : glyph->second.advance;
 }
 
+#define ANSI_ESC_CHAR_0         '\033'
+#define ANSI_ESC_CHAR_1         '['
+#define ANSI_ESC_END_CHAR       'm'
+#define ANSI_ESC_FG_CHAR        '3'
+#define ANSI_ESC_BRFG_CHAR      '9'
+#define ANSI_ESC_RESET_CHAR     '0'
+
+namespace AnsiColors
+{
+
+// Note: These are XTerm's default colors
+
+static constexpr RGBColor fgColors[8]{
+    {  0/255.f,   0/255.f,   0/255.f}, // Black
+    {205/255.f,   0/255.f,   0/255.f}, // Red
+    {  0/255.f, 205/255.f,   0/255.f}, // Green
+    {205/255.f, 205/255.f,   0/255.f}, // Yellow
+    {  0/255.f,   0/255.f, 238/255.f}, // Blue
+    {205/255.f,   0/255.f, 205/255.f}, // Magenta
+    {  0/255.f, 205/255.f, 205/255.f}, // Cyan
+    {229/255.f, 229/255.f, 229/255.f}, // White
+};
+
+static constexpr RGBColor brightFgColors[8]{
+    {127/255.f, 127/255.f, 127/255.f}, // Bright black (gray)
+    {255/255.f,   0/255.f,   0/255.f}, // Bright red
+    {  0/255.f, 255/255.f,   0/255.f}, // Bright green
+    {255/255.f, 255/255.f,   0/255.f}, // Bright yellow
+    { 92/255.f,  92/255.f, 255/255.f}, // Bright blue
+    {255/255.f,   0/255.f, 255/255.f}, // Bright magenta
+    {  0/255.f, 255/255.f,   0/255.f}, // Bright cyan
+    {255/255.f, 255/255.f, 255/255.f}, // Bright white
+};
+
+}
+
 void TextRenderer::renderString(
         const std::string& str,
         const glm::ivec2& position,
-        FontStyle style/*=FontStyle::Regular*/,
-        const RGBColor& color/*={1.0f, 1.0f, 1.0f}*/,
+        FontStyle initStyle/*=FontStyle::Regular*/,
+        const RGBColor& initColor/*={1.0f, 1.0f, 1.0f}*/,
         bool shouldWrap/*=false*/
     )
 {
     static constexpr float scale = 1.0f;
-    auto glyphs = getGlyphListFromStyle(style);
+    auto* glyphs = getGlyphListFromStyle(initStyle);
 
     const float initTextX = position.x;
     const float initTextY = position.y;
@@ -245,8 +281,9 @@ void TextRenderer::renderString(
     float textY = initTextY;
 
     prepareForDrawing();
-    setDrawingColor(color);
+    setDrawingColor(initColor);
 
+    std::string ansiSeq;
     for (char c : str)
     {
         switch (c)
@@ -268,6 +305,58 @@ void TextRenderer::renderString(
             textX = initTextX;
             textY += g_fontSizePx * scale * 4;
             continue;
+
+        case ANSI_ESC_CHAR_0: // Escape seqence introducer 1
+            ansiSeq += c;
+            continue;
+
+        case ANSI_ESC_END_CHAR: // End of escape sequence
+            if (!ansiSeq.empty())
+            {
+#if 0
+                Logger::dbg << "ANSI sequence: ";
+                for (char k : ansiSeq)
+                    Logger::dbg << +k << '/' << k << " | ";
+                Logger::dbg << +c << '/' << c << Logger::End;
+#endif
+
+                assert(ansiSeq[1] == ANSI_ESC_CHAR_1); // Check the second escape introducer character
+
+                assert(ansiSeq.size() >= 3);
+                switch (ansiSeq[2])
+                {
+                case ANSI_ESC_FG_CHAR: // Foregound seqence identifier
+                    assert(ansiSeq.size() == 4);
+                    assert(ansiSeq[3] >= '0' && ansiSeq[3] <= '7');
+                    setDrawingColor(AnsiColors::fgColors[ansiSeq[3]-'0']);
+                    break;
+
+                case ANSI_ESC_BRFG_CHAR: // Bright foregound seqence identifier
+                    assert(ansiSeq.size() == 4);
+                    assert(ansiSeq[3] >= '0' && ansiSeq[3] <= '7');
+                    setDrawingColor(AnsiColors::brightFgColors[ansiSeq[3]-'0']);
+                    break;
+
+                case ANSI_ESC_RESET_CHAR: // Reset sequence identifier
+                    setDrawingColor(initColor); // Reset color
+                    glyphs = getGlyphListFromStyle(initStyle); // Reset style
+                    break;
+
+                default: // Invalid escape sequence
+                    assert(false);
+                }
+                ansiSeq.clear();
+                continue;
+            }
+            break;
+
+        default:
+            if (!ansiSeq.empty())
+            {
+                ansiSeq += c;
+                continue;
+            }
+            break;
         }
 
         if (shouldWrap && textX+g_fontSizePx > m_windowWidth)
