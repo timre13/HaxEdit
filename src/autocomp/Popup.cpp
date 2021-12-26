@@ -114,5 +114,15 @@ void Popup::render()
     TIMER_END_FUNC();
 }
 
+void Popup::clear()
+{
+    m_items.clear();
+    m_filteredItems.clear();
+    m_filterBuffer.clear();
+    m_scrollByItems = 0;
+    m_isItemSortingNeeded = true;
+    m_isFilteringNeeded = true;
+}
+
 }
 

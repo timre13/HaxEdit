@@ -66,6 +66,7 @@ add_executable(haxed
     src/SessionHandler.cpp
     src/autocomp/Popup.cpp
     src/autocomp/DictionaryProvider.cpp
+    src/autocomp/BufferWordProvider.cpp
     src/Git.cpp
     external/cJSON/cJSON.c
 )

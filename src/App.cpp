@@ -2,6 +2,7 @@
 #include "Bindings.h"
 #include "../external/stb/stb_image.h"
 #include "Git.h"
+#include "common.h"
 
 #define BUFFER_RESIZE_MAX_CURS_DIST 10
 
@@ -104,6 +105,35 @@ FileTypeHandler* App::createFileTypeHandler()
 void App::createAutocompleteProviders()
 {
     Autocomp::dictProvider.reset(new Autocomp::DictionaryProvider{});
+
+    Logger::log << "Loading dictionary: " << quoteStr(DICTIONARY_FILE_PATH) << Logger::End;
+
+    try
+    {
+        const String content = loadUnicodeFile(DICTIONARY_FILE_PATH);
+        LineIterator it = content;
+        String line;
+        while (it.next(line))
+        {
+            if (line.length() > 2)
+            {
+                Autocomp::DictionaryProvider::s_words.push_back(line);
+            }
+        }
+    }
+    catch (std::exception& e)
+    {
+        Logger::err << "Failed to load dictionary: " << quoteStr(DICTIONARY_FILE_PATH)
+            << ": " << e.what() << Logger::End;
+        return;
+    }
+
+    Logger::log << "Loaded dictionary " << quoteStr(DICTIONARY_FILE_PATH) << " with "
+        << Autocomp::DictionaryProvider::s_words.size() << " words (filtered)" << Logger::End;
+    if (Autocomp::DictionaryProvider::s_words.size() > 50'000)
+    {
+        Logger::warn << "Dictionary has a lot of words, autocompletion may be slow" << Logger::End;
+    }
 }
 
 void App::setupKeyBindings()

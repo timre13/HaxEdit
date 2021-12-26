@@ -14,6 +14,8 @@
 #include "signs.h"
 #include "Git.h"
 #include "autocomp/Popup.h"
+#include "autocomp/DictionaryProvider.h"
+#include "autocomp/BufferWordProvider.h"
 
 namespace std_fs = std::filesystem;
 
@@ -160,6 +162,7 @@ protected:
     // To handle Undo and Redo
     BufferHistory m_history;
 
+    std::unique_ptr<Autocomp::BufferWordProvider> m_buffWordProvid;
     std::unique_ptr<Autocomp::Popup> m_autocompPopup;
 
     Selection m_selection{};
@@ -320,6 +323,7 @@ public:
     virtual void autocompPopupHide();
     virtual bool isAutocompPopupShown() const { return m_autocompPopup->isEnabled(); }
     virtual void autocompPopupInsert();
+    virtual void regenAutocompList();
 
     virtual void startSelection(Selection::Mode mode);
     virtual void closeSelection();

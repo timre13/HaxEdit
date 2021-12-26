@@ -66,6 +66,7 @@ void switchToNormalMode()
     {
         g_activeBuff->closeSelection();
         g_activeBuff->autocompPopupHide();
+        g_activeBuff->regenAutocompList();
         g_activeBuff->setCursorVisibility(true);
         g_isRedrawNeeded = true;
     }

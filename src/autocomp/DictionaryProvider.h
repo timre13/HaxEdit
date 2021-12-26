@@ -1,22 +1,20 @@
 #pragma once
 
-#include <vector>
+#include "IProvider.h"
 #include "../types.h"
+#include <vector>
 
 namespace Autocomp
 {
 
-class Popup;
-
-class DictionaryProvider final
+class DictionaryProvider final : public IProvider
 {
-private:
-    std::vector<String> m_words;
-
 public:
-    DictionaryProvider();
+    // This is the list of words in the dictionary
+    // It is shared accross all the `DictionaryProvider` instances
+    static std::vector<String> s_words;
 
-    void get(Popup* popupP);
+    virtual void get(Popup* popupP) override;
 };
 
-}
+} // namespace Autocomp

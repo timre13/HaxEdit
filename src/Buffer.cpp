@@ -46,7 +46,7 @@ Buffer::Buffer()
 
     Logger::dbg << "Setting up autocomplete for buffer: " << this << Logger::End;
     m_autocompPopup = std::make_unique<Autocomp::Popup>();
-    Autocomp::dictProvider->get(m_autocompPopup.get());
+    m_buffWordProvid = std::make_unique<Autocomp::BufferWordProvider>();
 
     Logger::log << "Created a buffer: " << this << Logger::End;
 }
@@ -119,6 +119,30 @@ void Buffer::open(const std::string& filePath)
         }
         file.close();
     }
+
+    { // Regenerate the initial autocomplete list for `m_buffWordProvid`
+        m_buffWordProvid->clear();
+
+        String word;
+        for (int i{}; i < m_content.size(); ++i)
+        {
+            if (u_isspace(m_content[i]))
+            {
+                // End of word
+                if (!word.empty())
+                {
+                    //Logger::dbg << "Feeding word: " << quoteStr(strToAscii(word)) << Logger::End;
+                    m_buffWordProvid->add(word);
+                    word.clear();
+                }
+            }
+            else
+            {
+                word += m_content[i];
+            }
+        }
+    }
+    regenAutocompList();
 
     g_statMsg.set("Opened file"+std::string(m_isReadOnly ? " (read-only)" : "")+": \""+filePath+"\"",
             StatusMsg::Type::Info);
@@ -1173,15 +1197,14 @@ void Buffer::insert(Char character)
     if (character == '\n')
     {
         ++m_cursorLine;
-        ++m_cursorCharPos;
         m_cursorCol = 0;
         ++m_numOfLines;
     }
     else
     {
         ++m_cursorCol;
-        ++m_cursorCharPos;
     }
+    ++m_cursorCharPos;
     m_isModified = true;
 
     m_isCursorShown = true;
@@ -1195,6 +1218,23 @@ void Buffer::insert(Char character)
     else
     {
         m_autocompPopup->setVisibility(false);
+    }
+
+    // If this is the end of a word
+    if (u_isspace(character))
+    {
+        // Find the word
+        int wordStart;
+        for (wordStart=m_cursorCharPos-2; wordStart >= 0 && !u_isspace(m_content[wordStart]); wordStart--)
+            ;
+        const String word = m_content.substr(wordStart+1, m_cursorCharPos-wordStart-2);
+
+        // Feed the buffer word provider the word
+        if (!word.empty())
+        {
+            //Logger::dbg << "Feeding word to buffer word provider: " << quoteStr(strToAscii(word)) << Logger::End;
+            m_buffWordProvid->add(word);
+        }
     }
 
     TIMER_END_FUNC();
@@ -1539,6 +1579,14 @@ void Buffer::autocompPopupInsert()
     m_autocompPopup->setVisibility(false);
     m_isCursorShown = true;
     g_isRedrawNeeded = true;
+}
+
+void Buffer::regenAutocompList()
+{
+    Logger::dbg << "Regenerating autocomplete list for buffer " << this << Logger::End;
+    m_autocompPopup->clear();
+    Autocomp::dictProvider->get(m_autocompPopup.get());
+    m_buffWordProvid->get(m_autocompPopup.get());
 }
 
 void Buffer::startSelection(Selection::Mode mode)

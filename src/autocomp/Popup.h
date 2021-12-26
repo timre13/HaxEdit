@@ -19,7 +19,8 @@ public:
         enum class Type
         {
             Misc,
-            Word,
+            DictionaryWord,
+            BufferWord,
             Path,
         } type;
 
@@ -28,6 +29,17 @@ public:
         friend inline bool operator==(const Item& a, const Item& b)
         {
             return a.type == b.type && a.value == b.value;
+        }
+
+        std::string getTypeAsStr()
+        {
+            switch (type)
+            {
+            case Type::Misc:                return "Misc";
+            case Type::DictionaryWord:      return "Dict";
+            case Type::BufferWord:          return "Buff";
+            case Type::Path:                return "Path";
+            }
         }
     };
 
@@ -161,6 +173,8 @@ public:
     {
         return m_filterBuffer.length();
     }
+
+    void clear();
 };
 
 }
