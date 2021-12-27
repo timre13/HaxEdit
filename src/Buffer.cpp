@@ -899,7 +899,7 @@ void Buffer::render()
             {
                 auto dimensions = g_textRenderer->renderChar(digit,
                         {digitX, textY},
-                        lineI == m_cursorLine ? FontStyle::Bold : FontStyle::Italic);
+                        lineI == m_cursorLine ? FONT_STYLE_BOLD : FONT_STYLE_ITALIC);
                 digitX += dimensions.advance/64.0f;
             }
 
@@ -1150,7 +1150,7 @@ void Buffer::render()
         }
         else
         {
-            advance = g_textRenderer->getCharGlyphAdvance(c, FontStyle::Regular);
+            advance = g_textRenderer->getCharGlyphAdvance(c, FONT_STYLE_REGULAR);
         }
 
         textX += (advance/64.0f);

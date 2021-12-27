@@ -8,23 +8,21 @@
 #include <map>
 #include <glm/glm.hpp>
 
-
-enum class FontStyle
-{
-    Regular,
-    Bold,
-    Italic,
-    BoldItalic,
-};
+using FontStyle = int;
+#define FONT_STYLE_REGULAR  (FontStyle)(0b00)
+#define FONT_STYLE_BOLD     (FontStyle)(0b01)
+#define FONT_STYLE_ITALIC   (FontStyle)(0b10)
 
 inline std::string fontStyleToStr(FontStyle style)
 {
+    // Note: DO NOT CHANGE THE RETURN VALUES. They are used to query the font paths.
     switch (style)
     {
-    case FontStyle::Regular: return "Regular";
-    case FontStyle::Bold: return "Bold";
-    case FontStyle::Italic: return "Oblique";
-    case FontStyle::BoldItalic: return "Bold Oblique";
+    case 0:                                 return "Regular";
+    case FONT_STYLE_BOLD:                   return "Bold";
+    case FONT_STYLE_ITALIC:                 return "Oblique";
+    case FONT_STYLE_BOLD|FONT_STYLE_ITALIC: return "Bold Oblique";
+    default: assert(false);
     }
     return ""; // Never reached
 }
@@ -78,7 +76,7 @@ private:
     GlyphDimensions renderChar(
             Char c,
             const glm::ivec2& position,
-            FontStyle style=FontStyle::Regular
+            FontStyle style=FONT_STYLE_REGULAR
     );
     // ---------------------------------------------
 
@@ -120,7 +118,7 @@ public:
     void renderString(
             const std::string& str,
             const glm::ivec2& position,
-            FontStyle initStyle=FontStyle::Regular,
+            FontStyle initStyle=FONT_STYLE_REGULAR,
             const RGBColor& initColor={1.0f, 1.0f, 1.0f},
             bool shouldWrap=false
     );
@@ -128,7 +126,7 @@ public:
     inline int getWindowWidth() const { return m_windowWidth; }
     inline int getWindowHeight() const { return m_windowHeight; }
 
-    uint getCharGlyphAdvance(Char c, FontStyle style=FontStyle::Regular);
+    uint getCharGlyphAdvance(Char c, FontStyle style=FONT_STYLE_REGULAR);
 
     ~TextRenderer();
 };

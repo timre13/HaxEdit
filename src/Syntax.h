@@ -39,17 +39,17 @@ constexpr RGBColor syntaxColors[_SYNTAX_MARK_COUNT] = {
 };
 
 constexpr FontStyle syntaxStyles[_SYNTAX_MARK_COUNT] = {
-    FontStyle::Regular, // None, default
-    FontStyle::Bold,    // Keyword
-    FontStyle::Regular, // Type
-    FontStyle::Regular, // Operator
-    FontStyle::Regular, // Number
-    FontStyle::Italic,  // String
-    FontStyle::Regular, // Comment
-    FontStyle::Regular, // Character literal
-    FontStyle::Regular, // Preprocessor
-    FontStyle::Bold,    // Special character
-    FontStyle::Italic,  // Filepath - Should be "Underlined" in the future, when we support it
+    FONT_STYLE_REGULAR, // None, default
+    FONT_STYLE_BOLD,    // Keyword
+    FONT_STYLE_REGULAR, // Type
+    FONT_STYLE_REGULAR, // Operator
+    FONT_STYLE_REGULAR, // Number
+    FONT_STYLE_ITALIC,  // String
+    FONT_STYLE_REGULAR, // Comment
+    FONT_STYLE_REGULAR, // Character literal
+    FONT_STYLE_REGULAR, // Preprocessor
+    FONT_STYLE_BOLD,    // Special character
+    FONT_STYLE_ITALIC,  // Filepath - Should be "Underlined" in the future, when we support it
 };
 
 inline std::array<String, 87> keywordList{

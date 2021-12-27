@@ -111,7 +111,7 @@ void Popup::render()
         g_textRenderer->renderString(
                 strToAscii(m_filteredItems[i]->value),
                 {m_position.x, m_position.y+m_scrollByItems*g_fontSizePx+i*g_fontSizePx},
-                FontStyle::Regular,
+                FONT_STYLE_REGULAR,
                 {0.400f, 0.851f, 0.937f});
     }
 

@@ -51,10 +51,10 @@ void App::setupGlFeatures()
 
 TextRenderer* App::createTextRenderer()
 {
-    auto regularFontPath    = OS::getFontFilePath(FONT_FAMILY_REGULAR, FontStyle::Regular);
-    auto boldFontPath       = OS::getFontFilePath(FONT_FAMILY_BOLD, FontStyle::Bold);
-    auto italicFontPath     = OS::getFontFilePath(FONT_FAMILY_ITALIC, FontStyle::Italic);
-    auto boldItalicFontPath = OS::getFontFilePath(FONT_FAMILY_BOLDITALIC, FontStyle::BoldItalic);
+    auto regularFontPath    = OS::getFontFilePath(FONT_FAMILY_REGULAR, FONT_STYLE_REGULAR);
+    auto boldFontPath       = OS::getFontFilePath(FONT_FAMILY_BOLD, FONT_STYLE_BOLD);
+    auto italicFontPath     = OS::getFontFilePath(FONT_FAMILY_ITALIC, FONT_STYLE_ITALIC);
+    auto boldItalicFontPath = OS::getFontFilePath(FONT_FAMILY_BOLDITALIC, FONT_STYLE_BOLD|FONT_STYLE_ITALIC);
     Logger::dbg
         << "Regular font: " << regularFontPath
         << "\n       Bold font: " << boldFontPath
@@ -266,7 +266,7 @@ void App::renderStatusLine()
     g_textRenderer->renderString(
             g_statMsg.isEmpty() ? leftStr : g_statMsg.get(),
             {g_statMsg.isEmpty() ? 0 : g_fontSizePx*4, winH-g_fontSizePx-4},
-            g_statMsg.isEmpty() ? FontStyle::Regular : FontStyle::BoldItalic,
+            g_statMsg.isEmpty() ? FONT_STYLE_REGULAR : FONT_STYLE_BOLD|FONT_STYLE_ITALIC,
             g_statMsg.isEmpty() ? RGBColor{1.0f, 1.0f, 1.0f} : g_statMsg.getTypeColor());
 
     if (g_activeBuff)
@@ -277,7 +277,7 @@ void App::renderStatusLine()
                 g_activeBuff->m_statusLineStr.str,
                 {winW-g_fontSizePx*g_activeBuff->m_statusLineStr.maxLen*0.7f,
                  winH-g_fontSizePx-4},
-                 FontStyle::Regular,
+                 FONT_STYLE_REGULAR,
                  g_activeBuff->isSelectionInProgress() ? RGBColor{0.3f, 0.9f, 0.6f} : RGBColor{1.f, 1.f, 1.f});
     }
 }
@@ -314,7 +314,7 @@ void App::renderTabLine()
         // Render the filename, use orange color when the buffer is modified since the last save
         g_textRenderer->renderString(buffer->getFileName().substr(0, TABLINE_TAB_MAX_TEXT_LEN),
                 {tabX+20, -2},
-                i == g_currTabI ? FontStyle::BoldItalic : FontStyle::Regular,
+                i == g_currTabI ? FONT_STYLE_BOLD|FONT_STYLE_ITALIC : FONT_STYLE_REGULAR,
                 (buffer->isModified() ? RGBColor{1.0f, 0.5f, 0.0f} : RGBColor{1.0f, 1.0, 1.0f}));
 
         // Render icon
@@ -384,12 +384,8 @@ static const std::string genWelcomeMsg(std::string templ)
 void App::renderStartupScreen()
 {
     static const auto icon = loadProgramIcon();
-    static const auto welcomeMsg1 = genWelcomeMsg(WELCOME_MSG_PRIMARY);
-    static const auto welcomeMsg2 = genWelcomeMsg(WELCOME_MSG_SECONDARY);
-    g_textRenderer->renderString(welcomeMsg1, {200, 30}, FontStyle::Bold, {0.8f, 0.8f, 0.8f}, true);
-    g_textRenderer->renderString(welcomeMsg2,
-            {200, 30+(strCountLines(welcomeMsg1)+1)*g_fontSizePx},
-            FontStyle::Regular, {0.8f, 0.8f, 0.8f}, true);
+    static const auto welcomeMsg = genWelcomeMsg(WELCOME_MSG);
+    g_textRenderer->renderString(welcomeMsg, {200, 30}, FONT_STYLE_REGULAR, WELCOME_MSG_DEF_FG, true);
 
     const int origIconW = icon->getPhysicalSize().x;
     const int origIconH = icon->getPhysicalSize().y;

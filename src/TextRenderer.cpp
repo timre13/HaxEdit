@@ -200,10 +200,11 @@ std::map<Char, TextRenderer::Glyph>* TextRenderer::getGlyphListFromStyle(FontSty
 {
     switch (style)
     {
-    case FontStyle::Regular:    return &m_regularGlyphs;
-    case FontStyle::Bold:       return &m_boldGlyphs;
-    case FontStyle::Italic:     return &m_italicGlyphs;
-    case FontStyle::BoldItalic: return &m_boldItalicGlyphs;
+    case FONT_STYLE_REGULAR:                return &m_regularGlyphs;
+    case FONT_STYLE_BOLD:                   return &m_boldGlyphs;
+    case FONT_STYLE_ITALIC:                 return &m_italicGlyphs;
+    case FONT_STYLE_BOLD|FONT_STYLE_ITALIC: return &m_boldItalicGlyphs;
+    default: assert(false);
     }
     return {}; // Never reached
 }
@@ -211,7 +212,7 @@ std::map<Char, TextRenderer::Glyph>* TextRenderer::getGlyphListFromStyle(FontSty
 TextRenderer::GlyphDimensions TextRenderer::renderChar(
         Char c,
         const glm::ivec2& position,
-        FontStyle style/*=FontStyle::Regular*/
+        FontStyle style/*=FONT_STYLE_REGULAR*/
     )
 {
     auto glyphs = getGlyphListFromStyle(style);
@@ -221,19 +222,20 @@ TextRenderer::GlyphDimensions TextRenderer::renderChar(
             position.x, position.y, 1.0f, m_fontVbo);
 }
 
-uint TextRenderer::getCharGlyphAdvance(Char c, FontStyle style/*=FontStyle::Regular*/)
+uint TextRenderer::getCharGlyphAdvance(Char c, FontStyle style/*=FONT_STYLE_REGULAR*/)
 {
     auto glyphs = getGlyphListFromStyle(style);
     auto glyph = glyphs->find(c);
     return glyph == glyphs->end() ? glyphs->find(0)->second.advance : glyph->second.advance;
 }
 
-#define ANSI_ESC_CHAR_0         '\033'
-#define ANSI_ESC_CHAR_1         '['
-#define ANSI_ESC_END_CHAR       'm'
-#define ANSI_ESC_FG_CHAR        '3'
-#define ANSI_ESC_BRFG_CHAR      '9'
-#define ANSI_ESC_RESET_CHAR     '0'
+#define ANSI_ESC_CHAR_0                 '\033'
+#define ANSI_ESC_CHAR_1                 '['
+#define ANSI_ESC_END_CHAR               'm'
+#define ANSI_ESC_FG_OR_ITALIC_CHAR      '3'
+#define ANSI_ESC_BRFG_CHAR              '9'
+#define ANSI_ESC_RESET_CHAR             '0'
+#define ANSI_ESC_BOLD_CHAR              '1'
 
 namespace AnsiColors
 {
@@ -267,13 +269,19 @@ static constexpr RGBColor brightFgColors[8]{
 void TextRenderer::renderString(
         const std::string& str,
         const glm::ivec2& position,
-        FontStyle initStyle/*=FontStyle::Regular*/,
+        FontStyle initStyle/*=FONT_STYLE_REGULAR*/,
         const RGBColor& initColor/*={1.0f, 1.0f, 1.0f}*/,
         bool shouldWrap/*=false*/
     )
 {
     static constexpr float scale = 1.0f;
-    auto* glyphs = getGlyphListFromStyle(initStyle);
+    FontStyle currStyle = initStyle;
+    std::map<Char, TextRenderer::Glyph>* glyphs;
+
+    auto setStyle{[&currStyle, &glyphs, this](FontStyle style){
+        currStyle = style;
+        glyphs = getGlyphListFromStyle(currStyle);
+    }};
 
     const float initTextX = position.x;
     const float initTextY = position.y;
@@ -282,6 +290,7 @@ void TextRenderer::renderString(
 
     prepareForDrawing();
     setDrawingColor(initColor);
+    setStyle(initStyle);
 
     std::string ansiSeq;
     for (char c : str)
@@ -325,10 +334,20 @@ void TextRenderer::renderString(
                 assert(ansiSeq.size() >= 3);
                 switch (ansiSeq[2])
                 {
-                case ANSI_ESC_FG_CHAR: // Foregound seqence identifier
-                    assert(ansiSeq.size() == 4);
-                    assert(ansiSeq[3] >= '0' && ansiSeq[3] <= '7');
-                    setDrawingColor(AnsiColors::fgColors[ansiSeq[3]-'0']);
+                case ANSI_ESC_FG_OR_ITALIC_CHAR: // Italic or foregound color
+                    if (ansiSeq.size() == 4) // Foregound seqence identifier
+                    {
+                        assert(ansiSeq[3] >= '0' && ansiSeq[3] <= '7');
+                        setDrawingColor(AnsiColors::fgColors[ansiSeq[3]-'0']);
+                    }
+                    else if (ansiSeq.size() == 3) // Italic style sequence
+                    {
+                        setStyle(currStyle|FONT_STYLE_ITALIC);
+                    }
+                    else
+                    {
+                        assert(false);
+                    }
                     break;
 
                 case ANSI_ESC_BRFG_CHAR: // Bright foregound seqence identifier
@@ -337,9 +356,13 @@ void TextRenderer::renderString(
                     setDrawingColor(AnsiColors::brightFgColors[ansiSeq[3]-'0']);
                     break;
 
+                case ANSI_ESC_BOLD_CHAR: // Bold style sequence
+                    setStyle(currStyle|FONT_STYLE_BOLD);
+                    break;
+
                 case ANSI_ESC_RESET_CHAR: // Reset sequence identifier
                     setDrawingColor(initColor); // Reset color
-                    glyphs = getGlyphListFromStyle(initStyle); // Reset style
+                    setStyle(initStyle); // Reset style
                     break;
 
                 default: // Invalid escape sequence

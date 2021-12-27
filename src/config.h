@@ -66,12 +66,13 @@
  * - FONT_FAMILY_ITALIC
  * - FONT_FAMILY_BOLDITALIC
  */
-#define WELCOME_MSG_PRIMARY "Welcome to \033[92mHaxorEdit\033[0m\n"
-#define WELCOME_MSG_SECONDARY "Built on %BUILD_DATE% (Build t.: %BUILD_TYPE%, Optim.: %BUILD_IS_OPTIMIZED%, " \
-                              "ASAN: %BUILD_IS_ASAN_ON%)\nCompiler: \033[36m%COMPILER_NAME%\033[0m\n" \
-                              "OpenGL Vendor: \033[36m%GL_VENDOR%\033[0m | Renderer: \033[36m%GL_RENDERER%\033[0m\n" \
-                              "Font family: R: %FONT_FAMILY_REGULAR%, B: %FONT_FAMILY_BOLD%, " \
-                              "I: %FONT_FAMILY_ITALIC%, BI: %FONT_FAMILY_BOLDITALIC%"
+#define WELCOME_MSG "\033[1m\033[97mWelcome to \033[92mHaxorEdit\033[0m\n\n" \
+                    "Built on %BUILD_DATE% (Build t.: %BUILD_TYPE%, Optim.: %BUILD_IS_OPTIMIZED%, " \
+                    "ASAN: %BUILD_IS_ASAN_ON%)\nCompiler: \033[36m%COMPILER_NAME%\033[0m\n" \
+                    "OpenGL Vendor: \033[36m%GL_VENDOR%\033[0m | Renderer: \033[36m%GL_RENDERER%\033[0m\n" \
+                    "Font family: R: %FONT_FAMILY_REGULAR%, B: \033[1m%FONT_FAMILY_BOLD%\033[0m, " \
+                    "I: \033[3m%FONT_FAMILY_ITALIC%\033[0m, \033[1m\033[3mBI: %FONT_FAMILY_BOLDITALIC%\033[0m\n"
+#define WELCOME_MSG_DEF_FG RGBColor{0.8f, 0.8f, 0.8f}
 
 #define IMG_BUF_ZOOM_STEP 0.05f
 

@@ -135,7 +135,7 @@ void FileDialog::render()
         // Render filename
         g_textRenderer->renderString(file->name,
                 {rect.xPos+FILE_DIALOG_ICON_SIZE_PX+10, rect.yPos+rect.height/2-g_fontSizePx/2-2},
-                file->isDirectory ? FontStyle::Italic : FontStyle::Regular);
+                file->isDirectory ? FONT_STYLE_ITALIC : FONT_STYLE_REGULAR);
         // Render permissions
         g_textRenderer->renderString(file->permissionStr,
                 {m_dialogDims.xPos+m_dialogDims.width-g_fontSizePx*0.7f*9, rect.yPos-2});
