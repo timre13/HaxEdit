@@ -2,7 +2,8 @@
 
 #include "Logger.h"
 
-#define EDITMODE_STATLINE_STR_LEN 7
+// Editor mode status line string length, not counting escape sequences
+#define EDITMODE_STATLINE_STR_PWIDTH 7
 
 class EditorMode final
 {

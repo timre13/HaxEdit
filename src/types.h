@@ -196,3 +196,34 @@ inline std::string intToHexStr(T x)
     const std::string str = ss.str();
     return ((str.size() % 2) ? "0" : "") + str;
 }
+
+/*
+ * Get physical string length.
+ * Ignores ANSI escape sequences.
+ */
+template <typename T>
+inline size_t strPLen(const T& str)
+{
+    static_assert(
+            std::is_base_of<String, T>::value | std::is_base_of<std::string, T>::value,
+            "T must be a string type");
+
+    size_t len{};
+    bool isInsideEsc = false;
+    for (char c : str)
+    {
+        if (isInsideEsc)
+        {
+            if (c == 'm')
+                isInsideEsc = false;
+        }
+        else
+        {
+            if (c == '\033')
+                isInsideEsc = true;
+            else
+                ++len;
+        }
+    }
+    return len;
+}

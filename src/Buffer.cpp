@@ -612,7 +612,7 @@ void Buffer::updateCursor()
 }
 
 #define STATUS_LINE_STR_LEN_MAX\
-    EDITMODE_STATLINE_STR_LEN /* Mode string */\
+    EDITMODE_STATLINE_STR_PWIDTH /* Mode string */\
     + 3 /* Separator */\
     + 4 /* Cursor line */\
     + 1 /* Separator*/\
@@ -630,13 +630,13 @@ void Buffer::updateRStatusLineStr()
     {
         m_statusLineStr.str
             = g_editorMode.asStatLineStr()
-            + " | " + std::to_string(m_cursorLine + 1)
-            + ':'   + std::to_string(m_cursorCol + 1)
-            + " | " + std::to_string(m_cursorCharPos)
-            + " | " + std::to_string(m_content[m_cursorCharPos])
-            + '/' + intToHexStr((int32_t)m_content[m_cursorCharPos])
+            + " | \033[32m" + std::to_string(m_cursorLine + 1) + "\033[0m"
+            + ":\033[33m" + std::to_string(m_cursorCol + 1) + "\033[0m"
+            + " | \033[31m" + std::to_string(m_cursorCharPos) + "\033[0m"
+            + " | \033[95m" + std::to_string(m_content[m_cursorCharPos]) + "\033[0m"
+            + "/\033[95m" + intToHexStr((int32_t)m_content[m_cursorCharPos]) + "\033[0m"
             ;
-        m_statusLineStr.maxLen = std::max((size_t)STATUS_LINE_STR_LEN_MAX, m_statusLineStr.str.size());
+        m_statusLineStr.maxLen = std::max((size_t)STATUS_LINE_STR_LEN_MAX, strPLen(m_statusLineStr.str));
     }
     else
     {
@@ -668,7 +668,7 @@ void Buffer::updateRStatusLineStr()
                     + (showSizeInLines && showSizeInCols ? 1 : 0)
                     + (showSizeInLines ? 4 : 0)
                     + (showSizeInChars ? 7 : 0)),
-                m_statusLineStr.str.size());
+                strPLen(m_statusLineStr.str));
     }
 }
 

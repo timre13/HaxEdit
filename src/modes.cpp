@@ -52,12 +52,12 @@ std::string EditorMode::asString()
 
 std::string EditorMode::asStatLineStr()
 {
-    // Note: Adjust `EDITMODE_STATLINE_STR_LEN` if needed
+    // Note: Adjust `EDITMODE_STATLINE_STR_PWIDTH` if needed
 
     switch (m_editorMode)
     {
-    case _EditorMode::Normal:  return "NORMAL ";
-    case _EditorMode::Insert:  return "INSERT ";
-    case _EditorMode::Replace: return "REPLACE";
+    case _EditorMode::Normal:  return "\033[36mNORMAL \033[0m";
+    case _EditorMode::Insert:  return "\033[32mINSERT \033[0m";
+    case _EditorMode::Replace: return "\033[31mREPLACE\033[0m";
     }
 }

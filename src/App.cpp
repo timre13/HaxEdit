@@ -3,6 +3,8 @@
 #include "../external/stb/stb_image.h"
 #include "Git.h"
 #include "common.h"
+#include <filesystem>
+namespace fs = std::filesystem;
 
 #define BUFFER_RESIZE_MAX_CURS_DIST 10
 
@@ -261,7 +263,11 @@ void App::renderStatusLine()
 
     std::string leftStr;
     if (g_statMsg.isEmpty())
-        leftStr = g_activeBuff->m_filePath+(g_activeBuff->m_isReadOnly ? " [RO]" : "");
+    {
+        const std::string basePath = fs::path(g_activeBuff->m_filePath).remove_filename().string();
+        const std::string fileName = fs::path(g_activeBuff->m_filePath).filename().string();
+        leftStr = basePath+"\033[1m"+fileName+(g_activeBuff->m_isReadOnly ? "\033[0m\033[91m [RO]" : "");
+    }
 
     g_textRenderer->renderString(
             g_statMsg.isEmpty() ? leftStr : g_statMsg.get(),
