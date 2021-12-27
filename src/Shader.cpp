@@ -1,5 +1,6 @@
 #include "Shader.h"
-#include "common.h"
+#include "common/file.h"
+#include "common/string.h"
 #include <fstream>
 #include <sstream>
 #include <assert.h>

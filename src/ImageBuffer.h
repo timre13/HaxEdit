@@ -3,7 +3,7 @@
 #include "Buffer.h"
 #include "Image.h"
 #include "Logger.h"
-#include "types.h"
+#include "common/string.h"
 #include "globals.h"
 #include <memory>
 

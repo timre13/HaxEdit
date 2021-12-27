@@ -9,6 +9,7 @@
 #include "../config.h"
 #include "../glstuff.h"
 #include "../globals.h"
+#include "../common/string.h"
 #include <filesystem>
 #include <algorithm>
 #include <chrono>

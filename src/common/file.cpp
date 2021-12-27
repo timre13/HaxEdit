@@ -1,11 +1,16 @@
-#include "common.h"
-#include "config.h"
-#include "Logger.h"
+#include "file.h"
+#include "string.h"
+#include "../config.h"
+#include "../Logger.h"
+#include "unicode/unistr.h"
+#include <cstring>
 #include <fstream>
 #include <vector>
-#include <stdint.h>
-#include <cstring>
-#include <string>
+
+InvalidUnicodeError::InvalidUnicodeError()
+    : std::runtime_error("Invalid Unicode value")
+{
+}
 
 String loadUnicodeFile(const std::string& filePath)
 {

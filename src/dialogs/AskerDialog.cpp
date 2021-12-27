@@ -2,6 +2,7 @@
 #include "../Logger.h"
 #include "../Buffer.h"
 #include "../globals.h"
+#include "../common/string.h"
 #include <vector>
 #include <memory>
 

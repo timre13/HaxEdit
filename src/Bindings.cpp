@@ -6,6 +6,7 @@
 #include "dialogs/Dialog.h"
 #include "dialogs/FileDialog.h"
 #include "dialogs/MessageDialog.h"
+#include "common/string.h"
 #include "globals.h"
 #include "config.h"
 #include <vector>

@@ -5,7 +5,8 @@
 #include "Buffer.h"
 #include "ImageBuffer.h"
 #include "dialogs/MessageDialog.h"
-#include "common.h"
+#include "common/file.h"
+#include "common/string.h"
 #include <sstream>
 #include <fstream>
 #include <string.h>

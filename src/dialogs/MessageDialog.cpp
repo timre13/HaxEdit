@@ -4,7 +4,7 @@
 #include "../Logger.h"
 #include "../Timer.h"
 #include "../config.h"
-#include "../types.h"
+#include "../common/string.h"
 #include "../globals.h"
 #include <algorithm>
 

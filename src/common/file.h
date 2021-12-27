@@ -1,14 +1,13 @@
 #pragma once
 
-#include "types.h"
+#include "../types.h"
+#include <stdexcept>
+#include <string>
 
 class InvalidUnicodeError : public std::runtime_error
 {
 public:
-    InvalidUnicodeError()
-        : std::runtime_error("Invalid Unicode content")
-    {
-    }
+    InvalidUnicodeError();
 };
 
 /*

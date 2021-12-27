@@ -1,5 +1,5 @@
 #include "modes.h"
-#include "types.h"
+#include "common/string.h"
 #include "Bindings.h"
 #include "globals.h"
 

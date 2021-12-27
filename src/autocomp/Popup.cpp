@@ -4,6 +4,7 @@
 #include "../TextRenderer.h"
 #include "../Timer.h"
 #include "../Logger.h"
+#include "../common/string.h"
 #include <algorithm>
 
 namespace Autocomp

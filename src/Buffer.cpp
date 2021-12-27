@@ -6,7 +6,8 @@
 #include "Syntax.h"
 #include "dialogs/MessageDialog.h"
 #include "unicode/ustdio.h"
-#include "common.h"
+#include "common/file.h"
+#include "common/string.h"
 #include "Clipboard.h"
 #include <fstream>
 #include <sstream>

@@ -1,7 +1,9 @@
 .cache/
 .runcfg
-build/
+build*/
 Session.vim
 .ccls-cache/
 icons/*.*
 dictionary.txt
+testfiles/
+.vimspector.json

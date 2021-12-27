@@ -42,7 +42,8 @@ endif()
 
 add_executable(haxed
     src/main.cpp
-    src/common.cpp
+    src/common/string.cpp
+    src/common/file.cpp
     src/modes.cpp
     src/StatusMsg.cpp
     src/App.cpp
