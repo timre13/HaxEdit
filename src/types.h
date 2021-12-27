@@ -2,10 +2,14 @@
 
 #include "unicode/unistr.h"
 #include "unicode/uchar.h"
+#include "config.h"
+#include "Logger.h"
 #include <cassert>
 #include <string>
 #include <sstream>
 #include <filesystem>
+#include <time.h>
+#include <string.h>
 
 using uint = unsigned int;
 using uchar = unsigned char;
@@ -226,4 +230,18 @@ inline size_t strPLen(const T& str)
         }
     }
     return len;
+}
+
+inline std::string dateToStr(time_t date)
+{
+    char buff[DATE_TIME_STR_LEN+1];
+    auto gm = localtime(&date);
+#ifndef NDEBUG
+    if (!gm)
+        Logger::err << "Failed to convert time_t to tm: " << strerror(errno) << Logger::End;
+#endif
+    assert(gm);
+    assert(strftime(buff, DATE_TIME_STR_LEN+1, DATE_TIME_FORMAT, gm));
+    assert(buff[DATE_TIME_STR_LEN] == 0);
+    return buff;
 }

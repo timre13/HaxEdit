@@ -80,3 +80,6 @@
 #define DICTIONARY_FILE_PATH "../dictionary.txt"
 
 #define MAX_FILE_SIZE 1024*1024*1024
+
+#define DATE_TIME_FORMAT "%F %T"
+#define DATE_TIME_STR_LEN 19

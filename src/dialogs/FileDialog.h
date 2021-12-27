@@ -4,6 +4,7 @@
 #include <string>
 #include <memory>
 #include <filesystem>
+#include <time.h>
 #include "Dialog.h"
 #include "../globals.h"
 
@@ -33,7 +34,8 @@ private:
     {
         std::string name;
         bool isDirectory;
-        std::filesystem::file_time_type lastModTime;
+        time_t lastModTime;
+        std::string lastModTimeStr;
         std::string permissionStr;
     };
     std::vector<std::unique_ptr<FileEntry>> m_fileList;

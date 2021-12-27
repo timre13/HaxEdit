@@ -11,6 +11,7 @@
 #include "../globals.h"
 #include <filesystem>
 #include <algorithm>
+#include <chrono>
 
 namespace std_fs = std::filesystem;
 
@@ -139,6 +140,9 @@ void FileDialog::render()
         // Render permissions
         g_textRenderer->renderString(file->permissionStr,
                 {m_dialogDims.xPos+m_dialogDims.width-g_fontSizePx*0.7f*9, rect.yPos-2});
+        // Render last mod time
+        g_textRenderer->renderString(file->lastModTimeStr,
+                {m_dialogDims.xPos+m_dialogDims.width-g_fontSizePx*0.7f*(9+DATE_TIME_STR_LEN+4), rect.yPos-2});
         // Render file icon
         g_fileTypeHandler->getIconFromFilename(
                 file->name, file->isDirectory)->render(
@@ -163,7 +167,8 @@ void FileDialog::genFileList()
         auto parentDirEntry = std::make_unique<FileEntry>();
         parentDirEntry->name = "..";
         parentDirEntry->isDirectory = true;
-        parentDirEntry->lastModTime = {};
+        parentDirEntry->lastModTime = 0;
+        parentDirEntry->lastModTimeStr = "";
         parentDirEntry->permissionStr = "";
         m_fileList.push_back(std::move(parentDirEntry));
     }
@@ -173,7 +178,8 @@ void FileDialog::genFileList()
         auto currentDirEntry = std::make_unique<FileEntry>();
         currentDirEntry->name = ".";
         currentDirEntry->isDirectory = true;
-        currentDirEntry->lastModTime = {};
+        currentDirEntry->lastModTime = 0;
+        currentDirEntry->lastModTimeStr = "";
         currentDirEntry->permissionStr = "";
         m_fileList.push_back(std::move(currentDirEntry));
     }
@@ -189,7 +195,8 @@ void FileDialog::genFileList()
             auto entry = std::make_unique<FileEntry>();
             entry->name = file.path().filename();
             entry->isDirectory = file.is_directory();
-            entry->lastModTime = file.last_write_time();
+            entry->lastModTime = std::chrono::system_clock::to_time_t(std::chrono::file_clock::to_sys(file.last_write_time()));
+            entry->lastModTimeStr = dateToStr(entry->lastModTime);
             auto perms = file.status().permissions();
             entry->permissionStr
                 = std::string()
