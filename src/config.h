@@ -71,8 +71,10 @@
                     "ASAN: %BUILD_IS_ASAN_ON%)\nCompiler: \033[36m%COMPILER_NAME%\033[0m\n" \
                     "OpenGL Vendor: \033[36m%GL_VENDOR%\033[0m | Renderer: \033[36m%GL_RENDERER%\033[0m\n" \
                     "Font family: R: %FONT_FAMILY_REGULAR%, B: \033[1m%FONT_FAMILY_BOLD%\033[0m, " \
-                    "I: \033[3m%FONT_FAMILY_ITALIC%\033[0m, \033[1m\033[3mBI: %FONT_FAMILY_BOLDITALIC%\033[0m\n"
+                    "I: \033[3m%FONT_FAMILY_ITALIC%\033[0m, \033[1m\033[3mBI: %FONT_FAMILY_BOLDITALIC%\033[0m\n\n" \
+                    "\033[90m\033[3m%FORTUNE%\033[0m"
 #define WELCOME_MSG_DEF_FG RGBColor{0.8f, 0.8f, 0.8f}
+#define FORTUNE_CMD "fortune -s computers linuxcookie linux"
 
 #define IMG_BUF_ZOOM_STEP 0.05f
 

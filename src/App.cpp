@@ -2,6 +2,7 @@
 #include "Bindings.h"
 #include "../external/stb/stb_image.h"
 #include "common/file.h"
+#include "os.h"
 #include "Git.h"
 #include <filesystem>
 namespace fs = std::filesystem;
@@ -375,6 +376,7 @@ static const std::string genWelcomeMsg(std::string templ)
     map["FONT_FAMILY_BOLD"]         = FONT_FAMILY_BOLD;
     map["FONT_FAMILY_ITALIC"]       = FONT_FAMILY_ITALIC;
     map["FONT_FAMILY_BOLDITALIC"]   = FONT_FAMILY_BOLDITALIC;
+    map["FORTUNE"]                  = OS::runExternalCommand(FORTUNE_CMD);
 
     for (const auto& pair : map)
     {

@@ -1,4 +1,5 @@
 #include "os.h"
+#include "common/string.h"
 #include "Logger.h"
 #ifdef OS_LINUX
 #include <stdio.h>
@@ -9,7 +10,7 @@ namespace OS
 
 std::string runExternalCommand(const std::string& command)
 {
-    Logger::dbg << "Running command: " << command << Logger::End;
+    Logger::dbg << "Running command: " << quoteStr(command) << Logger::End;
 #ifdef OS_LINUX
     FILE* pipe = popen(command.c_str(), "r");
     if (!pipe) return "";
