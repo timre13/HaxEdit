@@ -35,6 +35,11 @@ private:
     std::unique_ptr<Image> m_image;
     float m_zoom{1.0f};
 
+    /*
+     * Do not call this. Use `App::openFileInNewBuffer`.
+     */
+    virtual void open(const std::string& filePath) override;
+
 public:
     ImageBuffer()
     {
@@ -47,7 +52,6 @@ public:
     ImageBuffer(ImageBuffer&& other) = default;
     ImageBuffer& operator=(ImageBuffer&& other) = default;
 
-    virtual void open(const std::string& filePath) override;
     virtual int saveToFile() override { return 1; }
     virtual int saveAsToFile(const std::string&) override { return 1; }
 

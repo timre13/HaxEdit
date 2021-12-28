@@ -184,6 +184,10 @@ protected:
     virtual void updateGitDiff();
 
     friend class App;
+    /*
+     * Do not call this. Use `App::openFileInNewBuffer`.
+     */
+    virtual void open(const std::string& filePath);
 
 public:
     Buffer();
@@ -193,7 +197,6 @@ public:
     Buffer(Buffer&& other) = default;
     Buffer& operator=(Buffer&& other) = default;
 
-    virtual void open(const std::string& filePath);
     virtual int saveToFile();
     virtual int saveAsToFile(const std::string& filePath);
 

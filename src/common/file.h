@@ -26,3 +26,8 @@ String loadUnicodeFile(const std::string& filePath);
  * Throws `std::runtime_error` when `std::fstream.open()` fails.
  */
 std::string loadAsciiFile(const std::string& filePath);
+
+/*
+ * Tries to open the file as writable. If fails, returns true.
+ */
+bool isReadOnlyFile(const std::string& filePath);

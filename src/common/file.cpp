@@ -76,3 +76,15 @@ std::string loadAsciiFile(const std::string& filePath)
 
     return std::string(input.data(), input.size());
 }
+
+bool isReadOnlyFile(const std::string& filePath)
+{
+    std::fstream file;
+    file.open(filePath, std::ios_base::out | std::ios_base::app);
+    if (!file.is_open())
+    {
+        return true;
+    }
+    file.close();
+    return false;
+}

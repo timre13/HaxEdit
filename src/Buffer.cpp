@@ -109,16 +109,10 @@ void Buffer::open(const std::string& filePath)
         return;
     }
 
-    // Try to open the file as writable. If fails, read-only file.
+    if (isReadOnlyFile(filePath))
     {
-        std::fstream file;
-        file.open(filePath, std::ios_base::out | std::ios_base::app);
-        if (!file.is_open())
-        {
-            Logger::warn << "File is read only" << Logger::End;
-            m_isReadOnly = true;
-        }
-        file.close();
+        Logger::warn << "File is read only" << Logger::End;
+        m_isReadOnly = true;
     }
 
     { // Regenerate the initial autocomplete list for `m_buffWordProvid`

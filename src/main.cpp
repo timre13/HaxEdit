@@ -53,12 +53,6 @@ int main(int argc, char** argv)
         g_activeBuff = g_tabs[0]->getActiveBufferRecursively();
     }
 
-    //if (g_tabs.empty())
-    //{
-    //    g_tabs.emplace_back(new Buffer{});
-    //    g_tabs.back()->open(__FILE__);
-    //}
-
     SessionHandler sessHndlr{"Session.haxedsess"};
     // If we didn't get files to open, load the last session
     if (g_tabs.empty())
