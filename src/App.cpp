@@ -407,6 +407,10 @@ void App::renderStartupScreen()
 
 Buffer* App::openFileInNewBuffer(const std::string& path)
 {
+    g_statMsg.set("Opening file: "+path, StatusMsg::Type::Info);
+    App::renderStatusLine();
+    glfwSwapBuffers(g_window);
+
     Buffer* buffer;
     if (isImageExtension(getFileExt(path)))
     {
