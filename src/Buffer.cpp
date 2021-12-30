@@ -821,6 +821,23 @@ void Buffer::cutSelectionToClipboard()
             StatusMsg::Type::Info);
 }
 
+static RGBColor calcLinenBgColor(RGBColor col)
+{
+    if ((col.r + col.g + col.b) / 3.f > .5f) // If light color
+    {
+        col.r *= 0.8f;
+        col.g *= 0.8f;
+        col.b *= 0.8f;
+    }
+    else // Dark color
+    {
+        col.r *= 1.3f;
+        col.g *= 1.3f;
+        col.b *= 1.3f;
+    }
+    return col;
+}
+
 void Buffer::render()
 {
     TIMER_BEGIN_FUNC();
@@ -839,7 +856,7 @@ void Buffer::render()
     g_uiRenderer->renderFilledRectangle(
             m_position,
             {m_position.x+g_fontSizePx*LINEN_BAR_WIDTH, m_position.y+m_size.y},
-            RGB_COLOR_TO_RGBA(LINEN_BG_COLOR));
+            RGB_COLOR_TO_RGBA(calcLinenBgColor(g_theme->bgColor)));
 
     const float initTextX = m_position.x+g_fontSizePx*LINEN_BAR_WIDTH;
     const float initTextY = m_position.y+m_scrollY;

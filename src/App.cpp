@@ -255,6 +255,23 @@ void App::renderBuffers()
     }
 }
 
+static RGBColor calcStatLineColor(RGBColor col)
+{
+    if ((col.r + col.g + col.b) / 3.f > .5f) // If light color
+    {
+        col.r *= 0.9f;
+        col.g *= 0.9f;
+        col.b *= 0.9f;
+    }
+    else // Dark color
+    {
+        col.r *= 1.2f;
+        col.g *= 1.2f;
+        col.b *= 1.2f;
+    }
+    return col;
+}
+
 void App::renderStatusLine()
 {
     if (!g_activeBuff && g_statMsg.isEmpty())
@@ -266,7 +283,7 @@ void App::renderStatusLine()
     g_uiRenderer->renderFilledRectangle(
             {0, winH-g_fontSizePx*1.2f},
             {winW, winH},
-            RGB_COLOR_TO_RGBA(STATUSBAR_BG_COLOR));
+            RGB_COLOR_TO_RGBA(calcStatLineColor(g_theme->bgColor)));
 
     std::string leftStr;
     if (g_statMsg.isEmpty())
