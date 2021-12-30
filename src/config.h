@@ -6,10 +6,11 @@
 #define DEF_WIN_W 1500
 #define DEF_WIN_H 1000
 
-#define FONT_FAMILY_REGULAR     "FreeMono"
-#define FONT_FAMILY_BOLD        "FreeMono"
-#define FONT_FAMILY_ITALIC      "FreeMono"
-#define FONT_FAMILY_BOLDITALIC  "FreeMono"
+#define FONT_FAMILY_REGULAR     "DejaVu Sans Mono"
+#define FONT_FAMILY_BOLD        "DejaVu Sans Mono"
+#define FONT_FAMILY_ITALIC      "DejaVu Sans Mono"
+#define FONT_FAMILY_BOLDITALIC  "DejaVu Sans Mono"
+
 #define DEF_FONT_SIZE_PX 18
 
 #define DEF_BG RGBColor{0.15f, 0.15f, 0.15f}
