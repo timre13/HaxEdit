@@ -65,7 +65,7 @@
  * - FONT_FAMILY_ITALIC
  * - FONT_FAMILY_BOLDITALIC
  */
-#define WELCOME_MSG "\033[1m\033[97mWelcome to \033[92mHaxorEdit\033[0m\n\n" \
+#define WELCOME_MSG "\033[1mWelcome to \033[92mHaxorEdit\033[0m\n\n" \
                     "Built on %BUILD_DATE% (Build t.: %BUILD_TYPE%, Optim.: %BUILD_IS_OPTIMIZED%, " \
                     "ASAN: %BUILD_IS_ASAN_ON%)\nCompiler: \033[36m%COMPILER_NAME%\033[0m\n" \
                     "OpenGL Vendor: \033[36m%GL_VENDOR%\033[0m | Renderer: \033[36m%GL_RENDERER%\033[0m\n" \

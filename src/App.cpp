@@ -416,7 +416,7 @@ void App::renderStartupScreen()
 {
     static const auto icon = loadProgramIcon();
     static const auto welcomeMsg = genWelcomeMsg(WELCOME_MSG);
-    g_textRenderer->renderString(welcomeMsg, {200, 30}, FONT_STYLE_REGULAR, WELCOME_MSG_DEF_FG, true);
+    g_textRenderer->renderString(welcomeMsg, {200, 30}, FONT_STYLE_REGULAR, g_theme->values[Syntax::MARK_NONE].color, true);
 
     const int origIconW = icon->getPhysicalSize().x;
     const int origIconH = icon->getPhysicalSize().y;
