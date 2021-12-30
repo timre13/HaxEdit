@@ -79,13 +79,11 @@
 #define IMG_BUF_ZOOM_STEP 0.05f
 
 //#define DICTIONARY_FILE_PATH "/usr/share/dict/words"
-#define DICTIONARY_FILE_PATH "../dictionary.txt"
+#define DICTIONARY_FILE_PATH "../external/dictionary.txt"
 
 #define MAX_FILE_SIZE 1024*1024*1024
 
 #define DATE_TIME_FORMAT "%F %T"
 #define DATE_TIME_STR_LEN 19
 
-//#define THEME_PATH "../external/onedark_theme.epf"
-//#define THEME_PATH "../external/vibrant_ink_theme.epf"
-#define THEME_PATH "../external/solarized_light_theme.epf"
+#define THEME_PATH "../external/themes/rainbowdrops.epf"
