@@ -379,7 +379,7 @@ void Buffer::_updateHighlighting()
                     return isValidFilePath(path);
                 else
                     // Relative path
-                    return isValidFilePath(getParentPath(m_filePath)/std::filesystem::path{path});
+                    return isValidFilePath((getParentPath(m_filePath)/std::filesystem::path{path}).string());
             }
             catch (std::exception&)
             {

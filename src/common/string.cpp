@@ -76,7 +76,9 @@ std::string dateToStr(time_t date)
         Logger::err << "Failed to convert time_t to tm: " << strerror(errno) << Logger::End;
 #endif
     assert(gm);
-    assert(strftime(buff, DATE_TIME_STR_LEN+1, DATE_TIME_FORMAT, gm));
+    size_t count = strftime(buff, DATE_TIME_STR_LEN+1, DATE_TIME_FORMAT, gm);
+    assert(count);
+    (void)count;
     assert(buff[DATE_TIME_STR_LEN] == 0);
     return buff;
 }
