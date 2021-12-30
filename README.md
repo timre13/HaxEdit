@@ -22,10 +22,9 @@ apt install cmake libglew-dev libglfw3-dev libglm-dev libfreetype-dev libgit2-de
 * [cJSON](https://github.com/DaveGamble/cJSON) for JSON parsing
 * [ICU](https://github.com/unicode-org/icu) for Unicode handling
 
-Run the script `get_submodules.sh` to get the submodules.
-
 ### Compiling
 ```
+python3 init.py
 mkdir build
 cd build
 cmake ..
