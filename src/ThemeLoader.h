@@ -29,6 +29,7 @@ struct Theme
 {
     std::array<ThemeVal, Syntax::_SYNTAX_MARK_COUNT> values;
     RGBColor bgColor{DEF_BG};
+    RGBAColor currLineColor{DEF_CURSOR_LINE_COLOR};
 };
 
 class ThemeLoader

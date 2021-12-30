@@ -924,7 +924,7 @@ void Buffer::render()
                     {textX, initTextY+textY-m_scrollY-m_position.y+2},
                     {textX+m_size.x,
                         initTextY+textY-m_scrollY-m_position.y+2+g_fontSizePx},
-                    CURSOR_LINE_COLOR
+                    g_theme->currLineColor
             );
             // Bind the text renderer shader again
             g_textRenderer->prepareForDrawing();

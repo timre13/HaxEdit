@@ -25,7 +25,7 @@
 #define BUFFER_WRAP_LINES true
 #define BUFFER_DRAW_LINE_NUMS true
 
-#define CURSOR_LINE_COLOR RGBAColor{0.3f, 0.3f, 0.3f, 0.5f}
+#define DEF_CURSOR_LINE_COLOR RGBAColor{0.3f, 0.3f, 0.3f, 0.5f}
 // The number of frames to wait before blinking one
 // Set to -1 to disable blinking
 #define CURSOR_BLINK_FRAMES 30

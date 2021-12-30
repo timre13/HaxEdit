@@ -6,7 +6,8 @@
 
 #define THEME_LINE_PREF0 "/instance/org.eclipse.cdt.ui/"
 #define THEME_LINE_PREF1 "/instance/org.eclipse.ui.editors/"
-#define THEME_BG_KEY "AbstractTextEditor.Color.Background"
+#define THEME_KEY_BG "AbstractTextEditor.Color.Background"
+#define THEME_KEY_CURSLINE "currentLineColor"
 
 static int strToBool(const std::string& str)
 {
@@ -64,11 +65,18 @@ Theme* ThemeLoader::load(const std::string& path)
         const size_t keyEnd = line.find('=');
         const std::string key = line.substr(0, keyEnd);
 
-        if (key == THEME_BG_KEY)
+        if (key == THEME_KEY_BG)
         {
             RGBColor asColor = strToColor(line.substr(keyEnd+1));
             theme->bgColor = asColor;
             Logger::dbg << "BG = RGBColor(" << asColor.r << ", " << asColor.g << ", " << asColor.b << ")" << Logger::End;
+            continue;
+        }
+        if (key == THEME_KEY_CURSLINE)
+        {
+            RGBColor asColor = strToColor(line.substr(keyEnd+1));
+            theme->currLineColor = RGB_COLOR_TO_RGBA(asColor);
+            Logger::dbg << "CursLine = RGBColor(" << asColor.r << ", " << asColor.g << ", " << asColor.b << ")" << Logger::End;
             continue;
         }
 
