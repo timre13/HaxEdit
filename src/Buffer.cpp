@@ -9,6 +9,7 @@
 #include "common/file.h"
 #include "common/string.h"
 #include "Clipboard.h"
+#include "ThemeLoader.h"
 #include <fstream>
 #include <sstream>
 #include <chrono>
@@ -831,7 +832,7 @@ void Buffer::render()
     g_uiRenderer->renderFilledRectangle(
             m_position,
             {m_position.x+m_size.x, m_position.y+m_size.y},
-            RGB_COLOR_TO_RGBA(BG_COLOR)
+            RGB_COLOR_TO_RGBA(g_theme->bgColor)
     );
 
     // Draw line number background
@@ -1105,13 +1106,13 @@ void Buffer::render()
             if (m_highlightBuffer.size() <= m_content.length()
              && m_highlightBuffer[charI] < Syntax::_SYNTAX_MARK_COUNT)
             {
-                charColor = Syntax::syntaxColors[m_highlightBuffer[charI]];
-                charStyle = Syntax::syntaxStyles[m_highlightBuffer[charI]];
+                charColor = g_theme->values[m_highlightBuffer[charI]].color;
+                charStyle = Syntax::defStyles[m_highlightBuffer[charI]];
             }
             else
             {
-                charColor = Syntax::syntaxColors[0];
-                charStyle = Syntax::syntaxStyles[0];
+                charColor = g_theme->values[0].color;
+                charStyle = Syntax::defStyles[0];
             }
             g_textRenderer->setDrawingColor(charColor);
             advance = g_textRenderer->renderChar(c, {textX, textY}, charStyle).advance;
@@ -1158,7 +1159,7 @@ void Buffer::render()
         g_uiRenderer->renderFilledRectangle(
                 m_position,
                 {m_position.x+m_size.x, m_position.y+m_size.y},
-                {UNPACK_RGB_COLOR(BG_COLOR), 0.5f}
+                {UNPACK_RGB_COLOR(g_theme->bgColor), 0.5f}
         );
     }
     else

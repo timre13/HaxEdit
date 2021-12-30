@@ -1,0 +1,98 @@
+#include "ThemeLoader.h"
+#include "Logger.h"
+#include "common/file.h"
+#include "common/string.h"
+#include <algorithm>
+
+#define THEME_LINE_PREF0 "/instance/org.eclipse.cdt.ui/"
+#define THEME_LINE_PREF1 "/instance/org.eclipse.ui.editors/"
+#define THEME_BG_KEY "AbstractTextEditor.Color.Background"
+
+static int strToBool(const std::string& str)
+{
+    if (str == "true")
+        return 1;
+    else if (str == "false")
+        return 0;
+    else
+        return -1;
+}
+
+static RGBColor strToColor(const std::string& str)
+{
+    const size_t colonPos1 = str.find(',');
+    const size_t colonPos2 = str.find(',', colonPos1+1);
+
+    const RGBColor color = {
+        std::stoi(str.substr(0, colonPos1))/255.0f,
+        std::stoi(str.substr(colonPos1+1, colonPos2-colonPos1-1))/255.0f,
+        std::stoi(str.substr(colonPos2+1))/255.0f
+    };
+
+    return color;
+}
+
+Theme* ThemeLoader::load(const std::string& path)
+{
+    Logger::log << "Loading theme: " << path << Logger::End;
+
+    const std::string content = loadAsciiFile(path);
+    LineIterator<std::string> it{content};
+
+    Theme* theme = new Theme{};
+    // Initialize theme with default values
+    for (size_t i{}; i < theme->values.size(); ++i)
+    {
+        theme->values[i].color = Syntax::defColors[i];
+    }
+
+    std::string line;
+    while (it.next(line))
+    {
+        {
+            auto found0 = line.rfind(THEME_LINE_PREF0, 0);
+            auto found1 = line.rfind(THEME_LINE_PREF1, 0);
+            if (found0 != 0 && found1 != 0)
+                continue;
+
+            if (found0 == 0)
+                line = line.substr(strlen(THEME_LINE_PREF0));
+            else if (found1 == 0)
+                line = line.substr(strlen(THEME_LINE_PREF1));
+        }
+
+        const size_t keyEnd = line.find('=');
+        const std::string key = line.substr(0, keyEnd);
+
+        if (key == THEME_BG_KEY)
+        {
+            RGBColor asColor = strToColor(line.substr(keyEnd+1));
+            theme->bgColor = asColor;
+            Logger::dbg << "BG = RGBColor(" << asColor.r << ", " << asColor.g << ", " << asColor.b << ")" << Logger::End;
+            continue;
+        }
+
+        auto themeKeyIt = std::find(themeKeys.begin(), themeKeys.end(), key);
+        if (themeKeyIt == themeKeys.end())
+            continue;
+        const size_t themeKeyI = themeKeyIt-themeKeys.begin();
+
+        const std::string val = line.substr(keyEnd+1);
+        Logger::dbg << quoteStr(key) << " = ";// << quoteStr(val) << Logger::End;
+        const int _asBool = strToBool(val);
+        if (_asBool != -1)
+        {
+            const bool asBool = !!_asBool;
+            //Logger::dbg << "Bool: " << (_asBool ? "true" : "false") << Logger::End;
+        }
+        else
+        {
+            RGBColor asColor = strToColor(val);
+            Logger::dbg << "RGBColor(" << asColor.r << ", " << asColor.g << ", " << asColor.b << ")" << Logger::End;
+            theme->values[themeKeyI].color = asColor;
+        }
+    }
+
+    Logger::log << "Loaded theme" << Logger::End;
+    return theme;
+}

@@ -4,7 +4,6 @@
 #include "unicode/uchar.h"
 #include <cassert>
 #include <stdint.h>
-#include <vector>
 
 std::u32string strToUtf32(const icu::UnicodeString& input)
 {
@@ -66,23 +65,6 @@ std::string getFileExt(const std::string& path)
 std::string getParentPath(const std::string& path)
 {
     return std::filesystem::path{path}.parent_path();
-}
-
-LineIterator::LineIterator(const String& str)
-    : m_strR{str}
-{
-}
-
-[[nodiscard]] bool LineIterator::next(String& output)
-{
-    output.clear();
-    if (m_charI >= m_strR.size())
-        return false;
-
-    while (m_charI < m_strR.size() && m_strR[m_charI] != '\n')
-        output += m_strR[m_charI++];
-    ++m_charI;
-    return true;
 }
 
 std::string dateToStr(time_t date)

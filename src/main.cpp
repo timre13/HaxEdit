@@ -32,13 +32,14 @@ int main(int argc, char** argv)
     App::loadSignImages();
 
     glClear(GL_COLOR_BUFFER_BIT);
-    glClearColor(UNPACK_RGB_COLOR(BG_COLOR), 1.0f);
+    glClearColor(UNPACK_RGB_COLOR(DEF_BG), 1.0f);
     glfwSwapBuffers(g_window);
 
     g_textRenderer.reset(App::createTextRenderer());
     g_uiRenderer.reset(App::createUiRenderer());
     g_fileTypeHandler.reset(App::createFileTypeHandler());
     App::createAutocompleteProviders();
+    App::loadTheme();
     glfwPollEvents();
 
     for (int i{1}; i < argc; ++i)
@@ -90,8 +91,8 @@ int main(int argc, char** argv)
 
         if (g_isRedrawNeeded)
         {
+            glClearColor(UNPACK_RGB_COLOR(g_theme->bgColor), 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
-            glClearColor(UNPACK_RGB_COLOR(BG_COLOR), 1.0f);
 
             if (g_tabs.empty())
             {

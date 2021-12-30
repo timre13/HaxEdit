@@ -1,3 +1,5 @@
+#pragma once
+
 #include <vector>
 #include <memory>
 #include "glstuff.h"
@@ -12,6 +14,7 @@ class Buffer;
 class TextRenderer;
 class UiRenderer;
 class FileTypeHandler;
+struct Theme;
 
 #ifdef _DEF_GLOBALS_
 
@@ -39,6 +42,8 @@ std::vector<std::unique_ptr<Dialog>> g_dialogs;
 std::unique_ptr<TextRenderer> g_textRenderer;
 std::unique_ptr<UiRenderer> g_uiRenderer;
 std::unique_ptr<FileTypeHandler> g_fileTypeHandler;
+
+std::unique_ptr<Theme> g_theme;
 
 int g_fontSizePx = DEF_FONT_SIZE_PX;
 
@@ -74,6 +79,8 @@ extern bool g_isDebugDrawMode;
 extern bool g_shouldIgnoreNextChar;
 
 extern std::vector<std::unique_ptr<Dialog>> g_dialogs;
+
+extern std::unique_ptr<Theme> g_theme;
 
 extern std::vector<std::unique_ptr<Split>> g_tabs;
 extern Buffer* g_activeBuff;

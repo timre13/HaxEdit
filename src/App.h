@@ -22,6 +22,7 @@
 #include "Split.h"
 #include "globals.h"
 #include "autocomp/DictionaryProvider.h"
+#include "ThemeLoader.h"
 
 class App final
 {
@@ -39,6 +40,7 @@ public:
     static void loadSignImages();
     static FileTypeHandler* createFileTypeHandler();
     static void createAutocompleteProviders();
+    static void loadTheme();
     static void setupKeyBindings();
     static void initGit();
 

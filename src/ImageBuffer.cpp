@@ -4,6 +4,8 @@
 #include "config.h"
 #include "Timer.h"
 #include "types.h"
+#include "ThemeLoader.h"
+#include "globals.h"
 #include <fstream>
 #include <sstream>
 
@@ -67,7 +69,7 @@ void ImageBuffer::render()
     g_uiRenderer->renderFilledRectangle(
             m_position,
             {m_position.x+m_size.x, m_position.y+m_size.y},
-            RGB_COLOR_TO_RGBA(BG_COLOR)
+            RGB_COLOR_TO_RGBA(g_theme->bgColor)
     );
     // Draw border
     g_uiRenderer->renderRectangleOutline(

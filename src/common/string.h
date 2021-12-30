@@ -8,13 +8,22 @@
 #include <string>
 #include <time.h>
 #include <filesystem>
+#include <vector>
+#include "../Logger.h"
 
 std::u32string strToUtf32(const icu::UnicodeString& input);
 std::string strToAscii(const String& str);
 
+#define _CHECK_T_STR_TYPE \
+    static_assert(\
+            std::is_base_of<String, T>::value | std::is_base_of<std::string, T>::value,\
+            "T must be a string type");
+
 template <typename T>
 inline int strCountLines(const T& str)
 {
+    _CHECK_T_STR_TYPE;
+
     int lines{};
     for (auto it=str.begin(); it != str.end(); ++it)
     {
@@ -35,16 +44,31 @@ inline String quoteStr(const String& str) { return U'"'+str+U'"'; }
 inline String charToStr(Char c) { return String(1, c); }
 inline std::string charToStr(char c) { return std::string(1, c); }
 
+template <typename T>
 class LineIterator
 {
 private:
-    const String& m_strR;
+    const T& m_strR;
     size_t m_charI{};
 
 public:
-    LineIterator(const String& str);
+    LineIterator(const T& str)
+        : m_strR{str}
+    {
+        _CHECK_T_STR_TYPE;
+    }
 
-    [[nodiscard]] bool next(String& output);
+    [[nodiscard]] bool next(T& output)
+    {
+        output.clear();
+        if (m_charI >= m_strR.size())
+            return false;
+
+        while (m_charI < m_strR.size() && m_strR[m_charI] != '\n')
+            output += m_strR[m_charI++];
+        ++m_charI;
+        return true;
+    }
 };
 
 template <typename T>
@@ -63,9 +87,7 @@ inline std::string intToHexStr(T x)
 template <typename T>
 inline size_t strPLen(const T& str)
 {
-    static_assert(
-            std::is_base_of<String, T>::value | std::is_base_of<std::string, T>::value,
-            "T must be a string type");
+    _CHECK_T_STR_TYPE;
 
     size_t len{};
     bool isInsideEsc = false;
@@ -95,6 +117,8 @@ std::string getParentPath(const std::string& path);
 template <typename T>
 inline bool isValidFilePath(const T& str)
 {
+    _CHECK_T_STR_TYPE;
+
     const auto path = std::filesystem::path{str};
     return std::filesystem::exists(path)
         && (std::filesystem::is_regular_file(path)
@@ -102,4 +126,18 @@ inline bool isValidFilePath(const T& str)
          || std::filesystem::is_block_file(path)
          || std::filesystem::is_character_file(path)
     );
+}
+
+template <typename T>
+std::vector<T> splitStrToLines(const T& str)
+{
+    _CHECK_T_STR_TYPE;
+
+    std::vector<T> output;
+    auto it = LineIterator(str);
+    T line;
+    while (it.next(line))
+        output.push_back(std::move(line));
+
+    return output;
 }

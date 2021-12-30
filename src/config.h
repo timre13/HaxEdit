@@ -12,7 +12,7 @@
 #define FONT_FAMILY_BOLDITALIC  "FreeMono"
 #define DEF_FONT_SIZE_PX 18
 
-#define BG_COLOR RGBColor{0.15f, 0.15f, 0.15f}
+#define DEF_BG RGBColor{0.15f, 0.15f, 0.15f}
 
 // Line number bar width in characters
 #define LINEN_BAR_WIDTH 4
@@ -85,3 +85,7 @@
 
 #define DATE_TIME_FORMAT "%F %T"
 #define DATE_TIME_STR_LEN 19
+
+//#define THEME_PATH "../external/onedark_theme.epf"
+//#define THEME_PATH "../external/vibrant_ink_theme.epf"
+#define THEME_PATH "../external/solarized_light_theme.epf"

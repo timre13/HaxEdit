@@ -24,7 +24,7 @@ enum SyntaxMarks: uint8_t
     _SYNTAX_MARK_COUNT,
 };
 
-constexpr RGBColor syntaxColors[_SYNTAX_MARK_COUNT] = {
+constexpr RGBColor defColors[_SYNTAX_MARK_COUNT] = {
     RGBColor{1.000f, 1.000f, 1.000f}, // None, default
     RGBColor{0.000f, 0.400f, 0.800f}, // Keyword
     RGBColor{0.900f, 0.900f, 0.000f}, // Type
@@ -38,7 +38,7 @@ constexpr RGBColor syntaxColors[_SYNTAX_MARK_COUNT] = {
     RGBColor{0.0800, 0.510f, 0.710f}, // Filepath
 };
 
-constexpr FontStyle syntaxStyles[_SYNTAX_MARK_COUNT] = {
+constexpr FontStyle defStyles[_SYNTAX_MARK_COUNT] = {
     FONT_STYLE_REGULAR, // None, default
     FONT_STYLE_BOLD,    // Keyword
     FONT_STYLE_REGULAR, // Type
