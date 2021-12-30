@@ -2,6 +2,12 @@
 
 Modern code editor for 1337 H4X0Rs.
 
+![](./doc/scrot3.png)
+
+![](./doc/scrot1.png)
+
+![](./doc/scrot2.png)
+
 ## Building
 ### Dependencies
 * CMake
