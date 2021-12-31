@@ -15,6 +15,9 @@
 
 #define DEF_BG RGBColor{0.15f, 0.15f, 0.15f}
 
+#define DEF_SEL_BG RGBColor{0.156f, 0.541f, 0.862f}
+#define DEF_SEL_FG RGBColor{1.0f, 1.0f, 1.0f}
+
 // Line number bar width in characters
 #define LINEN_BAR_WIDTH 4
 #define LINEN_FONT_COLOR RGBColor{0.56f, 0.71f, 0.07f}

@@ -31,6 +31,11 @@ public:
             && _g >= 0.0f && _g <= 1.0f
             && _b >= 0.0f && _b <= 1.0f);
     }
+
+    std::string str() const
+    {
+        return "RGBColor(" + std::to_string(r) + ", " + std::to_string(g) + ", " + std::to_string(b) + ")";
+    }
 };
 #define UNPACK_RGB_COLOR(x) x.r, x.g, x.b
 

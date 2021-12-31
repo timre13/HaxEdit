@@ -1043,17 +1043,11 @@ void Buffer::render()
         auto drawCharSelectionMarkIfNeeded{[&](int width){
             if (isCharSel)
             {
+                // Render selection background
                 g_uiRenderer->renderFilledRectangle(
                         {textX, initTextY+textY-m_scrollY-m_position.y},
                         {textX+width, initTextY+textY-m_scrollY-m_position.y+g_fontSizePx},
-                        {0.156f, 0.541f, 0.862f, 0.2f}
-                );
-
-                g_uiRenderer->renderRectangleOutline(
-                        {textX, initTextY+textY-m_scrollY-m_position.y},
-                        {textX+width, initTextY+textY-m_scrollY-m_position.y+g_fontSizePx},
-                        {0.156f, 0.541f, 0.862f},
-                        1
+                        RGB_COLOR_TO_RGBA(g_theme->selBg)
                 );
 
                 // Bind the text renderer shader again
@@ -1078,8 +1072,8 @@ void Buffer::render()
         {
         case '\n': // New line
         case '\v': // Vertical tab
-            drawCursorIfNeeded(g_fontSizePx*0.7f);
             drawCharSelectionMarkIfNeeded(g_fontSizePx*0.7f);
+            drawCursorIfNeeded(g_fontSizePx*0.7f);
             textX = initTextX;
             textY += g_fontSizePx;
             isLineBeginning = true;
@@ -1093,8 +1087,8 @@ void Buffer::render()
             continue;
 
         case '\t': // Tab
-            drawCursorIfNeeded(g_fontSizePx*4*0.7f);
             drawCharSelectionMarkIfNeeded(g_fontSizePx*4*0.7f);
+            drawCursorIfNeeded(g_fontSizePx*4*0.7f);
             // Draw a horizontal line to mark the character
             g_uiRenderer->renderFilledRectangle(
                     {textX+g_fontSizePx*0.3f,
@@ -1118,16 +1112,24 @@ void Buffer::render()
         uint advance{};
         if (isCharInsideViewport)
         {
+            drawCharSelectionMarkIfNeeded(g_fontSizePx*0.7f);
+
             RGBColor charColor;
             FontStyle charStyle;
-            if (m_highlightBuffer.size() <= m_content.length()
+            if (isCharSel) // If the character is selected, draw with selection FG color
+            {
+                charColor = g_theme->selFg;
+                charStyle = 0;
+            }
+            else if (m_highlightBuffer.size() >= m_content.length()
              && m_highlightBuffer[charI] < Syntax::_SYNTAX_MARK_COUNT)
             {
                 charColor = g_theme->values[m_highlightBuffer[charI]].color;
                 charStyle = Syntax::defStyles[m_highlightBuffer[charI]];
             }
-            else
+            else // Error: Something is wrong with the highlight buffer
             {
+                assert(false);
                 charColor = g_theme->values[0].color;
                 charStyle = Syntax::defStyles[0];
             }
@@ -1159,7 +1161,6 @@ void Buffer::render()
 
 
             drawCursorIfNeeded(advance/64.f);
-            drawCharSelectionMarkIfNeeded(advance/64.f);
         }
         else
         {

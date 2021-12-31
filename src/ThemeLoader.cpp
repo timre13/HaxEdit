@@ -8,6 +8,8 @@
 #define THEME_LINE_PREF1 "/instance/org.eclipse.ui.editors/"
 #define THEME_KEY_BG "AbstractTextEditor.Color.Background"
 #define THEME_KEY_CURSLINE "currentLineColor"
+#define THEME_KEY_SELFG "AbstractTextEditor.Color.SelectionForeground"
+#define THEME_KEY_SELBG "AbstractTextEditor.Color.SelectionBackground"
 
 static int strToBool(const std::string& str)
 {
@@ -69,14 +71,28 @@ Theme* ThemeLoader::load(const std::string& path)
         {
             RGBColor asColor = strToColor(line.substr(keyEnd+1));
             theme->bgColor = asColor;
-            Logger::dbg << "BG = RGBColor(" << asColor.r << ", " << asColor.g << ", " << asColor.b << ")" << Logger::End;
+            Logger::dbg << "BG = " << asColor.str() << Logger::End;
             continue;
         }
         if (key == THEME_KEY_CURSLINE)
         {
             RGBColor asColor = strToColor(line.substr(keyEnd+1));
             theme->currLineColor = RGB_COLOR_TO_RGBA(asColor);
-            Logger::dbg << "CursLine = RGBColor(" << asColor.r << ", " << asColor.g << ", " << asColor.b << ")" << Logger::End;
+            Logger::dbg << "CursLine = " << asColor.str() << Logger::End;
+            continue;
+        }
+        if (key == THEME_KEY_SELBG)
+        {
+            RGBColor asColor = strToColor(line.substr(keyEnd+1));
+            theme->selBg = asColor;
+            Logger::dbg << "SelBG = " << asColor.str() << Logger::End;
+            continue;
+        }
+        if (key == THEME_KEY_SELFG)
+        {
+            RGBColor asColor = strToColor(line.substr(keyEnd+1));
+            theme->selFg = asColor;
+            Logger::dbg << "SelFG = " << asColor.str() << Logger::End;
             continue;
         }
 
@@ -90,7 +106,7 @@ Theme* ThemeLoader::load(const std::string& path)
         const int _asBool = strToBool(val);
         if (_asBool != -1)
         {
-            const bool asBool = !!_asBool;
+            //const bool asBool = !!_asBool;
             //Logger::dbg << "Bool: " << (_asBool ? "true" : "false") << Logger::End;
         }
         else
