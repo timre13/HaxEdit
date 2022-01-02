@@ -64,6 +64,7 @@ add_executable(haxed
     src/dialogs/MessageDialog.cpp
     src/dialogs/FileDialog.cpp
     src/dialogs/AskerDialog.cpp
+    src/dialogs/FindDialog.cpp
     src/SessionHandler.cpp
     src/autocomp/Popup.cpp
     src/autocomp/DictionaryProvider.cpp

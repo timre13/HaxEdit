@@ -6,6 +6,7 @@
 #include "dialogs/Dialog.h"
 #include "dialogs/FileDialog.h"
 #include "dialogs/MessageDialog.h"
+#include "dialogs/FindDialog.h"
 #include "common/string.h"
 #include "globals.h"
 #include "config.h"
@@ -719,6 +720,20 @@ void bufferCutSelectionToClipboard()
         return;
 
     g_activeBuff->cutSelectionToClipboard();
+}
+
+static void bufferFindDialogCb(int btn, Dialog* dlg, void*)
+{
+    auto dialog = dynamic_cast<FindDialog*>(dlg);
+    g_activeBuff->find(strToUtf32(dialog->getValue()));
+}
+
+void bufferFind()
+{
+    if (!g_activeBuff)
+        return;
+
+    FindDialog::create(bufferFindDialogCb, nullptr);
 }
 
 } // Namespace Callbacks

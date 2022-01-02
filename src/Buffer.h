@@ -171,6 +171,10 @@ protected:
     std::vector<std::pair<int, Sign>> m_signs;
     std::unique_ptr<Git::Repo> m_gitRepo;
 
+    String m_toFind;
+    std::vector<size_t> m_findResultIs{};
+    int m_findCurrResultI{};
+
     virtual void renderAutocompPopup();
 
     /*
@@ -336,6 +340,12 @@ public:
     virtual void pasteFromClipboard();
     virtual size_t copySelectionToClipboard(bool shouldUnselect=true);
     virtual void cutSelectionToClipboard();
+
+    virtual void findGoToNextResult();
+    virtual void findGoToPrevResult();
+    virtual void find(const String& str);
+    virtual void findUpdate();
+    virtual void findClear();
 
     virtual ~Buffer();
 };

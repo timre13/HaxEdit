@@ -44,16 +44,13 @@ FileDialog::FileDialog(
 
 void FileDialog::recalculateDimensions()
 {
-    Logger::dbg << "Recalculating file dialog dimensions (window size: "
-        << m_windowWidth << 'x' << m_windowHeight << ')' << Logger::End;
-
-    assert(m_windowWidth > 0);
-    assert(m_windowHeight > 0);
+    assert(g_windowWidth > 0);
+    assert(g_windowHeight > 0);
 
     m_dialogDims.xPos = 80;
     m_dialogDims.yPos = 80;
-    m_dialogDims.width = std::max(m_windowWidth-160, 0);
-    m_dialogDims.height = std::max(m_windowHeight-160, 0);
+    m_dialogDims.width = std::max(g_windowWidth-160, 0);
+    m_dialogDims.height = std::max(g_windowHeight-160, 0);
 
     m_titleRect.xPos = m_dialogDims.xPos+10;
     m_titleRect.yPos = m_dialogDims.yPos+10;
@@ -80,8 +77,7 @@ void FileDialog::render()
 
     TIMER_BEGIN_FUNC();
 
-    // Calls `recalculateDimensions()` if needed
-    this->Dialog::render();
+    recalculateDimensions();
 
     // Render dialog border
     g_uiRenderer->renderFilledRectangle(

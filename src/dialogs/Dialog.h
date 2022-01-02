@@ -16,8 +16,6 @@ public:
     static callback_t EMPTY_CB;
 
 protected:
-    int m_windowWidth{};
-    int m_windowHeight{};
     struct Dimensions
     {
         int xPos{};

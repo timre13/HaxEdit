@@ -5,16 +5,24 @@
 #include <cassert>
 #include <stdint.h>
 
-std::u32string strToUtf32(const icu::UnicodeString& input)
+String strToUtf32(const icu::UnicodeString& input)
 {
     const int32_t len = input.countChar32()+1;
     int32_t* buff = new int32_t[len];
     UErrorCode err = U_ZERO_ERROR;
     input.toUTF32(buff, input.countChar32(), err);
     buff[len-1] = '\0';
-    std::u32string output{(const char32_t*)buff};
+    String output{(const Char*)buff};
     delete[] buff;
     assert(U_SUCCESS(err));
+    return output;
+}
+
+String strToUtf32(const std::string& input)
+{
+    String output;
+    for (char c : input)
+        output += c;
     return output;
 }
 

@@ -4,6 +4,7 @@
 #include "App.h"
 #include "SessionHandler.h"
 #include <filesystem>
+#include "dialogs/FindDialog.h"
 
 int main(int argc, char** argv)
 {

@@ -3,9 +3,9 @@
 #include "Dialog.h"
 #include "../globals.h"
 
-class AskerDialog final : public Dialog
+class AskerDialog : public Dialog
 {
-private:
+protected:
     std::string m_msg;
 
     Dimensions m_entryRect{};
@@ -30,11 +30,11 @@ public:
     {
         g_dialogs.push_back(std::unique_ptr<AskerDialog>(
                     new AskerDialog{cb, cbUserData, msg}));
+        g_isRedrawNeeded = true;
     }
 
     virtual void render() override;
     virtual void handleKey(int key, int mods) override;
     virtual void handleChar(uint c) override;
     inline const std::string& getValue() const { return m_buffer; }
-    virtual ~AskerDialog() { Logger::dbg << "Destroyed an asker dialog" << Logger::End; }
 };

@@ -888,6 +888,7 @@ void Buffer::render()
             isLeadingSpace = false;
 
         const bool isCharSel = isCharSelected(lineI, colI, charI);
+        const bool isCharFoundStart = (std::find(m_findResultIs.begin(), m_findResultIs.end(), charI) != m_findResultIs.end());
         if (isCharInsideViewport && BUFFER_DRAW_LINE_NUMS && isLineBeginning)
         {
             g_textRenderer->setDrawingColor(
@@ -1037,9 +1038,6 @@ void Buffer::render()
             }
         };
 
-        /*
-         * Draws the selection rectangle around the current character if it is selected.
-         */
         auto drawCharSelectionMarkIfNeeded{[&](int width){
             if (isCharSel)
             {
@@ -1048,6 +1046,20 @@ void Buffer::render()
                         {textX, initTextY+textY-m_scrollY-m_position.y},
                         {textX+width, initTextY+textY-m_scrollY-m_position.y+g_fontSizePx},
                         RGB_COLOR_TO_RGBA(g_theme->selBg)
+                );
+
+                // Bind the text renderer shader again
+                g_textRenderer->prepareForDrawing();
+            }
+        }};
+
+        auto drawFoundMarkIfNeeded{[&](){
+            if (isCharFoundStart)
+            {
+                g_uiRenderer->renderFilledRectangle(
+                        {textX, initTextY+textY-m_scrollY-m_position.y},
+                        {textX+g_fontSizePx*.75f*m_toFind.size(), initTextY+textY-m_scrollY-m_position.y+g_fontSizePx},
+                        RGB_COLOR_TO_RGBA(DEF_FIND_MARK_COLOR)
                 );
 
                 // Bind the text renderer shader again
@@ -1073,6 +1085,7 @@ void Buffer::render()
         case '\n': // New line
         case '\v': // Vertical tab
             drawCharSelectionMarkIfNeeded(g_fontSizePx*0.7f);
+            drawFoundMarkIfNeeded();
             drawCursorIfNeeded(g_fontSizePx*0.7f);
             textX = initTextX;
             textY += g_fontSizePx;
@@ -1088,6 +1101,7 @@ void Buffer::render()
 
         case '\t': // Tab
             drawCharSelectionMarkIfNeeded(g_fontSizePx*4*0.7f);
+            drawFoundMarkIfNeeded();
             drawCursorIfNeeded(g_fontSizePx*4*0.7f);
             // Draw a horizontal line to mark the character
             g_uiRenderer->renderFilledRectangle(
@@ -1113,6 +1127,7 @@ void Buffer::render()
         if (isCharInsideViewport)
         {
             drawCharSelectionMarkIfNeeded(g_fontSizePx*0.7f);
+            drawFoundMarkIfNeeded();
 
             RGBColor charColor;
             FontStyle charStyle;
@@ -1748,6 +1763,77 @@ void Buffer::deleteSelectedChars()
     scrollViewportToCursor();
     m_isHighlightUpdateNeeded = true;
     g_isRedrawNeeded = true;
+}
+
+static void showFindNoResultMsg(const String& toFind)
+{
+    g_statMsg.set("Not found: "+quoteStr(strToAscii(toFind)), StatusMsg::Type::Error);
+}
+
+void Buffer::findGoToNextResult()
+{
+    if (m_findResultIs.empty())
+    {
+        showFindNoResultMsg(m_toFind);
+        return;
+    }
+
+    ++m_findCurrResultI;
+    if (m_findCurrResultI >= m_findResultIs.size())
+    {
+        m_findCurrResultI = 0;
+        g_statMsg.set("Starting search from beginning", StatusMsg::Type::Info);
+    }
+
+    // TODO: Actually go there
+}
+
+void Buffer::findGoToPrevResult()
+{
+    if (m_findResultIs.empty())
+    {
+        showFindNoResultMsg(m_toFind);
+        return;
+    }
+
+    --m_findCurrResultI;
+    if (m_findCurrResultI < 0)
+    {
+        m_findCurrResultI = m_findResultIs.size()-1;
+        g_statMsg.set("Starting search from end", StatusMsg::Type::Info);
+    }
+
+    // TODO: Actually go there
+}
+
+void Buffer::find(const String& str)
+{
+    m_toFind = str;
+    findUpdate();
+    m_findCurrResultI = -1;
+    findGoToNextResult();
+}
+
+void Buffer::findUpdate()
+{
+    m_findResultIs.clear();
+    for (size_t i{}; i < m_content.size();)
+    {
+        i = m_content.find(m_toFind, i+1);
+        if (i == m_content.npos)
+            break;
+        m_findResultIs.push_back(i);
+    }
+
+    g_statMsg.set(
+            "Found "+std::to_string(m_findResultIs.size())+" occurences of "+quoteStr(strToAscii(m_toFind)),
+            StatusMsg::Type::Info);
+}
+
+void Buffer::findClear()
+{
+    m_toFind.clear();
+    m_findResultIs.clear();
 }
 
 Buffer::~Buffer()

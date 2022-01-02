@@ -11,7 +11,8 @@
 #include <vector>
 #include "../Logger.h"
 
-std::u32string strToUtf32(const icu::UnicodeString& input);
+String strToUtf32(const icu::UnicodeString& input);
+String strToUtf32(const std::string& input);
 std::string strToAscii(const String& str);
 
 #define _CHECK_T_STR_TYPE \

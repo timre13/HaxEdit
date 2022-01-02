@@ -55,6 +55,7 @@ public:
     {
         g_dialogs.push_back(std::unique_ptr<MessageDialog>(
                     new MessageDialog{cb, cbUserData, msg, type, btns}));
+        g_isRedrawNeeded = true;
     }
 
     virtual void render() override;

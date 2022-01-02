@@ -72,6 +72,7 @@ public:
     {
         g_dialogs.push_back(std::unique_ptr<FileDialog>(
                     new FileDialog{cb, cbUserData, type}));
+        g_isRedrawNeeded = true;
     }
 
     virtual void render() override;

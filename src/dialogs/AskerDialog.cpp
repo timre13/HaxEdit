@@ -19,14 +19,8 @@ AskerDialog::AskerDialog(
 
 void AskerDialog::recalculateDimensions()
 {
-    Logger::dbg << "Recalculating asker dialog dimensions (window size: "
-        << m_windowWidth << 'x' << m_windowHeight << ')' << Logger::End;
-
-    assert(m_windowWidth > 0);
-    assert(m_windowHeight > 0);
-
     m_dialogDims.xPos = 160;
-    m_dialogDims.width = std::max(m_windowWidth-160*2, 0);
+    m_dialogDims.width = std::max(g_windowWidth-160*2, 0);
 
     m_titleDims.xPos = m_dialogDims.xPos+10;
     m_titleDims.width = m_dialogDims.width-20;
@@ -37,7 +31,7 @@ void AskerDialog::recalculateDimensions()
     m_entryRect.height = g_fontSizePx;
 
     m_dialogDims.height = m_titleDims.height+m_entryRect.height+40;
-    m_dialogDims.yPos = m_windowHeight/2-m_dialogDims.height;
+    m_dialogDims.yPos = g_windowHeight/2-m_dialogDims.height;
     m_titleDims.yPos = m_dialogDims.yPos+10;
     m_entryRect.yPos = m_titleDims.yPos+m_titleDims.height+10;
 }
@@ -49,8 +43,7 @@ void AskerDialog::render()
 
     TIMER_BEGIN_FUNC();
 
-    // Calls `recalculateDimensions()` if needed
-    this->Dialog::render();
+    recalculateDimensions();
 
     // Render dialog border
     g_uiRenderer->renderFilledRectangle(

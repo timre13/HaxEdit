@@ -82,6 +82,8 @@ void bufferPasteClipboard();
 void bufferCopySelectionToClipboard();
 void bufferCutSelectionToClipboard();
 
+void bufferFind();
+
 }
 
 extern BindingMapSet nmap; // Normal mode mapping

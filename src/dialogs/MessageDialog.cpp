@@ -36,20 +36,14 @@ static std::string getBtnText(const MessageDialog::BtnInfo& btn)
 
 void MessageDialog::recalculateDimensions()
 {
-    Logger::dbg << "Recalculating message dialog dimensions (window size: "
-        << m_windowWidth << 'x' << m_windowHeight << ')' << Logger::End;
-
-    assert(m_windowWidth > 0);
-    assert(m_windowHeight > 0);
-
     const int widestBtnW = std::max_element(m_btnInfo.begin(), m_btnInfo.end(),
             [](const BtnInfo& a, const BtnInfo& b){ return getBtnText(a).size() < getBtnText(b).size(); }
             )->label.size()*g_fontSizePx*0.7f+20;
 
     m_dialogDims.width = std::max(std::max(m_msgTextDims.width, widestBtnW)+10+10, 200);
     m_dialogDims.height = 10+m_msgTextDims.height+10+(g_fontSizePx+30)*m_btnInfo.size();
-    m_dialogDims.xPos = m_windowWidth/2-m_dialogDims.width/2;
-    m_dialogDims.yPos = m_windowHeight/2-m_dialogDims.height/2;
+    m_dialogDims.xPos = g_windowWidth/2-m_dialogDims.width/2;
+    m_dialogDims.yPos = g_windowHeight/2-m_dialogDims.height/2;
 
     m_msgTextDims.width = getLongestLineLen(m_message)*g_fontSizePx*0.7;
     m_msgTextDims.height = strCountLines(m_message)*g_fontSizePx;
@@ -67,7 +61,7 @@ void MessageDialog::recalculateDimensions()
         m_btnTxtDims.back().height = g_fontSizePx;
         m_btnDims.back().width = m_btnTxtDims.back().width+10+10;
         m_btnDims.back().height = m_btnTxtDims.back().height+10+10;
-        m_btnDims.back().xPos = m_windowWidth/2-m_btnDims.back().width/2;
+        m_btnDims.back().xPos = g_windowWidth/2-m_btnDims.back().width/2;
         m_btnTxtDims.back().xPos
             = m_btnDims.back().xPos+m_btnDims.back().width/2-m_btnTxtDims.back().width/2;
         m_btnDims.back().yPos
@@ -86,9 +80,7 @@ void MessageDialog::render()
 
     TIMER_BEGIN_FUNC();
 
-    // Calls `recalculateDimensions()` if needed
-    this->Dialog::render();
-    recalculateDimensions(); // FIXME: Why do we need to call this?
+    recalculateDimensions();
 
     RGBAColor dialogColor;
     RGBAColor buttonColor;

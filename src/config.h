@@ -89,4 +89,5 @@
 #define DATE_TIME_FORMAT "%F %T"
 #define DATE_TIME_STR_LEN 19
 
+#define DEF_FIND_MARK_COLOR RGBColor{0.65f, 0.65f, 0.18f}
 #define THEME_PATH "../external/themes/rainbowdrops.epf"
