@@ -838,6 +838,182 @@ static RGBColor calcLinenBgColor(RGBColor col)
     return col;
 }
 
+void Buffer::_renderDrawCursor(const glm::ivec2& textPos, int initTextY, int width)
+{
+    m_cursorXPx = textPos.x;
+    m_cursorYPx = initTextY+textPos.y-m_scrollY-m_position.y;
+
+    if ((m_cursorMovCmd != CursorMovCmd::None || m_isCursorShown))
+    {
+        RGBColor cursColor{};
+        switch (g_editorMode.get())
+        {
+        case EditorMode::_EditorMode::Normal:
+            cursColor = {0.2f, 0.4f, 1.0f};
+            break;
+
+        case EditorMode::_EditorMode::Insert:
+            cursColor = {0.0f, 1.0f, 0.0f};
+            break;
+
+        case EditorMode::_EditorMode::Replace:
+            cursColor = {1.0f, 0.0f, 0.0f};
+            break;
+        }
+
+        if (g_editorMode.get() == EditorMode::_EditorMode::Normal || m_isDimmed)
+        {
+            g_uiRenderer->renderRectangleOutline(
+                    {textPos.x-2, initTextY+textPos.y-m_scrollY-m_position.y-2},
+                    {textPos.x+width+2, initTextY+textPos.y-m_scrollY-m_position.y+g_fontSizePx+2},
+                    {UNPACK_RGB_COLOR(cursColor), 1.0f},
+                    2
+            );
+            g_uiRenderer->renderFilledRectangle(
+                    {textPos.x-2, initTextY+textPos.y-m_scrollY-m_position.y-2},
+                    {textPos.x+width+2, initTextY+textPos.y-m_scrollY-m_position.y+g_fontSizePx+2},
+                    {UNPACK_RGB_COLOR(cursColor), 0.4f}
+            );
+        }
+        else if (g_editorMode.get() == EditorMode::_EditorMode::Replace)
+        {
+            g_uiRenderer->renderFilledRectangle(
+                    {textPos.x-2,       initTextY+textPos.y-m_scrollY-m_position.y+g_fontSizePx-2},
+                    {textPos.x+width+2, initTextY+textPos.y-m_scrollY-m_position.y+g_fontSizePx+2},
+                    {UNPACK_RGB_COLOR(cursColor), 1.0f}
+            );
+        }
+        else
+        {
+            g_uiRenderer->renderFilledRectangle(
+                    {textPos.x-1, initTextY+textPos.y-m_scrollY-m_position.y-2},
+                    {textPos.x+1, initTextY+textPos.y-m_scrollY-m_position.y+g_fontSizePx+2},
+                    {UNPACK_RGB_COLOR(cursColor), 0.4f}
+            );
+        }
+
+        // Bind the text renderer shader again
+        g_textRenderer->prepareForDrawing();
+    }
+}
+
+void Buffer::_renderDrawSelBg(const glm::ivec2& textPos, int initTextY, int width) const
+{
+    // Render selection background
+    g_uiRenderer->renderFilledRectangle(
+            {textPos.x, initTextY+textPos.y-m_scrollY-m_position.y},
+            {textPos.x+width, initTextY+textPos.y-m_scrollY-m_position.y+g_fontSizePx},
+            RGB_COLOR_TO_RGBA(g_theme->selBg)
+    );
+
+    // Bind the text renderer shader again
+    g_textRenderer->prepareForDrawing();
+}
+
+void Buffer::_renderDrawIndGuid(const glm::ivec2& textPos, int initTextY) const
+{
+    g_uiRenderer->renderFilledRectangle(
+            {textPos.x, initTextY+textPos.y-m_scrollY-m_position.y+2},
+            {textPos.x+g_fontSizePx/10, initTextY+textPos.y-m_scrollY-m_position.y+2+g_fontSizePx/5},
+            {0.7f, 0.7f, 0.7f, 0.7f}
+    );
+    g_uiRenderer->renderFilledRectangle(
+            {textPos.x, initTextY+textPos.y-m_scrollY-m_position.y+2+g_fontSizePx/5*2},
+            {textPos.x+g_fontSizePx/10, initTextY+textPos.y-m_scrollY-m_position.y+2+g_fontSizePx/5*3},
+            {0.7f, 0.7f, 0.7f, 0.7f}
+    );
+    g_uiRenderer->renderFilledRectangle(
+            {textPos.x, initTextY+textPos.y-m_scrollY-m_position.y+2+g_fontSizePx/5*4},
+            {textPos.x+g_fontSizePx/10, initTextY+textPos.y-m_scrollY-m_position.y+2+g_fontSizePx/5*5},
+            {0.7f, 0.7f, 0.7f, 0.7f}
+    );
+}
+
+void Buffer::_renderDrawIndRainbow(const glm::ivec2& textPos, int initTextY, int colI, uint advance) const
+{
+#if DRAW_INDENT_RAINBOW
+    static constexpr int indentColorCount = 6;
+    static constexpr RGBAColor indentColors[indentColorCount]{
+        {1.0f, 0.7f, 0.0f, 0.1f},
+        {1.0f, 1.0f, 0.0f, 0.1f},
+        {0.0f, 0.5f, 0.0f, 0.1f},
+        {0.0f, 0.0f, 1.0f, 0.1f},
+        {0.3f, 0.0f, 0.5f, 0.1f},
+        {0.9f, 0.5f, 0.9f, 0.1f}
+    };
+
+    g_uiRenderer->renderFilledRectangle(
+            {textPos.x,            initTextY+textPos.y-m_scrollY-m_position.y+2},
+            {textPos.x+advance/64, initTextY+textPos.y-m_scrollY-m_position.y+2+g_fontSizePx},
+            indentColors[colI/TAB_SPACE_COUNT%indentColorCount]
+    );
+    g_textRenderer->prepareForDrawing();
+#else
+    (void)textPos;
+    (void)initTextY;
+    (void)colI;
+    (void)advance;
+#endif
+}
+
+void Buffer::_renderDrawLineNumBar(const glm::ivec2& textPos, int lineI) const
+{
+    g_textRenderer->setDrawingColor(
+            lineI == m_cursorLine ? LINEN_ACTIVE_FONT_COLOR : LINEN_FONT_COLOR);
+
+    const std::string lineNumStr =
+#if LINEN_DRAW_RELATIVE
+        std::to_string(lineI == m_cursorLine ?
+                m_cursorLine+1 :
+                std::abs(lineI-m_cursorLine));
+#else
+        std::to_string(lineI+1);
+#endif
+
+    float digitX = m_position.x
+#if LINEN_ALIGN_NONCURR_RIGHT
+        + (lineI == m_cursorLine ? 0 : (LINEN_BAR_WIDTH-lineNumStr.length()*0.75f)*g_fontSizePx);
+#else
+    ;
+#endif
+    for (char digit : lineNumStr)
+    {
+        auto dimensions = g_textRenderer->renderChar(digit,
+                {digitX, textPos.y},
+                lineI == m_cursorLine ? FONT_STYLE_BOLD : FONT_STYLE_ITALIC);
+        digitX += dimensions.advance/64.0f;
+    }
+
+    // Reset color
+    g_textRenderer->setDrawingColor({1.0f, 1.0f, 1.0f});
+
+
+    for (const auto& pair : m_signs)
+    {
+        // If there is a sign in the current line
+        if (pair.first == lineI)
+        {
+            // Render the sign
+            signImages[(int)pair.second]->render(
+                    {m_position.x+LINEN_BAR_WIDTH*g_fontSizePx-16*(getSignColumn(pair.second)+1), textPos.y},
+                    {16, 16});
+        }
+    }
+    g_textRenderer->prepareForDrawing();
+}
+
+void Buffer::_renderDrawFoundMark(const glm::ivec2& textPos, int initTextY) const
+{
+    g_uiRenderer->renderFilledRectangle(
+            {textPos.x, initTextY+textPos.y-m_scrollY-m_position.y},
+            {textPos.x+g_fontSizePx*.75f*m_toFind.size(), initTextY+textPos.y-m_scrollY-m_position.y+g_fontSizePx},
+            RGB_COLOR_TO_RGBA(DEF_FIND_MARK_COLOR)
+    );
+
+    // Bind the text renderer shader again
+    g_textRenderer->prepareForDrawing();
+}
+
 void Buffer::render()
 {
     TIMER_BEGIN_FUNC();
@@ -874,6 +1050,7 @@ void Buffer::render()
     int lineI{};
     int colI{};
     size_t charI{(size_t)-1};
+
     for (Char c : m_content)
     {
         // Don't draw the part of the buffer that is below the viewport
@@ -889,186 +1066,49 @@ void Buffer::render()
 
         const bool isCharSel = isCharSelected(lineI, colI, charI);
         const bool isCharFoundStart = (std::find(m_findResultIs.begin(), m_findResultIs.end(), charI) != m_findResultIs.end());
-        if (isCharInsideViewport && BUFFER_DRAW_LINE_NUMS && isLineBeginning)
-        {
-            g_textRenderer->setDrawingColor(
-                    lineI == m_cursorLine ? LINEN_ACTIVE_FONT_COLOR : LINEN_FONT_COLOR);
 
-            const std::string lineNumStr =
-#if LINEN_DRAW_RELATIVE
-                std::to_string(lineI == m_cursorLine ?
-                        m_cursorLine+1 :
-                        std::abs(lineI-m_cursorLine));
-#else
-                std::to_string(lineI+1);
-#endif
+        //-------------------------------------- Drawing lambdas ---------------------------------------------
 
-            float digitX = m_position.x
-#if LINEN_ALIGN_NONCURR_RIGHT
-                + (lineI == m_cursorLine ? 0 : (LINEN_BAR_WIDTH-lineNumStr.length()*0.75f)*g_fontSizePx);
-#else
-            ;
-#endif
-            for (char digit : lineNumStr)
-            {
-                auto dimensions = g_textRenderer->renderChar(digit,
-                        {digitX, textY},
-                        lineI == m_cursorLine ? FONT_STYLE_BOLD : FONT_STYLE_ITALIC);
-                digitX += dimensions.advance/64.0f;
-            }
-
-            // Reset color
-            g_textRenderer->setDrawingColor({1.0f, 1.0f, 1.0f});
-
-
-            for (const auto& pair : m_signs)
-            {
-                // If there is a sign in the current line
-                if (pair.first == lineI)
-                {
-                    // Render the sign
-                    signImages[(int)pair.second]->render(
-                            {m_position.x+LINEN_BAR_WIDTH*g_fontSizePx-16*(getSignColumn(pair.second)+1), textY},
-                            {16, 16});
-                    g_textRenderer->prepareForDrawing();
-                }
-            }
-        }
-
-        // Render the cursor line highlight
-        if (isCharInsideViewport && isLineBeginning && m_cursorLine == lineI)
-        {
-            g_uiRenderer->renderFilledRectangle(
-                    {textX, initTextY+textY-m_scrollY-m_position.y+2},
-                    {textX+m_size.x,
-                        initTextY+textY-m_scrollY-m_position.y+2+g_fontSizePx},
-                    g_theme->currLineColor
-            );
-            // Bind the text renderer shader again
-            g_textRenderer->prepareForDrawing();
-        }
-
-        // Render indent guides
-        if (TAB_SPACE_COUNT > 0 && isCharInsideViewport
-         && isLeadingSpace && colI%TAB_SPACE_COUNT==0 && colI != 0)
-        {
-            g_uiRenderer->renderFilledRectangle(
-                    {textX, initTextY+textY-m_scrollY-m_position.y+2},
-                    {textX+g_fontSizePx/10, initTextY+textY-m_scrollY-m_position.y+2+g_fontSizePx/5},
-                    {0.7f, 0.7f, 0.7f, 0.7f}
-            );
-            g_uiRenderer->renderFilledRectangle(
-                    {textX, initTextY+textY-m_scrollY-m_position.y+2+g_fontSizePx/5*2},
-                    {textX+g_fontSizePx/10, initTextY+textY-m_scrollY-m_position.y+2+g_fontSizePx/5*3},
-                    {0.7f, 0.7f, 0.7f, 0.7f}
-            );
-            g_uiRenderer->renderFilledRectangle(
-                    {textX, initTextY+textY-m_scrollY-m_position.y+2+g_fontSizePx/5*4},
-                    {textX+g_fontSizePx/10, initTextY+textY-m_scrollY-m_position.y+2+g_fontSizePx/5*5},
-                    {0.7f, 0.7f, 0.7f, 0.7f}
-            );
-            // Bind the text renderer shader again
-            g_textRenderer->prepareForDrawing();
-        }
-
-        /*
-         * Render a cursor at the current character position if it is the cursor position.
-         */
-        auto drawCursorIfNeeded{
-            [&](int width)
-            {
-                if (charI == m_cursorCharPos)
-                {
-                    m_cursorXPx = textX;
-                    m_cursorYPx = initTextY+textY-m_scrollY-m_position.y;
-                }
-
-                if ((m_cursorMovCmd != CursorMovCmd::None || m_isCursorShown) && charI == m_cursorCharPos)
-                {
-                    RGBColor cursColor{};
-                    switch (g_editorMode.get())
-                    {
-                    case EditorMode::_EditorMode::Normal:
-                        cursColor = {0.2f, 0.4f, 1.0f};
-                        break;
-
-                    case EditorMode::_EditorMode::Insert:
-                        cursColor = {0.0f, 1.0f, 0.0f};
-                        break;
-
-                    case EditorMode::_EditorMode::Replace:
-                        cursColor = {1.0f, 0.0f, 0.0f};
-                        break;
-                    }
-
-                    if (g_editorMode.get() == EditorMode::_EditorMode::Normal || m_isDimmed)
-                    {
-                        g_uiRenderer->renderRectangleOutline(
-                                {textX-2, initTextY+textY-m_scrollY-m_position.y-2},
-                                {textX+width+2, initTextY+textY-m_scrollY-m_position.y+g_fontSizePx+2},
-                                {UNPACK_RGB_COLOR(cursColor), 1.0f},
-                                2
-                        );
-                        g_uiRenderer->renderFilledRectangle(
-                                {textX-2, initTextY+textY-m_scrollY-m_position.y-2},
-                                {textX+width+2, initTextY+textY-m_scrollY-m_position.y+g_fontSizePx+2},
-                                {UNPACK_RGB_COLOR(cursColor), 0.4f}
-                        );
-                    }
-                    else if (g_editorMode.get() == EditorMode::_EditorMode::Replace)
-                    {
-                        g_uiRenderer->renderFilledRectangle(
-                                {textX-2,       initTextY+textY-m_scrollY-m_position.y+g_fontSizePx-2},
-                                {textX+width+2, initTextY+textY-m_scrollY-m_position.y+g_fontSizePx+2},
-                                {UNPACK_RGB_COLOR(cursColor), 1.0f}
-                        );
-                    }
-                    else
-                    {
-                        g_uiRenderer->renderFilledRectangle(
-                                {textX-1, initTextY+textY-m_scrollY-m_position.y-2},
-                                {textX+1, initTextY+textY-m_scrollY-m_position.y+g_fontSizePx+2},
-                                {UNPACK_RGB_COLOR(cursColor), 0.4f}
-                        );
-                    }
-
-                    // Bind the text renderer shader again
-                    g_textRenderer->prepareForDrawing();
-                }
-            }
-        };
+        auto drawCursorIfNeeded{[&](int width){
+            if (charI == m_cursorCharPos)
+                _renderDrawCursor({textX, textY}, initTextY, width);
+        }};
 
         auto drawCharSelectionMarkIfNeeded{[&](int width){
             if (isCharSel)
-            {
-                // Render selection background
-                g_uiRenderer->renderFilledRectangle(
-                        {textX, initTextY+textY-m_scrollY-m_position.y},
-                        {textX+width, initTextY+textY-m_scrollY-m_position.y+g_fontSizePx},
-                        RGB_COLOR_TO_RGBA(g_theme->selBg)
-                );
-
-                // Bind the text renderer shader again
-                g_textRenderer->prepareForDrawing();
-            }
+                _renderDrawSelBg({textX, textY}, initTextY, width);
         }};
 
         auto drawFoundMarkIfNeeded{[&](){
             if (isCharFoundStart)
-            {
-                g_uiRenderer->renderFilledRectangle(
-                        {textX, initTextY+textY-m_scrollY-m_position.y},
-                        {textX+g_fontSizePx*.75f*m_toFind.size(), initTextY+textY-m_scrollY-m_position.y+g_fontSizePx},
-                        RGB_COLOR_TO_RGBA(DEF_FIND_MARK_COLOR)
-                );
-
-                // Bind the text renderer shader again
-                g_textRenderer->prepareForDrawing();
-            }
+                _renderDrawFoundMark({textX, textY}, initTextY);
         }};
+
+        //----------------------------------------------------------------------------------------------------
 
         if (isCharInsideViewport)
         {
+            if (BUFFER_DRAW_LINE_NUMS && isLineBeginning)
+            {
+                _renderDrawLineNumBar({textX, textY}, lineI);
+            }
+
+            // Render the cursor line highlight
+            if (isLineBeginning && m_cursorLine == lineI)
+            {
+                g_uiRenderer->renderFilledRectangle(
+                        {textX, initTextY+textY-m_scrollY-m_position.y+2},
+                        {textX+m_size.x,
+                            initTextY+textY-m_scrollY-m_position.y+2+g_fontSizePx},
+                        g_theme->currLineColor
+                );
+            }
+
+            // Render indent guides if needed
+            if (TAB_SPACE_COUNT > 0 && isLeadingSpace && colI%TAB_SPACE_COUNT==0 && colI != 0)
+                _renderDrawIndGuid({textX, textY}, initTextY);
+
+            // Underline current word
             if (charI > wordBeg && charI < wordEnd)
             {
                 g_uiRenderer->renderFilledRectangle(
@@ -1076,9 +1116,11 @@ void Buffer::render()
                         {textX+g_fontSizePx*0.75f, initTextY+textY-m_scrollY-m_position.y+g_fontSizePx+2},
                         {0.4f, 0.4f, 0.4f, 1.0f}
                 );
-                g_textRenderer->prepareForDrawing();
             }
         }
+
+        // Bind the text renderer shader again
+        g_textRenderer->prepareForDrawing();
 
         switch (c)
         {
@@ -1103,7 +1145,7 @@ void Buffer::render()
             drawCharSelectionMarkIfNeeded(g_fontSizePx*4*0.7f);
             drawFoundMarkIfNeeded();
             drawCursorIfNeeded(g_fontSizePx*4*0.7f);
-            // Draw a horizontal line to mark the character
+            // Draw a horizontal line to mark the tab character
             g_uiRenderer->renderFilledRectangle(
                     {textX+g_fontSizePx*0.3f,
                      initTextY+textY-m_scrollY-m_position.y+g_fontSizePx/2.0f+2},
@@ -1152,28 +1194,11 @@ void Buffer::render()
             advance = g_textRenderer->renderChar(c, {textX, textY}, charStyle).advance;
 
 
-#if DRAW_INDENT_RAINBOW
             // Render indent rainbow
-            static constexpr int indentColorCount = 6;
-            static constexpr RGBAColor indentColors[indentColorCount]{
-                {1.0f, 0.7f, 0.0f, 0.1f},
-                {1.0f, 1.0f, 0.0f, 0.1f},
-                {0.0f, 0.5f, 0.0f, 0.1f},
-                {0.0f, 0.0f, 1.0f, 0.1f},
-                {0.3f, 0.0f, 0.5f, 0.1f},
-                {0.9f, 0.5f, 0.9f, 0.1f}
-            };
             if (TAB_SPACE_COUNT > 0 && isLeadingSpace)
             {
-                g_uiRenderer->renderFilledRectangle(
-                        {textX,            initTextY+textY-m_scrollY-m_position.y+2},
-                        {textX+advance/64, initTextY+textY-m_scrollY-m_position.y+2+g_fontSizePx},
-                        indentColors[colI/TAB_SPACE_COUNT%indentColorCount]
-                );
-                g_textRenderer->prepareForDrawing();
+                _renderDrawIndRainbow({textX, textY}, initTextY, colI, advance);
             }
-#endif
-
 
             drawCursorIfNeeded(advance/64.f);
         }

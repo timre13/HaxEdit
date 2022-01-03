@@ -187,6 +187,14 @@ protected:
     virtual void _updateHighlighting();
     virtual void updateGitDiff();
 
+    // -------------------- Rendering functions -----------------------------
+    void _renderDrawCursor(const glm::ivec2& textPos, int initTextY, int width);
+    void _renderDrawSelBg(const glm::ivec2& textPos, int initTextY, int width) const;
+    void _renderDrawIndGuid(const glm::ivec2& textPos, int initTextY) const;
+    void _renderDrawIndRainbow(const glm::ivec2& textPos, int initTextY, int colI, uint advance) const;
+    void _renderDrawLineNumBar(const glm::ivec2& textPos, int lineI) const;
+    void _renderDrawFoundMark(const glm::ivec2& textPos, int initTextY) const;
+
     friend class App;
     /*
      * Do not call this. Use `App::openFileInNewBuffer`.
