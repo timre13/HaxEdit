@@ -68,3 +68,11 @@ public:
 #define UNPACK_RGBA_COLOR(x) x.r, x.g, x.b, x.a
 
 #define RGB_COLOR_TO_RGBA(x) RGBAColor{x.r, x.g, x.b, 1.0f}
+
+inline RGBColor calcCompColor(RGBColor col)
+{
+    col.r = 1.0f-col.r;
+    col.g = 1.0f-col.g;
+    col.b = 1.0f-col.b;
+    return col;
+}

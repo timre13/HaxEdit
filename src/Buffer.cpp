@@ -1002,12 +1002,17 @@ void Buffer::_renderDrawLineNumBar(const glm::ivec2& textPos, int lineI) const
     g_textRenderer->prepareForDrawing();
 }
 
+static RGBColor calcFindResultFgColor(RGBColor col)
+{
+    return calcCompColor(col);
+}
+
 void Buffer::_renderDrawFoundMark(const glm::ivec2& textPos, int initTextY) const
 {
     g_uiRenderer->renderFilledRectangle(
             {textPos.x, initTextY+textPos.y-m_scrollY-m_position.y},
             {textPos.x+g_fontSizePx*.75f*m_toFind.size(), initTextY+textPos.y-m_scrollY-m_position.y+g_fontSizePx},
-            RGB_COLOR_TO_RGBA(DEF_FIND_MARK_COLOR)
+            RGB_COLOR_TO_RGBA(g_theme->findResultBg)
     );
 
     // Bind the text renderer shader again
@@ -1050,22 +1055,30 @@ void Buffer::render()
     int lineI{};
     int colI{};
     size_t charI{(size_t)-1};
+    // Chars since last search result character
+    int _charFoundOffs = INT_MIN;
 
     for (Char c : m_content)
     {
+        ++charI;
+
         // Don't draw the part of the buffer that is below the viewport
         if (textY > m_position.y+m_size.y)
         {
             break;
         }
-        const bool isCharInsideViewport = textY > -g_fontSizePx;
 
-        ++charI;
+        //------------------------------------ Info variables ------------------------------------------------
+
         if (!isspace((uchar)c))
             isLeadingSpace = false;
-
+        const bool isCharInsideViewport = textY > -g_fontSizePx;
         const bool isCharSel = isCharSelected(lineI, colI, charI);
-        const bool isCharFoundStart = (std::find(m_findResultIs.begin(), m_findResultIs.end(), charI) != m_findResultIs.end());
+        // If this is the beginning of a search result
+        if (std::find(m_findResultIs.begin(), m_findResultIs.end(), charI) != m_findResultIs.end())
+            _charFoundOffs = 0;
+        // If the current character is inside a search result
+        const bool isCharFound = (!m_toFind.empty() && _charFoundOffs < m_toFind.size());
 
         //-------------------------------------- Drawing lambdas ---------------------------------------------
 
@@ -1080,7 +1093,7 @@ void Buffer::render()
         }};
 
         auto drawFoundMarkIfNeeded{[&](){
-            if (isCharFoundStart)
+            if (isCharFound && _charFoundOffs == 0)
                 _renderDrawFoundMark({textX, textY}, initTextY);
         }};
 
@@ -1135,6 +1148,7 @@ void Buffer::render()
             isLeadingSpace = true;
             ++lineI;
             colI = 0;
+            ++_charFoundOffs;
             continue;
 
         case '\r': // Carriage return
@@ -1156,6 +1170,7 @@ void Buffer::render()
             g_textRenderer->prepareForDrawing();
             textX += g_fontSizePx*0.7f*4;
             ++colI;
+            ++_charFoundOffs;
             continue;
         }
 
@@ -1173,10 +1188,17 @@ void Buffer::render()
 
             RGBColor charColor;
             FontStyle charStyle;
-            if (isCharSel) // If the character is selected, draw with selection FG color
+            // If the character is selected, draw with selection FG color
+            if (isCharSel)
             {
                 charColor = g_theme->selFg;
                 charStyle = 0;
+            }
+            // If the character is part of the search result, draw with a different color
+            else if (isCharFound)
+            {
+                charColor = calcFindResultFgColor(g_theme->findResultBg);
+                charStyle = FONT_STYLE_BOLD|FONT_STYLE_ITALIC;
             }
             else if (m_highlightBuffer.size() >= m_content.length()
              && m_highlightBuffer[charI] < Syntax::_SYNTAX_MARK_COUNT)
@@ -1209,6 +1231,7 @@ void Buffer::render()
 
         textX += (advance/64.0f);
         ++colI;
+        ++_charFoundOffs;
         isLineBeginning = false;
     }
 

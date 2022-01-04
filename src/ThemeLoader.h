@@ -32,8 +32,13 @@ struct Theme
     RGBAColor currLineColor{DEF_CURSOR_LINE_COLOR};
     RGBColor selBg{DEF_SEL_BG};
     RGBColor selFg{DEF_SEL_FG};
+    RGBColor findResultBg{DEF_FIND_MARK_COLOR};
 };
 
+/*
+ * Color themes:
+ *  http://www.eclipsecolorthemes.org/
+ */
 class ThemeLoader
 {
 public:

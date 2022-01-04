@@ -10,6 +10,7 @@
 #define THEME_KEY_CURSLINE "currentLineColor"
 #define THEME_KEY_SELFG "AbstractTextEditor.Color.SelectionForeground"
 #define THEME_KEY_SELBG "AbstractTextEditor.Color.SelectionBackground"
+#define THEME_KEY_FINDRESBG "searchResultIndicationColor"
 
 static int strToBool(const std::string& str)
 {
@@ -93,6 +94,13 @@ Theme* ThemeLoader::load(const std::string& path)
             RGBColor asColor = strToColor(line.substr(keyEnd+1));
             theme->selFg = asColor;
             Logger::dbg << "SelFG = " << asColor.str() << Logger::End;
+            continue;
+        }
+        if (key == THEME_KEY_FINDRESBG)
+        {
+            RGBColor asColor = strToColor(line.substr(keyEnd+1));
+            theme->findResultBg = asColor;
+            Logger::dbg << "FindResultBG = " << asColor.str() << Logger::End;
             continue;
         }
 
