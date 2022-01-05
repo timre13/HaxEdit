@@ -1,59 +1,54 @@
 #pragma once
 
-#define DEBUG_ENABLE_FUNC_TIMER 0
+#define DEBUG_ENABLE_FUNC_TIMER         0
 
+//-------------------- Window size --------------------
 
-#define DEF_WIN_W 1500
-#define DEF_WIN_H 1000
+#define DEF_WIN_W                       1500
+#define DEF_WIN_H                       1000
 
-#define FONT_FAMILY_REGULAR     "DejaVu Sans Mono"
-#define FONT_FAMILY_BOLD        "DejaVu Sans Mono"
-#define FONT_FAMILY_ITALIC      "DejaVu Sans Mono"
-#define FONT_FAMILY_BOLDITALIC  "DejaVu Sans Mono"
+//-------------------- Fonts --------------------
 
-#define DEF_FONT_SIZE_PX 18
+#define FONT_FAMILY_REGULAR             "DejaVu Sans Mono"
+#define FONT_FAMILY_BOLD                "DejaVu Sans Mono"
+#define FONT_FAMILY_ITALIC              "DejaVu Sans Mono"
+#define FONT_FAMILY_BOLDITALIC          "DejaVu Sans Mono"
+#define DEF_FONT_SIZE_PX                18
 
-#define DEF_BG RGBColor{0.15f, 0.15f, 0.15f}
+//-------------------- Default theme colors --------------------
 
-#define DEF_SEL_BG RGBColor{0.156f, 0.541f, 0.862f}
-#define DEF_SEL_FG RGBColor{1.0f, 1.0f, 1.0f}
+#define DEF_BG                          RGBColor{0.150f, 0.150f, 0.150f}
+#define DEF_LINEN_FG                    RGBColor{0.560f, 0.710f, 0.070f}
+#define DEF_CURSOR_LINE_COLOR           RGBAColor{0.300f, 0.300f, 0.300f, 0.5f}
+#define DEF_SEL_BG                      RGBColor{0.156f, 0.541f, 0.862f}
+#define DEF_SEL_FG                      RGBColor{1.000f, 1.000f, 1.000f}
+#define DEF_FIND_MARK_COLOR             RGBColor{0.650f, 0.650f, 0.180f}
 
-// Line number bar width in characters
-#define LINEN_BAR_WIDTH 4
-#define LINEN_FONT_COLOR RGBColor{0.56f, 0.71f, 0.07f}
-#define LINEN_ACTIVE_FONT_COLOR RGBColor{100/255.f, 210/255.f, 200/255.f}
-#define LINEN_DRAW_RELATIVE true
-#define LINEN_ALIGN_NONCURR_RIGHT false
+//-------------------- Line numbers --------------------
 
-#define BUFFER_WRAP_LINES true
-#define BUFFER_DRAW_LINE_NUMS true
+#define BUFFER_DRAW_LINE_NUMS           true
+#define LINEN_BAR_WIDTH_CHAR            4
+#define LINEN_CURR_LINE_FG              RGBColor{0.392f, 0.824f, 0.784f}
+#define LINEN_DRAW_RELATIVE             true
+#define LINEN_ALIGN_NONCURR_RIGHT       false
 
-#define DEF_CURSOR_LINE_COLOR RGBAColor{0.3f, 0.3f, 0.3f, 0.5f}
-// The number of frames to wait before blinking one
-// Set to -1 to disable blinking
-#define CURSOR_BLINK_FRAMES 30
+//-------------------- Tabs --------------------
 
-#define SCROLL_SPEED_MULTIPLIER 40
+#define TABLINE_HEIGHT_PX               20
+#define TABLINE_BG_COLOR                RGBColor{0.098f, 0.118f, 0.196f}
+#define TABLINE_TAB_WIDTH_PX            200
+#define TABLINE_TAB_COLOR               RGBColor{0.157f, 0.157f, 0.353f}
+#define TABLINE_ACTIVE_TAB_COLOR        RGBColor{0.275f, 0.275f, 0.510f}
+#define TABLINE_TAB_MAX_TEXT_LEN        18
 
-#define STATUSBAR_BG_COLOR RGBColor{70/255.0f, 70/255.0f, 90/255.0f}
+//-------------------- Paths --------------------
 
-// Number of spaces to insert when pressing tab, set to 0 to insert the tab character
-#define TAB_SPACE_COUNT 4
+#define ICON_FILE_PATH                  "../img/logo.png"
+//#define DICTIONARY_FILE_PATH            "/usr/share/dict/words"
+#define DICTIONARY_FILE_PATH            "../external/dictionary.txt"
+#define THEME_PATH                      "../external/themes/nightlion_aptan.epf"
 
-#define DRAW_INDENT_RAINBOW true
-
-#define TABLINE_HEIGHT_PX 20
-#define TABLINE_BG_COLOR RGBColor{25/255.0f, 30/255.0f, 50/255.0f}
-#define TABLINE_TAB_WIDTH_PX 200
-#define TABLINE_TAB_COLOR RGBColor{40/255.0f, 40/255.0f, 90/255.0f}
-#define TABLINE_ACTIVE_TAB_COLOR RGBColor{70/255.0f, 70/255.0f, 130/255.0f}
-#define TABLINE_TAB_MAX_TEXT_LEN 18
-
-#define FILE_DIALOG_ICON_SIZE_PX 32
-
-#define ENABLE_SYNTAX_HIGHLIGHTING true
-
-#define ICON_FILE_PATH "../img/logo.png"
+//-------------------- Welcome screen --------------------
 
 /*
  * Valid keys:
@@ -69,25 +64,34 @@
  * - FONT_FAMILY_ITALIC
  * - FONT_FAMILY_BOLDITALIC
  */
-#define WELCOME_MSG "\033[1mWelcome to \033[92mHaxorEdit\033[0m\n\n" \
-                    "Built on %BUILD_DATE% (Build t.: %BUILD_TYPE%, Optim.: %BUILD_IS_OPTIMIZED%, " \
-                    "ASAN: %BUILD_IS_ASAN_ON%)\nCompiler: \033[36m%COMPILER_NAME%\033[0m\n" \
-                    "OpenGL Vendor: \033[36m%GL_VENDOR%\033[0m | Renderer: \033[36m%GL_RENDERER%\033[0m\n" \
-                    "Font family: R: %FONT_FAMILY_REGULAR%, B: \033[1m%FONT_FAMILY_BOLD%\033[0m, " \
-                    "I: \033[3m%FONT_FAMILY_ITALIC%\033[0m, \033[1m\033[3mBI: %FONT_FAMILY_BOLDITALIC%\033[0m\n\n" \
-                    "\033[90m\033[3m%FORTUNE%\033[0m"
-#define WELCOME_MSG_DEF_FG RGBColor{0.8f, 0.8f, 0.8f}
-#define FORTUNE_CMD "fortune -s computers linuxcookie linux"
+#define WELCOME_MSG                     "\033[1mWelcome to \033[92mHaxorEdit\033[0m\n\n" \
+                                        "Built on %BUILD_DATE% (Build t.: %BUILD_TYPE%, Optim.: %BUILD_IS_OPTIMIZED%, " \
+                                        "ASAN: %BUILD_IS_ASAN_ON%)\nCompiler: \033[36m%COMPILER_NAME%\033[0m\n" \
+                                        "OpenGL Vendor: \033[36m%GL_VENDOR%\033[0m | Renderer: \033[36m%GL_RENDERER%\033[0m\n" \
+                                        "Font family: R: %FONT_FAMILY_REGULAR%, B: \033[1m%FONT_FAMILY_BOLD%\033[0m, " \
+                                        "I: \033[3m%FONT_FAMILY_ITALIC%\033[0m, \033[1m\033[3mBI: %FONT_FAMILY_BOLDITALIC%\033[0m\n\n" \
+                                        "\033[90m\033[3m%FORTUNE%\033[0m"
+#define WELCOME_MSG_DEF_FG              RGBColor{0.800f, 0.800f, 0.800f}
+#define FORTUNE_CMD                     "fortune -s computers linuxcookie linux"
 
-#define IMG_BUF_ZOOM_STEP 0.05f
+//-------------------- Buffer settings --------------------
 
-//#define DICTIONARY_FILE_PATH "/usr/share/dict/words"
-#define DICTIONARY_FILE_PATH "../external/dictionary.txt"
+// Number of spaces to insert when pressing tab, set to 0 to insert the tab character
+#define TAB_SPACE_COUNT                 4
+#define ENABLE_SYNTAX_HIGHLIGHTING      true
+#define DRAW_INDENT_RAINBOW             true
+#define SCROLL_SPEED_MULTIPLIER         40
+#define BUFFER_WRAP_LINES               true
+// The number of frames to wait before blinking one
+// Set to -1 to disable blinking
+#define CURSOR_BLINK_FRAMES             30
+#define IMG_BUF_ZOOM_STEP               0.05f
 
-#define MAX_FILE_SIZE 1024*1024*1024
+//-------------------- Misc. --------------------
 
-#define DATE_TIME_FORMAT "%F %T"
-#define DATE_TIME_STR_LEN 19
+#define FILE_DIALOG_ICON_SIZE_PX        32
 
-#define DEF_FIND_MARK_COLOR RGBColor{0.65f, 0.65f, 0.18f}
-#define THEME_PATH "../external/themes/rainbowdrops.epf"
+#define DATE_TIME_FORMAT                "%F %T"
+#define DATE_TIME_STR_LEN               19
+
+#define MAX_FILE_SIZE                   1024*1024*1024

@@ -959,7 +959,7 @@ void Buffer::_renderDrawIndRainbow(const glm::ivec2& textPos, int initTextY, int
 void Buffer::_renderDrawLineNumBar(const glm::ivec2& textPos, int lineI) const
 {
     g_textRenderer->setDrawingColor(
-            lineI == m_cursorLine ? LINEN_ACTIVE_FONT_COLOR : LINEN_FONT_COLOR);
+            lineI == m_cursorLine ? LINEN_CURR_LINE_FG : DEF_LINEN_FG);
 
     const std::string lineNumStr =
 #if LINEN_DRAW_RELATIVE
@@ -995,7 +995,7 @@ void Buffer::_renderDrawLineNumBar(const glm::ivec2& textPos, int lineI) const
         {
             // Render the sign
             signImages[(int)pair.second]->render(
-                    {m_position.x+LINEN_BAR_WIDTH*g_fontSizePx-16*(getSignColumn(pair.second)+1), textPos.y},
+                    {m_position.x+LINEN_BAR_WIDTH_CHAR*g_fontSizePx-16*(getSignColumn(pair.second)+1), textPos.y},
                     {16, 16});
         }
     }
@@ -1036,10 +1036,10 @@ void Buffer::render()
     // Draw line number background
     g_uiRenderer->renderFilledRectangle(
             m_position,
-            {m_position.x+g_fontSizePx*LINEN_BAR_WIDTH, m_position.y+m_size.y},
+            {m_position.x+g_fontSizePx*LINEN_BAR_WIDTH_CHAR, m_position.y+m_size.y},
             RGB_COLOR_TO_RGBA(calcLinenBgColor(g_theme->bgColor)));
 
-    const float initTextX = m_position.x+g_fontSizePx*LINEN_BAR_WIDTH;
+    const float initTextX = m_position.x+g_fontSizePx*LINEN_BAR_WIDTH_CHAR;
     const float initTextY = m_position.y+m_scrollY;
     float textX = initTextX;
     float textY = initTextY;
