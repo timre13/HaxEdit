@@ -912,20 +912,21 @@ void Buffer::_renderDrawSelBg(const glm::ivec2& textPos, int initTextY, int widt
 
 void Buffer::_renderDrawIndGuid(const glm::ivec2& textPos, int initTextY) const
 {
+    const RGBColor& defcol = g_theme->values[Syntax::MARK_NONE].color;
     g_uiRenderer->renderFilledRectangle(
             {textPos.x, initTextY+textPos.y-m_scrollY-m_position.y+2},
             {textPos.x+g_fontSizePx/10, initTextY+textPos.y-m_scrollY-m_position.y+2+g_fontSizePx/5},
-            {0.7f, 0.7f, 0.7f, 0.7f}
+            {defcol.r, defcol.g, defcol.b, 0.7f}
     );
     g_uiRenderer->renderFilledRectangle(
             {textPos.x, initTextY+textPos.y-m_scrollY-m_position.y+2+g_fontSizePx/5*2},
             {textPos.x+g_fontSizePx/10, initTextY+textPos.y-m_scrollY-m_position.y+2+g_fontSizePx/5*3},
-            {0.7f, 0.7f, 0.7f, 0.7f}
+            {defcol.r, defcol.g, defcol.b, 0.7f}
     );
     g_uiRenderer->renderFilledRectangle(
             {textPos.x, initTextY+textPos.y-m_scrollY-m_position.y+2+g_fontSizePx/5*4},
             {textPos.x+g_fontSizePx/10, initTextY+textPos.y-m_scrollY-m_position.y+2+g_fontSizePx/5*5},
-            {0.7f, 0.7f, 0.7f, 0.7f}
+            {defcol.r, defcol.g, defcol.b, 0.7f}
     );
 }
 
