@@ -76,3 +76,12 @@ inline RGBColor calcCompColor(RGBColor col)
     col.b = 1.0f-col.b;
     return col;
 }
+
+inline float limit(float min, float max, float val)
+{
+    if (val < min)
+        return min;
+    if (val > max)
+        return max;
+    return val;
+}

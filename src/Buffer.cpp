@@ -956,10 +956,32 @@ void Buffer::_renderDrawIndRainbow(const glm::ivec2& textPos, int initTextY, int
 #endif
 }
 
+static RGBColor calcActiveLinenFg(RGBColor col)
+{
+    if ((col.r + col.g + col.b) / 3.f > .5f) // If light color
+    {
+        col.r *= 1.3f;
+        col.g *= 1.3f;
+        col.b *= 1.3f;
+    }
+    else // Dark color
+    {
+        col.r *= 0.7f;
+        col.g *= 0.7f;
+        col.b *= 0.7f;
+    }
+
+    return {
+        limit(0, 1, col.r),
+        limit(0, 1, col.g),
+        limit(0, 1, col.b),
+    };
+}
+
 void Buffer::_renderDrawLineNumBar(const glm::ivec2& textPos, int lineI) const
 {
     g_textRenderer->setDrawingColor(
-            lineI == m_cursorLine ? LINEN_CURR_LINE_FG : DEF_LINEN_FG);
+            lineI == m_cursorLine ? calcActiveLinenFg(g_theme->lineNColor) : g_theme->lineNColor);
 
     const std::string lineNumStr =
 #if LINEN_DRAW_RELATIVE

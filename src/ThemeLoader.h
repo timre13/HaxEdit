@@ -33,6 +33,7 @@ struct Theme
     RGBColor selBg{DEF_SEL_BG};
     RGBColor selFg{DEF_SEL_FG};
     RGBColor findResultBg{DEF_FIND_MARK_COLOR};
+    RGBColor lineNColor{DEF_LINEN_FG};
 };
 
 /*
