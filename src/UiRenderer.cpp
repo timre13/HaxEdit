@@ -2,6 +2,7 @@
 #include "Logger.h"
 #include "config.h"
 #include "glstuff.h"
+#include "globals.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -76,9 +77,9 @@ void UiRenderer::renderFilledRectangle(
         const RGBAColor& fillColor
     )
 {
-    assert(m_windowWidth > 0 && m_windowHeight > 0);
+    assert(g_windowWidth > 0 && g_windowHeight > 0);
 
-    configShaderBeforeDrawing(m_shader, m_windowWidth, m_windowHeight, fillColor);
+    configShaderBeforeDrawing(m_shader, g_windowWidth, g_windowHeight, fillColor);
 
     const float vertexData[6][2] = {
         {(float)position1.x, (float)position2.y},
@@ -99,9 +100,9 @@ void UiRenderer::renderRectangleOutline(
         uint borderThickness
     )
 {
-    assert(m_windowWidth > 0 && m_windowHeight > 0);
+    assert(g_windowWidth > 0 && g_windowHeight > 0);
 
-    configShaderBeforeDrawing(m_shader, m_windowWidth, m_windowHeight, fillColor);
+    configShaderBeforeDrawing(m_shader, g_windowWidth, g_windowHeight, fillColor);
 
     // Top
     const float rect1VertexData[6][2] = {
@@ -150,10 +151,10 @@ void UiRenderer::renderRectangleOutline(
 
 void UiRenderer::renderImage(const Image* image, const glm::ivec2& pos, const glm::ivec2& size)
 {
-    assert(m_windowWidth > 0 && m_windowHeight > 0);
+    assert(g_windowWidth > 0 && g_windowHeight > 0);
 
     m_imgShader.use();
-    const auto matrix = glm::ortho(0.0f, (float)m_windowWidth, (float)m_windowHeight, 0.0f);
+    const auto matrix = glm::ortho(0.0f, (float)g_windowWidth, (float)g_windowHeight, 0.0f);
     glUniformMatrix4fv(
             glGetUniformLocation(m_imgShader.getId(), "projectionMat"),
             1,

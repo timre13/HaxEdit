@@ -278,12 +278,9 @@ void App::renderStatusLine()
     if (!g_activeBuff && g_statMsg.isEmpty())
         return;
 
-    const int winW = g_textRenderer->getWindowWidth();
-    const int winH = g_textRenderer->getWindowHeight();
-
     g_uiRenderer->renderFilledRectangle(
-            {0, winH-g_fontSizePx*1.2f},
-            {winW, winH},
+            {0, g_windowHeight-g_fontSizePx*1.2f},
+            {g_windowWidth, g_windowHeight},
             RGB_COLOR_TO_RGBA(calcStatLineColor(g_theme->bgColor)));
 
     std::string leftStr;
@@ -296,7 +293,7 @@ void App::renderStatusLine()
 
     g_textRenderer->renderString(
             g_statMsg.isEmpty() ? leftStr : g_statMsg.get(),
-            {g_statMsg.isEmpty() ? 0 : g_fontSizePx*4, winH-g_fontSizePx-4},
+            {g_statMsg.isEmpty() ? 0 : g_fontSizePx*4, g_windowHeight-g_fontSizePx-4},
             g_statMsg.isEmpty() ? FONT_STYLE_REGULAR : FONT_STYLE_BOLD|FONT_STYLE_ITALIC,
             g_statMsg.isEmpty() ? RGBColor{1.0f, 1.0f, 1.0f} : g_statMsg.getTypeColor());
 
@@ -306,8 +303,8 @@ void App::renderStatusLine()
         assert(g_activeBuff->m_statusLineStr.maxLen > 0);
         g_textRenderer->renderString(
                 g_activeBuff->m_statusLineStr.str,
-                {winW-g_fontSizePx*g_activeBuff->m_statusLineStr.maxLen*0.7f,
-                 winH-g_fontSizePx-4},
+                {g_windowWidth-g_fontSizePx*g_activeBuff->m_statusLineStr.maxLen*0.7f,
+                 g_windowHeight-g_fontSizePx-4},
                  FONT_STYLE_REGULAR,
                  g_activeBuff->isSelectionInProgress() ? RGBColor{0.3f, 0.9f, 0.6f} : RGBColor{1.f, 1.f, 1.f});
     }
@@ -515,12 +512,11 @@ void App::windowResizeCB(GLFWwindow*, int width, int height)
     glViewport(0, 0, width, height);
     g_windowWidth = width;
     g_windowHeight = height;
-    g_textRenderer->onWindowResized(width, height);
-    g_uiRenderer->onWindowResized(width, height);
     for (auto& tab : g_tabs)
     {
         tab->makeChildrenSizesEqual();
     }
+    g_isRedrawNeeded = true;
 }
 
 static void handleDialogClose()

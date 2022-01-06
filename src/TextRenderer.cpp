@@ -139,7 +139,7 @@ void TextRenderer::prepareForDrawing()
 {
     m_glyphShader.use();
 
-    const auto matrix = glm::ortho(0.0f, (float)m_windowWidth, (float)m_windowHeight, 0.0f);
+    const auto matrix = glm::ortho(0.0f, (float)g_windowWidth, (float)g_windowHeight, 0.0f);
     glUniformMatrix4fv(
             glGetUniformLocation(m_glyphShader.getId(), "projectionMat"),
             1,
@@ -382,12 +382,12 @@ void TextRenderer::renderString(
             break;
         }
 
-        if (shouldWrap && textX+g_fontSizePx > m_windowWidth)
+        if (shouldWrap && textX+g_fontSizePx > g_windowWidth)
         {
             textX = initTextX;
             textY += g_fontSizePx * scale;
         }
-        if (textY > m_windowHeight)
+        if (textY > g_windowHeight)
         {
             return;
         }

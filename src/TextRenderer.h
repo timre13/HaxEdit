@@ -60,9 +60,6 @@ private:
 
     Shader m_glyphShader;
 
-    int m_windowWidth;
-    int m_windowHeight;
-
     RGBColor m_currentTextColor{1, 1, 1};
 
     // ---------------------------------------------
@@ -93,12 +90,6 @@ public:
 
     void setFontSize(int size);
 
-    inline void onWindowResized(int width, int height)
-    {
-        m_windowWidth = width;
-        m_windowHeight = height;
-    }
-
     /*
      * Render a string to the window.
      *
@@ -122,9 +113,6 @@ public:
             const RGBColor& initColor={1.0f, 1.0f, 1.0f},
             bool shouldWrap=false
     );
-
-    inline int getWindowWidth() const { return m_windowWidth; }
-    inline int getWindowHeight() const { return m_windowHeight; }
 
     uint getCharGlyphAdvance(Char c, FontStyle style=FONT_STYLE_REGULAR);
 

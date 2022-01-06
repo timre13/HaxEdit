@@ -20,21 +20,12 @@ private:
     Shader m_shader;
     Shader m_imgShader;
 
-    int m_windowWidth;
-    int m_windowHeight;
-
     friend class Image;
     // Used by Image::render()
     void renderImage(const Image* image, const glm::ivec2& pos, const glm::ivec2& size);
 
 public:
     UiRenderer();
-
-    inline void onWindowResized(int width, int height)
-    {
-        m_windowWidth = width;
-        m_windowHeight = height;
-    }
 
     void renderFilledRectangle(
         const glm::ivec2& position1,
