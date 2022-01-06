@@ -313,12 +313,24 @@ void App::renderStatusLine()
     }
 }
 
+#define BUFFCLOSE_BTN_SIZE_PX TABLINE_HEIGHT_PX
+
 void App::renderTabLine()
 {
     // Draw tabline background
     g_uiRenderer->renderFilledRectangle({0, 0}, {g_windowWidth, TABLINE_HEIGHT_PX},
             RGB_COLOR_TO_RGBA(TABLINE_BG_COLOR));
-    const int tabPageSize = roundf((float)g_windowWidth/TABLINE_TAB_WIDTH_PX);
+    const int tabPageSize = roundf(float(g_windowWidth-BUFFCLOSE_BTN_SIZE_PX)/TABLINE_TAB_WIDTH_PX);
+
+
+    static const Image closeImg = Image("../img/buff_close.png");
+    // Draw buffer close button
+    g_uiRenderer->renderFilledRectangle(
+            {g_windowWidth-BUFFCLOSE_BTN_SIZE_PX, 0}, {g_windowWidth, BUFFCLOSE_BTN_SIZE_PX},
+            {0.8f, 0.0f, 0.0f}
+    );
+    if (!closeImg.isOpenFailed())
+        closeImg.render({g_windowWidth-BUFFCLOSE_BTN_SIZE_PX, 0}, {BUFFCLOSE_BTN_SIZE_PX, BUFFCLOSE_BTN_SIZE_PX});
 
     // Draw tabs
     for (size_t i{}; i < g_tabs.size(); ++i)
@@ -788,6 +800,15 @@ void App::mouseButtonCB(GLFWwindow*, int btn, int act, int mods)
             handleDialogClose();
             g_isRedrawNeeded = true;
         }
+        return;
+    }
+
+    // If the cursor was pressed on the close buffer button
+    if (act == GLFW_PRESS
+     && g_cursorX > g_windowWidth-BUFFCLOSE_BTN_SIZE_PX
+     && g_cursorY < BUFFCLOSE_BTN_SIZE_PX)
+    {
+        Bindings::Callbacks::closeActiveBuffer();
         return;
     }
 
