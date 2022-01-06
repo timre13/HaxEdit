@@ -303,12 +303,14 @@ public:
     virtual inline void setXPos(int x) final
     {
         m_position.x = x;
-        Logger::dbg << "Set buffer x pos to " << x << Logger::End;
+        if (g_isDebugDrawMode)
+            Logger::dbg << "Set buffer x pos to " << x << Logger::End;
     }
     virtual inline void setYPos(int y) final
     {
         m_position.y = y;
-        Logger::dbg << "Set buffer y pos to " << y << Logger::End;
+        if (g_isDebugDrawMode)
+            Logger::dbg << "Set buffer y pos to " << y << Logger::End;
     }
     virtual inline const glm::ivec2& getPos() const final { return m_position; }
     virtual inline int getXPos() const final { return m_position.x; }
@@ -318,12 +320,14 @@ public:
     virtual inline void setWidth(int w) final
     {
         m_size.x = w;
-        Logger::dbg << "Set buffer width to " << w << Logger::End;
+        if (g_isDebugDrawMode)
+            Logger::dbg << "Set buffer width to " << w << Logger::End;
     }
     virtual inline void setHeight(int h) final
     {
         m_size.y = h;
-        Logger::dbg << "Set buffer height to " << h << Logger::End;
+        if (g_isDebugDrawMode)
+            Logger::dbg << "Set buffer height to " << h << Logger::End;
     }
     virtual inline const glm::ivec2& getSize() const final { return m_size; }
     virtual inline int getWidth() const final { return m_size.x; }

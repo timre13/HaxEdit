@@ -508,7 +508,8 @@ void App::windowRefreshCB(GLFWwindow*)
 
 void App::windowResizeCB(GLFWwindow*, int width, int height)
 {
-    Logger::log << "Resized window to " << width << 'x' << height << Logger::End;
+    if (g_isDebugDrawMode)
+        Logger::log << "Resized window to " << width << 'x' << height << Logger::End;
     glViewport(0, 0, width, height);
     g_windowWidth = width;
     g_windowHeight = height;

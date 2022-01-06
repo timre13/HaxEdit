@@ -123,7 +123,7 @@ void Split::makeChildrenSizesEqual()
             buff->setXPos((float)g_windowWidth/len*i);
             buff->setWidth((float)g_windowWidth/len);
             buff->setHeight(g_windowHeight);
-            if (i == 0)
+            if (i == 0 && g_isDebugDrawMode)
             {
                 Logger::dbg << "Resized children to " << (float)g_windowWidth/len << "px"
                     << Logger::End;
