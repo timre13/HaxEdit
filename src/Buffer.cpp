@@ -16,10 +16,6 @@
 #include <filesystem>
 using namespace std::chrono_literals;
 
-// Separates lines in a block selection delete BufferHistory::Entry
-#define BLOCK_SEL_HIST_ENTRY_LINE_SEP_CHAR ((uint32_t)-1)
-#define BLOCK_SEL_HIST_ENTRY_LINE_SEP_INDEX ((size_t)-1)
-
 Buffer::Buffer()
 {
     /*
@@ -701,6 +697,10 @@ bool Buffer::isCharSelected(int lineI, int colI, size_t charI) const
 
     case Selection::Mode::Block:
     {
+        // Newlines can't be selected with block selection
+        if (m_content[charI] == '\n')
+            return false;
+
         bool isLineOk = false;
         if (m_selection.fromLine < m_cursorLine)
         {
@@ -1530,28 +1530,20 @@ void Buffer::undo()
             // FIXME: When selection starts at the bottom left or top right corner,
             //        the block gets messed up
 
+            const auto lines = splitStrToLines(entry.values);
             int blockSepCount = 0;
-            String line;
-            int insertLine = std::min(entry.cursLine, entry.selBeginLine);
-            int insertCol = std::min(entry.selBeginCol, entry.cursCol);
-            int insertPos = std::min(entry.cursPos, entry.selBeginPos);
-            for (Char c : entry.values)
+            int insPos = std::min(entry.selBeginPos, entry.cursPos);
+            int insLine = std::min(entry.selBeginLine, entry.cursLine);
+            for (const auto& line : lines)
             {
-                if (c == BLOCK_SEL_HIST_ENTRY_LINE_SEP_CHAR)
-                {
-                    m_content.insert(insertPos, line);
-                    m_highlightBuffer.insert(insertPos, line.size(), Syntax::MARK_NONE);
-                    Logger::log << "INSERTED LINE: " << strToAscii(line) << Logger::End;
-                    // BUG?
-                    insertPos += getLineLenAt(m_content, insertLine)+1;
-                    line.clear();
-                    ++insertLine;
-                    ++blockSepCount;
-                }
-                else
-                {
-                    line += c;
-                }
+                m_content.insert(insPos, line);
+                //m_content.insert(insPos, line.size(), 'A'+blockSepCount);
+                m_highlightBuffer.insert(insPos, line.size(), Syntax::MARK_NONE);
+                Logger::log << "INSERTED LINE: " << strToAscii(line) << Logger::End;
+                // BUG?
+                insPos += getLineLenAt(m_content, insLine)+1;
+                ++insLine;
+                ++blockSepCount;
             }
 
             Logger::log << "Undone a block selection of " << entry.values.size()-blockSepCount
@@ -1725,7 +1717,7 @@ void Buffer::deleteSelectedChars()
             charIndicesToDel.push_back(charI);
             // If we are in block selection mode and this is at the right border of the selection
             if (m_selection.mode == Selection::Mode::Block && colI == std::max(m_selection.fromCol, m_cursorCol))
-                charIndicesToDel.push_back(BLOCK_SEL_HIST_ENTRY_LINE_SEP_INDEX); // End of block line
+                charIndicesToDel.push_back(-1); // End of block line
         }
 
         switch (m_content[charI])
@@ -1753,8 +1745,8 @@ void Buffer::deleteSelectedChars()
     String deletedStr;
     for (size_t toDel : charIndicesToDel)
     {
-        if (toDel == BLOCK_SEL_HIST_ENTRY_LINE_SEP_INDEX)
-            deletedStr += BLOCK_SEL_HIST_ENTRY_LINE_SEP_CHAR;
+        if (toDel == -1_st)
+            deletedStr += '\n';
         else
             deletedStr += m_content[toDel];
     }
@@ -1764,7 +1756,7 @@ void Buffer::deleteSelectedChars()
     for (size_t i{charIndicesToDel.size()-1}; i != -1_st; --i)
     {
         size_t toDel = charIndicesToDel[i];
-        if (toDel == BLOCK_SEL_HIST_ENTRY_LINE_SEP_INDEX)
+        if (toDel == -1_st)
         {
             ++blockSepCount;
             continue;
