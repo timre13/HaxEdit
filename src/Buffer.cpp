@@ -110,31 +110,32 @@ void Buffer::open(const std::string& filePath)
         m_isReadOnly = true;
     }
 
-    // TODO: Reimplement
-#if 0
     { // Regenerate the initial autocomplete list for `m_buffWordProvid`
         m_buffWordProvid->clear();
 
-        String word;
-        for (int i{}; i < m_content.size(); ++i)
+        for (const auto& line : m_content)
         {
-            if (u_isspace(m_content[i]))
+            String word;
+            for (Char c : line)
             {
-                // End of word
-                if (!word.empty())
+                // TODO: Filter out operators and such
+                if (u_isspace(c))
                 {
-                    //Logger::dbg << "Feeding word: " << quoteStr(strToAscii(word)) << Logger::End;
-                    m_buffWordProvid->add(word);
-                    word.clear();
+                    // End of word
+                    if (!word.empty())
+                    {
+                        //Logger::dbg << "Feeding word: " << quoteStr(strToAscii(word)) << Logger::End;
+                        m_buffWordProvid->add(word);
+                        word.clear();
+                    }
                 }
-            }
-            else
-            {
-                word += m_content[i];
+                else
+                {
+                    word += c;
+                }
             }
         }
     }
-#endif
     regenAutocompList();
 
     g_statMsg.set("Opened file"+std::string(m_isReadOnly ? " (read-only)" : "")+": \""+filePath+"\"",
