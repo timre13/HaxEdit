@@ -146,4 +146,5 @@ std::vector<T> splitStrToLines(const T& str, bool keepBreaks=false)
     return output;
 }
 
-size_t countLineListLen(const std::vector<String> lines);
+size_t countLineListLen(const std::vector<String>& lines);
+String lineVecConcat(const std::vector<String>& lines);

@@ -149,12 +149,15 @@ int Buffer::saveToFile()
     TIMER_BEGIN_FUNC();
 
     Logger::dbg << "Writing buffer to file: " << m_filePath << Logger::End;
-    // TODO: Reimplement
-#if 0
+    size_t contentLen{};
     try
     {
+        // TODO: Is there a way to write the content line-by-line to the file?
+        //       That would be faster.
+        const String content = lineVecConcat(m_content);
+        contentLen = content.length();
         const icu::UnicodeString str = icu::UnicodeString::fromUTF32(
-                (const UChar32*)m_content.data(), m_content.length());
+                (const UChar32*)content.data(), content.length());
         UFILE* outFile = u_fopen(m_filePath.c_str(), "w", NULL, NULL);
         if (!outFile)
         {
@@ -174,8 +177,8 @@ int Buffer::saveToFile()
         TIMER_END_FUNC();
         return 1;
     }
-#endif
-    Logger::log << "Wrote " << m_content.size() << " characters" << Logger::End;
+    Logger::log << "Wrote " << contentLen << " characters ("
+        << m_content.size() << " lines)" << Logger::End;
     g_statMsg.set("Wrote buffer to file: \""+m_filePath+"\"", StatusMsg::Type::Info);
 
     m_isModified = false;
