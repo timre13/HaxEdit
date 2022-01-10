@@ -114,8 +114,6 @@ public:
             bool shouldWrap=false
     );
 
-    uint getCharGlyphAdvance(Char c, FontStyle style=FONT_STYLE_REGULAR);
-
     ~TextRenderer();
 };
 

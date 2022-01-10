@@ -130,15 +130,20 @@ inline bool isValidFilePath(const T& str)
 }
 
 template <typename T>
-std::vector<T> splitStrToLines(const T& str)
+std::vector<T> splitStrToLines(const T& str, bool keepBreaks=false)
 {
     _CHECK_T_STR_TYPE;
 
     std::vector<T> output;
-    auto it = LineIterator(str);
+    auto it = LineIterator<T>(str);
     T line;
     while (it.next(line))
+    {
+        if (keepBreaks) line += '\n';
         output.push_back(std::move(line));
+    }
 
     return output;
 }
+
+size_t countLineListLen(const std::vector<String> lines);

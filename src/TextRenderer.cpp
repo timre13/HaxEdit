@@ -12,9 +12,14 @@
 void TextRenderer::cleanUpGlyphs()
 {
     for (auto& glyph : m_regularGlyphs) { glDeleteTextures(1, &glyph.second.textureId); }
+    m_regularGlyphs.clear();
     for (auto& glyph : m_boldGlyphs) { glDeleteTextures(1, &glyph.second.textureId); }
+    m_boldGlyphs.clear();
     for (auto& glyph : m_italicGlyphs) { glDeleteTextures(1, &glyph.second.textureId); }
+    m_italicGlyphs.clear();
     for (auto& glyph : m_boldItalicGlyphs) { glDeleteTextures(1, &glyph.second.textureId); }
+    m_boldItalicGlyphs.clear();
+
     Logger::dbg << "Cleaned up glyphs" << Logger::End;
 }
 
@@ -31,11 +36,6 @@ static void loadGlyphs(
         Logger::fatal << "Failed to load font: " << fontPath << ": " << FT_Error_String(error)
             << Logger::End;
     }
-    Logger::dbg << "Loaded font: " << fontPath
-        << "\n\tFamily: " << face->family_name
-        << "\n\tStyle: " << face->style_name
-        << "\n\tGlyphs: " << face->num_glyphs
-        << Logger::End;
 
     if (FT_Error error = FT_Set_Pixel_Sizes(face, fontSize, 0))
     {
@@ -75,6 +75,15 @@ static void loadGlyphs(
                 }
         });
     }
+
+    const float width = glyphs->find('A')->second.advance/64.0f;
+    Logger::dbg << "Loaded font: " << fontPath
+        << "\n\tFamily: " << face->family_name
+        << "\n\tStyle: " << face->style_name
+        << "\n\tGlyphs: " << face->num_glyphs
+        << "\n\tSize: " << g_fontSizePx
+        << "\n\tWidth: " << width
+        << Logger::End;
     FT_Done_Face(face);
 }
 
@@ -113,12 +122,6 @@ TextRenderer::TextRenderer(
 void TextRenderer::setFontSize(int size)
 {
     cleanUpGlyphs();
-    m_regularGlyphs.clear();
-    m_boldGlyphs.clear();
-    m_italicGlyphs.clear();
-    m_boldItalicGlyphs.clear();
-
-    auto fontPath = m_regularFontPath;
 
     Logger::dbg << "Initializing FreeType" << Logger::End;
     FT_Library library;
@@ -133,6 +136,8 @@ void TextRenderer::setFontSize(int size)
     loadGlyphs(&library, &m_boldItalicGlyphs, m_boldItalicFontPath, size);
 
     FT_Done_FreeType(library);
+    g_fontSizePx = size;
+    g_fontWidthPx = m_regularGlyphs.find('A')->second.advance/64.0f;
 }
 
 void TextRenderer::prepareForDrawing()
@@ -220,13 +225,6 @@ TextRenderer::GlyphDimensions TextRenderer::renderChar(
     return renderGlyph(
             glyphIt == glyphs->end() ? glyphs->find(0)->second : glyphIt->second,
             position.x, position.y, 1.0f, m_fontVbo);
-}
-
-uint TextRenderer::getCharGlyphAdvance(Char c, FontStyle style/*=FONT_STYLE_REGULAR*/)
-{
-    auto glyphs = getGlyphListFromStyle(style);
-    auto glyph = glyphs->find(c);
-    return glyph == glyphs->end() ? glyphs->find(0)->second.advance : glyph->second.advance;
 }
 
 #define ANSI_ESC_CHAR_0                 '\033'

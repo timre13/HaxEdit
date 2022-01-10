@@ -64,16 +64,15 @@ void Buffer::open(const std::string& filePath)
 
     try
     {
-        m_content = loadUnicodeFile(filePath);
-        m_highlightBuffer = std::u8string(m_content.length(), Syntax::MARK_NONE);
+        m_content = splitStrToLines(loadUnicodeFile(filePath), true);
+        m_highlightBuffer = std::u8string(countLineListLen(m_content), Syntax::MARK_NONE);
         m_isHighlightUpdateNeeded = true;
-        m_numOfLines = strCountLines(m_content);
         m_gitRepo = std::make_unique<Git::Repo>(filePath);
         updateGitDiff();
 
         Logger::dbg << "Read "
-            << m_content.length() << " characters ("
-            << m_numOfLines << " lines) from file" << Logger::End;
+            << countLineListLen(m_content) << " characters ("
+            << m_content.size() << " lines) from file" << Logger::End;
     }
     catch (InvalidUnicodeError& e)
     {
@@ -91,7 +90,6 @@ void Buffer::open(const std::string& filePath)
         m_content.clear();
         m_highlightBuffer.clear();
         m_isHighlightUpdateNeeded = true;
-        m_numOfLines = 0;
         m_gitRepo.reset();
         m_signs.clear();
 
@@ -112,6 +110,8 @@ void Buffer::open(const std::string& filePath)
         m_isReadOnly = true;
     }
 
+    // TODO: Reimplement
+#if 0
     { // Regenerate the initial autocomplete list for `m_buffWordProvid`
         m_buffWordProvid->clear();
 
@@ -134,6 +134,7 @@ void Buffer::open(const std::string& filePath)
             }
         }
     }
+#endif
     regenAutocompList();
 
     g_statMsg.set("Opened file"+std::string(m_isReadOnly ? " (read-only)" : "")+": \""+filePath+"\"",
@@ -148,6 +149,8 @@ int Buffer::saveToFile()
     TIMER_BEGIN_FUNC();
 
     Logger::dbg << "Writing buffer to file: " << m_filePath << Logger::End;
+    // TODO: Reimplement
+#if 0
     try
     {
         const icu::UnicodeString str = icu::UnicodeString::fromUTF32(
@@ -171,6 +174,7 @@ int Buffer::saveToFile()
         TIMER_END_FUNC();
         return 1;
     }
+#endif
     Logger::log << "Wrote " << m_content.size() << " characters" << Logger::End;
     g_statMsg.set("Wrote buffer to file: \""+m_filePath+"\"", StatusMsg::Type::Info);
 
@@ -197,18 +201,6 @@ int Buffer::saveAsToFile(const std::string& filePath)
     return 0;
 }
 
-static size_t getLineLenAt(const String& str, int lineI)
-{
-    int _lineI{};
-    String line;
-    LineIterator it{str};
-    while (it.next(line) && _lineI != lineI)
-    {
-        ++_lineI;
-    }
-    return line.length();
-}
-
 void Buffer::renderAutocompPopup()
 {
     m_autocompPopup->setPos(
@@ -233,6 +225,8 @@ void Buffer::scrollViewportToCursor()
 
 void Buffer::_updateHighlighting()
 {
+    // TODO: Reimplement
+#if 0
     Logger::dbg("Highighter");
     Logger::log << "Updating syntax highlighting" << Logger::End;
 
@@ -468,6 +462,7 @@ void Buffer::_updateHighlighting()
     Logger::log(Logger::End);
 
     g_isRedrawNeeded = true;
+#endif
 }
 
 void Buffer::updateGitDiff()
@@ -496,15 +491,12 @@ void Buffer::updateCursor()
     TIMER_BEGIN_FUNC();
 
     assert(m_cursorLine >= 0);
-    assert(m_numOfLines == 0 || m_cursorLine < m_numOfLines);
+    assert(m_content.empty() || m_cursorLine < m_content.size());
     assert(m_cursorCol >= 0);
 
-    auto getCursorLineLen{ // -> int
-        [&]()
-        {
-            return getLineLenAt(m_content, m_cursorLine);
-        }
-    };
+    auto getCursorLineLen{[&](){
+        return m_content[m_cursorLine].size();
+    }};
 
     switch (m_cursorMovCmd)
     {
@@ -519,7 +511,7 @@ void Buffer::updateCursor()
     case CursorMovCmd::Right:
     {
         auto cursorLineLen = getCursorLineLen();
-        if (cursorLineLen > 0 && m_cursorCol < cursorLineLen)
+        if (cursorLineLen > 0 && m_cursorCol < cursorLineLen-1)
         {
             ++m_cursorCol;
             ++m_cursorCharPos;
@@ -536,14 +528,14 @@ void Buffer::updateCursor()
 
             if (m_cursorCol != 0) // Column 0 always exists
                 // If the new line is smaller than the current cursor column, step back to the end of the line
-                m_cursorCol = std::min((int)getCursorLineLen(), m_cursorCol);
+                m_cursorCol = std::min((int)getCursorLineLen()-1, m_cursorCol);
 
-            m_cursorCharPos -= prevCursorCol + ((int)getCursorLineLen()+1-m_cursorCol);
+            m_cursorCharPos -= prevCursorCol + ((int)getCursorLineLen()-m_cursorCol);
         }
         break;
 
     case CursorMovCmd::Down:
-        if (m_cursorLine < m_numOfLines-1)
+        if (m_cursorLine < m_content.size()-1)
         {
             const int prevCursorCol = m_cursorCol;
             const int prevCursorLineLen = getCursorLineLen();
@@ -552,9 +544,9 @@ void Buffer::updateCursor()
 
             if (m_cursorCol != 0) // Column 0 always exists
                 // If the new line is smaller than the current cursor column, step back to the end of the line
-                m_cursorCol = std::min((int)getCursorLineLen(), m_cursorCol);
+                m_cursorCol = std::min((int)getCursorLineLen()-1, m_cursorCol);
 
-            m_cursorCharPos += (prevCursorLineLen+1-prevCursorCol) + m_cursorCol;
+            m_cursorCharPos += (prevCursorLineLen-prevCursorCol) + m_cursorCol;
         }
         break;
 
@@ -567,8 +559,8 @@ void Buffer::updateCursor()
     {
         const int prevCursorCol = m_cursorCol;
         const int cursorLineLen = getCursorLineLen();
-        m_cursorCharPos += cursorLineLen-prevCursorCol;
-        m_cursorCol = cursorLineLen;
+        m_cursorCharPos += cursorLineLen-1-prevCursorCol;
+        m_cursorCol = cursorLineLen-1;
         break;
     }
 
@@ -579,9 +571,9 @@ void Buffer::updateCursor()
         break;
 
     case CursorMovCmd::LastChar:
-        m_cursorLine = m_numOfLines == 0 ? 0 : m_numOfLines-1;
-        m_cursorCol = getCursorLineLen();
-        m_cursorCharPos = m_content.length()-1;
+        m_cursorLine = m_content.empty() ? 0 : m_content.size()-1;
+        m_cursorCol = getCursorLineLen()-1;
+        m_cursorCharPos = countLineListLen(m_content)-1;
         break;
 
     case CursorMovCmd::None:
@@ -589,7 +581,7 @@ void Buffer::updateCursor()
     }
 
     assert(m_cursorLine >= 0);
-    assert(m_numOfLines == 0 || m_cursorLine < m_numOfLines);
+    assert(m_content.empty() || m_cursorLine < m_content.size());
     assert(m_cursorCol >= 0);
 
     // Scroll up when the cursor goes out of the viewport
@@ -625,8 +617,8 @@ void Buffer::updateRStatusLineStr()
             + " | \033[32m" + std::to_string(m_cursorLine + 1) + "\033[0m"
             + ":\033[33m" + std::to_string(m_cursorCol + 1) + "\033[0m"
             + " | \033[31m" + std::to_string(m_cursorCharPos) + "\033[0m"
-            + " | \033[95m" + std::to_string(m_content[m_cursorCharPos]) + "\033[0m"
-            + "/\033[95m" + intToHexStr((int32_t)m_content[m_cursorCharPos]) + "\033[0m"
+            + " | \033[95m" + std::to_string(getCharAt(m_cursorCharPos)) + "\033[0m"
+            + "/\033[95m" + intToHexStr((int32_t)getCharAt(m_cursorCharPos)) + "\033[0m"
             ;
         m_statusLineStr.maxLen = std::max((size_t)STATUS_LINE_STR_LEN_MAX, strPLen(m_statusLineStr.str));
     }
@@ -697,6 +689,8 @@ bool Buffer::isCharSelected(int lineI, int colI, size_t charI) const
 
     case Selection::Mode::Block:
     {
+        // TODO: Reimplement
+#if 0
         // Newlines can't be selected with block selection
         if (m_content[charI] == '\n')
             return false;
@@ -722,6 +716,7 @@ bool Buffer::isCharSelected(int lineI, int colI, size_t charI) const
         }
 
         isSelected = isLineOk && isColOk;
+#endif
         break;
     }
     }
@@ -769,6 +764,8 @@ size_t Buffer::copySelectionToClipboard(bool shouldUnselect/*=true*/)
                 toCopy.push_back('\n'); // End of block line
         }
 
+        // TODO: Reimplement
+#if 0
         switch (m_content[charI])
         {
         case '\n': // New line
@@ -784,6 +781,7 @@ size_t Buffer::copySelectionToClipboard(bool shouldUnselect/*=true*/)
             ++colI;
             continue;
         }
+#endif
 
         ++colI;
     }
@@ -930,7 +928,7 @@ void Buffer::_renderDrawIndGuid(const glm::ivec2& textPos, int initTextY) const
     );
 }
 
-void Buffer::_renderDrawIndRainbow(const glm::ivec2& textPos, int initTextY, int colI, uint advance) const
+void Buffer::_renderDrawIndRainbow(const glm::ivec2& textPos, int initTextY, int colI) const
 {
 #if DRAW_INDENT_RAINBOW
     static constexpr int indentColorCount = 6;
@@ -944,8 +942,8 @@ void Buffer::_renderDrawIndRainbow(const glm::ivec2& textPos, int initTextY, int
     };
 
     g_uiRenderer->renderFilledRectangle(
-            {textPos.x,            initTextY+textPos.y-m_scrollY-m_position.y+2},
-            {textPos.x+advance/64, initTextY+textPos.y-m_scrollY-m_position.y+2+g_fontSizePx},
+            {textPos.x,               initTextY+textPos.y-m_scrollY-m_position.y+2},
+            {textPos.x+g_fontWidthPx, initTextY+textPos.y-m_scrollY-m_position.y+2+g_fontSizePx},
             indentColors[colI/TAB_SPACE_COUNT%indentColorCount]
     );
     g_textRenderer->prepareForDrawing();
@@ -1073,57 +1071,84 @@ void Buffer::render()
     const size_t wordBeg = getCursorWordBeginning();
     const size_t wordEnd = getCursorWordEnd();
 
+    const int maxLineLenChar = m_size.x/g_fontWidthPx;
+
     bool isLineBeginning = true;
     bool isLeadingSpace = true;
     int lineI{};
-    int colI{};
-    size_t charI{(size_t)-1};
+    size_t charI{};
     // Chars since last search result character
     int _charFoundOffs = INT_MIN;
 
-    for (Char c : m_content)
+    for (const String& line : m_content)
     {
-        ++charI;
-
         // Don't draw the part of the buffer that is below the viewport
         if (textY > m_position.y+m_size.y)
         {
             break;
         }
 
-        //------------------------------------ Info variables ------------------------------------------------
-
-        if (!isspace((uchar)c))
-            isLeadingSpace = false;
-        const bool isCharInsideViewport = textY > -g_fontSizePx;
-        const bool isCharSel = isCharSelected(lineI, colI, charI);
-        // If this is the beginning of a search result
-        if (std::find(m_findResultIs.begin(), m_findResultIs.end(), charI) != m_findResultIs.end())
-            _charFoundOffs = 0;
-        // If the current character is inside a search result
-        const bool isCharFound = (!m_toFind.empty() && _charFoundOffs < m_toFind.size());
-
-        //-------------------------------------- Drawing lambdas ---------------------------------------------
-
-        auto drawCursorIfNeeded{[&](int width){
-            if (charI == m_cursorCharPos)
-                _renderDrawCursor({textX, textY}, initTextY, width);
-        }};
-
-        auto drawCharSelectionMarkIfNeeded{[&](int width){
-            if (isCharSel)
-                _renderDrawSelBg({textX, textY}, initTextY, width);
-        }};
-
-        auto drawFoundMarkIfNeeded{[&](){
-            if (isCharFound && _charFoundOffs == 0)
-                _renderDrawFoundMark({textX, textY}, initTextY);
-        }};
-
-        //----------------------------------------------------------------------------------------------------
-
-        if (isCharInsideViewport)
+        const bool isLineAboveViewport = textY <= -g_fontSizePx;
+        if (isLineAboveViewport)
         {
+            ++lineI;
+            charI += line.size();
+            textX = initTextX;
+            textY += g_fontSizePx;
+            _charFoundOffs += line.size();
+
+            // TODO: Reimplement
+#if 0
+            if (BUFFER_WRAP_LINES && textX+g_fontWidthPx > m_position.x+m_size.x)
+            {
+                textX = initTextX;
+                textY += g_fontSizePx*line.size()/maxLineLenChar;
+            }
+#endif
+            continue;
+        }
+
+        isLineBeginning = true;
+        isLeadingSpace = true;
+        for (size_t colI{}; colI < line.size(); ++colI)
+        {
+            const Char c = line[colI];
+
+            //------------------------------------ Info variables ------------------------------------------------
+
+            if (!isspace((uchar)c))
+                isLeadingSpace = false;
+            const bool isCharSel = isCharSelected(lineI, colI, charI);
+            // If this is the beginning of a search result
+            if (std::find(m_findResultIs.begin(), m_findResultIs.end(), charI) != m_findResultIs.end())
+                _charFoundOffs = 0;
+            // If the current character is inside a search result
+            const bool isCharFound = (!m_toFind.empty() && _charFoundOffs < m_toFind.size());
+
+            //-------------------------------------- Drawing lambdas ---------------------------------------------
+
+            auto drawCursorIfNeeded{[&](int width){
+                if (charI == m_cursorCharPos)
+                {
+                    assert(lineI == m_cursorLine);
+                    assert(colI == m_cursorCol);
+
+                    _renderDrawCursor({textX, textY}, initTextY, width);
+                }
+            }};
+
+            auto drawCharSelectionMarkIfNeeded{[&](int width){
+                if (isCharSel)
+                    _renderDrawSelBg({textX, textY}, initTextY, width);
+            }};
+
+            auto drawFoundMarkIfNeeded{[&](){
+                if (isCharFound && _charFoundOffs == 0)
+                    _renderDrawFoundMark({textX, textY}, initTextY);
+            }};
+
+            //----------------------------------------------------------------------------------------------------
+
             if (BUFFER_DRAW_LINE_NUMS && isLineBeginning)
             {
                 _renderDrawLineNumBar({textX, textY}, lineI);
@@ -1153,109 +1178,108 @@ void Buffer::render()
                         {0.4f, 0.4f, 0.4f, 1.0f}
                 );
             }
-        }
 
-        // Bind the text renderer shader again
-        g_textRenderer->prepareForDrawing();
-
-        switch (c)
-        {
-        case '\n': // New line
-        case '\v': // Vertical tab
-            drawCharSelectionMarkIfNeeded(g_fontSizePx*0.7f);
-            drawFoundMarkIfNeeded();
-            drawCursorIfNeeded(g_fontSizePx*0.7f);
-            textX = initTextX;
-            textY += g_fontSizePx;
-            isLineBeginning = true;
-            isLeadingSpace = true;
-            ++lineI;
-            colI = 0;
-            ++_charFoundOffs;
-            continue;
-
-        case '\r': // Carriage return
-            // Don't render them or do anything
-            continue;
-
-        case '\t': // Tab
-            drawCharSelectionMarkIfNeeded(g_fontSizePx*4*0.7f);
-            drawFoundMarkIfNeeded();
-            drawCursorIfNeeded(g_fontSizePx*4*0.7f);
-            // Draw a horizontal line to mark the tab character
-            g_uiRenderer->renderFilledRectangle(
-                    {textX+g_fontSizePx*0.3f,
-                     initTextY+textY-m_scrollY-m_position.y+g_fontSizePx/2.0f+2},
-                    {textX+g_fontSizePx*0.3f+(g_fontSizePx*0.7f)*4-g_fontSizePx*0.6f,
-                     initTextY+textY-m_scrollY-m_position.y+g_fontSizePx/2.0f+4},
-                    {0.8f, 0.8f, 0.8f, 0.2f}
-            );
+            // Bind the text renderer shader again
             g_textRenderer->prepareForDrawing();
-            textX += g_fontSizePx*0.7f*4;
-            ++colI;
-            ++_charFoundOffs;
-            continue;
-        }
 
-        if (BUFFER_WRAP_LINES && textX+g_fontSizePx > m_position.x+m_size.x)
-        {
-            textX = initTextX;
-            textY += g_fontSizePx;
-        }
+            switch (c)
+            {
+            // TODO: Reimplement
+#if 0
+            case '\n':
+            case '\v':
+              drawCharSelectionMarkIfNeeded(g_fontSizePx*0.7f);
+              drawFoundMarkIfNeeded();
+              drawCursorIfNeeded(g_fontSizePx*0.7f);
+              continue;
+#endif
 
-        uint advance{};
-        if (isCharInsideViewport)
-        {
+            case '\r': // Carriage return
+                // Don't render them or do anything
+                continue;
+
+            case '\t': // Tab
+                drawCharSelectionMarkIfNeeded(g_fontSizePx*4*0.7f);
+                drawFoundMarkIfNeeded();
+                drawCursorIfNeeded(g_fontSizePx*4*0.7f);
+                // Draw a horizontal line to mark the tab character
+                g_uiRenderer->renderFilledRectangle(
+                        {textX+g_fontSizePx*0.3f,
+                         initTextY+textY-m_scrollY-m_position.y+g_fontSizePx/2.0f+2},
+                        {textX+g_fontSizePx*0.3f+(g_fontSizePx*0.7f)*4-g_fontSizePx*0.6f,
+                         initTextY+textY-m_scrollY-m_position.y+g_fontSizePx/2.0f+4},
+                        {0.8f, 0.8f, 0.8f, 0.2f}
+                );
+                g_textRenderer->prepareForDrawing();
+                textX += g_fontSizePx*0.7f*4;
+                ++_charFoundOffs;
+                continue;
+            }
+
+            // TODO: Reimplement
+#if 0
+            if (BUFFER_WRAP_LINES && textX+g_fontSizePx > m_position.x+m_size.x)
+            {
+                textX = initTextX;
+                textY += g_fontSizePx;
+            }
+#endif
+
             drawCharSelectionMarkIfNeeded(g_fontSizePx*0.7f);
             drawFoundMarkIfNeeded();
 
-            RGBColor charColor;
-            FontStyle charStyle;
-            // If the character is selected, draw with selection FG color
-            if (isCharSel)
+            if (!u_isspace(c))
             {
-                charColor = g_theme->selFg;
-                charStyle = 0;
+                RGBColor charColor = g_theme->values[0].color;
+                FontStyle charStyle = Syntax::defStyles[0];
+                // If the character is selected, draw with selection FG color
+                if (isCharSel)
+                {
+                    charColor = g_theme->selFg;
+                    charStyle = 0;
+                }
+                // If the character is part of the search result, draw with a different color
+                else if (isCharFound)
+                {
+                    charColor = calcFindResultFgColor(g_theme->findResultBg);
+                    charStyle = FONT_STYLE_BOLD|FONT_STYLE_ITALIC;
+                }
+                // TODO: Reimplement
+#if 0
+                else if (m_highlightBuffer.size() >= countLineListLen(m_content)
+                 && m_highlightBuffer[charI] < Syntax::_SYNTAX_MARK_COUNT)
+                {
+                    charColor = g_theme->values[m_highlightBuffer[charI]].color;
+                    charStyle = Syntax::defStyles[m_highlightBuffer[charI]];
+                }
+                else // Error: Something is wrong with the highlight buffer
+                {
+                    assert(false);
+                }
+#endif
+                g_textRenderer->setDrawingColor(charColor);
+                g_textRenderer->renderChar(c, {textX, textY}, charStyle);
             }
-            // If the character is part of the search result, draw with a different color
-            else if (isCharFound)
-            {
-                charColor = calcFindResultFgColor(g_theme->findResultBg);
-                charStyle = FONT_STYLE_BOLD|FONT_STYLE_ITALIC;
-            }
-            else if (m_highlightBuffer.size() >= m_content.length()
-             && m_highlightBuffer[charI] < Syntax::_SYNTAX_MARK_COUNT)
-            {
-                charColor = g_theme->values[m_highlightBuffer[charI]].color;
-                charStyle = Syntax::defStyles[m_highlightBuffer[charI]];
-            }
-            else // Error: Something is wrong with the highlight buffer
-            {
-                assert(false);
-                charColor = g_theme->values[0].color;
-                charStyle = Syntax::defStyles[0];
-            }
-            g_textRenderer->setDrawingColor(charColor);
-            advance = g_textRenderer->renderChar(c, {textX, textY}, charStyle).advance;
 
 
             // Render indent rainbow
             if (TAB_SPACE_COUNT > 0 && isLeadingSpace)
             {
-                _renderDrawIndRainbow({textX, textY}, initTextY, colI, advance);
+                _renderDrawIndRainbow({textX, textY}, initTextY, colI);
             }
 
-            drawCursorIfNeeded(advance/64.f);
-        }
-        else
-        {
-            advance = g_textRenderer->getCharGlyphAdvance(c, FONT_STYLE_REGULAR);
+            drawCursorIfNeeded(g_fontWidthPx);
+
+            ++charI;
+            textX += g_fontWidthPx;
+            ++_charFoundOffs;
+            isLineBeginning = false;
         }
 
-        textX += (advance/64.0f);
-        ++colI;
+        ++lineI;
+        textX = initTextX;
+        textY += g_fontSizePx;
         ++_charFoundOffs;
-        isLineBeginning = false;
     }
 
     if (m_isDimmed)
@@ -1291,6 +1315,8 @@ void Buffer::insert(Char character)
             .cursLine=m_cursorLine,
             .cursCol=m_cursorCol,
     });
+    // TODO: Reimplement
+#if 0
     m_content.insert(m_cursorCharPos, 1, character);
     m_highlightBuffer.insert(m_cursorCharPos, 1, 0);
 
@@ -1336,6 +1362,7 @@ void Buffer::insert(Char character)
             m_buffWordProvid->add(word);
         }
     }
+#endif
 
     TIMER_END_FUNC();
 }
@@ -1350,7 +1377,9 @@ void Buffer::replaceChar(Char character)
     assert(m_cursorCol >= 0);
     assert(m_cursorLine >= 0);
 
+    // TODO: Reimplement
     // Disallow replacing a newline or replacing a char by a newline
+#if 0
     if (character == '\n' || m_content[m_cursorCharPos] == '\n')
     {
         TIMER_END_FUNC();
@@ -1365,6 +1394,7 @@ void Buffer::replaceChar(Char character)
             .cursCol=m_cursorCol,
     });
     m_content[m_cursorCharPos] = character;
+#endif
 
     ++m_cursorCol;
     ++m_cursorCharPos;
@@ -1390,6 +1420,8 @@ void Buffer::deleteCharBackwards()
     // If deleting at the beginning of the line and we have stuff to delete
     if (m_cursorCol == 0 && m_cursorLine != 0)
     {
+        // TODO: Reimplement
+#if 0
         m_history.add(BufferHistory::Entry{
                 .action=BufferHistory::Entry::Action::Delete,
                 .values=charToStr(m_content[m_cursorCharPos-1]),
@@ -1403,10 +1435,13 @@ void Buffer::deleteCharBackwards()
         m_highlightBuffer.erase(m_cursorCharPos-1, 1);
         --m_cursorCharPos;
         m_isModified = true;
+#endif
     }
     // If deleting in the middle/end of the line and we have stuff to delete
     else if (m_cursorCharPos > 0)
     {
+        // TODO: Reimplement
+#if 0
         m_history.add(BufferHistory::Entry{
                 .action=BufferHistory::Entry::Action::Delete,
                 .values=charToStr(m_content[m_cursorCharPos-1]),
@@ -1419,6 +1454,7 @@ void Buffer::deleteCharBackwards()
         --m_cursorCol;
         --m_cursorCharPos;
         m_isModified = true;
+#endif
     }
 
     assert(m_cursorCol >= 0);
@@ -1450,6 +1486,8 @@ void Buffer::deleteCharForwardOrSelected()
     assert(m_cursorCol >= 0);
     assert(m_cursorLine >= 0);
 
+    // TODO: Reimplement
+#if 0
     int lineLen = getLineLenAt(m_content, m_cursorLine);
 
     // If deleting at the end of the line and we have stuff to delete
@@ -1481,6 +1519,7 @@ void Buffer::deleteCharForwardOrSelected()
         m_highlightBuffer.erase(m_cursorCharPos, 1);
         m_isModified = true;
     }
+#endif
 
     assert(m_cursorCol >= 0);
     assert(m_cursorLine >= 0);
@@ -1503,6 +1542,8 @@ void Buffer::undo()
             assert(false);
             return;
 
+        // TODO: Reimplement
+#if 0
         case BufferHistory::Entry::Action::Insert:
             m_content.erase(entry.cursPos, 1);
             m_highlightBuffer.erase(entry.cursPos, 1);
@@ -1551,6 +1592,7 @@ void Buffer::undo()
 
             break;
         }
+#endif
         }
 
         assert(entry.cursPos != -1_st);
@@ -1581,6 +1623,8 @@ void Buffer::redo()
             assert(false);
             return;
 
+        // TODO: Reimplement
+#if 0
         case BufferHistory::Entry::Action::Insert:
             m_content.insert(entry.cursPos, 1, entry.values[0]);
             m_highlightBuffer.insert(entry.cursPos, 1, Syntax::MARK_NONE);
@@ -1594,6 +1638,7 @@ void Buffer::redo()
             m_content.erase(entry.cursPos, 1);
             m_highlightBuffer.erase(entry.cursPos, 1);
             break;
+#endif
 
         case BufferHistory::Entry::Action::DeleteNormalSelection:
 #pragma message("TODO")
@@ -1663,7 +1708,10 @@ void Buffer::autocompPopupInsert()
         // Hide the popup and insert the current item
         const String toInsert = m_autocompPopup->getSelectedItem()->value
             .substr(m_autocompPopup->getFilterLen());
+        // TODO: Reimplement
+#if 0
         m_content.insert(m_cursorCharPos, toInsert);
+#endif
         m_cursorCharPos += toInsert.length();
         m_cursorCol += toInsert.length();
         m_isHighlightUpdateNeeded = true;
@@ -1720,6 +1768,8 @@ void Buffer::deleteSelectedChars()
                 charIndicesToDel.push_back(-1); // End of block line
         }
 
+        // TODO: Reimplement
+#if 0
         switch (m_content[charI])
         {
         case '\n': // New line
@@ -1735,6 +1785,7 @@ void Buffer::deleteSelectedChars()
             ++colI;
             continue;
         }
+#endif
 
         ++colI;
     }
@@ -1761,7 +1812,10 @@ void Buffer::deleteSelectedChars()
             ++blockSepCount;
             continue;
         }
+        // TODO: Reimplement
+#if 0
         m_content.erase(toDel, 1);
+#endif
         m_highlightBuffer.erase(toDel, 1);
     }
 
@@ -1880,6 +1934,8 @@ void Buffer::find(const String& str)
 void Buffer::findUpdate()
 {
     m_findResultIs.clear();
+    // TODO: Reimplement
+#if 0
     for (size_t i{}; i < m_content.size();)
     {
         i = m_content.find(m_toFind, i+1);
@@ -1887,6 +1943,7 @@ void Buffer::findUpdate()
             break;
         m_findResultIs.push_back(i);
     }
+#endif
 
     g_statMsg.set(
             "Found "+std::to_string(m_findResultIs.size())+" occurences of "+quoteStr(strToAscii(m_toFind)),

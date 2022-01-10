@@ -126,8 +126,7 @@ public:
 
 protected:
     std::string m_filePath = FILENAME_NEW;
-    String m_content;
-    int m_numOfLines{};
+    std::vector<String> m_content;
     bool m_isModified{};
     bool m_isReadOnly{};
 
@@ -187,11 +186,30 @@ protected:
     virtual void _updateHighlighting();
     virtual void updateGitDiff();
 
+    virtual inline Char getCharAt(size_t pos) const
+    {
+        size_t i{};
+        for (const String& line : m_content)
+        {
+            if (i + line.size() - 1 < pos)
+            {
+                i += line.size();
+            }
+            else
+            {
+                return line[pos-i];
+            }
+        }
+        Logger::fatal << "Tried to get character at invalid position: "
+            << pos << " / " << std::to_string((int)pos) << Logger::End;
+        return '\0';
+    }
+
     // -------------------- Rendering functions -----------------------------
     void _renderDrawCursor(const glm::ivec2& textPos, int initTextY, int width);
     void _renderDrawSelBg(const glm::ivec2& textPos, int initTextY, int width) const;
     void _renderDrawIndGuid(const glm::ivec2& textPos, int initTextY) const;
-    void _renderDrawIndRainbow(const glm::ivec2& textPos, int initTextY, int colI, uint advance) const;
+    void _renderDrawIndRainbow(const glm::ivec2& textPos, int initTextY, int colI) const;
     void _renderDrawLineNumBar(const glm::ivec2& textPos, int lineI) const;
     void _renderDrawFoundMark(const glm::ivec2& textPos, int initTextY) const;
 
@@ -217,14 +235,14 @@ public:
     virtual void render();
     virtual void setDimmed(bool val) final { m_isDimmed = val; }
 
-    virtual inline const String& getContent() const { return m_content; }
+    //virtual inline const String& getContent() const { return m_content; }
     virtual inline const std::string& getFilePath() const final { return m_filePath; }
     virtual inline const std::string getFileName() const final {
          return std_fs::path{m_filePath}.filename().string(); }
     virtual inline const std::string getFileExt() const final {
         return std_fs::path{m_filePath}.extension().string(); }
     virtual inline bool isNewFile() const final { return m_filePath.compare(FILENAME_NEW) == 0; }
-    virtual inline int getNumOfLines() const { return m_numOfLines; }
+    virtual inline int getNumOfLines() const { return m_content.size(); }
 
     virtual inline int getCursorLine() const { return m_cursorLine; }
     virtual inline int getCursorCol() const { return m_cursorCol; }
@@ -234,6 +252,8 @@ public:
 
     virtual inline int getCursorWordBeginning()
     {
+        // TODO: Reimplement
+#if 0
         int begin = m_cursorCharPos;
         if (isspace((uchar)m_content[begin]))
             return -1;
@@ -242,10 +262,14 @@ public:
         while (begin >= 0 && !isspace((uchar)m_content[begin]))
             --begin;
         return begin+1;
+#endif
+        return 0;
     }
 
     virtual inline int getCursorWordEnd()
     {
+        // TODO: Reimplement
+#if 0
         int end = m_cursorCharPos;
         if (isspace((uchar)m_content[end]))
             return -1;
@@ -253,14 +277,20 @@ public:
         while (end < (int)m_content.size() && !isspace((uchar)m_content[end]))
             ++end;
         return end;
+#endif
+        return 0;
     }
     virtual inline String getCursorWord()
     {
+        // TODO: Reimplement
+#if 0
         int wordBegin = g_activeBuff->getCursorWordBeginning();
         int wordEnd = g_activeBuff->getCursorWordEnd();
         if (wordBegin < 0 || wordEnd < 0)
             return U"";
         return m_content.substr(wordBegin, wordEnd-wordBegin);
+#endif
+        return U"";
     }
 
     virtual inline void setCursorVisibility(bool isVisible) {

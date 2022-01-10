@@ -46,6 +46,7 @@ std::unique_ptr<FileTypeHandler> g_fileTypeHandler;
 std::unique_ptr<Theme> g_theme;
 
 int g_fontSizePx = DEF_FONT_SIZE_PX;
+float g_fontWidthPx = 0;
 
 // Loaded by App::loadCursors()
 namespace Cursors
@@ -87,6 +88,7 @@ extern Buffer* g_activeBuff;
 extern size_t g_currTabI;
 
 extern int g_fontSizePx;
+extern float g_fontWidthPx;
 
 namespace Cursors
 {

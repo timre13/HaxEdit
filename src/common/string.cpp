@@ -48,6 +48,16 @@ int getLongestLineLen(const std::string& str)
     return (int)maxLen;
 }
 
+size_t countLineListLen(const std::vector<String> lines)
+{
+    size_t len{};
+    for (const String& line : lines)
+    {
+        len += line.length();
+    }
+    return len;
+}
+
 std::string strToLower(std::string str)
 {
     for (char& c : str)
