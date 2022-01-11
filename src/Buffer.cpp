@@ -1385,10 +1385,8 @@ void Buffer::replaceChar(Char character)
     assert(m_cursorCol >= 0);
     assert(m_cursorLine >= 0);
 
-    // TODO: Reimplement
     // Disallow replacing a newline or replacing a char by a newline
-#if 0
-    if (character == '\n' || m_content[m_cursorCharPos] == '\n')
+    if (character == '\n' || m_content[m_cursorLine][m_cursorCol] == '\n')
     {
         TIMER_END_FUNC();
         return;
@@ -1396,13 +1394,12 @@ void Buffer::replaceChar(Char character)
 
     m_history.add(BufferHistory::Entry{
             .action=BufferHistory::Entry::Action::Replace,
-            .values=charToStr(m_content[m_cursorCharPos])+charToStr(character),
+            .values=charToStr(m_content[m_cursorLine][m_cursorCol])+charToStr(character),
             .cursPos=m_cursorCharPos,
             .cursLine=m_cursorLine,
             .cursCol=m_cursorCol,
     });
-    m_content[m_cursorCharPos] = character;
-#endif
+    m_content[m_cursorLine][m_cursorCol] = character;
 
     ++m_cursorCol;
     ++m_cursorCharPos;
