@@ -1312,6 +1312,9 @@ void Buffer::insert(Char character)
     assert(m_cursorCol >= 0);
     assert(m_cursorLine >= 0);
 
+    const int oldCol = m_cursorCol;
+    const int oldLine = m_cursorLine;
+
     m_history.add(BufferHistory::Entry{
             .action=BufferHistory::Entry::Action::Insert,
             .values=charToStr(character),
@@ -1319,27 +1322,23 @@ void Buffer::insert(Char character)
             .cursLine=m_cursorLine,
             .cursCol=m_cursorCol,
     });
-    // TODO: Reimplement
-#if 0
-    m_content.insert(m_cursorCharPos, 1, character);
-    m_highlightBuffer.insert(m_cursorCharPos, 1, 0);
 
     if (character == '\n')
     {
         ++m_cursorLine;
+        const String newLineVal = m_content[oldLine].substr(m_cursorCol); // Save chars right to cursor
+        m_content[oldLine] = m_content[oldLine].substr(0, m_cursorCol) + U'\n'; // Remove chars right to cursor
+        m_content.insert(m_content.begin()+m_cursorLine, newLineVal); // Create a new line
         m_cursorCol = 0;
-        ++m_numOfLines;
     }
     else
     {
+        m_content[m_cursorLine].insert(m_content[m_cursorLine].begin()+m_cursorCol, character);
         ++m_cursorCol;
     }
     ++m_cursorCharPos;
-    m_isModified = true;
-
-    m_isCursorShown = true;
-    m_isHighlightUpdateNeeded = true;
-    scrollViewportToCursor();
+    // TODO: Reimplement
+    //m_highlightBuffer.insert(m_cursorCharPos, 1, 0);
 
     if (m_autocompPopup->isRendered())
     {
@@ -1355,9 +1354,9 @@ void Buffer::insert(Char character)
     {
         // Find the word
         int wordStart;
-        for (wordStart=m_cursorCharPos-2; wordStart >= 0 && !u_isspace(m_content[wordStart]); wordStart--)
+        for (wordStart=oldCol-1; wordStart >= 0 && !u_isspace(m_content[oldLine][wordStart]); wordStart--)
             ;
-        const String word = m_content.substr(wordStart+1, m_cursorCharPos-wordStart-2);
+        const String word = m_content[oldLine].substr(wordStart+1, oldCol-wordStart-1);
 
         // Feed the buffer word provider the word
         if (!word.empty())
@@ -1366,7 +1365,12 @@ void Buffer::insert(Char character)
             m_buffWordProvid->add(word);
         }
     }
-#endif
+
+
+    m_isModified = true;
+    m_isCursorShown = true;
+    m_isHighlightUpdateNeeded = true;
+    scrollViewportToCursor();
 
     TIMER_END_FUNC();
 }
