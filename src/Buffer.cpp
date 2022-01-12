@@ -1942,16 +1942,22 @@ void Buffer::find(const String& str)
 void Buffer::findUpdate()
 {
     m_findResultIs.clear();
-    // TODO: Reimplement
-#if 0
-    for (size_t i{}; i < m_content.size();)
     {
-        i = m_content.find(m_toFind, i+1);
-        if (i == m_content.npos)
-            break;
-        m_findResultIs.push_back(i);
+        size_t index{};
+        for (const auto& line : m_content)
+        {
+            int col = -1;
+            while (true)
+            {
+                col = line.find(m_toFind, col+1);
+                if (col == line.npos)
+                    break;
+                m_findResultIs.push_back(index + col);
+            }
+
+            index += line.length();
+        }
     }
-#endif
 
     g_statMsg.set(
             "Found "+std::to_string(m_findResultIs.size())+" occurences of "+quoteStr(strToAscii(m_toFind)),
