@@ -1492,40 +1492,42 @@ void Buffer::deleteCharForwardOrSelected()
     assert(m_cursorCol >= 0);
     assert(m_cursorLine >= 0);
 
-    // TODO: Reimplement
-#if 0
-    int lineLen = getLineLenAt(m_content, m_cursorLine);
-
+    const int lineLen = m_content[m_cursorLine].length();
     // If deleting at the end of the line and we have stuff to delete
-    if (m_cursorCol == lineLen && m_cursorLine < m_numOfLines)
+    if (m_cursorCol == lineLen-1 && m_cursorLine < m_content.size()-1)
     {
         m_history.add(BufferHistory::Entry{
                 .action=BufferHistory::Entry::Action::Delete,
-                .values=charToStr(m_content[m_cursorCharPos]),
+                .values=charToStr(m_content[m_cursorLine][m_cursorCol]),
                 .cursPos=m_cursorCharPos,
                 .cursLine=m_cursorLine,
                 .cursCol=m_cursorCol,
         });
-        m_content.erase(m_cursorCharPos, 1);
+        // Save next line
+        const String nextLine = m_content[m_cursorLine+1];
+        // Remove next line
+        m_content.erase(m_content.begin()+m_cursorLine+1);
+        // Remove newline from current line
+        m_content[m_cursorLine].erase(m_content[m_cursorLine].length()-1, 1);
+        // Append the next line to the current one
+        m_content[m_cursorLine].append(nextLine);
         m_highlightBuffer.erase(m_cursorCharPos, 1);
-        --m_numOfLines;
         m_isModified = true;
     }
     // If deleting in the middle/beginning of the line and we have stuff to delete
-    else if (m_cursorCharPos != (size_t)lineLen && m_cursorCharPos < m_content.length())
+    else if (m_cursorCol < (size_t)lineLen-1 && m_cursorLine < m_content.size())
     {
         m_history.add(BufferHistory::Entry{
                 .action=BufferHistory::Entry::Action::Delete,
-                .values=charToStr(m_content[m_cursorCharPos]),
+                .values=charToStr(m_content[m_cursorLine][m_cursorCol]),
                 .cursPos=m_cursorCharPos,
                 .cursLine=m_cursorLine,
                 .cursCol=m_cursorCol,
         });
-        m_content.erase(m_cursorCharPos, 1);
+        m_content[m_cursorLine].erase(m_cursorCol, 1);
         m_highlightBuffer.erase(m_cursorCharPos, 1);
         m_isModified = true;
     }
-#endif
 
     assert(m_cursorCol >= 0);
     assert(m_cursorLine >= 0);
