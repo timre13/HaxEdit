@@ -693,10 +693,8 @@ bool Buffer::isCharSelected(int lineI, int colI, size_t charI) const
 
     case Selection::Mode::Block:
     {
-        // TODO: Reimplement
-#if 0
         // Newlines can't be selected with block selection
-        if (m_content[charI] == '\n')
+        if (m_content[lineI][colI] == '\n')
             return false;
 
         bool isLineOk = false;
@@ -720,7 +718,6 @@ bool Buffer::isCharSelected(int lineI, int colI, size_t charI) const
         }
 
         isSelected = isLineOk && isColOk;
-#endif
         break;
     }
     }
