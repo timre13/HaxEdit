@@ -229,14 +229,16 @@ void Buffer::scrollViewportToCursor()
 
 void Buffer::_updateHighlighting()
 {
-    // TODO: Reimplement
-#if 0
+    // TODO: This should really be optimized, don't generated a concatenated buffer
+
     Logger::dbg("Highighter");
     Logger::log << "Updating syntax highlighting" << Logger::End;
 
+    const auto buffer = lineVecConcat(m_content);
+
     // This is the temporary buffer we are working with
     // `m_highlightBuffer` is replaced with this at the end
-    auto highlightBuffer = std::u8string(m_content.length(), Syntax::MARK_NONE);
+    auto highlightBuffer = std::u8string(buffer.length(), Syntax::MARK_NONE);
 
     auto highlightWord{[&](const String& word, char colorMark, bool shouldBeWholeWord){
         assert(!word.empty());
@@ -244,12 +246,12 @@ void Buffer::_updateHighlighting()
         while (true)
         {
             if (m_isHighlightUpdateNeeded) break;
-            size_t found = m_content.find(word, start);
+            size_t found = buffer.find(word, start);
             if (found == String::npos)
                 break;
             if (!shouldBeWholeWord |
-                ((found == 0 || !isalnum((uchar)m_content[found-1]))
-                 && (found+word.size()-1 == m_content.length()-1 || !isalnum((uchar)m_content[found+word.size()]))))
+                ((found == 0 || !isalnum((uchar)buffer[found-1]))
+                 && (found+word.size()-1 == buffer.length()-1 || !isalnum((uchar)buffer[found+word.size()]))))
                 highlightBuffer.replace(found, word.length(), word.length(), colorMark);
             start = found+word.length();
         }
@@ -257,34 +259,34 @@ void Buffer::_updateHighlighting()
 
     auto highlightStrings{[&](){
         bool isInsideString = false;
-        for (size_t i{}; i < m_content.length(); ++i)
+        for (size_t i{}; i < buffer.length(); ++i)
         {
             if (m_isHighlightUpdateNeeded) break;
-            if (highlightBuffer[i] == Syntax::MARK_NONE && m_content[i] == '"'
-                    && (i == 0 || (m_content[i-1] != '\\' || (i >= 2 && m_content[i-2] == '\\'))))
+            if (highlightBuffer[i] == Syntax::MARK_NONE && buffer[i] == '"'
+                    && (i == 0 || (buffer[i-1] != '\\' || (i >= 2 && buffer[i-2] == '\\'))))
                 isInsideString = !isInsideString;
-            if (isInsideString || (highlightBuffer[i] == Syntax::MARK_NONE && m_content[i] == '"'))
+            if (isInsideString || (highlightBuffer[i] == Syntax::MARK_NONE && buffer[i] == '"'))
                 highlightBuffer[i] = Syntax::MARK_STRING;
         }
     }};
 
     auto highlightNumbers{[&](){
         size_t i{};
-        while (i < m_content.length())
+        while (i < buffer.length())
         {
             if (m_isHighlightUpdateNeeded) break;
             // Go till a number
-            while (i < m_content.length() && !isdigit((uchar)m_content[i]) && m_content[i] != '.')
+            while (i < buffer.length() && !isdigit((uchar)buffer[i]) && buffer[i] != '.')
                 ++i;
             // Color the number
-            while (i < m_content.length() && (isxdigit((uchar)m_content[i]) || m_content[i] == '.' || m_content[i] == 'x'))
+            while (i < buffer.length() && (isxdigit((uchar)buffer[i]) || buffer[i] == '.' || buffer[i] == 'x'))
                 highlightBuffer[i++] = Syntax::MARK_NUMBER;
         }
     }};
 
     auto highlightPrefixed{[&](const String& prefix, char colorMark){
         size_t charI{};
-        LineIterator it{m_content};
+        LineIterator it{buffer};
         String line;
         while (it.next(line))
         {
@@ -302,7 +304,7 @@ void Buffer::_updateHighlighting()
 
     auto highlightPreprocessors{[&](){
         size_t charI{};
-        LineIterator it{m_content};
+        LineIterator it{buffer};
         String line;
         while (it.next(line))
         {
@@ -324,42 +326,42 @@ void Buffer::_updateHighlighting()
 
     auto highlightBlockComments{[&](){
         bool isInsideComment = false;
-        for (size_t i{}; i < m_content.length(); ++i)
+        for (size_t i{}; i < buffer.length(); ++i)
         {
             if (m_isHighlightUpdateNeeded) break;
             if (highlightBuffer[i] != Syntax::MARK_STRING
-                    && m_content.substr(i, Syntax::blockCommentBegin.size()) == Syntax::blockCommentBegin)
+                    && buffer.substr(i, Syntax::blockCommentBegin.size()) == Syntax::blockCommentBegin)
                 isInsideComment = true;
             else if (highlightBuffer[i] != Syntax::MARK_STRING
-                    && m_content.substr(i, Syntax::blockCommentEnd.size()) == Syntax::blockCommentEnd)
+                    && buffer.substr(i, Syntax::blockCommentEnd.size()) == Syntax::blockCommentEnd)
                 isInsideComment = false;
             if (isInsideComment
                     || (highlightBuffer[i] != Syntax::MARK_STRING
-                    && (m_content.substr(i, Syntax::blockCommentEnd.size()) == Syntax::blockCommentEnd
-                    || (i > 0 && m_content.substr(i-1, Syntax::blockCommentEnd.size()) == Syntax::blockCommentEnd))))
+                    && (buffer.substr(i, Syntax::blockCommentEnd.size()) == Syntax::blockCommentEnd
+                    || (i > 0 && buffer.substr(i-1, Syntax::blockCommentEnd.size()) == Syntax::blockCommentEnd))))
                 highlightBuffer[i] = Syntax::MARK_COMMENT;
         }
     }};
 
     auto highlightCharLiterals{[&](){
         bool isInsideCharLit = false;
-        for (size_t i{}; i < m_content.length(); ++i)
+        for (size_t i{}; i < buffer.length(); ++i)
         {
             if (m_isHighlightUpdateNeeded) break;
-            if (highlightBuffer[i] == Syntax::MARK_NONE && m_content[i] == '\''
-                    && (i == 0 || (m_content[i-1] != '\\')))
+            if (highlightBuffer[i] == Syntax::MARK_NONE && buffer[i] == '\''
+                    && (i == 0 || (buffer[i-1] != '\\')))
                 isInsideCharLit = !isInsideCharLit;
-            if (isInsideCharLit || (highlightBuffer[i] == Syntax::MARK_NONE && m_content[i] == '\''))
+            if (isInsideCharLit || (highlightBuffer[i] == Syntax::MARK_NONE && buffer[i] == '\''))
                 highlightBuffer[i] = Syntax::MARK_CHARLIT;
         }
     }};
 
     auto highlightChar{[&](char c, char colorMark){
-        for (size_t i{}; i < m_content.length(); ++i)
+        for (size_t i{}; i < buffer.length(); ++i)
         {
             if (m_isHighlightUpdateNeeded) break;
             if (highlightBuffer[i] != Syntax::MARK_STRING && highlightBuffer[i] != Syntax::MARK_COMMENT
-                    && m_content[i] == c)
+                    && buffer[i] == c)
                 highlightBuffer[i] = colorMark;
         }
     }};
@@ -381,15 +383,15 @@ void Buffer::_updateHighlighting()
             }
         }};
 
-        for (size_t i{}; i < m_content.length();)
+        for (size_t i{}; i < buffer.length();)
         {
             if (m_isHighlightUpdateNeeded) break;
-            while (i < m_content.length() && (isspace((uchar)m_content[i]) || m_content[i] == '"'))
+            while (i < buffer.length() && (isspace((uchar)buffer[i]) || buffer[i] == '"'))
                 ++i;
 
             String word;
-            while (i < m_content.length() && !isspace((uchar)m_content[i]) && m_content[i] != '"')
-                word += m_content[i++];
+            while (i < buffer.length() && !isspace((uchar)buffer[i]) && buffer[i] != '"')
+                word += buffer[i++];
 
             if (_isValidFilePath(word))
             {
@@ -466,7 +468,6 @@ void Buffer::_updateHighlighting()
     Logger::log(Logger::End);
 
     g_isRedrawNeeded = true;
-#endif
 }
 
 void Buffer::updateGitDiff()
@@ -1253,6 +1254,14 @@ void Buffer::render()
 
             if (!u_isspace(c))
             {
+#if 0
+                const size_t contentLen = countLineListLen(m_content);
+                if (m_highlightBuffer.size() < contentLen)
+                {
+                    Logger::fatal << "BUG: Invalid highlight buffer length. Expected: " << contentLen
+                        << ", got: " << m_highlightBuffer.length() << Logger::End;
+                }
+#endif
                 RGBColor charColor = g_theme->values[0].color;
                 FontStyle charStyle = Syntax::defStyles[0];
                 // If the character is selected, draw with selection FG color
@@ -1267,21 +1276,17 @@ void Buffer::render()
                     charColor = calcFindResultFgColor(g_theme->findResultBg);
                     charStyle = FONT_STYLE_BOLD|FONT_STYLE_ITALIC;
                 }
-                // TODO: Reimplement
-#if 0
-                else if (m_highlightBuffer.size() >= countLineListLen(m_content)
-                 && m_highlightBuffer[charI] < Syntax::_SYNTAX_MARK_COUNT)
+                else if (m_highlightBuffer[charI] < Syntax::_SYNTAX_MARK_COUNT)
                 {
                     charColor = g_theme->values[m_highlightBuffer[charI]].color;
                     charStyle = Syntax::defStyles[m_highlightBuffer[charI]];
                 }
                 else // Error: Something is wrong with the highlight buffer
                 {
-                    assert(false);
+                    assert(false && "Invalid highlight buffer value");
                 }
-#endif
                 g_textRenderer->setDrawingColor(charColor);
-                g_textRenderer->renderChar(c, {textX, textY}, charStyle);
+                g_textRenderer->renderChar(c == '\n' ? BUF_NL_DISP_CHAR_CODE : c, {textX, textY}, charStyle);
             }
 
 
@@ -1356,8 +1361,7 @@ void Buffer::insert(Char character)
         ++m_cursorCol;
     }
     ++m_cursorCharPos;
-    // TODO: Reimplement
-    //m_highlightBuffer.insert(m_cursorCharPos, 1, 0);
+    m_highlightBuffer.insert(m_cursorCharPos, 1, 0);
 
     if (m_autocompPopup->isRendered())
     {
