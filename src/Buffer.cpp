@@ -747,44 +747,44 @@ void Buffer::pasteFromClipboard()
 
 size_t Buffer::copySelectionToClipboard(bool shouldUnselect/*=true*/)
 {
+    // Note: Mostly copied from `deleteSelectedChars()`
+
     if (m_selection.mode == Selection::Mode::None)
         return 0;
 
-    // Note: Mostly copied from `deleteSelectedChars()`
+    //----------------------------------------------------------------------
+
+    struct CharPos_t
+    {
+        size_t line  = -1_st;
+        size_t col   = -1_st;
+        size_t index = -1_st;
+    };
 
     String toCopy;
-    int lineI{};
-    int colI{};
-    for (size_t charI{}; charI < m_content.size(); ++charI)
     {
-        if (isCharSelected(lineI, colI, charI))
+        size_t charI{};
+        for (size_t lineI{}; lineI < m_content.size(); ++lineI)
         {
-            toCopy += m_content[charI];
-            // If we are in block selection mode and this is at the right border of the selection
-            if (m_selection.mode == Selection::Mode::Block && colI == std::max(m_selection.fromCol, m_cursorCol))
-                toCopy.push_back('\n'); // End of block line
+            const auto& line = m_content[lineI];
+
+            for (size_t colI{}; colI < line.length(); ++colI)
+            {
+                if (isCharSelected(lineI, colI, charI))
+                {
+                    // We can't select newlines in block selection mode
+                    assert(m_selection.mode != Selection::Mode::Block || line[colI] != U'\n');
+
+                    toCopy += m_content[lineI][colI];
+
+                    // If we are in block selection mode and this is at the right border of the selection
+                    if (m_selection.mode == Selection::Mode::Block && colI == std::max(m_selection.fromCol, m_cursorCol))
+                        toCopy += U'\n';
+                }
+
+                ++charI;
+            }
         }
-
-        // TODO: Reimplement
-#if 0
-        switch (m_content[charI])
-        {
-        case '\n': // New line
-        case '\v': // Vertical tab
-            ++lineI;
-            colI = 0;
-            continue;
-
-        case '\r': // Carriage return
-            continue;
-
-        case '\t': // Tab
-            ++colI;
-            continue;
-        }
-#endif
-
-        ++colI;
     }
 
     assert(!toCopy.empty());
@@ -802,12 +802,13 @@ size_t Buffer::copySelectionToClipboard(bool shouldUnselect/*=true*/)
 
     if (shouldUnselect)
         m_selection.mode = Selection::Mode::None; // Cancel the selection
-    m_isCursorShown = true;
-    scrollViewportToCursor();
 
     g_statMsg.set("Copied text to clipboard ("+std::to_string(_toCopy.size())+" chars)",
             StatusMsg::Type::Info);
 
+    scrollViewportToCursor();
+    m_isCursorShown = true;
+    g_isRedrawNeeded = true;
     return toCopy.size();
 }
 
