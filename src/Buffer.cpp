@@ -1760,68 +1760,64 @@ void Buffer::deleteSelectedChars()
     if (m_selection.mode == Selection::Mode::None)
         return;
 
-    std::vector<size_t> charIndicesToDel;
-    int lineI{};
-    int colI{};
-    for (size_t charI{}; charI < m_content.size(); ++charI)
+    struct CharPos_t
     {
-        if (isCharSelected(lineI, colI, charI))
+        size_t line  = -1_st;
+        size_t col   = -1_st;
+        size_t index = -1_st;
+    };
+
+    std::vector<CharPos_t> charPosesToDel;
+    {
+        size_t charI{};
+        for (size_t lineI{}; lineI < m_content.size(); ++lineI)
         {
-            charIndicesToDel.push_back(charI);
-            // If we are in block selection mode and this is at the right border of the selection
-            if (m_selection.mode == Selection::Mode::Block && colI == std::max(m_selection.fromCol, m_cursorCol))
-                charIndicesToDel.push_back(-1); // End of block line
+            const auto& line = m_content[lineI];
+
+            for (size_t colI{}; colI < line.length(); ++colI)
+            {
+                if (isCharSelected(lineI, colI, charI))
+                {
+                    // We can't select newlines in block selection mode
+                    assert(m_selection.mode != Selection::Mode::Block || line[colI] != U'\n');
+
+                    charPosesToDel.push_back({lineI, colI, charI});
+                    // If we are in block selection mode and this is at the right border of the selection
+                    if (m_selection.mode == Selection::Mode::Block && colI == std::max(m_selection.fromCol, m_cursorCol))
+                        charPosesToDel.push_back({}); // End of block line
+                }
+
+                ++charI;
+            }
         }
-
-        // TODO: Reimplement
-#if 0
-        switch (m_content[charI])
-        {
-        case '\n': // New line
-        case '\v': // Vertical tab
-            ++lineI;
-            colI = 0;
-            continue;
-
-        case '\r': // Carriage return
-            continue;
-
-        case '\t': // Tab
-            ++colI;
-            continue;
-        }
-#endif
-
-        ++colI;
     }
 
-    assert(!charIndicesToDel.empty());
+    assert(!charPosesToDel.empty());
 
     // Save the deleted chars first
     String deletedStr;
-    for (size_t toDel : charIndicesToDel)
+    for (const CharPos_t& toDel : charPosesToDel)
     {
-        if (toDel == -1_st)
+        if (toDel.line == -1_st || toDel.col == -1_st || toDel.index == -1_st)
             deletedStr += '\n';
         else
-            deletedStr += m_content[toDel];
+            deletedStr += m_content[toDel.line][toDel.col];
     }
 
     int blockSepCount = 0;
-    // Do the delete
-    for (size_t i{charIndicesToDel.size()-1}; i != -1_st; --i)
+    // Do the deletion
+    for (size_t i{charPosesToDel.size()-1}; i != -1_st; --i)
     {
-        size_t toDel = charIndicesToDel[i];
-        if (toDel == -1_st)
+        const CharPos_t& toDel = charPosesToDel[i];
+        if (toDel.line == -1_st || toDel.col == -1_st || toDel.index == -1_st)
         {
             ++blockSepCount;
             continue;
         }
-        // TODO: Reimplement
-#if 0
-        m_content.erase(toDel, 1);
-#endif
-        m_highlightBuffer.erase(toDel, 1);
+        m_content[toDel.line].erase(toDel.col, 1);
+        if (m_content[toDel.line].empty()) // Remove line if empty
+            m_content.erase(m_content.begin()+toDel.line);
+        m_highlightBuffer.erase(toDel.index, 1);
     }
 
     Logger::dbg << "Deleted " << deletedStr.size()-blockSepCount << " characters (block has "
@@ -1877,6 +1873,15 @@ void Buffer::deleteSelectedChars()
         m_cursorCol = m_selection.fromCol;
         m_cursorLine = m_selection.fromLine;
         m_cursorCharPos = m_selection.fromCharI;
+    }
+    { // Limit too large cursor column
+        const int cursMaxCol = m_content[m_cursorLine].length()-1;
+        if (m_cursorCol > cursMaxCol)
+        {
+            m_cursorCharPos -= m_cursorCol;
+            m_cursorCharPos += cursMaxCol;
+            m_cursorCol = cursMaxCol;
+        }
     }
 
     m_selection.mode = Selection::Mode::None; // Cancel the selection
