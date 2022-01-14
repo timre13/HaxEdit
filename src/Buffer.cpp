@@ -1131,8 +1131,29 @@ void Buffer::render()
             auto drawCursorIfNeeded{[&](int width){
                 if (charI == m_cursorCharPos)
                 {
-                    assert(lineI == m_cursorLine);
-                    assert(colI == m_cursorCol);
+#if 1
+#    ifndef NDEBUG
+                    bool isError = false;
+                    if (lineI != m_cursorLine)
+                    {
+                        Logger::fatal << "BUG: Mismatching cursor line\n";
+                        isError = true;
+                    }
+                    if (colI != m_cursorCol)
+                    {
+                        Logger::fatal << "BUG: Mismatching cursor column\n";
+                        isError = true;
+                    }
+
+                    if (isError)
+                    {
+                        Logger::fatal << "Cursor char pos: " << m_cursorCharPos
+                            << "\nCursor line: " << m_cursorLine << ", expected: " << lineI
+                            << "\nCursor col:  " << m_cursorCol << ", expected: " << colI
+                            << Logger::End;
+                    }
+#    endif
+#endif
 
                     _renderDrawCursor({textX, textY}, initTextY, width);
                 }
