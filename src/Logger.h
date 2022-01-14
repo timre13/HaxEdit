@@ -115,7 +115,7 @@ public:
         case Type::Fatal:
             std::cerr << '\n';
             std::cerr << "\n==================== Fatal error. Exiting. ====================\n";
-            exit(1);
+            abort();
             break;
         }
 
