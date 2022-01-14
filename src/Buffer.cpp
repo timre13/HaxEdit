@@ -1220,6 +1220,8 @@ void Buffer::render()
                         {0.8f, 0.8f, 0.8f, 0.2f}
                 );
                 g_textRenderer->prepareForDrawing();
+                ++charI;
+                isLineBeginning = false;
                 textX += g_fontSizePx*0.7f*4;
                 ++_charFoundOffs;
                 continue;
