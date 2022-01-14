@@ -82,6 +82,8 @@
 #define DRAW_INDENT_RAINBOW             true
 #define SCROLL_SPEED_MULTIPLIER         40
 #define BUFFER_WRAP_LINES               true
+// The line break character is displayed as this character. Set to 0 to disable rendering of line break.
+#define BUF_NL_DISP_CHAR_CODE           0xb6
 // The number of frames to wait before blinking one
 // Set to -1 to disable blinking
 #define CURSOR_BLINK_FRAMES             30

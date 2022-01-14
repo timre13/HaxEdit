@@ -1206,23 +1206,8 @@ void Buffer::render()
             // Bind the text renderer shader again
             g_textRenderer->prepareForDrawing();
 
-            switch (c)
+            if (c == '\t') // Tab
             {
-            // TODO: Reimplement
-#if 0
-            case '\n':
-            case '\v':
-              drawCharSelectionMarkIfNeeded(g_fontSizePx*0.7f);
-              drawFoundMarkIfNeeded();
-              drawCursorIfNeeded(g_fontSizePx*0.7f);
-              continue;
-#endif
-
-            case '\r': // Carriage return
-                // Don't render them or do anything
-                continue;
-
-            case '\t': // Tab
                 drawCharSelectionMarkIfNeeded(g_fontSizePx*4*0.7f);
                 drawFoundMarkIfNeeded();
                 drawCursorIfNeeded(g_fontSizePx*4*0.7f);
@@ -1252,6 +1237,7 @@ void Buffer::render()
             drawCharSelectionMarkIfNeeded(g_fontSizePx*0.7f);
             drawFoundMarkIfNeeded();
 
+            // Render non-whitespace character
             if (!u_isspace(c))
             {
 #if 0
@@ -1286,8 +1272,15 @@ void Buffer::render()
                     assert(false && "Invalid highlight buffer value");
                 }
                 g_textRenderer->setDrawingColor(charColor);
-                g_textRenderer->renderChar(c == '\n' ? BUF_NL_DISP_CHAR_CODE : c, {textX, textY}, charStyle);
+                g_textRenderer->renderChar(c, {textX, textY}, charStyle);
             }
+#if BUF_NL_DISP_CHAR_CODE // Render newline char if configured so
+            else if (c == '\n')
+            {
+                g_textRenderer->setDrawingColor(g_theme->values[Syntax::MARK_COMMENT].color);
+                g_textRenderer->renderChar(BUF_NL_DISP_CHAR_CODE, {textX, textY}, 0);
+            }
+#endif
 
 
             // Render indent rainbow
