@@ -18,7 +18,7 @@ void Popup::recalcSize()
         if (item->value.length() > maxItemValLen)
             maxItemValLen = item->value.length();
     }
-    m_size.x = maxItemValLen*g_fontSizePx*0.75f;
+    m_size.x = maxItemValLen*g_fontWidthPx;
     m_size.y = std::min(m_filteredItems.size()*g_fontSizePx, 800_st);
 }
 

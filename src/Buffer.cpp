@@ -996,7 +996,7 @@ void Buffer::_renderDrawLineNumBar(const glm::ivec2& textPos, int lineI) const
 
     float digitX = m_position.x
 #if LINEN_ALIGN_NONCURR_RIGHT
-        + (lineI == m_cursorLine ? 0 : (LINEN_BAR_WIDTH-lineNumStr.length()*0.75f)*g_fontSizePx);
+        + (lineI == m_cursorLine ? 0 : (LINEN_BAR_WIDTH_CHAR-lineNumStr.length())*g_fontWidthPx);
 #else
     ;
 #endif
@@ -1035,7 +1035,7 @@ void Buffer::_renderDrawFoundMark(const glm::ivec2& textPos, int initTextY) cons
 {
     g_uiRenderer->renderFilledRectangle(
             {textPos.x, initTextY+textPos.y-m_scrollY-m_position.y},
-            {textPos.x+g_fontSizePx*.75f*m_toFind.size(), initTextY+textPos.y-m_scrollY-m_position.y+g_fontSizePx},
+            {textPos.x+g_fontWidthPx*m_toFind.size(), initTextY+textPos.y-m_scrollY-m_position.y+g_fontSizePx},
             RGB_COLOR_TO_RGBA(g_theme->findResultBg)
     );
 
@@ -1198,7 +1198,7 @@ void Buffer::render()
             {
                 g_uiRenderer->renderFilledRectangle(
                         {textX, initTextY+textY-m_scrollY-m_position.y+g_fontSizePx+2-g_fontSizePx*0.1f},
-                        {textX+g_fontSizePx*0.75f, initTextY+textY-m_scrollY-m_position.y+g_fontSizePx+2},
+                        {textX+g_fontWidthPx, initTextY+textY-m_scrollY-m_position.y+g_fontSizePx+2},
                         {0.4f, 0.4f, 0.4f, 1.0f}
                 );
             }
@@ -1208,9 +1208,9 @@ void Buffer::render()
 
             if (c == '\t') // Tab
             {
-                drawCharSelectionMarkIfNeeded(g_fontSizePx*4*0.7f);
+                drawCharSelectionMarkIfNeeded(g_fontWidthPx*4);
                 drawFoundMarkIfNeeded();
-                drawCursorIfNeeded(g_fontSizePx*4*0.7f);
+                drawCursorIfNeeded(g_fontWidthPx*4);
                 // Draw a horizontal line to mark the tab character
                 g_uiRenderer->renderFilledRectangle(
                         {textX+g_fontSizePx*0.3f,
@@ -1222,7 +1222,7 @@ void Buffer::render()
                 g_textRenderer->prepareForDrawing();
                 ++charI;
                 isLineBeginning = false;
-                textX += g_fontSizePx*0.7f*4;
+                textX += g_fontWidthPx*4;
                 ++_charFoundOffs;
                 continue;
             }
@@ -1236,7 +1236,7 @@ void Buffer::render()
             }
 #endif
 
-            drawCharSelectionMarkIfNeeded(g_fontSizePx*0.7f);
+            drawCharSelectionMarkIfNeeded(g_fontWidthPx);
             drawFoundMarkIfNeeded();
 
             // Render non-whitespace character
