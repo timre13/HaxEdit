@@ -1734,10 +1734,7 @@ void Buffer::autocompPopupInsert()
         // Hide the popup and insert the current item
         const String toInsert = m_autocompPopup->getSelectedItem()->value
             .substr(m_autocompPopup->getFilterLen());
-        // TODO: Reimplement
-#if 0
-        m_content.insert(m_cursorCharPos, toInsert);
-#endif
+        m_content[m_cursorLine].insert(m_cursorCol, toInsert);
         m_cursorCharPos += toInsert.length();
         m_cursorCol += toInsert.length();
         m_isHighlightUpdateNeeded = true;
