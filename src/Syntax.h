@@ -21,6 +21,9 @@ enum SyntaxMarks: uint8_t
     MARK_PREPRO,
     MARK_SPECCHAR,
     MARK_FILEPATH,
+    MARK_TODO,
+    MARK_FIXME,
+    MARK_XXX,
     _SYNTAX_MARK_COUNT,
 };
 
@@ -35,7 +38,10 @@ constexpr RGBColor defColors[_SYNTAX_MARK_COUNT] = {
     RGBColor{0.050f, 0.600f, 0.100f}, // Character literal
     RGBColor{0.000f, 0.600f, 0.200f}, // Preprocessor
     RGBColor{0.500f, 0.500f, 0.500f}, // Special character
-    RGBColor{0.0800, 0.510f, 0.710f}, // Filepath
+    RGBColor{0.080f, 0.510f, 0.710f}, // Filepath
+    RGBColor{1.000f, 0.964f, 0.000f}, // TODO
+    RGBColor{1.000f, 0.100f, 0.000f}, // FIXME
+    RGBColor{1.000f, 0.500f, 0.000f}, // XXX
 };
 
 constexpr FontStyle defStyles[_SYNTAX_MARK_COUNT] = {
@@ -50,6 +56,9 @@ constexpr FontStyle defStyles[_SYNTAX_MARK_COUNT] = {
     FONT_STYLE_REGULAR, // Preprocessor
     FONT_STYLE_BOLD,    // Special character
     FONT_STYLE_ITALIC,  // Filepath - Should be "Underlined" in the future, when we support it
+    FONT_STYLE_BOLD|FONT_STYLE_ITALIC,  // TODO
+    FONT_STYLE_BOLD|FONT_STYLE_ITALIC,  // FIXME
+    FONT_STYLE_BOLD|FONT_STYLE_ITALIC,  // XXX
 };
 
 inline std::array<String, 87> keywordList{

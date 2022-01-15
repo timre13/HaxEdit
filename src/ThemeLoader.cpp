@@ -68,6 +68,8 @@ Theme* ThemeLoader::load(const std::string& path)
 
         const size_t keyEnd = line.find('=');
         const std::string key = line.substr(0, keyEnd);
+        if (key.empty())
+            continue;
 
         if (key == THEME_KEY_BG)
         {

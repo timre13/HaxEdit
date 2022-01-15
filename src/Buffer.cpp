@@ -229,7 +229,7 @@ void Buffer::scrollViewportToCursor()
 
 void Buffer::_updateHighlighting()
 {
-    // TODO: This should really be optimized, don't generated a concatenated buffer
+    // TODO: This should really be optimized, don't generate a concatenated buffer
 
     Logger::dbg("Highighter");
     Logger::log << "Updating syntax highlighting" << Logger::End;
@@ -286,7 +286,7 @@ void Buffer::_updateHighlighting()
 
     auto highlightPrefixed{[&](const String& prefix, char colorMark){
         size_t charI{};
-        LineIterator it{buffer};
+        LineIterator<String> it{buffer};
         String line;
         while (it.next(line))
         {
@@ -304,7 +304,7 @@ void Buffer::_updateHighlighting()
 
     auto highlightPreprocessors{[&](){
         size_t charI{};
-        LineIterator it{buffer};
+        LineIterator<String> it{buffer};
         String line;
         while (it.next(line))
         {
@@ -422,6 +422,8 @@ void Buffer::_updateHighlighting()
     highlightNumbers();
     Logger::dbg << "Highlighting of numbers took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
+    //--------------------------------------------------------------------------
+
     if (m_isHighlightUpdateNeeded) return;
     timer.reset();
     highlightPrefixed(Syntax::lineCommentPrefix, Syntax::MARK_COMMENT);
@@ -431,6 +433,8 @@ void Buffer::_updateHighlighting()
     timer.reset();
     highlightBlockComments();
     Logger::dbg << "Highlighting of block comments took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
+
+    //--------------------------------------------------------------------------
 
     if (m_isHighlightUpdateNeeded) return;
     timer.reset();
@@ -442,19 +446,46 @@ void Buffer::_updateHighlighting()
     highlightStrings();
     Logger::dbg << "Highlighting of strings took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
+    //--------------------------------------------------------------------------
+
     if (m_isHighlightUpdateNeeded) return;
     timer.reset();
     highlightPreprocessors();
     Logger::dbg << "Highlighting preprocessor directives took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
+    //--------------------------------------------------------------------------
+
+    if (m_isHighlightUpdateNeeded) return;
+    timer.reset();
+    highlightWord(U"TODO:", Syntax::MARK_TODO, true);
+    Logger::dbg << "Highlighting of TODOs took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
+
+    if (m_isHighlightUpdateNeeded) return;
+    timer.reset();
+    highlightWord(U"FIXME:", Syntax::MARK_FIXME, true);
+    Logger::dbg << "Highlighting of FIXMEs took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
+
+    if (m_isHighlightUpdateNeeded) return;
+    timer.reset();
+    highlightWord(U"XXX:", Syntax::MARK_XXX, true);
+    Logger::dbg << "Highlighting of XXXs took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
+
+    //--------------------------------------------------------------------------
+
     if (m_isHighlightUpdateNeeded) return;
     timer.reset();
     highlightChar(';', Syntax::MARK_SPECCHAR);
+    if (m_isHighlightUpdateNeeded) return;
     highlightChar('{', Syntax::MARK_SPECCHAR);
+    if (m_isHighlightUpdateNeeded) return;
     highlightChar('}', Syntax::MARK_SPECCHAR);
+    if (m_isHighlightUpdateNeeded) return;
     highlightChar('(', Syntax::MARK_SPECCHAR);
+    if (m_isHighlightUpdateNeeded) return;
     highlightChar(')', Syntax::MARK_SPECCHAR);
     Logger::dbg << "Highlighting special characters took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
+
+    //--------------------------------------------------------------------------
 
     if (m_isHighlightUpdateNeeded) return;
     timer.reset();

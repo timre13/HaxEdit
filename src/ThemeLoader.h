@@ -18,6 +18,9 @@ inline std::array<std::string, Syntax::_SYNTAX_MARK_COUNT> themeKeys = {
     "pp_directive",             // Preprocessor
     "c_braces",                 // Special character
     "pp_header",                // Filepath -- better than nothing
+    "",                         // TODO -- not specified in theme files
+    "",                         // FIXME -- not specified in theme files
+    "",                         // XXX -- not specified in theme files
 };
 
 struct ThemeVal
