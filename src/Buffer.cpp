@@ -1153,8 +1153,9 @@ void Buffer::render()
             if (!isspace((uchar)c))
                 isLeadingSpace = false;
             const bool isCharSel = isCharSelected(lineI, colI, charI);
-            // If this is the beginning of a search result
-            if (std::find(m_findResultIs.begin(), m_findResultIs.end(), charI) != m_findResultIs.end())
+
+            // Handle if this is the beginning of a search result
+            if (std::binary_search(m_findResultIs.begin(), m_findResultIs.end(), charI))
                 _charFoundOffs = 0;
             // If the current character is inside a search result
             const bool isCharFound = (!m_toFind.empty() && _charFoundOffs < m_toFind.size());
