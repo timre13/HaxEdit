@@ -88,6 +88,7 @@
 // Set to -1 to disable blinking
 #define CURSOR_BLINK_FRAMES             30
 #define IMG_BUF_ZOOM_STEP               0.05f
+#define HIDE_MOUSE_WHILE_TYPING         true
 
 //-------------------- Misc. --------------------
 

@@ -568,6 +568,11 @@ void App::windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods)
 
 void App::windowCharCB(GLFWwindow*, uint codePoint)
 {
+#if HIDE_MOUSE_WHILE_TYPING
+    // Hide cursor while typing
+    glfwSetInputMode(g_window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+#endif
+
     // If there are dialogs open, don't react to keypresses
     if (!g_dialogs.empty())
     {
@@ -674,6 +679,11 @@ void App::windowCloseCB(GLFWwindow* window)
 
 void App::cursorPosCB(GLFWwindow* window, double x, double y)
 {
+#if HIDE_MOUSE_WHILE_TYPING
+    // Show cursor when moved
+    glfwSetInputMode(g_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+#endif
+
     g_cursorX = (int)x;
     g_cursorY = (int)y;
 
