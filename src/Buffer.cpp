@@ -1945,7 +1945,7 @@ void Buffer::deleteSelectedChars()
     g_isRedrawNeeded = true;
 }
 
-void Buffer::_goToCurrFindResult()
+void Buffer::_goToCurrFindResult(bool showStatMsg)
 {
     const size_t goTo = m_findResultIs[m_findCurrResultI];
     {
@@ -1966,68 +1966,81 @@ void Buffer::_goToCurrFindResult()
             }
         }
     }
+    if (showStatMsg)
+    {
+        g_statMsg.set("Jumped to search result "+std::to_string(m_findCurrResultI+1)+
+                " out of "+std::to_string(m_findResultIs.size()),
+                StatusMsg::Type::Info);
+    }
     scrollViewportToCursor();
     m_isCursorShown = true;
     g_isRedrawNeeded = true;
 }
 
-static void showFindNoResultMsg(const String& toFind)
-{
-    g_statMsg.set("Not found: "+quoteStr(strToAscii(toFind)), StatusMsg::Type::Error);
-}
-
 void Buffer::findGoToNextResult()
 {
-    if (m_toFind.empty())
+    if (m_toFind.empty() || m_findResultIs.empty())
         return;
-    if (m_findResultIs.empty())
-    {
-        showFindNoResultMsg(m_toFind);
-        return;
-    }
 
     ++m_findCurrResultI;
     if ((size_t)m_findCurrResultI >= m_findResultIs.size())
     {
         m_findCurrResultI = 0;
         g_statMsg.set("Starting search from beginning", StatusMsg::Type::Info);
+        _goToCurrFindResult(false);
     }
-    _goToCurrFindResult();
+    else
+    {
+        _goToCurrFindResult(true);
+    }
 }
 
 void Buffer::findGoToPrevResult()
 {
-    if (m_toFind.empty())
+    if (m_toFind.empty() || m_findResultIs.empty())
         return;
-    if (m_findResultIs.empty())
-    {
-        showFindNoResultMsg(m_toFind);
-        return;
-    }
 
     --m_findCurrResultI;
     if (m_findCurrResultI < 0)
     {
         m_findCurrResultI = m_findResultIs.size()-1;
         g_statMsg.set("Starting search from end", StatusMsg::Type::Info);
+        _goToCurrFindResult(false);
     }
-    _goToCurrFindResult();
+    else
+    {
+        _goToCurrFindResult(true);
+    }
 }
 
 void Buffer::find(const String& str)
 {
     m_toFind = str;
+    m_findCurrResultI = 0;
     findUpdate();
-    m_findCurrResultI = -1;
-    findGoToNextResult();
+
+    if (m_toFind.empty())
+        return;
+
+    if (m_findResultIs.empty())
+    {
+        g_statMsg.set("Not found: "+quoteStr(strToAscii(str)), StatusMsg::Type::Error);
+        return;
+    }
+
+    g_statMsg.set(
+            "Found "+std::to_string(m_findResultIs.size())+" occurences of "+quoteStr(strToAscii(m_toFind)),
+            StatusMsg::Type::Info);
+
+    _goToCurrFindResult(false);
 }
 
 void Buffer::findUpdate()
 {
+    m_findResultIs.clear();
+
     if (m_toFind.empty())
         return;
-
-    m_findResultIs.clear();
     {
         size_t index{};
         for (const auto& line : m_content)
@@ -2044,10 +2057,6 @@ void Buffer::findUpdate()
             index += line.length();
         }
     }
-
-    g_statMsg.set(
-            "Found "+std::to_string(m_findResultIs.size())+" occurences of "+quoteStr(strToAscii(m_toFind)),
-            StatusMsg::Type::Info);
 }
 
 void Buffer::findClear()

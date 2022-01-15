@@ -213,7 +213,7 @@ protected:
     void _renderDrawLineNumBar(const glm::ivec2& textPos, int lineI) const;
     void _renderDrawFoundMark(const glm::ivec2& textPos, int initTextY) const;
 
-    void _goToCurrFindResult();
+    void _goToCurrFindResult(bool showStatMsg);
 
     friend class App;
     /*
