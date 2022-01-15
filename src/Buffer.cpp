@@ -356,12 +356,11 @@ void Buffer::_updateHighlighting()
         }
     }};
 
-    auto highlightChar{[&](char c, char colorMark){
+    auto highlightChar{[&](Char c, char colorMark){
         for (size_t i{}; i < buffer.length(); ++i)
         {
             if (m_isHighlightUpdateNeeded) break;
-            if (highlightBuffer[i] != Syntax::MARK_STRING && highlightBuffer[i] != Syntax::MARK_COMMENT
-                    && buffer[i] == c)
+            if (highlightBuffer[i] != Syntax::MARK_STRING && highlightBuffer[i] != Syntax::MARK_COMMENT && buffer[i] == c)
                 highlightBuffer[i] = colorMark;
         }
     }};
@@ -474,15 +473,15 @@ void Buffer::_updateHighlighting()
 
     if (m_isHighlightUpdateNeeded) return;
     timer.reset();
-    highlightChar(';', Syntax::MARK_SPECCHAR);
+    highlightChar(U';', Syntax::MARK_SPECCHAR);
     if (m_isHighlightUpdateNeeded) return;
-    highlightChar('{', Syntax::MARK_SPECCHAR);
+    highlightChar(U'{', Syntax::MARK_SPECCHAR);
     if (m_isHighlightUpdateNeeded) return;
-    highlightChar('}', Syntax::MARK_SPECCHAR);
+    highlightChar(U'}', Syntax::MARK_SPECCHAR);
     if (m_isHighlightUpdateNeeded) return;
-    highlightChar('(', Syntax::MARK_SPECCHAR);
+    highlightChar(U'(', Syntax::MARK_SPECCHAR);
     if (m_isHighlightUpdateNeeded) return;
-    highlightChar(')', Syntax::MARK_SPECCHAR);
+    highlightChar(U')', Syntax::MARK_SPECCHAR);
     Logger::dbg << "Highlighting special characters took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
     //--------------------------------------------------------------------------
@@ -527,7 +526,7 @@ void Buffer::updateCursor()
     TIMER_BEGIN_FUNC();
 
     assert(m_cursorLine >= 0);
-    assert(m_content.empty() || m_cursorLine < m_content.size());
+    assert(m_content.empty() || (size_t)m_cursorLine < m_content.size());
     assert(m_cursorCol >= 0);
 
     auto getCursorLineLen{[&](){
@@ -546,8 +545,8 @@ void Buffer::updateCursor()
 
     case CursorMovCmd::Right:
     {
-        auto cursorLineLen = getCursorLineLen();
-        if (cursorLineLen > 0 && m_cursorCol < cursorLineLen-1)
+        const size_t cursorLineLen = getCursorLineLen();
+        if (cursorLineLen > 0 && (size_t)m_cursorCol < cursorLineLen-1)
         {
             ++m_cursorCol;
             ++m_cursorCharPos;
@@ -571,7 +570,7 @@ void Buffer::updateCursor()
         break;
 
     case CursorMovCmd::Down:
-        if (m_cursorLine < m_content.size()-1)
+        if ((size_t)m_cursorLine < m_content.size()-1)
         {
             const int prevCursorCol = m_cursorCol;
             const int prevCursorLineLen = getCursorLineLen();
@@ -617,7 +616,7 @@ void Buffer::updateCursor()
     }
 
     assert(m_cursorLine >= 0);
-    assert(m_content.empty() || m_cursorLine < m_content.size());
+    assert(m_content.empty() || (size_t)m_cursorLine < m_content.size());
     assert(m_cursorCol >= 0);
 
     // Scroll up when the cursor goes out of the viewport
@@ -810,7 +809,7 @@ size_t Buffer::copySelectionToClipboard(bool shouldUnselect/*=true*/)
                     toCopy += m_content[lineI][colI];
 
                     // If we are in block selection mode and this is at the right border of the selection
-                    if (m_selection.mode == Selection::Mode::Block && colI == std::max(m_selection.fromCol, m_cursorCol))
+                    if (m_selection.mode == Selection::Mode::Block && colI == (size_t)std::max(m_selection.fromCol, m_cursorCol))
                         toCopy += U'\n';
                 }
 
@@ -1105,7 +1104,11 @@ void Buffer::render()
     const size_t wordBeg = getCursorWordBeginning();
     const size_t wordEnd = getCursorWordEnd();
 
+            // TODO: Reimplement
+#if 0
+    // This is used for line wrapping
     const int maxLineLenChar = m_size.x/g_fontWidthPx;
+#endif
 
     bool isLineBeginning = true;
     bool isLeadingSpace = true;
@@ -1158,7 +1161,7 @@ void Buffer::render()
             if (std::binary_search(m_findResultIs.begin(), m_findResultIs.end(), charI))
                 _charFoundOffs = 0;
             // If the current character is inside a search result
-            const bool isCharFound = (!m_toFind.empty() && _charFoundOffs < m_toFind.size());
+            const bool isCharFound = (!m_toFind.empty() && (size_t)_charFoundOffs < m_toFind.size());
 
             //-------------------------------------- Drawing lambdas ---------------------------------------------
 
@@ -1173,7 +1176,7 @@ void Buffer::render()
                         Logger::fatal << "BUG: Mismatching cursor line\n";
                         isError = true;
                     }
-                    if (colI != m_cursorCol)
+                    if (colI != (size_t)m_cursorCol)
                     {
                         Logger::fatal << "BUG: Mismatching cursor column\n";
                         isError = true;
@@ -1544,7 +1547,7 @@ void Buffer::deleteCharForwardOrSelected()
 
     const int lineLen = m_content[m_cursorLine].length();
     // If deleting at the end of the line and we have stuff to delete
-    if (m_cursorCol == lineLen-1 && m_cursorLine < m_content.size()-1)
+    if (m_cursorCol == lineLen-1 && (size_t)m_cursorLine < m_content.size()-1)
     {
         m_history.add(BufferHistory::Entry{
                 .action=BufferHistory::Entry::Action::Delete,
@@ -1565,7 +1568,7 @@ void Buffer::deleteCharForwardOrSelected()
         m_isModified = true;
     }
     // If deleting in the middle/beginning of the line and we have stuff to delete
-    else if (m_cursorCol < (size_t)lineLen-1 && m_cursorLine < m_content.size())
+    else if (m_cursorCol < lineLen-1 && (size_t)m_cursorLine < m_content.size())
     {
         m_history.add(BufferHistory::Entry{
                 .action=BufferHistory::Entry::Action::Delete,
@@ -1833,7 +1836,7 @@ void Buffer::deleteSelectedChars()
 
                     charPosesToDel.push_back({lineI, colI, charI});
                     // If we are in block selection mode and this is at the right border of the selection
-                    if (m_selection.mode == Selection::Mode::Block && colI == std::max(m_selection.fromCol, m_cursorCol))
+                    if (m_selection.mode == Selection::Mode::Block && colI == (size_t)std::max(m_selection.fromCol, m_cursorCol))
                         charPosesToDel.push_back({}); // End of block line
                 }
 
@@ -1956,7 +1959,7 @@ void Buffer::findGoToNextResult()
     }
 
     ++m_findCurrResultI;
-    if (m_findCurrResultI >= m_findResultIs.size())
+    if ((size_t)m_findCurrResultI >= m_findResultIs.size())
     {
         m_findCurrResultI = 0;
         g_statMsg.set("Starting search from beginning", StatusMsg::Type::Info);
@@ -2002,7 +2005,7 @@ void Buffer::findUpdate()
             while (true)
             {
                 col = line.find(m_toFind, col+1);
-                if (col == line.npos)
+                if ((size_t)col == line.npos)
                     break;
                 m_findResultIs.push_back(index + col);
             }

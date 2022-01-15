@@ -722,7 +722,7 @@ void bufferCutSelectionToClipboard()
     g_activeBuff->cutSelectionToClipboard();
 }
 
-static void bufferFindDialogCb(int btn, Dialog* dlg, void*)
+static void bufferFindDialogCb(int, Dialog* dlg, void*)
 {
     auto dialog = dynamic_cast<FindDialog*>(dlg);
     g_activeBuff->find(strToUtf32(dialog->getValue()));
