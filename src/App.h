@@ -70,6 +70,7 @@ private:
     static void windowCloseCB(GLFWwindow* window);
     static void cursorPosCB(GLFWwindow* window, double x, double y);
     static void mouseButtonCB(GLFWwindow*, int btn, int act, int mods);
+    static void pathDropCB(GLFWwindow*, int count, const char** paths);
 
     static void toggleDebugDraw();
 };

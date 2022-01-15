@@ -28,6 +28,7 @@ GLFWwindow* App::createWindow()
     glfwSetWindowCloseCallback(window, App::windowCloseCB);
     glfwSetCursorPosCallback(window, App::cursorPosCB);
     glfwSetMouseButtonCallback(window, App::mouseButtonCB);
+    glfwSetDropCallback(window, App::pathDropCB);
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
     return window;
@@ -859,4 +860,35 @@ void App::mouseButtonCB(GLFWwindow*, int btn, int act, int mods)
             }
         }
     }
+}
+
+void App::pathDropCB(GLFWwindow*, int count, const char** paths)
+{
+    Logger::log << "Dropped " << count << " paths into window" << Logger::End;
+    Logger::dbg << "Paths:";
+    for (int i{}; i < count; ++i)
+        Logger::dbg << '\n' << '\t' << paths[i];
+    Logger::dbg << Logger::End;
+
+    for (int i{}; i < count; ++i)
+    {
+        if (!std_fs::is_regular_file(paths[i]))
+            continue;
+
+        auto* buffer = App::openFileInNewBuffer(paths[i]);
+        if (g_tabs.empty())
+        {
+            g_tabs.push_back(std::make_unique<Split>(buffer));
+            g_activeBuff = buffer;
+            g_currTabI = 0;
+        }
+        else
+        {
+            // Insert the buffer next to the current one
+            g_tabs.insert(g_tabs.begin()+g_currTabI+1, std::make_unique<Split>(buffer));
+            g_activeBuff = buffer;
+            ++g_currTabI; // Go to the current buffer
+        }
+    }
+    g_isTitleUpdateNeeded = true;
 }
