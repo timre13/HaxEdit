@@ -182,6 +182,7 @@ void App::setupKeyBindings()
         nmap.noMod[GLFW_KEY_O]          = Callbacks::putLineBreakAfterLineAndEnterInsertMode;
         nmap.noMod[GLFW_KEY_P]          = Callbacks::bufferPasteClipboard;
         nmap.noMod[GLFW_KEY_Y]          = Callbacks::bufferCopySelectionToClipboard;
+        nmap.noMod[GLFW_KEY_N]          = Callbacks::bufferFindGotoNext;
 
         nmap.ctrl[GLFW_KEY_N]           = Callbacks::createBufferInNewTab;
         nmap.ctrl[GLFW_KEY_S]           = Callbacks::saveCurrentBuffer;
@@ -212,6 +213,7 @@ void App::setupKeyBindings()
         nmap.shift[GLFW_KEY_I]          = Callbacks::moveCursorToLineBeginningAndEnterInsertMode;
         nmap.shift[GLFW_KEY_A]          = Callbacks::moveCursorToLineEndAndEnterInsertMode;
         nmap.shift[GLFW_KEY_O]          = Callbacks::putLineBreakBeforeLineAndEnterInsertMode;
+        nmap.shift[GLFW_KEY_N]          = Callbacks::bufferFindGotoPrev;
     }
 
 

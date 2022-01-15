@@ -736,6 +736,20 @@ void bufferFind()
     FindDialog::create(bufferFindDialogCb, nullptr);
 }
 
+void bufferFindGotoNext()
+{
+    if (!g_activeBuff)
+        return;
+    g_activeBuff->findGoToNextResult();
+}
+
+void bufferFindGotoPrev()
+{
+    if (!g_activeBuff)
+        return;
+    g_activeBuff->findGoToPrevResult();
+}
+
 } // Namespace Callbacks
 
 BindingMapSet nmap = {};

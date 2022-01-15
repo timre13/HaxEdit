@@ -83,6 +83,8 @@ void bufferCopySelectionToClipboard();
 void bufferCutSelectionToClipboard();
 
 void bufferFind();
+void bufferFindGotoNext();
+void bufferFindGotoPrev();
 
 }
 

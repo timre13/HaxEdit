@@ -1945,6 +1945,32 @@ void Buffer::deleteSelectedChars()
     g_isRedrawNeeded = true;
 }
 
+void Buffer::_goToCurrFindResult()
+{
+    const size_t goTo = m_findResultIs[m_findCurrResultI];
+    {
+        size_t i{};
+        for (size_t lineI{}; lineI < m_content.size(); ++lineI)
+        {
+            const size_t lineLen = m_content[lineI].length();
+            if (i + lineLen - 1 < goTo)
+            {
+                i += lineLen;
+            }
+            else
+            {
+                m_cursorCol = goTo-i;
+                m_cursorLine = lineI;
+                m_cursorCharPos = goTo;
+                break;
+            }
+        }
+    }
+    scrollViewportToCursor();
+    m_isCursorShown = true;
+    g_isRedrawNeeded = true;
+}
+
 static void showFindNoResultMsg(const String& toFind)
 {
     g_statMsg.set("Not found: "+quoteStr(strToAscii(toFind)), StatusMsg::Type::Error);
@@ -1952,6 +1978,8 @@ static void showFindNoResultMsg(const String& toFind)
 
 void Buffer::findGoToNextResult()
 {
+    if (m_toFind.empty())
+        return;
     if (m_findResultIs.empty())
     {
         showFindNoResultMsg(m_toFind);
@@ -1964,12 +1992,13 @@ void Buffer::findGoToNextResult()
         m_findCurrResultI = 0;
         g_statMsg.set("Starting search from beginning", StatusMsg::Type::Info);
     }
-
-    // TODO: Actually go there
+    _goToCurrFindResult();
 }
 
 void Buffer::findGoToPrevResult()
 {
+    if (m_toFind.empty())
+        return;
     if (m_findResultIs.empty())
     {
         showFindNoResultMsg(m_toFind);
@@ -1982,8 +2011,7 @@ void Buffer::findGoToPrevResult()
         m_findCurrResultI = m_findResultIs.size()-1;
         g_statMsg.set("Starting search from end", StatusMsg::Type::Info);
     }
-
-    // TODO: Actually go there
+    _goToCurrFindResult();
 }
 
 void Buffer::find(const String& str)
@@ -1996,6 +2024,9 @@ void Buffer::find(const String& str)
 
 void Buffer::findUpdate()
 {
+    if (m_toFind.empty())
+        return;
+
     m_findResultIs.clear();
     {
         size_t index{};
