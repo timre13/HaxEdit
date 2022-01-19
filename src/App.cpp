@@ -214,6 +214,9 @@ void App::setupKeyBindings()
         nmap.shift[GLFW_KEY_A]          = Callbacks::moveCursorToLineEndAndEnterInsertMode;
         nmap.shift[GLFW_KEY_O]          = Callbacks::putLineBreakBeforeLineAndEnterInsertMode;
         nmap.shift[GLFW_KEY_N]          = Callbacks::bufferFindGotoPrev;
+        nmap.shift[GLFW_KEY_E]          = Callbacks::moveCursorToSWordEnd;
+        nmap.shift[GLFW_KEY_B]          = Callbacks::moveCursorToSWordBeginning;
+        nmap.shift[GLFW_KEY_W]          = Callbacks::moveCursorToNextSWord;
     }
 
 

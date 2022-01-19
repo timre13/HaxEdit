@@ -528,6 +528,7 @@ void Buffer::updateCursor()
     assert(m_cursorLine >= 0);
     assert(m_content.empty() || (size_t)m_cursorLine < m_content.size());
     assert(m_cursorCol >= 0);
+    assert(m_cursorCharPos < countLineListLen(m_content));
 
     auto getCursorLineLen{[&](){
         return m_content[m_cursorLine].size();
@@ -611,6 +612,186 @@ void Buffer::updateCursor()
         m_cursorCharPos = countLineListLen(m_content)-1;
         break;
 
+    case CursorMovCmd::SWordEnd:
+    {
+        const int contentSize = countLineListLen(m_content);
+
+        // Skip spaces
+        while ((int)m_cursorCharPos < contentSize)
+        {
+            int newCCol = m_cursorCol + 1;
+            int newCLine = m_cursorLine;
+            size_t newCPos = m_cursorCharPos + 1;
+            if ((size_t)newCCol == m_content[newCLine].length()) // If at the end of line
+            {
+                ++newCLine;
+                newCCol = 0;
+                if ((size_t)newCLine >= m_content.size()) // End of bufer?
+                    break;
+            }
+
+            if (!u_isspace(m_content[newCLine][newCCol]))
+                break;
+
+            m_cursorCharPos = newCPos;
+            m_cursorLine = newCLine;
+            m_cursorCol = newCCol;
+        }
+
+        // Go until spaces
+        while ((int)m_cursorCharPos < contentSize)
+        {
+            int newCCol = m_cursorCol + 1;
+            int newCLine = m_cursorLine;
+            size_t newCPos = m_cursorCharPos + 1;
+            if ((size_t)newCCol == m_content[newCLine].length()) // If at the end of line
+            {
+                ++newCLine;
+                newCCol = 0;
+                if ((size_t)newCLine >= m_content.size()) // End of bufer?
+                    break;
+            }
+
+            if (u_isspace(m_content[newCLine][newCCol]))
+                break;
+
+            m_cursorCharPos = newCPos;
+            m_cursorLine = newCLine;
+            m_cursorCol = newCCol;
+        }
+        break;
+    }
+
+    case CursorMovCmd::SWordBeginning:
+    {
+        // FIXME: In VIM an empty line is also a WORD
+
+        // Skip spaces
+        while ((int)m_cursorCharPos >= 0)
+        {
+            int newCCol = m_cursorCol - 1;
+            int newCLine = m_cursorLine;
+            size_t newCPos = m_cursorCharPos - 1;
+            if (newCCol == -1) // If at the beginning of line
+            {
+                --newCLine;
+                if (newCLine == -1) // Buffer beginning?
+                    break;
+                newCCol = m_content[newCLine].length()-1; // Go to line end
+            }
+
+            if (!u_isspace(m_content[newCLine][newCCol]))
+                break;
+
+            m_cursorCharPos = newCPos;
+            m_cursorLine = newCLine;
+            m_cursorCol = newCCol;
+        }
+
+        // Go until spaces
+        while ((int)m_cursorCharPos >= 0)
+        {
+            int newCCol = m_cursorCol - 1;
+            int newCLine = m_cursorLine;
+            size_t newCPos = m_cursorCharPos - 1;
+            if (newCCol == -1) // If at the beginning of line
+            {
+                --newCLine;
+                if (newCLine == -1) // Buffer beginning?
+                    break;
+                newCCol = m_content[newCLine].length()-1; // Go to line end
+            }
+
+            if (u_isspace(m_content[newCLine][newCCol]))
+                break;
+
+            m_cursorCharPos = newCPos;
+            m_cursorLine = newCLine;
+            m_cursorCol = newCCol;
+        }
+        break;
+    }
+
+    case CursorMovCmd::SNextWord:
+    {
+        // FIXME: In VIM an empty line is also a WORD
+
+        const int contentSize = countLineListLen(m_content);
+
+        // If inside spaces
+        if (u_isspace(m_content[m_cursorLine][m_cursorCol]))
+        {
+            // Skip spaces
+            while ((int)m_cursorCharPos < contentSize)
+            {
+                if (!u_isspace(m_content[m_cursorLine][m_cursorCol]))
+                    break;
+
+                int newCCol = m_cursorCol + 1;
+                int newCLine = m_cursorLine;
+                size_t newCPos = m_cursorCharPos + 1;
+                if ((size_t)newCCol == m_content[newCLine].length()) // If at the end of line
+                {
+                    ++newCLine;
+                    newCCol = 0;
+                    if ((size_t)newCLine >= m_content.size()) // End of bufer?
+                        break;
+                }
+                m_cursorCharPos = newCPos;
+                m_cursorLine = newCLine;
+                m_cursorCol = newCCol;
+            }
+        }
+        // If inside a word
+        else
+        {
+            // Go until spaces
+            while ((int)m_cursorCharPos < contentSize)
+            {
+                if (u_isspace(m_content[m_cursorLine][m_cursorCol]))
+                    break;
+
+                int newCCol = m_cursorCol + 1;
+                int newCLine = m_cursorLine;
+                size_t newCPos = m_cursorCharPos + 1;
+                if ((size_t)newCCol == m_content[newCLine].length()) // If at the end of line
+                {
+                    ++newCLine;
+                    newCCol = 0;
+                    if ((size_t)newCLine >= m_content.size()) // End of bufer?
+                        break;
+                }
+
+                m_cursorCharPos = newCPos;
+                m_cursorLine = newCLine;
+                m_cursorCol = newCCol;
+            }
+
+            // Skip spaces
+            while ((int)m_cursorCharPos < contentSize)
+            {
+                if (!u_isspace(m_content[m_cursorLine][m_cursorCol]))
+                    break;
+
+                int newCCol = m_cursorCol + 1;
+                int newCLine = m_cursorLine;
+                size_t newCPos = m_cursorCharPos + 1;
+                if ((size_t)newCCol == m_content[newCLine].length()) // If at the end of line
+                {
+                    ++newCLine;
+                    newCCol = 0;
+                    if ((size_t)newCLine >= m_content.size()) // End of bufer?
+                        break;
+                }
+
+                m_cursorCharPos = newCPos;
+                m_cursorLine = newCLine;
+                m_cursorCol = newCCol;
+            }
+        }
+        break;
+    }
+
     case CursorMovCmd::None:
         break;
     }
@@ -618,6 +799,7 @@ void Buffer::updateCursor()
     assert(m_cursorLine >= 0);
     assert(m_content.empty() || (size_t)m_cursorLine < m_content.size());
     assert(m_cursorCol >= 0);
+    assert(m_cursorCharPos < countLineListLen(m_content));
 
     // Scroll up when the cursor goes out of the viewport
     if (m_cursorMovCmd != CursorMovCmd::None)

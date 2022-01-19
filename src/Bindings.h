@@ -48,6 +48,11 @@ void moveCursorDown();
 void moveCursorUp();
 void moveCursorToLineBeginning();
 void moveCursorToLineEnd();
+
+void moveCursorToSWordEnd();
+void moveCursorToSWordBeginning();
+void moveCursorToNextSWord();
+
 void moveCursorToLineBeginningAndEnterInsertMode();
 void moveCursorToLineEndAndEnterInsertMode();
 void putLineBreakAfterLineAndEnterInsertMode();

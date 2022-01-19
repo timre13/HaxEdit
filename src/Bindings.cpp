@@ -472,6 +472,33 @@ void moveCursorToLineEnd()
     }
 }
 
+void moveCursorToSWordEnd()
+{
+    if (g_activeBuff)
+    {
+        g_activeBuff->moveCursor(Buffer::CursorMovCmd::SWordEnd);
+        g_isRedrawNeeded = true;
+    }
+}
+
+void moveCursorToSWordBeginning()
+{
+    if (g_activeBuff)
+    {
+        g_activeBuff->moveCursor(Buffer::CursorMovCmd::SWordBeginning);
+        g_isRedrawNeeded = true;
+    }
+}
+
+void moveCursorToNextSWord()
+{
+    if (g_activeBuff)
+    {
+        g_activeBuff->moveCursor(Buffer::CursorMovCmd::SNextWord);
+        g_isRedrawNeeded = true;
+    }
+}
+
 void moveCursorToLineBeginningAndEnterInsertMode()
 {
     moveCursorToLineBeginning();
