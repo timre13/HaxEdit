@@ -154,94 +154,106 @@ void App::setupKeyBindings()
     using namespace Bindings;
 
     { // Normal mode mappings
-        nmap.noMod[GLFW_KEY_ESCAPE]     = Callbacks::bufferCancelSelection;
-        nmap.noMod[GLFW_KEY_I]          = Callbacks::switchToInsertMode;
-        nmap.noMod[GLFW_KEY_A]          = Callbacks::moveCursorRightAndEnterInsertMode;
-        nmap.noMod[GLFW_KEY_INSERT]     = Callbacks::switchToInsertMode;
-        nmap.noMod[GLFW_KEY_RIGHT]      = Callbacks::moveCursorRight;
-        nmap.noMod[GLFW_KEY_L]          = Callbacks::moveCursorRight;
-        nmap.noMod[GLFW_KEY_LEFT]       = Callbacks::moveCursorLeft;
-        nmap.noMod[GLFW_KEY_H]          = Callbacks::moveCursorLeft;
-        nmap.noMod[GLFW_KEY_DOWN]       = Callbacks::moveCursorDown;
-        nmap.noMod[GLFW_KEY_J]          = Callbacks::moveCursorDown;
-        nmap.noMod[GLFW_KEY_UP]         = Callbacks::moveCursorUp;
-        nmap.noMod[GLFW_KEY_K]          = Callbacks::moveCursorUp;
-        nmap.noMod[GLFW_KEY_HOME]       = Callbacks::moveCursorToLineBeginning;
-        nmap.noMod[GLFW_KEY_0]          = Callbacks::moveCursorToLineBeginning;
-        nmap.noMod[GLFW_KEY_END]        = Callbacks::moveCursorToLineEnd;
-        nmap.noMod[GLFW_KEY_BACKSPACE]  = Callbacks::deleteCharBackwards;
-        nmap.noMod[GLFW_KEY_DELETE]     = Callbacks::deleteCharForwardOrSelection;
-        nmap.noMod[GLFW_KEY_KP_DECIMAL] = Callbacks::deleteCharForwardOrSelection;
-        nmap.noMod[GLFW_KEY_MINUS]      = Callbacks::zoomOutBufferIfImage;
-        nmap.noMod[GLFW_KEY_KP_SUBTRACT]= Callbacks::zoomOutBufferIfImage;
-        nmap.noMod[GLFW_KEY_EQUAL]      = Callbacks::zoomInBufferIfImage;
-        nmap.noMod[GLFW_KEY_KP_ADD]     = Callbacks::zoomInBufferIfImage;
-        nmap.noMod[GLFW_KEY_U]          = Callbacks::undoActiveBufferChange;
-        nmap.noMod[GLFW_KEY_V]          = Callbacks::bufferStartNormalSelection;
-        nmap.noMod[GLFW_KEY_X]          = Callbacks::deleteCharForwardOrSelection;
-        nmap.noMod[GLFW_KEY_O]          = Callbacks::putLineBreakAfterLineAndEnterInsertMode;
-        nmap.noMod[GLFW_KEY_P]          = Callbacks::bufferPasteClipboard;
-        nmap.noMod[GLFW_KEY_Y]          = Callbacks::bufferCopySelectionToClipboard;
-        nmap.noMod[GLFW_KEY_N]          = Callbacks::bufferFindGotoNext;
 
-        nmap.ctrl[GLFW_KEY_N]           = Callbacks::createBufferInNewTab;
-        nmap.ctrl[GLFW_KEY_S]           = Callbacks::saveCurrentBuffer;
-        nmap.ctrl[GLFW_KEY_O]           = Callbacks::openFile;
-        nmap.ctrl[GLFW_KEY_Q]           = Callbacks::closeActiveBuffer;
-        nmap.ctrl[GLFW_KEY_PAGE_UP]     = Callbacks::goToPrevTab;
-        nmap.ctrl[GLFW_KEY_PAGE_DOWN]   = Callbacks::goToNextTab;
-        nmap.ctrl[GLFW_KEY_TAB]         = Callbacks::goToNextSplit;
-        nmap.ctrl[GLFW_KEY_HOME]        = Callbacks::goToFirstChar;
-        nmap.ctrl[GLFW_KEY_END]         = Callbacks::goToLastChar;
-        nmap.ctrl[GLFW_KEY_MINUS]       = Callbacks::decreaseFontSize;
-        nmap.ctrl[GLFW_KEY_KP_SUBTRACT] = Callbacks::decreaseFontSize;
-        nmap.ctrl[GLFW_KEY_EQUAL]       = Callbacks::increaseFontSize;
-        nmap.ctrl[GLFW_KEY_KP_ADD]      = Callbacks::increaseFontSize;
-        nmap.ctrl[GLFW_KEY_ENTER]       = Callbacks::openPathAtCursor;
-        nmap.ctrl[GLFW_KEY_V]           = Callbacks::bufferStartBlockSelection;
-        nmap.ctrl[GLFW_KEY_R]           = Callbacks::redoActiveBufferChange;
-        nmap.ctrl[GLFW_KEY_X]           = Callbacks::bufferCutSelectionToClipboard;
-        nmap.ctrl[GLFW_KEY_F]           = Callbacks::bufferFind;
+        // We want to set the normal mode mapping
+        bindingsP = &nmap;
 
-        nmap.ctrlShift[GLFW_KEY_S]      = Callbacks::saveCurrentBufferAs;
-        nmap.ctrlShift[GLFW_KEY_TAB]    = Callbacks::goToPrevSplit;
-        nmap.ctrlShift[GLFW_KEY_RIGHT]  = Callbacks::increaseActiveBufferWidth;
-        nmap.ctrlShift[GLFW_KEY_LEFT]   = Callbacks::decreaseActiveBufferWidth;
+        // No modifier
+        bindPrimKey("i",                    0, Callbacks::switchToInsertMode);
+        bindPrimKey("a",                    0, Callbacks::moveCursorRightAndEnterInsertMode);
+        bindPrimKey("l",                    0, Callbacks::moveCursorRight);
+        bindPrimKey("h",                    0, Callbacks::moveCursorLeft);
+        bindPrimKey("j",                    0, Callbacks::moveCursorDown);
+        bindPrimKey("k",                    0, Callbacks::moveCursorUp);
+        bindPrimKey("0",                    0, Callbacks::moveCursorToLineBeginning);
+        bindPrimKey("u",                    0, Callbacks::undoActiveBufferChange);
+        bindPrimKey("v",                    0, Callbacks::bufferStartNormalSelection);
+        bindPrimKey("x",                    0, Callbacks::deleteCharForwardOrSelection);
+        bindPrimKey("o",                    0, Callbacks::putLineBreakAfterLineAndEnterInsertMode);
+        bindPrimKey("p",                    0, Callbacks::bufferPasteClipboard);
+        bindPrimKey("y",                    0, Callbacks::bufferCopySelectionToClipboard);
+        bindPrimKey("n",                    0, Callbacks::bufferFindGotoNext);
+        bindPrimKey("-",                    0, Callbacks::zoomOutBufferIfImage);
+        bindPrimKey("+",                    0, Callbacks::zoomInBufferIfImage);
+        //bindNonprimChar(U'>',                  Callbacks::indentSelectedLines);
+        bindFuncKey(GLFW_KEY_ESCAPE,        0, Callbacks::bufferCancelSelection);
+        bindFuncKey(GLFW_KEY_INSERT,        0, Callbacks::switchToInsertMode);
+        bindFuncKey(GLFW_KEY_RIGHT,         0, Callbacks::moveCursorRight);
+        bindFuncKey(GLFW_KEY_LEFT,          0, Callbacks::moveCursorLeft);
+        bindFuncKey(GLFW_KEY_DOWN,          0, Callbacks::moveCursorDown);
+        bindFuncKey(GLFW_KEY_UP,            0, Callbacks::moveCursorUp);
+        bindFuncKey(GLFW_KEY_HOME,          0, Callbacks::moveCursorToLineBeginning);
+        bindFuncKey(GLFW_KEY_END,           0, Callbacks::moveCursorToLineEnd);
+        bindFuncKey(GLFW_KEY_BACKSPACE,     0, Callbacks::deleteCharBackwards);
+        bindFuncKey(GLFW_KEY_DELETE,        0, Callbacks::deleteCharForwardOrSelection);
+        bindFuncKey(GLFW_KEY_KP_DECIMAL,    0, Callbacks::deleteCharForwardOrSelection);
 
-        nmap.shift[GLFW_KEY_R]          = Callbacks::switchToReplaceMode;
-        nmap.shift[GLFW_KEY_V]          = Callbacks::bufferStartLineSelection;
-        nmap.shift[GLFW_KEY_I]          = Callbacks::moveCursorToLineBeginningAndEnterInsertMode;
-        nmap.shift[GLFW_KEY_A]          = Callbacks::moveCursorToLineEndAndEnterInsertMode;
-        nmap.shift[GLFW_KEY_O]          = Callbacks::putLineBreakBeforeLineAndEnterInsertMode;
-        nmap.shift[GLFW_KEY_N]          = Callbacks::bufferFindGotoPrev;
-        nmap.shift[GLFW_KEY_E]          = Callbacks::moveCursorToSWordEnd;
-        nmap.shift[GLFW_KEY_B]          = Callbacks::moveCursorToSWordBeginning;
-        nmap.shift[GLFW_KEY_W]          = Callbacks::moveCursorToNextSWord;
+        // Ctrl held down
+        bindPrimKey("n",                    GLFW_MOD_CONTROL, Callbacks::createBufferInNewTab);
+        bindPrimKey("s",                    GLFW_MOD_CONTROL, Callbacks::saveCurrentBuffer);
+        bindPrimKey("o",                    GLFW_MOD_CONTROL, Callbacks::openFile);
+        bindPrimKey("q",                    GLFW_MOD_CONTROL, Callbacks::closeActiveBuffer);
+        bindPrimKey("v",                    GLFW_MOD_CONTROL, Callbacks::bufferStartBlockSelection);
+        bindPrimKey("r",                    GLFW_MOD_CONTROL, Callbacks::redoActiveBufferChange);
+        bindPrimKey("x",                    GLFW_MOD_CONTROL, Callbacks::bufferCutSelectionToClipboard);
+        bindPrimKey("f",                    GLFW_MOD_CONTROL, Callbacks::bufferFind);
+        bindPrimKey("-",                    GLFW_MOD_CONTROL, Callbacks::decreaseFontSize);
+        bindPrimKey("+",                    GLFW_MOD_CONTROL, Callbacks::increaseFontSize);
+        bindFuncKey(GLFW_KEY_PAGE_UP,       GLFW_MOD_CONTROL, Callbacks::goToPrevTab);
+        bindFuncKey(GLFW_KEY_PAGE_DOWN,     GLFW_MOD_CONTROL, Callbacks::goToNextTab);
+        bindFuncKey(GLFW_KEY_TAB,           GLFW_MOD_CONTROL, Callbacks::goToNextSplit);
+        bindFuncKey(GLFW_KEY_HOME,          GLFW_MOD_CONTROL, Callbacks::goToFirstChar);
+        bindFuncKey(GLFW_KEY_END,           GLFW_MOD_CONTROL, Callbacks::goToLastChar);
+        bindFuncKey(GLFW_KEY_ENTER,         GLFW_MOD_CONTROL, Callbacks::openPathAtCursor);
+
+        // Ctrl-shift held down
+        bindPrimKey("s",                    GLFW_MOD_CONTROL|GLFW_MOD_SHIFT, Callbacks::saveCurrentBufferAs);
+        bindFuncKey(GLFW_KEY_TAB,           GLFW_MOD_CONTROL|GLFW_MOD_SHIFT, Callbacks::goToPrevSplit);
+        bindFuncKey(GLFW_KEY_RIGHT,         GLFW_MOD_CONTROL|GLFW_MOD_SHIFT, Callbacks::increaseActiveBufferWidth);
+        bindFuncKey(GLFW_KEY_LEFT,          GLFW_MOD_CONTROL|GLFW_MOD_SHIFT, Callbacks::decreaseActiveBufferWidth);
+
+        // Shift held down
+        bindPrimKey("r",                    GLFW_MOD_SHIFT, Callbacks::switchToReplaceMode);
+        bindPrimKey("v",                    GLFW_MOD_SHIFT, Callbacks::bufferStartLineSelection);
+        bindPrimKey("i",                    GLFW_MOD_SHIFT, Callbacks::moveCursorToLineBeginningAndEnterInsertMode);
+        bindPrimKey("a",                    GLFW_MOD_SHIFT, Callbacks::moveCursorToLineEndAndEnterInsertMode);
+        bindPrimKey("o",                    GLFW_MOD_SHIFT, Callbacks::putLineBreakBeforeLineAndEnterInsertMode);
+        bindPrimKey("n",                    GLFW_MOD_SHIFT, Callbacks::bufferFindGotoPrev);
+        bindPrimKey("e",                    GLFW_MOD_SHIFT, Callbacks::moveCursorToSWordEnd);
+        bindPrimKey("b",                    GLFW_MOD_SHIFT, Callbacks::moveCursorToSWordBeginning);
+        bindPrimKey("w",                    GLFW_MOD_SHIFT, Callbacks::moveCursorToNextSWord);
     }
 
 
     { // Insert mode mappings
-        imap.noMod[GLFW_KEY_ESCAPE]     = Callbacks::switchToNormalMode;
-        imap.noMod[GLFW_KEY_RIGHT]      = Callbacks::moveCursorRight;
-        imap.noMod[GLFW_KEY_LEFT]       = Callbacks::moveCursorLeft;
-        imap.noMod[GLFW_KEY_DOWN]       = Callbacks::moveCursorDown;
-        imap.noMod[GLFW_KEY_UP]         = Callbacks::moveCursorUp;
-        imap.noMod[GLFW_KEY_HOME]       = Callbacks::moveCursorToLineBeginning;
-        imap.noMod[GLFW_KEY_END]        = Callbacks::moveCursorToLineEnd;
-        imap.noMod[GLFW_KEY_ENTER]      = Callbacks::bufferPutEnterOrInsertAutocomplete;
-        imap.noMod[GLFW_KEY_KP_ENTER]   = Callbacks::bufferPutEnterOrInsertAutocomplete;
-        imap.noMod[GLFW_KEY_BACKSPACE]  = Callbacks::deleteCharBackwards;
-        imap.noMod[GLFW_KEY_DELETE]     = Callbacks::deleteCharForwardOrSelection;
-        imap.noMod[GLFW_KEY_KP_DECIMAL] = Callbacks::deleteCharForwardOrSelection;
-        imap.noMod[GLFW_KEY_TAB]        = Callbacks::insertTabOrSpaces;
-        imap.noMod[GLFW_KEY_MINUS]      = Callbacks::zoomOutBufferIfImage;
-        imap.noMod[GLFW_KEY_KP_SUBTRACT]= Callbacks::zoomOutBufferIfImage;
-        imap.noMod[GLFW_KEY_EQUAL]      = Callbacks::zoomInBufferIfImage;
-        imap.noMod[GLFW_KEY_KP_ADD]     = Callbacks::zoomInBufferIfImage;
 
-        imap.ctrl[GLFW_KEY_SPACE]       = Callbacks::triggerAutocompPopupOrSelectNextItem;
+        // We want to set the normal mode mapping
+        bindingsP = &imap;
 
-        imap.ctrlShift[GLFW_KEY_SPACE]  = Callbacks::triggerAutocompPopupOrSelectPrevItem;
+        // No modifier
+        bindFuncKey(GLFW_KEY_ESCAPE,        0, Callbacks::switchToNormalMode);
+        bindFuncKey(GLFW_KEY_RIGHT,         0, Callbacks::moveCursorRight);
+        bindFuncKey(GLFW_KEY_LEFT,          0, Callbacks::moveCursorLeft);
+        bindFuncKey(GLFW_KEY_DOWN,          0, Callbacks::moveCursorDown);
+        bindFuncKey(GLFW_KEY_UP,            0, Callbacks::moveCursorUp);
+        bindFuncKey(GLFW_KEY_HOME,          0, Callbacks::moveCursorToLineBeginning);
+        bindFuncKey(GLFW_KEY_END,           0, Callbacks::moveCursorToLineEnd);
+        bindFuncKey(GLFW_KEY_ENTER,         0, Callbacks::bufferPutEnterOrInsertAutocomplete);
+        bindFuncKey(GLFW_KEY_KP_ENTER,      0, Callbacks::bufferPutEnterOrInsertAutocomplete);
+        bindFuncKey(GLFW_KEY_BACKSPACE,     0, Callbacks::deleteCharBackwards);
+        bindFuncKey(GLFW_KEY_DELETE,        0, Callbacks::deleteCharForwardOrSelection);
+        bindFuncKey(GLFW_KEY_KP_DECIMAL,    0, Callbacks::deleteCharForwardOrSelection);
+        bindFuncKey(GLFW_KEY_TAB,           0, Callbacks::insertTabOrSpaces);
+        bindFuncKey(GLFW_KEY_MINUS,         0, Callbacks::zoomOutBufferIfImage);
+        bindFuncKey(GLFW_KEY_KP_SUBTRACT,   0, Callbacks::zoomOutBufferIfImage);
+        bindFuncKey(GLFW_KEY_EQUAL,         0, Callbacks::zoomInBufferIfImage);
+        bindFuncKey(GLFW_KEY_KP_ADD,        0, Callbacks::zoomInBufferIfImage);
+
+        // Ctrl held down
+        bindFuncKey(GLFW_KEY_SPACE,         GLFW_MOD_CONTROL, Callbacks::triggerAutocompPopupOrSelectNextItem);
+
+        // Ctrl-Shift held down
+        bindFuncKey(GLFW_KEY_SPACE,         GLFW_MOD_CONTROL|GLFW_MOD_SHIFT, Callbacks::triggerAutocompPopupOrSelectPrevItem);
     }
 
     // Start in normal mode
@@ -539,21 +551,19 @@ static void handleDialogClose()
 void App::windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods)
 {
     (void)scancode;
-
-    TIMER_BEGIN_FUNC();
-
     // We don't care about key releases
     if (action == GLFW_RELEASE)
-    {
-        TIMER_END_FUNC();
         return;
-    }
+
+#if HIDE_MOUSE_WHILE_TYPING
+    // Hide cursor while typing
+    glfwSetInputMode(g_window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+#endif
 
     // Debug mode toggle should work even when a dialog is open
     if (mods == 0 && key == GLFW_KEY_F3)
     {
         toggleDebugDraw();
-        TIMER_END_FUNC();
         return;
     }
 
@@ -563,13 +573,10 @@ void App::windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods)
         g_dialogs.back()->handleKey(key, mods);
         handleDialogClose();
         g_isRedrawNeeded = true;
-        TIMER_END_FUNC();
         return;
     }
 
-    Bindings::runBinding(mods, key);
-
-    TIMER_END_FUNC();
+    Bindings::runKeyBinding(key, mods);
 }
 
 void App::windowCharCB(GLFWwindow*, uint codePoint)
@@ -595,6 +602,7 @@ void App::windowCharCB(GLFWwindow*, uint codePoint)
     switch (g_editorMode.get())
     {
         case EditorMode::_EditorMode::Normal:
+            Bindings::runCharBinding(codePoint);
             return;
 
         case EditorMode::_EditorMode::Insert:

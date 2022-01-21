@@ -2,22 +2,57 @@
 
 #include "glstuff.h"
 #include <functional>
+#include <map>
 
 namespace Bindings
 {
 
 struct BindingMapSet
 {
+    typedef void (*rawBindingFunc_t)(void);
     using bindingFunc_t = std::function<void()>;
-    using bindingMap_t = bindingFunc_t[GLFW_KEY_LAST];
+    using primMap_t    = std::map<std::string, bindingFunc_t>;
+    using funcMap_t    = std::map<int, bindingFunc_t>;
+    using nonprimMap_t = std::map<uint, bindingFunc_t>;
 
-    bindingMap_t noMod;
-    bindingMap_t ctrl;
-    bindingMap_t ctrlShift;
-    bindingMap_t shift;
+    /*
+     * For characters that can be typed without AltGr.
+     * Layout dependent, logical keys.
+     *
+     * Uses lower case characters (unicode characters as multiple chars).
+     * TODO: We should use code points
+     */
+    primMap_t primNoMod;
+    primMap_t primCtrl;
+    primMap_t primCtrlShift;
+    primMap_t primShift;
+
+    /*
+     * For Enter, Space and other non-alphanumeric keys.
+     * NOT layout dependent, physical keys.
+     *
+     * Uses `GLFW_KEY_` values.
+     */
+    funcMap_t funcNoMod;
+    funcMap_t funcCtrl;
+    funcMap_t funcCtrlShift;
+    funcMap_t funcShift;
+
+    /*
+     * For characters that can only be typed with AltGr.
+     * Layout dependent, characters.
+     *
+     * Uses unicode code points.
+     */
+    funcMap_t nonprimNoMod;
 };
 
-void runBinding(int mods, int key);
+void runKeyBinding(int key, int mods);
+void runCharBinding(uint codePoint);
+
+void bindPrimKey(const std::string& keyName, int glfwMods, BindingMapSet::rawBindingFunc_t func);
+void bindFuncKey(int glfwKey, int glfwMods, BindingMapSet::rawBindingFunc_t func);
+void bindNonprimChar(uint codePoint, BindingMapSet::rawBindingFunc_t func);
 
 namespace Callbacks
 {

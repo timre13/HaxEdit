@@ -13,11 +13,35 @@
 #include <vector>
 #include <memory>
 #include <cstring>
+#include <unicode/uchar.h>
+
+#define BINDINGS_VERBOSE 1
 
 namespace Bindings
 {
 
-void runBinding(int mods, int key)
+static std::string modsToStr(int mods)
+{
+    switch (mods)
+    {
+    case 0:
+        return "";
+
+    case GLFW_MOD_CONTROL:
+        return "Ctrl-";
+
+    case GLFW_MOD_CONTROL|GLFW_MOD_SHIFT:
+        return "Ctrl-Shift-";
+
+    case GLFW_MOD_SHIFT:
+        return "Shift-";
+
+    default:
+        return "???";
+    }
+}
+
+void runKeyBinding(int key, int mods)
 {
     switch (key)
     {
@@ -36,26 +60,131 @@ void runBinding(int mods, int key)
     }
 
     BindingMapSet::bindingFunc_t func;
-    switch (mods)
-    {
-    case 0: /* No mod */                    func = bindingsP->noMod[key]; break;
-    case GLFW_MOD_CONTROL:                  func = bindingsP->ctrl[key]; break;
-    case GLFW_MOD_CONTROL | GLFW_MOD_SHIFT: func = bindingsP->ctrlShift[key]; break;
-    case GLFW_MOD_SHIFT:                    func = bindingsP->shift[key]; break;
-    default: break;
-    }
 
-    if (func)
+    const char* _keyName = glfwGetKeyName(key, 0);
+    try // `std::map::at()` throws if not found
     {
+        if (_keyName) // If normal key
+        {
+            const std::string keyName = _keyName;
+#if BINDINGS_VERBOSE
+            Logger::dbg << "Running binding for primary key: " << modsToStr(mods) << keyName << Logger::End;
+#endif
+
+            switch (mods)
+            {
+            case 0: /* No mod */                  func = bindingsP->primNoMod.at(keyName); break;
+            case GLFW_MOD_CONTROL:                func = bindingsP->primCtrl.at(keyName); break;
+            case GLFW_MOD_CONTROL|GLFW_MOD_SHIFT: func = bindingsP->primCtrlShift.at(keyName); break;
+            case GLFW_MOD_SHIFT:                  func = bindingsP->primShift.at(keyName); break;
+            default: break;
+            }
+        }
+        else // If function key (including space)
+        {
+#if BINDINGS_VERBOSE
+            Logger::dbg << "Running binding for function key: " << modsToStr(mods) << key << Logger::End;
+#endif
+
+            switch (mods)
+            {
+            case 0: /* No mod */                  func = bindingsP->funcNoMod.at(key); break;
+            case GLFW_MOD_CONTROL:                func = bindingsP->funcCtrl.at(key); break;
+            case GLFW_MOD_CONTROL|GLFW_MOD_SHIFT: func = bindingsP->funcCtrlShift.at(key); break;
+            case GLFW_MOD_SHIFT:                  func = bindingsP->funcShift.at(key); break;
+            default: break;
+            }
+        }
+
         func();
     }
-    else if (!((g_editorMode.get() == EditorMode::_EditorMode::Insert
-                    || g_editorMode.get() == EditorMode::_EditorMode::Replace)
-                && (mods == GLFW_MOD_SHIFT || mods == 0)))
+    catch (...)
     {
-        g_statMsg.set("Not bound", StatusMsg::Type::Error);
-        g_isRedrawNeeded = true;
+    // TODO
+    //if (!((g_editorMode.get() == EditorMode::_EditorMode::Insert
+    //                || g_editorMode.get() == EditorMode::_EditorMode::Replace)
+    //            && (mods == GLFW_MOD_SHIFT || mods == 0)))
+    //{
+    //    g_statMsg.set("Not bound", StatusMsg::Type::Error);
+    //    g_isRedrawNeeded = true;
+    //}
     }
+}
+
+void runCharBinding(uint codePoint)
+{
+#if BINDINGS_VERBOSE
+    Logger::dbg << "Running binding for character: ";
+    if (isascii(codePoint)) Logger::dbg << (char)codePoint;
+    else Logger::dbg << '<' << codePoint << '>';
+    Logger::dbg << Logger::End;
+#endif
+
+    try // `std::map::at()` throws if not found
+    {
+        BindingMapSet::bindingFunc_t func = bindingsP->nonprimNoMod.at(codePoint);
+        func();
+    }
+    catch (...)
+    {
+    // TODO
+    //if (!((g_editorMode.get() == EditorMode::_EditorMode::Insert
+    //                || g_editorMode.get() == EditorMode::_EditorMode::Replace)
+    //            && (mods == GLFW_MOD_SHIFT || mods == 0)))
+    //{
+    //    g_statMsg.set("Not bound", StatusMsg::Type::Error);
+    //    g_isRedrawNeeded = true;
+    //}
+    }
+}
+
+void bindPrimKey(const std::string& keyName, int glfwMods, BindingMapSet::rawBindingFunc_t func)
+{
+    assert(func && "Called `bindPrimKey()` with a null function");
+    assert(bindingsP && "Called `bindPrimKey()` without any editor mode set");
+
+    switch (glfwMods)
+    {
+    case 0: /* No mod */                  bindingsP->primNoMod.emplace(keyName, func); break;
+    case GLFW_MOD_CONTROL:                bindingsP->primCtrl.emplace(keyName, func); break;
+    case GLFW_MOD_CONTROL|GLFW_MOD_SHIFT: bindingsP->primCtrlShift.emplace(keyName, func); break;
+    case GLFW_MOD_SHIFT:                  bindingsP->primShift.emplace(keyName, func); break;
+    default: assert(0 && "Unimplemented/Invalid mod combination"); return;
+    }
+
+    Logger::dbg << "Primary key " << modsToStr(glfwMods) << keyName << " ==> " << reinterpret_cast<void*>(func) << Logger::End;
+}
+
+void bindFuncKey(int glfwKey, int glfwMods, BindingMapSet::rawBindingFunc_t func)
+{
+    assert(func && "Called `bindFuncKey()` with a null function");
+    assert(bindingsP && "Called `bindPrimKey()` without any editor mode set");
+
+    switch (glfwMods)
+    {
+    case 0: /* No mod */                  bindingsP->funcNoMod.emplace(glfwKey, func); break;
+    case GLFW_MOD_CONTROL:                bindingsP->funcCtrl.emplace(glfwKey, func); break;
+    case GLFW_MOD_CONTROL|GLFW_MOD_SHIFT: bindingsP->funcCtrlShift.emplace(glfwKey, func); break;
+    case GLFW_MOD_SHIFT:                  bindingsP->funcShift.emplace(glfwKey, func); break;
+    default: assert(0 && "Unimplemented/Invalid mod combination"); return;
+    }
+
+    Logger::dbg << "Function key " << modsToStr(glfwMods) << '<' << glfwKey << "> ==> "
+        << reinterpret_cast<void*>(func) << Logger::End;
+}
+
+void bindNonprimChar(uint codePoint, BindingMapSet::rawBindingFunc_t func)
+{
+    assert(func && "Called `bindNonprimChar()` with a null function");
+    assert(codePoint >= UCHAR_MIN_VALUE && codePoint <= UCHAR_MAX_VALUE && "Called `bindNonprimChar()` with invalid code point");
+    assert(bindingsP && "Called `bindPrimKey()` without any editor mode set");
+
+    bindingsP->nonprimNoMod.emplace(codePoint, func);
+
+    Logger::dbg << "Character ";
+    if (isascii(codePoint)) Logger::dbg << (char)codePoint;
+    else Logger::dbg << '<' << codePoint << '>';
+    Logger::dbg << " ==> " << reinterpret_cast<void*>(func) << Logger::End;
 }
 
 namespace Callbacks

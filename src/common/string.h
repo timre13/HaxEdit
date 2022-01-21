@@ -146,5 +146,13 @@ std::vector<T> splitStrToLines(const T& str, bool keepBreaks=false)
     return output;
 }
 
+template <typename T>
+inline T repeatChar(typename T::value_type character, size_t count)
+{
+    _CHECK_T_STR_TYPE;
+
+    return T(count, character);
+}
+
 size_t countLineListLen(const std::vector<String>& lines);
 String lineVecConcat(const std::vector<String>& lines);
