@@ -448,7 +448,10 @@ void openPathAtCursor()
     {
         std::string path = strToAscii(g_activeBuff->getCursorWord());
         if (path.empty())
+        {
+            g_statMsg.set("No word at cursor", StatusMsg::Type::Error);
             return;
+        }
         if (path[0] == '"') path = path.substr(1);
         if (path[path.size()-1] == '"') path = path.substr(0, path.size()-1);
 

@@ -4,6 +4,7 @@
 #include <stack>
 #include <thread>
 #include <glm/glm.hpp>
+#include "unicode/uchar.h"
 #include "Timer.h"
 #include "TextRenderer.h"
 #include "UiRenderer.h"
@@ -287,15 +288,19 @@ public:
     }
     virtual inline String getCursorWord()
     {
-        // TODO: Reimplement
-#if 0
-        int wordBegin = g_activeBuff->getCursorWordBeginning();
-        int wordEnd = g_activeBuff->getCursorWordEnd();
-        if (wordBegin < 0 || wordEnd < 0)
+        if (isspace(m_content[m_cursorLine][m_cursorCol]))
             return U"";
-        return m_content.substr(wordBegin, wordEnd-wordBegin);
-#endif
-        return U"";
+
+        int beginCol = m_cursorCol;
+        while (beginCol >= 0 && !u_isspace(m_content[m_cursorLine][beginCol]))
+            --beginCol;
+        ++beginCol;
+
+        int endCol = m_cursorCol;
+        while (endCol < (int)m_content[m_cursorLine].length() && !u_isspace(m_content[m_cursorLine][endCol]))
+            ++endCol;
+
+        return m_content[m_cursorLine].substr(beginCol, endCol-beginCol);
     }
 
     virtual inline void setCursorVisibility(bool isVisible) {
