@@ -19,12 +19,10 @@ void EditorMode::set(EditorMode::_EditorMode mode)
 
     case _EditorMode::Insert:
         Bindings::bindingsP = &Bindings::imap;
-        g_shouldIgnoreNextChar = true;
         break;
 
     case _EditorMode::Replace:
         Bindings::bindingsP = &Bindings::imap;
-        g_shouldIgnoreNextChar = true;
         break;
     }
     Logger::dbg << "Switched to editor mode: " << quoteStr(asString()) << Logger::End;

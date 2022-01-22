@@ -163,6 +163,7 @@ void runFetchedBinding()
 
     _foundKeyCB = 0;
     _foundCharCB = 0;
+    g_hasBindingToCall = false;
 }
 
 void bindPrimKey(const std::string& keyName, int glfwMods, BindingMapSet::rawBindingFunc_t func)

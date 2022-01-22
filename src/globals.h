@@ -31,7 +31,6 @@ bool g_isMouseBtnMPressed = false;
 bool g_isRedrawNeeded = false;
 bool g_isTitleUpdateNeeded = true;
 bool g_isDebugDrawMode = false;
-bool g_shouldIgnoreNextChar = false;
 
 std::vector<std::unique_ptr<Split>> g_tabs;
 Buffer* g_activeBuff = nullptr;
@@ -62,6 +61,8 @@ std::unique_ptr<Autocomp::DictionaryProvider> dictProvider;
 EditorMode g_editorMode;
 StatusMsg g_statMsg;
 
+bool g_hasBindingToCall = false;
+
 #else // ----------------------------------------------------------------------
 
 extern GLFWwindow* g_window;
@@ -77,7 +78,6 @@ extern bool g_isMouseBtnMPressed;
 extern bool g_isRedrawNeeded;
 extern bool g_isTitleUpdateNeeded;
 extern bool g_isDebugDrawMode;
-extern bool g_shouldIgnoreNextChar;
 
 extern std::vector<std::unique_ptr<Dialog>> g_dialogs;
 
@@ -102,5 +102,7 @@ extern std::unique_ptr<Autocomp::DictionaryProvider> dictProvider;
 
 extern EditorMode g_editorMode;
 extern StatusMsg g_statMsg;
+
+extern bool g_hasBindingToCall;
 
 #endif

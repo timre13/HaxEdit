@@ -2,6 +2,7 @@
 #include "globals.h"
 #undef _DEF_GLOBALS_
 #include "App.h"
+#include "Bindings.h"
 #include "SessionHandler.h"
 #include <filesystem>
 #include "dialogs/FindDialog.h"
@@ -88,6 +89,12 @@ int main(int argc, char** argv)
             g_activeBuff->toggleCursorVisibility();
             g_isRedrawNeeded = true;
             framesUntilCursorBlinking = CURSOR_BLINK_FRAMES;
+        }
+
+        if (g_hasBindingToCall)
+        {
+            Bindings::runFetchedBinding();
+            g_hasBindingToCall = false;
         }
 
         if (g_isRedrawNeeded)

@@ -544,7 +544,6 @@ static void handleDialogClose()
     if (g_dialogs.back()->isClosed())
     {
         g_dialogs.pop_back();
-        g_shouldIgnoreNextChar = true;
         g_isRedrawNeeded = true;
     }
 }
@@ -578,6 +577,9 @@ void App::windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods)
     }
 
     Bindings::fetchKeyBinding(key, mods);
+    // Key callback is always called, but char callback is not
+    // Make sure to run the fetched binding from outside, after the char callback (if called)
+    g_hasBindingToCall = true;
 }
 
 void App::windowCharCB(GLFWwindow*, uint codePoint)
@@ -594,17 +596,10 @@ void App::windowCharCB(GLFWwindow*, uint codePoint)
         return;
     }
 
-    if (g_shouldIgnoreNextChar)
-    {
-        g_shouldIgnoreNextChar = false;
-        return;
-    }
-
     switch (g_editorMode.get())
     {
         case EditorMode::_EditorMode::Normal:
             Bindings::fetchCharBinding(codePoint);
-            Bindings::runFetchedBinding();
             return;
 
         case EditorMode::_EditorMode::Insert:
