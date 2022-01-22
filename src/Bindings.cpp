@@ -933,6 +933,22 @@ void bufferFindGotoPrev()
     g_activeBuff->findGoToPrevResult();
 }
 
+void indentSelectedLines()
+{
+    if (!g_activeBuff)
+        return;
+
+    g_activeBuff->indentSelectedLines();
+}
+
+void unindentSelectedLines()
+{
+    if (!g_activeBuff)
+        return;
+
+    g_activeBuff->unindentSelectedLines();
+}
+
 } // Namespace Callbacks
 
 BindingMapSet nmap = {};

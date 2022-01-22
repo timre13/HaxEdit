@@ -394,5 +394,8 @@ public:
     virtual void findUpdate();
     virtual void findClear();
 
+    virtual void indentSelectedLines();
+    virtual void unindentSelectedLines();
+
     virtual ~Buffer();
 };

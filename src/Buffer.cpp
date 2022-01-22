@@ -2247,6 +2247,76 @@ void Buffer::findClear()
     m_findResultIs.clear();
 }
 
+void Buffer::indentSelectedLines()
+{
+    if (m_selection.mode == Selection::Mode::None)
+        return;
+
+    const size_t startLine = std::min(m_cursorLine, m_selection.fromLine);
+    const size_t endLine = std::max(m_cursorLine, m_selection.fromLine);
+
+    for (size_t i{startLine}; i <= endLine; ++i)
+    {
+        m_content[i].insert(0, (TAB_SPACE_COUNT == 0 ? 1 : TAB_SPACE_COUNT), (TAB_SPACE_COUNT == 0 ? U'\t' : ' '));
+    }
+
+    // Place the cursor to the upper (less) position
+    if (m_selection.fromCharI < m_cursorCharPos)
+    {
+        m_cursorCharPos = m_selection.fromCharI;
+        m_cursorLine = m_selection.fromLine;
+        m_cursorCol = m_selection.fromCol;
+    }
+
+    m_selection.mode = Selection::Mode::None;
+    // TODO: Insert to highlight buffer instead of reparsing
+    m_isHighlightUpdateNeeded = true;
+    g_isRedrawNeeded = true;
+}
+
+static size_t countTrailingSpaces(const String& str)
+{
+    size_t count{};
+    while (count < str.length() && str[count] == U' ')
+        ++count;
+    return count;
+}
+
+void Buffer::unindentSelectedLines()
+{
+    if (m_selection.mode == Selection::Mode::None)
+        return;
+
+    const size_t startLine = std::min(m_cursorLine, m_selection.fromLine);
+    const size_t endLine = std::max(m_cursorLine, m_selection.fromLine);
+
+    for (size_t i{startLine}; i <= endLine; ++i)
+    {
+#if TAB_SPACE_COUNT == 0
+        if (m_content[i][0] == U'\t')
+        {
+            m_content[i].erase(0, 1);
+        }
+#else
+        const int spaceCount = countTrailingSpaces(m_content[i]);
+        m_content[i].erase(0, std::min(spaceCount, TAB_SPACE_COUNT));
+#endif
+    }
+
+    // Place the cursor to the upper (less) position
+    if (m_selection.fromCharI < m_cursorCharPos)
+    {
+        m_cursorCharPos = m_selection.fromCharI;
+        m_cursorLine = m_selection.fromLine;
+        m_cursorCol = m_selection.fromCol;
+    }
+
+    m_selection.mode = Selection::Mode::None;
+    // TODO: Remove from highlight buffer instead of reparsing
+    m_isHighlightUpdateNeeded = true;
+    g_isRedrawNeeded = true;
+}
+
 Buffer::~Buffer()
 {
     glfwSetCursor(g_window, Cursors::busy);

@@ -130,6 +130,9 @@ void bufferFind();
 void bufferFindGotoNext();
 void bufferFindGotoPrev();
 
+void indentSelectedLines();
+void unindentSelectedLines();
+
 }
 
 extern BindingMapSet nmap; // Normal mode mapping
