@@ -47,8 +47,12 @@ struct BindingMapSet
     funcMap_t nonprimNoMod;
 };
 
-void runKeyBinding(int key, int mods);
-void runCharBinding(uint codePoint);
+extern BindingMapSet::bindingFunc_t _foundCharCB;
+extern BindingMapSet::bindingFunc_t _foundKeyCB;
+
+void fetchKeyBinding(int key, int mods);
+void fetchCharBinding(uint codePoint);
+void runFetchedBinding();
 
 void bindPrimKey(const std::string& keyName, int glfwMods, BindingMapSet::rawBindingFunc_t func);
 void bindFuncKey(int glfwKey, int glfwMods, BindingMapSet::rawBindingFunc_t func);

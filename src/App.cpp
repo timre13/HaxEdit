@@ -576,7 +576,7 @@ void App::windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods)
         return;
     }
 
-    Bindings::runKeyBinding(key, mods);
+    Bindings::fetchKeyBinding(key, mods);
 }
 
 void App::windowCharCB(GLFWwindow*, uint codePoint)
@@ -602,7 +602,8 @@ void App::windowCharCB(GLFWwindow*, uint codePoint)
     switch (g_editorMode.get())
     {
         case EditorMode::_EditorMode::Normal:
-            Bindings::runCharBinding(codePoint);
+            Bindings::fetchCharBinding(codePoint);
+            Bindings::runFetchedBinding();
             return;
 
         case EditorMode::_EditorMode::Insert:

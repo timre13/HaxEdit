@@ -41,8 +41,13 @@ static std::string modsToStr(int mods)
     }
 }
 
-void runKeyBinding(int key, int mods)
+BindingMapSet::bindingFunc_t _foundCharCB{};
+BindingMapSet::bindingFunc_t _foundKeyCB{};
+
+void fetchKeyBinding(int key, int mods)
 {
+    assert(!_foundKeyCB && "_foundKeyCB hasn't been cleared");
+
     switch (key)
     {
     case GLFW_KEY_CAPS_LOCK:
@@ -59,8 +64,6 @@ void runKeyBinding(int key, int mods)
         return; // Ignore modifier presses
     }
 
-    BindingMapSet::bindingFunc_t func;
-
     const char* _keyName = glfwGetKeyName(key, 0);
     try // `std::map::at()` throws if not found
     {
@@ -68,35 +71,33 @@ void runKeyBinding(int key, int mods)
         {
             const std::string keyName = _keyName;
 #if BINDINGS_VERBOSE
-            Logger::dbg << "Running binding for primary key: " << modsToStr(mods) << keyName << Logger::End;
+            Logger::dbg << "Fetching binding for primary key: " << modsToStr(mods) << keyName << Logger::End;
 #endif
 
             switch (mods)
             {
-            case 0: /* No mod */                  func = bindingsP->primNoMod.at(keyName); break;
-            case GLFW_MOD_CONTROL:                func = bindingsP->primCtrl.at(keyName); break;
-            case GLFW_MOD_CONTROL|GLFW_MOD_SHIFT: func = bindingsP->primCtrlShift.at(keyName); break;
-            case GLFW_MOD_SHIFT:                  func = bindingsP->primShift.at(keyName); break;
+            case 0: /* No mod */                  _foundKeyCB = bindingsP->primNoMod.at(keyName); break;
+            case GLFW_MOD_CONTROL:                _foundKeyCB = bindingsP->primCtrl.at(keyName); break;
+            case GLFW_MOD_CONTROL|GLFW_MOD_SHIFT: _foundKeyCB = bindingsP->primCtrlShift.at(keyName); break;
+            case GLFW_MOD_SHIFT:                  _foundKeyCB = bindingsP->primShift.at(keyName); break;
             default: break;
             }
         }
         else // If function key (including space)
         {
 #if BINDINGS_VERBOSE
-            Logger::dbg << "Running binding for function key: " << modsToStr(mods) << key << Logger::End;
+            Logger::dbg << "Fetching binding for function key: " << modsToStr(mods) << key << Logger::End;
 #endif
 
             switch (mods)
             {
-            case 0: /* No mod */                  func = bindingsP->funcNoMod.at(key); break;
-            case GLFW_MOD_CONTROL:                func = bindingsP->funcCtrl.at(key); break;
-            case GLFW_MOD_CONTROL|GLFW_MOD_SHIFT: func = bindingsP->funcCtrlShift.at(key); break;
-            case GLFW_MOD_SHIFT:                  func = bindingsP->funcShift.at(key); break;
+            case 0: /* No mod */                  _foundKeyCB = bindingsP->funcNoMod.at(key); break;
+            case GLFW_MOD_CONTROL:                _foundKeyCB = bindingsP->funcCtrl.at(key); break;
+            case GLFW_MOD_CONTROL|GLFW_MOD_SHIFT: _foundKeyCB = bindingsP->funcCtrlShift.at(key); break;
+            case GLFW_MOD_SHIFT:                  _foundKeyCB = bindingsP->funcShift.at(key); break;
             default: break;
             }
         }
-
-        func();
     }
     catch (...)
     {
@@ -111,10 +112,12 @@ void runKeyBinding(int key, int mods)
     }
 }
 
-void runCharBinding(uint codePoint)
+void fetchCharBinding(uint codePoint)
 {
+    assert(!_foundCharCB && "_foundCharCB hasn't been cleared");
+
 #if BINDINGS_VERBOSE
-    Logger::dbg << "Running binding for character: ";
+    Logger::dbg << "Fetching binding for character: ";
     if (isascii(codePoint)) Logger::dbg << (char)codePoint;
     else Logger::dbg << '<' << codePoint << '>';
     Logger::dbg << Logger::End;
@@ -122,8 +125,7 @@ void runCharBinding(uint codePoint)
 
     try // `std::map::at()` throws if not found
     {
-        BindingMapSet::bindingFunc_t func = bindingsP->nonprimNoMod.at(codePoint);
-        func();
+        _foundCharCB = bindingsP->nonprimNoMod.at(codePoint);
     }
     catch (...)
     {
@@ -136,6 +138,31 @@ void runCharBinding(uint codePoint)
     //    g_isRedrawNeeded = true;
     //}
     }
+}
+
+void runFetchedBinding()
+{
+    // Char callbacks have priority
+    if (_foundCharCB)
+    {
+#if BINDINGS_VERBOSE
+        Logger::dbg << "Running char callback" << Logger::End;
+#endif
+        _foundCharCB();
+    }
+    else if (_foundKeyCB)
+    {
+#if BINDINGS_VERBOSE
+        Logger::dbg << "Running key callback" << Logger::End;
+#endif
+        _foundKeyCB();
+    }
+    else
+    {
+    }
+
+    _foundKeyCB = 0;
+    _foundCharCB = 0;
 }
 
 void bindPrimKey(const std::string& keyName, int glfwMods, BindingMapSet::rawBindingFunc_t func)
