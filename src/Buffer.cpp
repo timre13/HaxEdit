@@ -1166,7 +1166,6 @@ void Buffer::_renderDrawIndRainbow(const glm::ivec2& textPos, int initTextY, int
     (void)textPos;
     (void)initTextY;
     (void)colI;
-    (void)advance;
 #endif
 }
 
@@ -1329,6 +1328,12 @@ void Buffer::render()
 
         isLineBeginning = true;
         isLeadingSpace = true;
+        // Count the number of spaces at the end of line
+        int closingSpaceCount = 1;
+        while ((size_t)closingSpaceCount < line.size() && u_isspace(line[line.size()-1-closingSpaceCount]))
+            ++closingSpaceCount;
+        --closingSpaceCount; // Don't count newline
+
         for (size_t colI{}; colI < line.size(); ++colI)
         {
             const Char c = line[colI];
@@ -1344,6 +1349,7 @@ void Buffer::render()
                 _charFoundOffs = 0;
             // If the current character is inside a search result
             const bool isCharFound = (!m_toFind.empty() && (size_t)_charFoundOffs < m_toFind.size());
+            const bool isClosingSpace = colI < line.size()-1 && ((int)colI > (int)line.size()-closingSpaceCount-2);
 
             //-------------------------------------- Drawing lambdas ---------------------------------------------
 
@@ -1388,6 +1394,19 @@ void Buffer::render()
                     _renderDrawFoundMark({textX, textY}, initTextY);
             }};
 
+            auto drawClosingSpaceMarkIfNeeded{[&](){
+                // Render closing space chars if they are not in the cursor line
+                if (isClosingSpace && lineI != m_cursorLine)
+                {
+                    g_uiRenderer->renderFilledRectangle(
+                            {textX, initTextY+textY-m_scrollY-m_position.y},
+                            {textX+g_fontWidthPx, initTextY+textY-m_scrollY-m_position.y+g_fontSizePx},
+                            {1.0f, 0.4f, 0.4f, 0.2f}
+                    );
+                    g_textRenderer->prepareForDrawing();
+                }
+            }};
+
             //----------------------------------------------------------------------------------------------------
 
             if (BUFFER_DRAW_LINE_NUMS && isLineBeginning)
@@ -1427,6 +1446,7 @@ void Buffer::render()
             {
                 drawCharSelectionMarkIfNeeded(g_fontWidthPx*4);
                 drawFoundMarkIfNeeded();
+                drawClosingSpaceMarkIfNeeded();
                 drawCursorIfNeeded(g_fontWidthPx*4);
                 // Draw a horizontal line to mark the tab character
                 g_uiRenderer->renderFilledRectangle(
@@ -1455,6 +1475,7 @@ void Buffer::render()
 
             drawCharSelectionMarkIfNeeded(g_fontWidthPx);
             drawFoundMarkIfNeeded();
+            drawClosingSpaceMarkIfNeeded();
 
             // Render non-whitespace character
             if (!u_isspace(c))
@@ -1503,7 +1524,7 @@ void Buffer::render()
 
 
             // Render indent rainbow
-            if (TAB_SPACE_COUNT > 0 && isLeadingSpace)
+            if (!isClosingSpace && TAB_SPACE_COUNT > 0 && isLeadingSpace)
             {
                 _renderDrawIndRainbow({textX, textY}, initTextY, colI);
             }
