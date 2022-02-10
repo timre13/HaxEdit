@@ -458,9 +458,12 @@ void App::renderStartupScreen()
             {iconSize*iconRatio, iconSize});
 }
 
-Buffer* App::openFileInNewBuffer(const std::string& path)
+Buffer* App::openFileInNewBuffer(
+        const std::string& path, bool addToRecFileList/*=true*/)
 {
     g_statMsg.set("Opening file: "+path, StatusMsg::Type::Info);
+    if (addToRecFileList)
+        g_recentFilePaths.push_back(path);
     App::renderStatusLine();
     glfwSwapBuffers(g_window);
 

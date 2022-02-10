@@ -52,7 +52,8 @@ public:
     static void renderStartupScreen();
 
     // ----- Helper functions -----
-    [[nodiscard]] static Buffer* openFileInNewBuffer(const std::string& path);
+    [[nodiscard]] static Buffer* openFileInNewBuffer(
+            const std::string& path, bool addToRecFileList=true);
 
 private:
     static void GLAPIENTRY glDebugMsgCB(

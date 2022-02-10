@@ -64,7 +64,8 @@ static Split* loadTabRecursively(const cJSON* node)
                 return nullptr;
             }
             const std::string path = fileVal->valuestring;
-            Buffer* buff = App::openFileInNewBuffer(path);
+            // Note: Don't mess up recent file list with session-loaded files
+            Buffer* buff = App::openFileInNewBuffer(path, false);
 
             if (const cJSON* cursorLineVal = cJSON_GetObjectItemCaseSensitive(child, "cursorLine"))
             {
@@ -119,6 +120,7 @@ void SessionHandler::loadFromFile()
     g_tabs.clear();
     g_currTabI = 0;
     g_activeBuff = nullptr;
+    g_recentFilePaths.clear();
 
     Logger::log("SessionHandler");
     std::stringstream ss0;
@@ -219,6 +221,40 @@ void SessionHandler::loadFromFile()
         }
     }
 
+    {
+        const cJSON* recentFileList = cJSON_GetObjectItemCaseSensitive(json, "recentFiles");
+        if (recentFileList)
+        {
+            if (!cJSON_IsArray(recentFileList))
+            {
+                Logger::err << "Invalid value for 'recentFiles', expected an array" << Logger::End;
+                goto error;
+            }
+            const int recentFileCount = cJSON_GetArraySize(recentFileList);
+            for (int i{}; i < recentFileCount; ++i)
+            {
+                const cJSON* item = cJSON_GetArrayItem(recentFileList, i);
+                assert(item);
+
+                if (!cJSON_IsString(item))
+                {
+                    Logger::err << "Invalid value in array 'recentFiles', expected a string" << Logger::End;
+                    goto error;
+                }
+
+                const char* path = cJSON_GetStringValue(item);
+                g_recentFilePaths.push_back(path);
+            }
+        }
+    }
+
+    Logger::dbg << "Loaded " << g_recentFilePaths.size() << " recent file paths: ";
+    for (const auto& path : g_recentFilePaths)
+    {
+        Logger::dbg << "\n\t" << path;
+    }
+    Logger::dbg << Logger::End;
+
     goto success;
 error:
     Logger::err << "Session loading failed" << Logger::End;
@@ -269,18 +305,30 @@ void SessionHandler::writeToFile()
 {
     Logger::log("SessionHandler");
     cJSON* json = cJSON_CreateObject();
-    cJSON* tabListJson = cJSON_AddArrayToObject(json, "tabs");
-    for (const auto& tab : g_tabs)
     {
-        cJSON* tabJson = storeTabRecursively(tab.get());
-        if (!tabJson)
+        cJSON* tabListJson = cJSON_AddArrayToObject(json, "tabs");
+        for (const auto& tab : g_tabs)
         {
-            Logger::err << "Failed to save tabs" << Logger::End;
-            goto error;
+            cJSON* tabJson = storeTabRecursively(tab.get());
+            if (!tabJson)
+            {
+                Logger::err << "Failed to save tabs" << Logger::End;
+                goto error;
+            }
+            cJSON_AddItemToArray(tabListJson, tabJson);
         }
-        cJSON_AddItemToArray(tabListJson, tabJson);
     }
-    cJSON_AddNumberToObject(json, "activeTabI", g_currTabI);
+    {
+        cJSON_AddNumberToObject(json, "activeTabI", g_currTabI);
+    }
+    {
+        cJSON* recentFilesJson = cJSON_AddArrayToObject(json, "recentFiles");
+        for (const auto& path : g_recentFilePaths)
+        {
+            cJSON* pathJson = cJSON_CreateString(path.c_str());
+            cJSON_AddItemToArray(recentFilesJson, pathJson);
+        }
+    }
 
     goto success;
 error:

@@ -35,6 +35,7 @@ bool g_isDebugDrawMode = false;
 std::vector<std::unique_ptr<Split>> g_tabs;
 Buffer* g_activeBuff = nullptr;
 size_t g_currTabI{};
+std::vector<std::string> g_recentFilePaths;
 
 std::vector<std::unique_ptr<Dialog>> g_dialogs;
 
@@ -86,6 +87,7 @@ extern std::unique_ptr<Theme> g_theme;
 extern std::vector<std::unique_ptr<Split>> g_tabs;
 extern Buffer* g_activeBuff;
 extern size_t g_currTabI;
+extern std::vector<std::string> g_recentFilePaths;
 
 extern int g_fontSizePx;
 extern float g_fontWidthPx;
