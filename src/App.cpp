@@ -463,6 +463,8 @@ void App::renderStartupScreen()
     // Render recent file list if not empty
     if (!g_recentFilePaths.empty())
     {
+        assert(g_recentFilePaths.size() <= RECENT_LIST_MAX_SIZE);
+
         g_textRenderer->renderString(
                 "\033[90mRecent files:",
                 {START_SCRN_INDENT_PX, (strCountLines(welcomeMsg)+4)*g_fontSizePx},
@@ -482,7 +484,15 @@ Buffer* App::openFileInNewBuffer(
 {
     g_statMsg.set("Opening file: "+path, StatusMsg::Type::Info);
     if (addToRecFileList)
+    {
+        assert(g_recentFilePaths.size() <= RECENT_LIST_MAX_SIZE);
+
+        // Remove the first item when the list is full
+        if (g_recentFilePaths.size() == RECENT_LIST_MAX_SIZE)
+            g_recentFilePaths.erase(g_recentFilePaths.begin());
+        // Append the new item to the end
         g_recentFilePaths.push_back(path);
+    }
     App::renderStatusLine();
     glfwSwapBuffers(g_window);
 
