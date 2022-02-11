@@ -8,6 +8,7 @@
 namespace fs = std::filesystem;
 
 #define BUFFER_RESIZE_MAX_CURS_DIST 10
+#define START_SCRN_INDENT_PX 100
 
 GLFWwindow* App::createWindow()
 {
@@ -446,7 +447,8 @@ void App::renderStartupScreen()
 {
     static const auto icon = loadProgramIcon();
     static const auto welcomeMsg = genWelcomeMsg(WELCOME_MSG);
-    g_textRenderer->renderString(welcomeMsg, {200, 30}, FONT_STYLE_REGULAR, g_theme->values[Syntax::MARK_NONE].color, true);
+    g_textRenderer->renderString(welcomeMsg, {START_SCRN_INDENT_PX, 30},
+            FONT_STYLE_REGULAR, g_theme->values[Syntax::MARK_NONE].color, true);
 
     const int origIconW = icon->getPhysicalSize().x;
     const int origIconH = icon->getPhysicalSize().y;
@@ -454,8 +456,25 @@ void App::renderStartupScreen()
     const int iconSize = std::min(
             std::min(g_windowWidth, 512),
             std::min(g_windowHeight, 512));
-    icon->render({g_windowWidth/2-iconSize*iconRatio/2, g_windowHeight/2-iconSize/2},
+    icon->render(
+            {g_windowWidth/2-iconSize*iconRatio/2, g_windowHeight/2-iconSize/2},
             {iconSize*iconRatio, iconSize});
+
+    // Render recent file list if not empty
+    if (!g_recentFilePaths.empty())
+    {
+        g_textRenderer->renderString(
+                "\033[90mRecent files:",
+                {START_SCRN_INDENT_PX, (strCountLines(welcomeMsg)+4)*g_fontSizePx},
+                FONT_STYLE_BOLD);
+
+        for (size_t i{}; i < g_recentFilePaths.size(); ++i)
+        {
+            g_textRenderer->renderString(
+                    "\033[90m["+std::to_string(i+1)+"]: \033[3m"+g_recentFilePaths[i],
+                    {START_SCRN_INDENT_PX, (strCountLines(welcomeMsg)+5+i)*g_fontSizePx});
+        }
+    }
 }
 
 Buffer* App::openFileInNewBuffer(
