@@ -120,7 +120,6 @@ void SessionHandler::loadFromFile()
     g_tabs.clear();
     g_currTabI = 0;
     g_activeBuff = nullptr;
-    g_recentFilePaths.clear();
 
     Logger::log("SessionHandler");
     std::stringstream ss0;
@@ -243,15 +242,15 @@ void SessionHandler::loadFromFile()
                 }
 
                 const char* path = cJSON_GetStringValue(item);
-                g_recentFilePaths.push_back(path);
+                g_recentFilePaths->addItem(path);
             }
         }
     }
 
-    Logger::dbg << "Loaded " << g_recentFilePaths.size() << " recent file paths: ";
-    for (const auto& path : g_recentFilePaths)
+    Logger::dbg << "Loaded " << g_recentFilePaths->getItemCount() << " recent file paths: ";
+    for (size_t i{}; i < g_recentFilePaths->getItemCount(); ++i)
     {
-        Logger::dbg << "\n\t" << path;
+        Logger::dbg << "\n\t" << g_recentFilePaths->getItem(i);
     }
     Logger::dbg << Logger::End;
 
@@ -323,8 +322,9 @@ void SessionHandler::writeToFile()
     }
     {
         cJSON* recentFilesJson = cJSON_AddArrayToObject(json, "recentFiles");
-        for (const auto& path : g_recentFilePaths)
+        for (size_t i{}; i < g_recentFilePaths->getItemCount(); ++i)
         {
+            const auto& path = g_recentFilePaths->getItem(i);
             cJSON* pathJson = cJSON_CreateString(path.c_str());
             cJSON_AddItemToArray(recentFilesJson, pathJson);
         }

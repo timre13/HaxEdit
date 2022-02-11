@@ -40,6 +40,7 @@ int main(int argc, char** argv)
     g_textRenderer.reset(App::createTextRenderer());
     g_uiRenderer.reset(App::createUiRenderer());
     g_fileTypeHandler.reset(App::createFileTypeHandler());
+    g_recentFilePaths = std::make_unique<RecentFileList>();
     App::createAutocompleteProviders();
     App::loadTheme();
     glfwPollEvents();

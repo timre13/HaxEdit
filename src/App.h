@@ -24,6 +24,73 @@
 #include "autocomp/DictionaryProvider.h"
 #include "ThemeLoader.h"
 
+class RecentFileList
+{
+private:
+    std::vector<std::string> m_list;
+    size_t m_selectedItemI{};
+
+public:
+
+    bool isEmpty() const
+    {
+        return m_list.empty();
+    }
+
+    void addItem(const std::string& item)
+    {
+        assert(m_list.size() <= RECENT_LIST_MAX_SIZE);
+        // Remove the last item when the list is full
+        if (m_list.size() == RECENT_LIST_MAX_SIZE)
+            m_list.pop_back();
+        m_list.insert(m_list.begin(), item);
+    }
+
+    void removeSelectedItem()
+    {
+        m_list.erase(m_list.begin()+m_selectedItemI);
+        m_selectedItemI = 0;
+    }
+
+    const std::string& getItem(size_t i) const
+    {
+        assert(i < m_list.size());
+        return m_list[i];
+    }
+
+    const std::string& getSelectedItem() const
+    {
+        assert(m_selectedItemI < m_list.size());
+        return m_list[m_selectedItemI];
+    }
+
+    size_t getSelectedItemI() const
+    {
+        return m_selectedItemI;
+    }
+
+    void selectNextItem()
+    {
+        if (m_selectedItemI < m_list.size()-1)
+        {
+            ++m_selectedItemI;
+        }
+    }
+
+    void selectPrevItem()
+    {
+        if (m_selectedItemI > 0)
+        {
+            --m_selectedItemI;
+        }
+    }
+
+    size_t getItemCount() const
+    {
+        return m_list.size();
+    }
+};
+
 class App final
 {
 public:

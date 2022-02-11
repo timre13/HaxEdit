@@ -461,20 +461,19 @@ void App::renderStartupScreen()
             {iconSize*iconRatio, iconSize});
 
     // Render recent file list if not empty
-    if (!g_recentFilePaths.empty())
+    if (!g_recentFilePaths->isEmpty())
     {
-        assert(g_recentFilePaths.size() <= RECENT_LIST_MAX_SIZE);
-
         g_textRenderer->renderString(
                 "\033[90mRecent files:",
                 {START_SCRN_INDENT_PX, (strCountLines(welcomeMsg)+4)*g_fontSizePx},
                 FONT_STYLE_BOLD);
 
-        for (size_t i{}; i < g_recentFilePaths.size(); ++i)
+        for (size_t i{}; i < g_recentFilePaths->getItemCount(); ++i)
         {
             g_textRenderer->renderString(
-                    "\033[90m["+std::to_string(g_recentFilePaths.size()-i)+"]: \033[3m"+g_recentFilePaths[i],
-                    {START_SCRN_INDENT_PX, (strCountLines(welcomeMsg)+5+g_recentFilePaths.size()-i)*g_fontSizePx});
+                    "\033[90m["+std::string(i == g_recentFilePaths->getSelectedItemI() ? "\033[97m" : "")
+                    +std::to_string(i+1)+"\033[0m\033[90m]: \033[3m"+g_recentFilePaths->getItem(i),
+                    {START_SCRN_INDENT_PX, (strCountLines(welcomeMsg)+5+i)*g_fontSizePx});
         }
     }
 }
@@ -483,16 +482,10 @@ Buffer* App::openFileInNewBuffer(
         const std::string& path, bool addToRecFileList/*=true*/)
 {
     g_statMsg.set("Opening file: "+path, StatusMsg::Type::Info);
-    if (addToRecFileList)
-    {
-        assert(g_recentFilePaths.size() <= RECENT_LIST_MAX_SIZE);
 
-        // Remove the first item when the list is full
-        if (g_recentFilePaths.size() == RECENT_LIST_MAX_SIZE)
-            g_recentFilePaths.erase(g_recentFilePaths.begin());
-        // Append the new item to the end
-        g_recentFilePaths.push_back(path);
-    }
+    if (addToRecFileList)
+        g_recentFilePaths->addItem(path);
+
     App::renderStatusLine();
     glfwSwapBuffers(g_window);
 
@@ -609,10 +602,42 @@ void App::windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods)
         return;
     }
 
-    Bindings::fetchKeyBinding(key, mods);
-    // Key callback is always called, but char callback is not
-    // Make sure to run the fetched binding from outside, after the char callback (if called)
-    g_hasBindingToCall = true;
+    // If j or the down key is pressed on the startup screen
+    if (g_tabs.empty() && (key == GLFW_KEY_J || key == GLFW_KEY_DOWN))
+    {
+        g_recentFilePaths->selectNextItem();
+        g_isRedrawNeeded = true;
+    }
+    // If k or the up key is pressed on the startup screen
+    else if (g_tabs.empty() && (key == GLFW_KEY_K || key == GLFW_KEY_UP))
+    {
+        g_recentFilePaths->selectPrevItem();
+        g_isRedrawNeeded = true;
+    }
+    // If the Enter key is pressed on the startup screen
+    else if (g_tabs.empty() && key == GLFW_KEY_ENTER)
+    {
+        if (!g_recentFilePaths->isEmpty())
+        {
+            auto path = g_recentFilePaths->getSelectedItem();
+            // Erase the selected recent file item, so it show will be at the end of the list
+            // without pushing out other entries
+            g_recentFilePaths->removeSelectedItem();
+
+            Buffer* buff = App::openFileInNewBuffer(path);
+            g_tabs.push_back(std::make_unique<Split>(buff));
+            g_activeBuff = buff;
+            g_currTabI = 0;
+            g_isRedrawNeeded = true;
+        }
+    }
+    else
+    {
+        Bindings::fetchKeyBinding(key, mods);
+        // Key callback is always called, but char callback is not
+        // Make sure to run the fetched binding from outside, after the char callback (if called)
+        g_hasBindingToCall = true;
+    }
 }
 
 void App::windowCharCB(GLFWwindow*, uint codePoint)

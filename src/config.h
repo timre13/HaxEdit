@@ -100,4 +100,4 @@
 #define MAX_FILE_SIZE                   1024*1024*1024
 
 // Max. number of paths to store in the last files list
-#define RECENT_LIST_MAX_SIZE            5
+#define RECENT_LIST_MAX_SIZE            20
