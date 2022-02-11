@@ -471,8 +471,8 @@ void App::renderStartupScreen()
         for (size_t i{}; i < g_recentFilePaths.size(); ++i)
         {
             g_textRenderer->renderString(
-                    "\033[90m["+std::to_string(i+1)+"]: \033[3m"+g_recentFilePaths[i],
-                    {START_SCRN_INDENT_PX, (strCountLines(welcomeMsg)+5+i)*g_fontSizePx});
+                    "\033[90m["+std::to_string(g_recentFilePaths.size()-i)+"]: \033[3m"+g_recentFilePaths[i],
+                    {START_SCRN_INDENT_PX, (strCountLines(welcomeMsg)+5+g_recentFilePaths.size()-i)*g_fontSizePx});
         }
     }
 }
