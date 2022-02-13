@@ -184,6 +184,10 @@ protected:
      * Make the cursor visible by scrolling the viewport.
      */
     virtual void scrollViewportToCursor();
+    /*
+     * Scroll so that the cursor line is at the window center.
+     */
+    virtual void centerCursor();
 
     virtual void deleteSelectedChars();
 

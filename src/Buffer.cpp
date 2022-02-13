@@ -227,6 +227,13 @@ void Buffer::scrollViewportToCursor()
     }
 }
 
+void Buffer::centerCursor()
+{
+    m_scrollY = -(m_cursorLine*g_fontSizePx-m_size.y/2);
+    if (m_scrollY > 0)
+        m_scrollY = 0;
+}
+
 void Buffer::_updateHighlighting()
 {
     // TODO: This should really be optimized, don't generate a concatenated buffer
@@ -2175,7 +2182,7 @@ void Buffer::_goToCurrFindResult(bool showStatMsg)
                 " out of "+std::to_string(m_findResultIs.size()),
                 StatusMsg::Type::Info);
     }
-    scrollViewportToCursor();
+    centerCursor();
     m_isCursorShown = true;
     g_isRedrawNeeded = true;
 }
