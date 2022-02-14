@@ -221,9 +221,9 @@ void Buffer::scrollViewportToCursor()
     }
     // Scroll down when the cursor goes out of the viewport
     // FIXME: Line wrapping breaks this, too
-    else if (m_cursorLine+m_scrollY/g_fontSizePx+5 > g_windowHeight/g_fontSizePx)
+    else if (m_cursorLine+m_scrollY/g_fontSizePx+5 > m_size.y/g_fontSizePx)
     {
-        scrollBy(-(m_cursorLine*g_fontSizePx+m_scrollY-g_windowHeight+g_fontSizePx*5));
+        scrollBy(-(m_cursorLine*g_fontSizePx+m_scrollY-m_size.y+g_fontSizePx*5));
     }
 }
 
