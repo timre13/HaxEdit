@@ -241,6 +241,9 @@ void Buffer::_updateHighlighting()
     Logger::dbg("Highighter");
     Logger::log << "Updating syntax highlighting" << Logger::End;
 
+    m_findResultIs.clear();
+    g_isRedrawNeeded = true;
+
     const auto buffer = lineVecConcat(m_content);
 
     // This is the temporary buffer we are working with
@@ -503,7 +506,9 @@ void Buffer::_updateHighlighting()
 
     Logger::log << "Syntax highlighting updated" << Logger::End;
     Logger::log(Logger::End);
+    g_isRedrawNeeded = true;
 
+    findUpdate();
     g_isRedrawNeeded = true;
 }
 
@@ -2267,6 +2272,8 @@ void Buffer::findUpdate()
             index += line.length();
         }
     }
+
+    Logger::log << "Found " << m_findResultIs.size() << " matches" << Logger::End;
 }
 
 void Buffer::findClear()
