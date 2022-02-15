@@ -46,8 +46,6 @@ BindingMapSet::bindingFunc_t _foundKeyCB{};
 
 void fetchKeyBinding(int key, int mods)
 {
-    assert(!_foundKeyCB && "_foundKeyCB hasn't been cleared");
-
     switch (key)
     {
     case GLFW_KEY_CAPS_LOCK:
