@@ -78,18 +78,18 @@ int main(int argc, char** argv)
             "(Launched in "+std::to_string(glfwGetTime()-appStartTime)+"s"
             ", loaded "+std::to_string(g_tabs.size())+" files)", StatusMsg::Type::Info);
 
-    float framesUntilCursorBlinking = CURSOR_BLINK_FRAMES;
+    int msUntilCursorBlinking = CURSOR_BLINK_MS;
     while (!glfwWindowShouldClose(g_window))
     {
         double startTime = glfwGetTime();
 
         glfwPollEvents();
 
-        if (CURSOR_BLINK_FRAMES >= 0 && framesUntilCursorBlinking <= 0 && g_activeBuff)
+        if (CURSOR_BLINK_MS >= 0 && msUntilCursorBlinking <= 0 && g_activeBuff)
         {
             g_activeBuff->toggleCursorVisibility();
             g_isRedrawNeeded = true;
-            framesUntilCursorBlinking = CURSOR_BLINK_FRAMES;
+            msUntilCursorBlinking = CURSOR_BLINK_MS;
         }
 
         if (g_hasBindingToCall)
@@ -125,9 +125,9 @@ int main(int argc, char** argv)
         }
 
         glfwSwapBuffers(g_window);
-        double frameTime = glfwGetTime()-startTime;
-        --framesUntilCursorBlinking;
-        g_statMsg.tick(frameTime);
+        double frameTimeSec = glfwGetTime()-startTime;
+        msUntilCursorBlinking -= frameTimeSec*1000;
+        g_statMsg.tick(frameTimeSec);
     }
 
     Logger::log << "Shutting down!" << Logger::End;
