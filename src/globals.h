@@ -39,6 +39,7 @@ size_t g_currTabI{};
 std::unique_ptr<RecentFileList> g_recentFilePaths;
 
 std::vector<std::unique_ptr<Dialog>> g_dialogs;
+int g_dialogFlashTime = 0;
 
 std::unique_ptr<TextRenderer> g_textRenderer;
 std::unique_ptr<UiRenderer> g_uiRenderer;
@@ -82,6 +83,7 @@ extern bool g_isTitleUpdateNeeded;
 extern bool g_isDebugDrawMode;
 
 extern std::vector<std::unique_ptr<Dialog>> g_dialogs;
+extern int g_dialogFlashTime;
 
 extern std::unique_ptr<Theme> g_theme;
 

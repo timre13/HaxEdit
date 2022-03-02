@@ -98,7 +98,7 @@ int main(int argc, char** argv)
             g_hasBindingToCall = false;
         }
 
-        if (g_isRedrawNeeded)
+        if (g_isRedrawNeeded || g_dialogFlashTime > 0)
         {
             glClearColor(UNPACK_RGB_COLOR(g_theme->bgColor), 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
@@ -125,9 +125,12 @@ int main(int argc, char** argv)
         }
 
         glfwSwapBuffers(g_window);
-        double frameTimeSec = glfwGetTime()-startTime;
+
+        const double frameTimeSec = glfwGetTime()-startTime;
         msUntilCursorBlinking -= frameTimeSec*1000;
         g_statMsg.tick(frameTimeSec);
+        if (g_dialogFlashTime > 0)
+            g_dialogFlashTime -= frameTimeSec*1000;
     }
 
     Logger::log << "Shutting down!" << Logger::End;

@@ -121,6 +121,7 @@ public:
     // ----- Helper functions -----
     [[nodiscard]] static Buffer* openFileInNewBuffer(
             const std::string& path, bool addToRecFileList=true);
+    static void flashDialog();
 
 private:
     static void GLAPIENTRY glDebugMsgCB(

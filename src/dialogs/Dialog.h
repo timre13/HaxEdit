@@ -44,6 +44,7 @@ public:
     virtual void handleKey(int key, int mods) = 0;
     virtual void handleChar(uint codePoint) = 0;
 
+    bool isInsideBody(const glm::ivec2& pos) const;
     virtual inline bool isClosed() const final { return m_isClosed; }
     virtual inline bool isInsideButton(const glm::ivec2& pos) const { (void)pos; return false; }
     virtual inline void pressButtonAt(const glm::ivec2 pos) { (void)pos; }

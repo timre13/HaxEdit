@@ -502,6 +502,11 @@ Buffer* App::openFileInNewBuffer(
     return buffer;
 }
 
+void App::flashDialog()
+{
+    g_dialogFlashTime = DIALOG_FLASH_TIME_MS;
+}
+
 void GLAPIENTRY App::glDebugMsgCB(
         GLenum source, GLenum type, GLuint, GLenum severity,
         GLsizei, const GLchar* message, const void*)
@@ -740,6 +745,7 @@ void App::windowCloseCB(GLFWwindow* window)
         if (!dlg->isClosed())
         {
             glfwSetWindowShouldClose(window, false);
+            flashDialog();
             Logger::log << "Window close request ignored, there are open dialogs" << Logger::End;
             return;
         }
@@ -867,14 +873,25 @@ void App::mouseButtonCB(GLFWwindow*, int btn, int act, int mods)
         }
     }
 
-
     if (!g_dialogs.empty())
     {
-        if (act == GLFW_PRESS && g_dialogs.back()->isInsideButton({g_cursorX, g_cursorY}))
+        if (act == GLFW_PRESS)
         {
-            g_dialogs.back()->pressButtonAt({g_cursorX, g_cursorY});
-            handleDialogClose();
-            g_isRedrawNeeded = true;
+            // If pressed inside the dialog
+            if (g_dialogs.back()->isInsideBody({g_cursorX, g_cursorY}))
+            {
+                // If pressed a dialog button
+                if (g_dialogs.back()->isInsideButton({g_cursorX, g_cursorY}))
+                {
+                    g_dialogs.back()->pressButtonAt({g_cursorX, g_cursorY});
+                    handleDialogClose();
+                    g_isRedrawNeeded = true;
+                }
+            }
+            else // If pressed outside the dialog
+            {
+                flashDialog();
+            }
         }
         return;
     }

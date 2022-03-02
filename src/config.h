@@ -90,9 +90,13 @@
 #define IMG_BUF_ZOOM_STEP               0.05f
 #define HIDE_MOUSE_WHILE_TYPING         true
 
-//-------------------- Misc. --------------------
+//-------------------- Dialogs --------------------
 
 #define FILE_DIALOG_ICON_SIZE_PX        32
+#define DIALOG_FLASH_TIME_MS            1000
+#define DIALOG_FLASH_FREQ_MS            200
+
+//-------------------- Misc. --------------------
 
 #define DATE_TIME_FORMAT                "%F %T"
 #define DATE_TIME_STR_LEN               19
