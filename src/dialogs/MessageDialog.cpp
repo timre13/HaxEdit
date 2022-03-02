@@ -83,36 +83,27 @@ void MessageDialog::render()
 
     recalculateDimensions();
 
-    RGBAColor dialogColor;
+    RGBColor dialogColor;
     RGBAColor buttonColor;
     switch (m_type)
     {
     case Type::Information:
-        dialogColor = {0.5f, 0.7f, 1.0f, 0.8f};
+        dialogColor = {0.5f, 0.7f, 1.0f};
         buttonColor = {0.6f, 0.8f, 0.9f, 0.8f};
         break;
 
     case Type::Warning:
-        dialogColor = {0.8f, 0.5f, 0.0f, 0.8f};
+        dialogColor = {0.8f, 0.5f, 0.0f};
         buttonColor = {0.9f, 0.6f, 0.4f, 0.8f};
         break;
 
     case Type::Error:
-        dialogColor = {1.0f, 0.3f, 0.2f, 0.8f};
+        dialogColor = {1.0f, 0.3f, 0.2f};
         buttonColor = {0.9f, 0.3f, 0.3f, 0.8f};
         break;
     }
 
-    // Render dialog border
-    g_uiRenderer->renderFilledRectangle(
-            {m_dialogDims.xPos-2, m_dialogDims.yPos-2},
-            {m_dialogDims.xPos+m_dialogDims.width+2, m_dialogDims.yPos+m_dialogDims.height+2},
-            {1.0f, 1.0f, 1.0f, 0.8f});
-    // Render dialog
-    g_uiRenderer->renderFilledRectangle(
-            {m_dialogDims.xPos, m_dialogDims.yPos},
-            {m_dialogDims.xPos+m_dialogDims.width, m_dialogDims.yPos+m_dialogDims.height},
-            dialogColor);
+    renderBase(dialogColor);
     // Render dialog text
     g_textRenderer->renderString(m_message, {m_msgTextDims.xPos, m_msgTextDims.yPos});
 

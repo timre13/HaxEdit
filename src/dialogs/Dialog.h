@@ -1,9 +1,12 @@
 #pragma once
 
 #include "../Logger.h"
+#include "../types.h"
 #include <string>
 #include <glm/glm.hpp>
 #include <functional>
+
+#define DIALOG_DEF_BG RGBColor{0.1f, 0.2f, 0.4f}
 
 class Dialog
 {
@@ -31,6 +34,8 @@ protected:
     void* m_cbUserData{}; // The pointer that will be passed to the callback as user data
 
     virtual void recalculateDimensions() = 0;
+
+    void renderBase(const RGBColor& color=DIALOG_DEF_BG);
 
     Dialog(callback_t cb, void* cbUserData);
 

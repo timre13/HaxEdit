@@ -45,17 +45,7 @@ void AskerDialog::render()
 
     recalculateDimensions();
 
-    // Render dialog border
-    g_uiRenderer->renderFilledRectangle(
-            {m_dialogDims.xPos-2, m_dialogDims.yPos-2},
-            {m_dialogDims.xPos+m_dialogDims.width+2, m_dialogDims.yPos+m_dialogDims.height+2},
-            {1.0f, 1.0f, 1.0f, 0.8f});
-    // Render dialog
-    g_uiRenderer->renderFilledRectangle(
-            {m_dialogDims.xPos, m_dialogDims.yPos},
-            {m_dialogDims.xPos+m_dialogDims.width, m_dialogDims.yPos+m_dialogDims.height},
-            {0.1f, 0.2f, 0.4f, 0.8f});
-
+    renderBase();
     // Render title path
     g_textRenderer->renderString(
             m_msg,
