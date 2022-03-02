@@ -196,6 +196,9 @@ protected:
 
     virtual inline Char getCharAt(size_t pos) const
     {
+        if (m_content.empty())
+            return '\0';
+
         size_t i{};
         for (const String& line : m_content)
         {

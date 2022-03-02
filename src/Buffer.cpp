@@ -55,7 +55,7 @@ void Buffer::open(const std::string& filePath)
 
     glfwSetCursor(g_window, Cursors::busy);
 
-    m_filePath = std::filesystem::canonical(filePath);
+    m_filePath = filePath;
     m_isReadOnly = false;
     m_history.clear();
     m_gitRepo.reset();
@@ -64,6 +64,7 @@ void Buffer::open(const std::string& filePath)
 
     try
     {
+        m_filePath = std::filesystem::canonical(filePath);
         m_content = splitStrToLines(loadUnicodeFile(filePath), true);
         m_highlightBuffer = std::u8string(countLineListLen(m_content), Syntax::MARK_NONE);
         m_isHighlightUpdateNeeded = true;
@@ -540,7 +541,7 @@ void Buffer::updateCursor()
     assert(m_cursorLine >= 0);
     assert(m_content.empty() || (size_t)m_cursorLine < m_content.size());
     assert(m_cursorCol >= 0);
-    assert(m_cursorCharPos < countLineListLen(m_content));
+    assert(m_content.empty() || m_cursorCharPos < countLineListLen(m_content));
 
     auto getCursorLineLen{[&](){
         return m_content[m_cursorLine].size();
@@ -811,7 +812,7 @@ void Buffer::updateCursor()
     assert(m_cursorLine >= 0);
     assert(m_content.empty() || (size_t)m_cursorLine < m_content.size());
     assert(m_cursorCol >= 0);
-    assert(m_cursorCharPos < countLineListLen(m_content));
+    assert(m_content.empty() || m_cursorCharPos < countLineListLen(m_content));
 
     // Scroll up when the cursor goes out of the viewport
     if (m_cursorMovCmd != CursorMovCmd::None)
