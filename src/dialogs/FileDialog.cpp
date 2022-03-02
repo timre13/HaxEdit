@@ -126,10 +126,10 @@ void FileDialog::render()
                 file->isDirectory ? FONT_STYLE_ITALIC : FONT_STYLE_REGULAR);
         // Render permissions
         g_textRenderer->renderString(file->permissionStr,
-                {m_dialogDims.xPos+m_dialogDims.width-g_fontWidthPx*9, rect.yPos-2});
+                {m_dialogDims.xPos+m_dialogDims.width-g_fontWidthPx*9-20, rect.yPos-2});
         // Render last mod time
         g_textRenderer->renderString(file->lastModTimeStr,
-                {m_dialogDims.xPos+m_dialogDims.width-g_fontWidthPx*(9+DATE_TIME_STR_LEN+4), rect.yPos-2});
+                {m_dialogDims.xPos+m_dialogDims.width-g_fontWidthPx*(9+DATE_TIME_STR_LEN+4)-20, rect.yPos-2});
         // Render file icon
         g_fileTypeHandler->getIconFromFilename(
                 file->name, file->isDirectory)->render(
