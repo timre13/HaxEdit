@@ -57,7 +57,13 @@ void ImageBuffer::updateRStatusLineStr()
         + "Z: "+std::to_string((int)std::round(m_zoom*100.0f))+"%"
         + " | "
         + (isCursorOutsideImg ? "\033[90m" : "")+"Cur: "+std::to_string(imgCursorX)+", "+std::to_string(imgCursorY);
-    m_statusLineStr.maxLen = std::max((size_t)44, strPLen(m_statusLineStr.str));
+    if (!isCursorOutsideImg)
+    {
+        const RGBAColor colorAtCurs = m_image->getColorAt({imgCursorX, imgCursorY});
+        m_statusLineStr.str += " | " + colorAtCurs.asStrFloat() + " | " + colorAtCurs.asStrHex();
+    }
+
+    m_statusLineStr.maxLen = std::max((size_t)88, strPLen(m_statusLineStr.str));
 }
 
 void ImageBuffer::render()

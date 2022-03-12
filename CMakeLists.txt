@@ -42,6 +42,7 @@ endif()
 
 add_executable(haxed
     src/main.cpp
+    src/types.cpp
     src/common/string.cpp
     src/common/file.cpp
     src/modes.cpp

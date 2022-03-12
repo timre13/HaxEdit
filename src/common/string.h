@@ -76,7 +76,7 @@ template <typename T>
 inline std::string intToHexStr(T x)
 {
     std::stringstream ss;
-    ss << std::uppercase << std::hex << x;
+    ss << std::uppercase << std::hex << +x;
     const std::string str = ss.str();
     return ((str.size() % 2) ? "0" : "") + str;
 }

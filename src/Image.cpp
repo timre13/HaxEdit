@@ -13,19 +13,19 @@ Image::Image(
 
     stbi_set_flip_vertically_on_load(1);
     int channelCount;
-    unsigned char* imageData = stbi_load(filePath.c_str(), &m_physicalSize.x, &m_physicalSize.y, &channelCount, 4);
-    if (!imageData)
+    m_data = stbi_load(filePath.c_str(), &m_physicalSize.x, &m_physicalSize.y, &channelCount, 4);
+    if (!m_data)
     {
         Logger::err << "Failed to load image: " << filePath << ": " << stbi_failure_reason() << Logger::End;
         m_isOpenFailed = true;
-        imageData = (unsigned char*)malloc(4*4*4);
+        m_data = (unsigned char*)malloc(4*4*4);
         static constexpr const uint32_t imgData[] = {
             0xffffffff, 0xff000000, 0xffffffff, 0xff000000,
             0xff000000, 0xffffffff, 0xff000000, 0xffffffff,
             0xffffffff, 0xff000000, 0xffffffff, 0xff000000,
             0xff000000, 0xffffffff, 0xff000000, 0xffffffff,
         };
-        memcpy(imageData, imgData, 4*4*4);
+        memcpy(m_data, imgData, 4*4*4);
         m_physicalSize.x = 4;
         m_physicalSize.y = 4;
     }
@@ -37,11 +37,9 @@ Image::Image(
 
     glGenTextures(1, &m_sampler);
     glBindTexture(GL_TEXTURE_2D, m_sampler);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_physicalSize.x, m_physicalSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_physicalSize.x, m_physicalSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, m_data);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, downscaleFilt); // Downscale filter
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, upscaleFilt); // Upscale filter
-
-    stbi_image_free(imageData);
 }
 
 void Image::render(const glm::ivec2& pos, const glm::ivec2& size/*={0, 0}*/) const
@@ -51,8 +49,27 @@ void Image::render(const glm::ivec2& pos, const glm::ivec2& size/*={0, 0}*/) con
             {size.x > 0 && size.y > 0 ? size : m_physicalSize});
 }
 
+RGBAColor Image::getColorAt(glm::ivec2 pos)
+{
+    // Flip the coordinate vertically
+    pos.y = m_physicalSize.y-pos.y-1;
+
+    assert(pos.x >= 0 && pos.x < m_physicalSize.x && pos.y >= 0 && pos.y < m_physicalSize.y);
+    if (pos.x < 0 || pos.x >= m_physicalSize.x || pos.y < 0 || pos.y >= m_physicalSize.y)
+        return {};
+
+    const int baseI = (pos.y*m_physicalSize.x + pos.x) * 4;
+    RGBAColor color;
+    color.r = m_data[baseI+0] / 255.0f;
+    color.g = m_data[baseI+1] / 255.0f;
+    color.b = m_data[baseI+2] / 255.0f;
+    color.a = m_data[baseI+3] / 255.0f;
+    return color;
+}
+
 Image::~Image()
 {
+    stbi_image_free(m_data);
     glDeleteTextures(1, &m_sampler);
     Logger::dbg << "Cleaned up texture data for image " << this << " (" << m_filePath << ')' << Logger::End;
 }

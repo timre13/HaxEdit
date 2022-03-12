@@ -12,6 +12,7 @@ private:
     glm::ivec2 m_physicalSize{};
     std::string m_filePath;
     bool m_isOpenFailed{};
+    uint8_t* m_data{};
 
 public:
     /*
@@ -35,6 +36,7 @@ public:
 
     inline uint getSamplerId() const { return m_sampler; }
     inline glm::ivec2 getPhysicalSize() const { return m_physicalSize; }
+    RGBAColor getColorAt(glm::ivec2 pos);
 
     inline bool isOpenFailed() const { return m_isOpenFailed; }
 

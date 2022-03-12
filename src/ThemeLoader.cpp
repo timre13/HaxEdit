@@ -75,42 +75,42 @@ Theme* ThemeLoader::load(const std::string& path)
         {
             RGBColor asColor = strToColor(line.substr(keyEnd+1));
             theme->bgColor = asColor;
-            Logger::dbg << "BG = " << asColor.str() << Logger::End;
+            Logger::dbg << "BG = " << asColor.asStrPrefixedFloat() << Logger::End;
             continue;
         }
         if (key == THEME_KEY_CURSLINE)
         {
             RGBColor asColor = strToColor(line.substr(keyEnd+1));
             theme->currLineColor = RGB_COLOR_TO_RGBA(asColor);
-            Logger::dbg << "CursLine = " << asColor.str() << Logger::End;
+            Logger::dbg << "CursLine = " << asColor.asStrPrefixedFloat() << Logger::End;
             continue;
         }
         if (key == THEME_KEY_SELBG)
         {
             RGBColor asColor = strToColor(line.substr(keyEnd+1));
             theme->selBg = asColor;
-            Logger::dbg << "SelBG = " << asColor.str() << Logger::End;
+            Logger::dbg << "SelBG = " << asColor.asStrPrefixedFloat() << Logger::End;
             continue;
         }
         if (key == THEME_KEY_SELFG)
         {
             RGBColor asColor = strToColor(line.substr(keyEnd+1));
             theme->selFg = asColor;
-            Logger::dbg << "SelFG = " << asColor.str() << Logger::End;
+            Logger::dbg << "SelFG = " << asColor.asStrPrefixedFloat() << Logger::End;
             continue;
         }
         if (key == THEME_KEY_FINDRESBG)
         {
             RGBColor asColor = strToColor(line.substr(keyEnd+1));
             theme->findResultBg = asColor;
-            Logger::dbg << "FindResultBG = " << asColor.str() << Logger::End;
+            Logger::dbg << "FindResultBG = " << asColor.asStrPrefixedFloat() << Logger::End;
             continue;
         }
         if (key == THEME_KEY_LINENFG)
         {
             RGBColor asColor = strToColor(line.substr(keyEnd+1));
             theme->lineNColor = asColor;
-            Logger::dbg << "LineNColor = " << asColor.str() << Logger::End;
+            Logger::dbg << "LineNColor = " << asColor.asStrPrefixedFloat() << Logger::End;
             continue;
         }
 
