@@ -158,6 +158,7 @@ protected:
 
     int m_charUnderMouseCol{};
     int m_charUnderMouseRow{};
+    int m_charUnderMouseI{};
 
     struct StatusLineStr
     {

@@ -761,6 +761,7 @@ void App::cursorPosCB(GLFWwindow* window, double x, double y)
 
     g_cursorX = (int)x;
     g_cursorY = (int)y;
+    g_isRedrawNeeded = true;
 
     if (!g_dialogs.empty() && !g_dialogs.back()->isClosed())
     {
