@@ -55,10 +55,8 @@ void ImageBuffer::updateRStatusLineStr()
         + " | "
         + "Z: "+std::to_string((int)std::round(m_zoom*100.0f))+"%"
         + " | "
-        + (imgCursorX < 0 || imgCursorX >= imgPW || imgCursorY < 0 || imgCursorY >= imgPW
-                ? ""
-                : "Cur: "+std::to_string(imgCursorX+1)+'x'+std::to_string(imgCursorY+1));
-    m_statusLineStr.maxLen = std::max((size_t)43, strPLen(m_statusLineStr.str));
+        + "Cur: "+std::to_string(imgCursorX+1)+", "+std::to_string(imgCursorY+1);
+    m_statusLineStr.maxLen = std::max((size_t)44, strPLen(m_statusLineStr.str));
 }
 
 void ImageBuffer::render()
