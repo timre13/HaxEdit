@@ -156,6 +156,9 @@ protected:
     bool m_isCursorShown{true}; // Used to blink the cursor
     CursorMovCmd m_cursorMovCmd{CursorMovCmd::None};
 
+    int m_charUnderMouseCol{};
+    int m_charUnderMouseRow{};
+
     struct StatusLineStr
     {
         std::string str;
@@ -408,6 +411,8 @@ public:
 
     virtual void indentSelectedLines();
     virtual void unindentSelectedLines();
+
+    virtual void goToMousePos();
 
     virtual ~Buffer();
 };

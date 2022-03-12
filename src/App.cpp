@@ -938,6 +938,7 @@ void App::mouseButtonCB(GLFWwindow*, int btn, int act, int mods)
                     // Activate the clicked buffer
                     g_tabs[g_currTabI]->setActiveChildI(i);
                     g_activeBuff = g_tabs[g_currTabI]->getActiveBufferRecursively();
+                    buffer->goToMousePos();
                     g_isTitleUpdateNeeded = true;
                     g_isRedrawNeeded = true;
                     break;

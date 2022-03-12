@@ -1304,6 +1304,9 @@ void Buffer::render()
     const int maxLineLenChar = m_size.x/g_fontWidthPx;
 #endif
 
+    m_charUnderMouseCol = -1;
+    m_charUnderMouseRow = -1;
+
     bool isLineBeginning = true;
     bool isLeadingSpace = true;
     int lineI{};
@@ -1454,6 +1457,18 @@ void Buffer::render()
 
             // Bind the text renderer shader again
             g_textRenderer->prepareForDrawing();
+
+            // If the mouse is in the current line, take a note. At least we know the line.
+            if (g_cursorY >= textY && g_cursorY < textY+g_fontSizePx)
+            {
+                m_charUnderMouseRow = lineI;
+            }
+            // If the mouse is in the current character, take a note. We known both the line and the column.
+            if (g_cursorY >= textY && g_cursorY < textY+g_fontSizePx
+             && g_cursorX >= textX && g_cursorX < textX+g_fontWidthPx)
+            {
+                m_charUnderMouseCol = colI;
+            }
 
             if (c == '\t') // Tab
             {
@@ -2351,6 +2366,26 @@ void Buffer::unindentSelectedLines()
     // TODO: Remove from highlight buffer instead of reparsing
     m_isHighlightUpdateNeeded = true;
     g_isRedrawNeeded = true;
+}
+
+void Buffer::goToMousePos()
+{
+    Logger::dbg << "Jumping to "
+        "line: " << m_charUnderMouseRow << ", "
+        "col: " << m_charUnderMouseCol << Logger::End;
+    if (m_charUnderMouseRow != -1)
+    {
+        m_cursorLine = m_charUnderMouseRow;
+        // If the mouse is right to a line, jump to the last character in the line
+        m_cursorCol = (m_charUnderMouseCol == -1 ? m_content[m_charUnderMouseRow].size()-1 : m_charUnderMouseCol);
+        m_cursorCharPos = 0;
+        for (int i{}; i < m_charUnderMouseRow; ++i)
+        {
+            m_cursorCharPos += m_content[i].size();
+        }
+        m_cursorCharPos += m_cursorCol;
+    }
+    m_isCursorShown = true;
 }
 
 Buffer::~Buffer()
