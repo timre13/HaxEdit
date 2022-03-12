@@ -826,6 +826,13 @@ void App::cursorPosCB(GLFWwindow* window, double x, double y)
                                     dynamic_cast<ImageBuffer*>(buffer.get()) == nullptr
                                     ? GLFW_IBEAM_CURSOR : GLFW_CROSSHAIR_CURSOR
                         ));
+
+                        // If the button is being held down, start a selection
+                        if (g_isMouseBtnLPressed)
+                        {
+                            buffer->goToMousePos();
+                            buffer->startSelection(Buffer::Selection::Mode::Normal);
+                        }
                         break;
                     }
                 }
@@ -939,7 +946,13 @@ void App::mouseButtonCB(GLFWwindow*, int btn, int act, int mods)
                     // Activate the clicked buffer
                     g_tabs[g_currTabI]->setActiveChildI(i);
                     g_activeBuff = g_tabs[g_currTabI]->getActiveBufferRecursively();
+
                     buffer->goToMousePos();
+
+                    // Cancel selection when going to a new position after releasing the button
+                    if (act == GLFW_PRESS)
+                        buffer->closeSelection();
+
                     g_isTitleUpdateNeeded = true;
                     g_isRedrawNeeded = true;
                     break;
