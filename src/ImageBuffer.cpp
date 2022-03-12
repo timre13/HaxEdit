@@ -48,6 +48,7 @@ void ImageBuffer::updateRStatusLineStr()
     const float zoomedH = imgPH*m_zoom;
     const int imgY = m_position.y+m_size.y/2-zoomedH/2;
     const int imgCursorY = (g_cursorY-imgY)/m_zoom;
+    const bool isCursorOutsideImg = (imgCursorX < 0 || imgCursorX >= imgPW || imgCursorY < 0 || imgCursorY >= imgPW);
 
     m_statusLineStr.str
         = "W: "+std::to_string(m_image->getPhysicalSize().x)
@@ -55,7 +56,7 @@ void ImageBuffer::updateRStatusLineStr()
         + " | "
         + "Z: "+std::to_string((int)std::round(m_zoom*100.0f))+"%"
         + " | "
-        + "Cur: "+std::to_string(imgCursorX+1)+", "+std::to_string(imgCursorY+1);
+        + (isCursorOutsideImg ? "\033[90m" : "")+"Cur: "+std::to_string(imgCursorX+1)+", "+std::to_string(imgCursorY+1);
     m_statusLineStr.maxLen = std::max((size_t)44, strPLen(m_statusLineStr.str));
 }
 
