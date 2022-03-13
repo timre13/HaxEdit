@@ -26,6 +26,12 @@ void Popup::sortItems()
 {
     std::sort(m_items.begin(), m_items.end(),
             [](const std::unique_ptr<Item>& a, const std::unique_ptr<Item>& b) {
+                // Prioritize Path items
+                if (a->type == Item::Type::Path && b->type != Item::Type::Path)
+                    return true;
+                else if (a->type != Item::Type::Path && b->type == Item::Type::Path)
+                    return false;
+
                 auto la = strToLower(a->value);
                 auto lb = strToLower(b->value);
                 // Generally case is ignored

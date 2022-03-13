@@ -17,6 +17,7 @@
 #include "autocomp/Popup.h"
 #include "autocomp/DictionaryProvider.h"
 #include "autocomp/BufferWordProvider.h"
+#include "autocomp/PathProvider.h"
 
 namespace std_fs = std::filesystem;
 
@@ -169,8 +170,9 @@ protected:
     // To handle Undo and Redo
     BufferHistory m_history;
 
-    std::unique_ptr<Autocomp::BufferWordProvider> m_buffWordProvid;
     std::unique_ptr<Autocomp::Popup> m_autocompPopup;
+    std::unique_ptr<Autocomp::BufferWordProvider> m_buffWordProvid;
+    std::unique_ptr<Autocomp::PathProvider> m_pathProvid;
 
     Selection m_selection{};
 

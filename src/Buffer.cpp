@@ -14,6 +14,7 @@
 #include <sstream>
 #include <chrono>
 #include <filesystem>
+#include <cctype>
 using namespace std::chrono_literals;
 
 Buffer::Buffer()
@@ -45,6 +46,7 @@ Buffer::Buffer()
     Logger::dbg << "Setting up autocomplete for buffer: " << this << Logger::End;
     m_autocompPopup = std::make_unique<Autocomp::Popup>();
     m_buffWordProvid = std::make_unique<Autocomp::BufferWordProvider>();
+    m_pathProvid = std::make_unique<Autocomp::PathProvider>();
 
     Logger::log << "Created a buffer: " << this << Logger::End;
 }
@@ -1968,8 +1970,26 @@ void Buffer::redo()
     }
 }
 
+// Guesses the currently typed path based on the POSIX portable file name character set
+static std::string getPathFromLine(const String& line)
+{
+    if (line.empty())
+        return "";
+
+    std::string output;
+    for (size_t i=line.length()-1; i != -1_st; --i)
+    {
+        const char c = line[i];
+        if (!std::isalnum(c) && c != '.' && c != '_' && c != '-' && c != '/')
+            break;
+        output = c + output;
+    }
+    return output;
+}
+
 void Buffer::triggerAutocompPopup()
 {
+    m_pathProvid->setPrevix(getPathFromLine(m_content[m_cursorLine].substr(0, m_cursorCol)));
     m_autocompPopup->setVisibility(true);
     m_isCursorShown = true;
     g_isRedrawNeeded = true;
@@ -2019,6 +2039,7 @@ void Buffer::regenAutocompList()
     m_autocompPopup->clear();
     Autocomp::dictProvider->get(m_autocompPopup.get());
     m_buffWordProvid->get(m_autocompPopup.get());
+    m_pathProvid->get(m_autocompPopup.get());
 }
 
 void Buffer::startSelection(Selection::Mode mode)
