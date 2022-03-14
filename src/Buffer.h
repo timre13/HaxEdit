@@ -197,7 +197,7 @@ protected:
      */
     virtual void centerCursor();
 
-    virtual void deleteSelectedChars();
+    virtual size_t deleteSelectedChars();
 
     virtual void _updateHighlighting();
     virtual void updateGitDiff();

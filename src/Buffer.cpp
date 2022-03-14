@@ -996,13 +996,17 @@ void Buffer::pasteFromClipboard()
     if (!aClipbText.empty())
     {
         Logger::dbg << "Pasting: " << quoteStr(aClipbText) << Logger::End;
+        const size_t delCount = deleteSelectedChars(); // Overwrite selected chars if a selection is active
         for (char c : aClipbText)
         {
             assert((c & 0b10000000) == 0); // Detect non-ASCII chars
             insert(c);
         }
-        g_statMsg.set("Pasted text from clipboard ("+std::to_string(aClipbText.size())+" chars)",
+        g_statMsg.set("Pasted text from clipboard ("
+                +std::to_string(aClipbText.size())+" chars)"
+                +(delCount ? " (overwrote "+std::to_string(delCount)+" chars)" : ""),
                 StatusMsg::Type::Info);
+
     }
     else
     {
@@ -2097,13 +2101,15 @@ void Buffer::closeSelection()
     m_selection.mode = Selection::Mode::None;
 }
 
-void Buffer::deleteSelectedChars()
+size_t Buffer::deleteSelectedChars()
 {
     if (m_isReadOnly)
-        return;
+        return 0;
 
     if (m_selection.mode == Selection::Mode::None)
-        return;
+        return 0;
+
+    int delCount = 0;
 
     struct CharPos_t
     {
@@ -2165,7 +2171,8 @@ void Buffer::deleteSelectedChars()
         m_highlightBuffer.erase(toDel.index, 1);
     }
 
-    Logger::dbg << "Deleted " << deletedStr.size()-blockSepCount << " characters (block has "
+    delCount = deletedStr.size()-blockSepCount;
+    Logger::dbg << "Deleted " << delCount << " characters (block has "
         << blockSepCount << " separators)" << Logger::End;
 
     switch (m_selection.mode)
@@ -2235,6 +2242,8 @@ void Buffer::deleteSelectedChars()
     scrollViewportToCursor();
     m_isHighlightUpdateNeeded = true;
     g_isRedrawNeeded = true;
+
+    return delCount;
 }
 
 void Buffer::_goToCurrFindResult(bool showStatMsg)
