@@ -506,20 +506,24 @@ void goToPrevTab()
 
 void increaseActiveBufferWidth()
 {
-    if (!g_tabs.empty()
-        && g_tabs[g_currTabI]->getActiveChildI()+1 < g_tabs[g_currTabI]->getNumOfChildren())
+    if (!g_tabs.empty() && g_tabs[g_currTabI]->getNumOfChildren() > 1)
     {
-        g_tabs[g_currTabI]->increaseChildWidth(g_tabs[g_currTabI]->getActiveChildI(), 10);
+        if (g_tabs[g_currTabI]->getActiveChildI()+1 < g_tabs[g_currTabI]->getNumOfChildren()) // If not last child
+            g_tabs[g_currTabI]->increaseChildWidth(g_tabs[g_currTabI]->getActiveChildI(), 10); // Move right border
+        else // If last child
+            g_tabs[g_currTabI]->increaseChildWidth(g_tabs[g_currTabI]->getActiveChildI()-1, -10); // Move left border
         g_isRedrawNeeded = true;
     }
 }
 
 void decreaseActiveBufferWidth()
 {
-    if (!g_tabs.empty()
-        && g_tabs[g_currTabI]->getActiveChildI()+1 < g_tabs[g_currTabI]->getNumOfChildren())
+    if (!g_tabs.empty() && g_tabs[g_currTabI]->getNumOfChildren() > 1)
     {
-        g_tabs[g_currTabI]->increaseChildWidth(g_tabs[g_currTabI]->getActiveChildI(), -10);
+        if (g_tabs[g_currTabI]->getActiveChildI()+1 < g_tabs[g_currTabI]->getNumOfChildren()) // If not last child
+            g_tabs[g_currTabI]->increaseChildWidth(g_tabs[g_currTabI]->getActiveChildI(), -10); // Move right border
+        else // If last child
+            g_tabs[g_currTabI]->increaseChildWidth(g_tabs[g_currTabI]->getActiveChildI()-1, 10); // Move left border
         g_isRedrawNeeded = true;
     }
 }
