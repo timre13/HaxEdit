@@ -807,6 +807,43 @@ void Buffer::updateCursor()
         break;
     }
 
+    case CursorMovCmd::PageUp:
+    {
+        const size_t pageSize = m_size.y / g_fontSizePx;
+        for (size_t i{}; i < pageSize && m_cursorLine > 0; ++i)
+        {
+            const int prevCursorCol = m_cursorCol;
+
+            --m_cursorLine;
+
+            if (m_cursorCol != 0) // Column 0 always exists
+                // If the new line is smaller than the current cursor column, step back to the end of the line
+                m_cursorCol = std::min((int)getCursorLineLen()-1, m_cursorCol);
+
+            m_cursorCharPos -= prevCursorCol + ((int)getCursorLineLen()-m_cursorCol);
+        }
+        break;
+    }
+
+    case CursorMovCmd::PageDown:
+    {
+        const size_t pageSize = m_size.y / g_fontSizePx;
+        for (size_t i{}; i < pageSize && (size_t)m_cursorLine < m_content.size()-1; ++i)
+        {
+            const int prevCursorCol = m_cursorCol;
+            const int prevCursorLineLen = getCursorLineLen();
+
+            ++m_cursorLine;
+
+            if (m_cursorCol != 0) // Column 0 always exists
+                // If the new line is smaller than the current cursor column, step back to the end of the line
+                m_cursorCol = std::min((int)getCursorLineLen()-1, m_cursorCol);
+
+            m_cursorCharPos += (prevCursorLineLen-prevCursorCol) + m_cursorCol;
+        }
+        break;
+    }
+
     case CursorMovCmd::None:
         break;
     }

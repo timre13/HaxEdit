@@ -748,6 +748,24 @@ void goToLastChar()
     }
 }
 
+void goPageUp()
+{
+    if (g_activeBuff)
+    {
+        g_activeBuff->moveCursor(Buffer::CursorMovCmd::PageUp);
+        g_isRedrawNeeded = true;
+    }
+}
+
+void goPageDown()
+{
+    if (g_activeBuff)
+    {
+        g_activeBuff->moveCursor(Buffer::CursorMovCmd::PageDown);
+        g_isRedrawNeeded = true;
+    }
+}
+
 void undoActiveBufferChange()
 {
     if (g_activeBuff)

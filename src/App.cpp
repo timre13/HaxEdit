@@ -190,6 +190,8 @@ void App::setupKeyBindings()
         bindFuncKey(GLFW_KEY_BACKSPACE,     0, Callbacks::deleteCharBackwards);
         bindFuncKey(GLFW_KEY_DELETE,        0, Callbacks::deleteCharForwardOrSelection);
         bindFuncKey(GLFW_KEY_KP_DECIMAL,    0, Callbacks::deleteCharForwardOrSelection);
+        bindFuncKey(GLFW_KEY_PAGE_UP,       0, Callbacks::goPageUp);
+        bindFuncKey(GLFW_KEY_PAGE_DOWN,     0, Callbacks::goPageDown);
 
         // Ctrl held down
         bindPrimKey("n",                    GLFW_MOD_CONTROL, Callbacks::createBufferInNewTab);

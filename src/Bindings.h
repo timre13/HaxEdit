@@ -104,6 +104,9 @@ void insertTabOrSpaces();
 void goToFirstChar();
 void goToLastChar();
 
+void goPageUp();
+void goPageDown();
+
 void undoActiveBufferChange();
 void redoActiveBufferChange();
 

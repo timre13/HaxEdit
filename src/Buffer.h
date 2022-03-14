@@ -113,6 +113,8 @@ public:
         SWordEnd,       // Note: Words are whitespace-separated here (WORD in VIM)
         SWordBeginning, // Note: Words are whitespace-separated here (WORD in VIM)
         SNextWord,      // Note: Words are whitespace-separated here (WORD in VIM)
+        PageUp,
+        PageDown,
     };
 
     struct Selection
