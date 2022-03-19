@@ -1646,25 +1646,37 @@ void Buffer::insert(Char character)
     const int oldCol = m_cursorCol;
     const int oldLine = m_cursorLine;
 
-    m_history.add(BufferHistory::Entry{
-            .action=BufferHistory::Entry::Action::Insert,
-            .values=charToStr(character),
-            .cursPos=m_cursorCharPos,
-            .cursLine=m_cursorLine,
-            .cursCol=m_cursorCol,
-    });
+
+    BufferHistory::Entry histEntry;
+    histEntry.cursPos = m_cursorCharPos,
+    histEntry.cursLine = m_cursorLine,
+    histEntry.cursCol = m_cursorCol;
+    histEntry.lines.emplace_back();
+    histEntry.lines[0].lineI = m_cursorLine;
 
     if (character == '\n')
     {
+        histEntry.lines[0].lineI = oldLine;
+        histEntry.lines[0].from = m_content[oldLine];
         ++m_cursorLine;
         const String newLineVal = m_content[oldLine].substr(m_cursorCol); // Save chars right to cursor
         m_content[oldLine] = m_content[oldLine].substr(0, m_cursorCol) + U'\n'; // Remove chars right to cursor
+        histEntry.lines[0].to = m_content[oldLine];
+
         m_content.insert(m_content.begin()+m_cursorLine, newLineVal); // Create a new line
         m_cursorCol = 0;
+        histEntry.lines.emplace_back();
+        histEntry.lines[1].lineI = m_cursorLine;
+        histEntry.lines[1].from = U"";
+        histEntry.lines[1].to = U"\n";
+
     }
     else
     {
+        histEntry.lines[0].lineI = m_cursorLine;
+        histEntry.lines[0].from = m_content[m_cursorLine];
         m_content[m_cursorLine].insert(m_content[m_cursorLine].begin()+m_cursorCol, character);
+        histEntry.lines[0].to = m_content[m_cursorLine];
         ++m_cursorCol;
     }
     ++m_cursorCharPos;
@@ -1696,6 +1708,7 @@ void Buffer::insert(Char character)
         }
     }
 
+    m_history.add(std::move(histEntry));
 
     m_isModified = true;
     m_isCursorShown = true;
@@ -1722,18 +1735,22 @@ void Buffer::replaceChar(Char character)
         return;
     }
 
-    m_history.add(BufferHistory::Entry{
-            .action=BufferHistory::Entry::Action::Replace,
-            .values=charToStr(m_content[m_cursorLine][m_cursorCol])+charToStr(character),
-            .cursPos=m_cursorCharPos,
-            .cursLine=m_cursorLine,
-            .cursCol=m_cursorCol,
-    });
+    BufferHistory::Entry histEntry;
+    histEntry.cursPos = m_cursorCharPos,
+    histEntry.cursLine = m_cursorLine,
+    histEntry.cursCol = m_cursorCol;
+    histEntry.lines.emplace_back();
+    histEntry.lines.back().from = m_content[m_cursorLine];
+    histEntry.lines.back().lineI = m_cursorLine;
+
     m_content[m_cursorLine][m_cursorCol] = character;
 
     ++m_cursorCol;
     ++m_cursorCharPos;
     m_isModified = true;
+
+    histEntry.lines.back().to = m_content[m_cursorLine];
+    m_history.add(std::move(histEntry));
 
     m_isCursorShown = true;
     m_isHighlightUpdateNeeded = true;
@@ -1752,16 +1769,21 @@ void Buffer::deleteCharBackwards()
     assert(m_cursorCol >= 0);
     assert(m_cursorLine >= 0);
 
+    BufferHistory::Entry histEntry;
+    histEntry.cursPos = m_cursorCharPos,
+    histEntry.cursLine = m_cursorLine,
+    histEntry.cursCol = m_cursorCol;
+    histEntry.lines.emplace_back();
+
     // If deleting at the beginning of the line and we have stuff to delete
     if (m_cursorCol == 0 && m_cursorLine != 0)
     {
-        m_history.add(BufferHistory::Entry{
-                .action=BufferHistory::Entry::Action::Delete,
-                .values=U"\n",
-                .cursPos=m_cursorCharPos-1,
-                .cursLine=m_cursorLine-1,
-                .cursCol=(int)m_content[m_cursorLine-1].length(),
-        });
+        histEntry.lines.emplace_back();
+        histEntry.lines[0].lineI = m_cursorLine-1;
+        histEntry.lines[0].from = m_content[m_cursorLine-1];
+        histEntry.lines[1].lineI = m_cursorLine;
+        histEntry.lines[1].from = m_content[m_cursorLine];
+
         m_cursorCol = m_content[m_cursorLine-1].length()-1;
         // Delete newline from end of previous line
         m_content[m_cursorLine-1].erase(m_content[m_cursorLine-1].length()-1, 1);
@@ -1771,6 +1793,8 @@ void Buffer::deleteCharBackwards()
         m_content.erase(m_content.begin()+m_cursorLine);
         // Move current line to the end of the prev. one
         m_content[m_cursorLine-1].append(currLineVal);
+        histEntry.lines[0].to = m_content[m_cursorLine-1];
+        histEntry.lines[1].to = U"";
         m_highlightBuffer.erase(m_cursorCharPos-1, 1);
         --m_cursorLine;
         --m_cursorCharPos;
@@ -1779,22 +1803,20 @@ void Buffer::deleteCharBackwards()
     // If deleting in the middle/end of the line and we have stuff to delete
     else if (m_cursorCharPos > 0)
     {
-        m_history.add(BufferHistory::Entry{
-                .action=BufferHistory::Entry::Action::Delete,
-                .values=charToStr(m_content[m_cursorLine][m_cursorCol-1]),
-                .cursPos=m_cursorCharPos-1,
-                .cursLine=m_cursorLine,
-                .cursCol=m_cursorCol-1,
-        });
+        histEntry.lines[0].lineI = m_cursorLine;
+        histEntry.lines[0].from = m_content[m_cursorLine];
         m_content[m_cursorLine].erase(m_cursorCol-1, 1);
         m_highlightBuffer.erase(m_cursorCharPos-1, 1);
         --m_cursorCol;
         --m_cursorCharPos;
         m_isModified = true;
+        histEntry.lines[0].to = m_content[m_cursorLine];
     }
 
     assert(m_cursorCol >= 0);
     assert(m_cursorLine >= 0);
+
+    m_history.add(std::move(histEntry));
 
     m_isCursorShown = true;
     m_isHighlightUpdateNeeded = true;
@@ -1822,17 +1844,21 @@ void Buffer::deleteCharForwardOrSelected()
     assert(m_cursorCol >= 0);
     assert(m_cursorLine >= 0);
 
+    BufferHistory::Entry histEntry;
+    histEntry.cursPos = m_cursorCharPos,
+    histEntry.cursLine = m_cursorLine,
+    histEntry.cursCol = m_cursorCol;
+    histEntry.lines.emplace_back();
+
     const int lineLen = m_content[m_cursorLine].length();
     // If deleting at the end of the line and we have stuff to delete
     if (m_cursorCol == lineLen-1 && (size_t)m_cursorLine < m_content.size()-1)
     {
-        m_history.add(BufferHistory::Entry{
-                .action=BufferHistory::Entry::Action::Delete,
-                .values=charToStr(m_content[m_cursorLine][m_cursorCol]),
-                .cursPos=m_cursorCharPos,
-                .cursLine=m_cursorLine,
-                .cursCol=m_cursorCol,
-        });
+        histEntry.lines.emplace_back();
+        histEntry.lines[0].lineI = m_cursorLine;
+        histEntry.lines[0].from = m_content[m_cursorLine];
+        histEntry.lines[1].lineI = m_cursorLine+1;
+        histEntry.lines[1].from = m_content[m_cursorLine+1];
         // Save next line
         const String nextLine = m_content[m_cursorLine+1];
         // Remove next line
@@ -1841,26 +1867,26 @@ void Buffer::deleteCharForwardOrSelected()
         m_content[m_cursorLine].erase(m_content[m_cursorLine].length()-1, 1);
         // Append the next line to the current one
         m_content[m_cursorLine].append(nextLine);
+        histEntry.lines[0].to = m_content[m_cursorLine];
+        histEntry.lines[1].to = U"";
         m_highlightBuffer.erase(m_cursorCharPos, 1);
         m_isModified = true;
     }
     // If deleting in the middle/beginning of the line and we have stuff to delete
     else if (m_cursorCol < lineLen-1 && (size_t)m_cursorLine < m_content.size())
     {
-        m_history.add(BufferHistory::Entry{
-                .action=BufferHistory::Entry::Action::Delete,
-                .values=charToStr(m_content[m_cursorLine][m_cursorCol]),
-                .cursPos=m_cursorCharPos,
-                .cursLine=m_cursorLine,
-                .cursCol=m_cursorCol,
-        });
+        histEntry.lines[0].lineI = m_cursorLine;
+        histEntry.lines[0].from = m_content[m_cursorLine];
         m_content[m_cursorLine].erase(m_cursorCol, 1);
         m_highlightBuffer.erase(m_cursorCharPos, 1);
+        histEntry.lines[0].to = m_content[m_cursorLine];
         m_isModified = true;
     }
 
     assert(m_cursorCol >= 0);
     assert(m_cursorLine >= 0);
+
+    m_history.add(std::move(histEntry));
 
     m_isCursorShown = true;
     scrollViewportToCursor();
@@ -1874,71 +1900,33 @@ void Buffer::undo()
     if (m_history.canGoBack())
     {
         auto entry = m_history.goBack();
-        switch (entry.action)
+        //Logger::dbg << "Undoing a history entry with " << entry.lines.size() << " lines" << Logger::End;
+        for (size_t i{}; i < entry.lines.size(); ++i)
         {
-        case BufferHistory::Entry::Action::None:
-            assert(false);
-            return;
+            const auto& lineEntry = entry.lines[i];
 
-        // TODO: Reimplement
-#if 0
-        case BufferHistory::Entry::Action::Insert:
-            m_content.erase(entry.cursPos, 1);
-            m_highlightBuffer.erase(entry.cursPos, 1);
-            break;
-
-        case BufferHistory::Entry::Action::Replace:
-            m_content[entry.cursPos] = entry.values[0];
-            break;
-
-        case BufferHistory::Entry::Action::Delete:
-            m_content.insert(entry.cursPos, 1, entry.values[0]);
-            m_highlightBuffer.insert(entry.cursPos, 1, Syntax::MARK_NONE);
-            break;
-
-        case BufferHistory::Entry::Action::DeleteNormalSelection:
-        case BufferHistory::Entry::Action::DeleteLineSelection:
-            m_content.insert(std::min(entry.cursPos, entry.selBeginPos), entry.values);
-            m_highlightBuffer.insert(std::min(entry.cursPos, entry.selBeginPos), entry.values.size(), Syntax::MARK_NONE);
-            break;
-
-        case BufferHistory::Entry::Action::DeleteBlockSelection:
-        {
-            assert(!entry.values.empty());
-
-            // FIXME: When selection starts at the bottom left or top right corner,
-            //        the block gets messed up
-
-            const auto lines = splitStrToLines(entry.values);
-            int blockSepCount = 0;
-            int insPos = std::min(entry.selBeginPos, entry.cursPos);
-            int insLine = std::min(entry.selBeginLine, entry.cursLine);
-            for (const auto& line : lines)
+            // If undoing the creation of a new line
+            if (lineEntry.from.empty())
             {
-                m_content.insert(insPos, line);
-                //m_content.insert(insPos, line.size(), 'A'+blockSepCount);
-                m_highlightBuffer.insert(insPos, line.size(), Syntax::MARK_NONE);
-                Logger::log << "INSERTED LINE: " << strToAscii(line) << Logger::End;
-                // BUG?
-                insPos += getLineLenAt(m_content, insLine)+1;
-                ++insLine;
-                ++blockSepCount;
+                m_content.erase(m_content.begin()+lineEntry.lineI);
+            }
+            // If undoing the deletion of a line
+            else if (lineEntry.to.empty())
+            {
+                m_content.insert(m_content.begin()+lineEntry.lineI, lineEntry.from);
+            }
+            else
+            {
+                m_content[lineEntry.lineI] = lineEntry.from;
             }
 
-            Logger::log << "Undone a block selection of " << entry.values.size()-blockSepCount
-                << " characters and " << blockSepCount << " block separators" << Logger::End;
-
-            break;
         }
-#endif
-        }
-
-        assert(entry.cursPos != -1_st);
-        assert(entry.cursLine != -1);
-        assert(entry.cursCol != -1);
-        m_cursorCharPos = entry.cursPos;
-        m_cursorLine = entry.cursLine;
         m_cursorCol = entry.cursCol;
+        m_cursorLine = entry.cursLine;
+        m_cursorCharPos = entry.cursPos;
+
+        // TODO: Adjust `m_highlightBuffer`
+
         scrollViewportToCursor();
         m_isHighlightUpdateNeeded = true;
         g_isRedrawNeeded = true;
@@ -1954,52 +1942,14 @@ void Buffer::redo()
 {
     if (m_history.canGoForward())
     {
-        auto entry = m_history.goForward();
-        switch (entry.action)
-        {
-        case BufferHistory::Entry::Action::None:
-            assert(false);
-            return;
-
-        // TODO: Reimplement
-#if 0
-        case BufferHistory::Entry::Action::Insert:
-            m_content.insert(entry.cursPos, 1, entry.values[0]);
-            m_highlightBuffer.insert(entry.cursPos, 1, Syntax::MARK_NONE);
-            break;
-
-        case BufferHistory::Entry::Action::Replace:
-            m_content[entry.cursPos] = entry.values[1];
-            break;
-
-        case BufferHistory::Entry::Action::Delete:
-            m_content.erase(entry.cursPos, 1);
-            m_highlightBuffer.erase(entry.cursPos, 1);
-            break;
-#endif
-
-        case BufferHistory::Entry::Action::DeleteNormalSelection:
-#pragma message("TODO")
-            assert(false);
-            break;
-
-        case BufferHistory::Entry::Action::DeleteLineSelection:
-#pragma message("TODO")
-            assert(false);
-            break;
-
-        case BufferHistory::Entry::Action::DeleteBlockSelection:
-#pragma message("TODO")
-            assert(false);
-            break;
-        }
-
-        assert(entry.cursPos != -1_st);
-        assert(entry.cursLine != -1);
-        assert(entry.cursCol != -1);
+        // TODO
+        /*
         m_cursorCharPos = entry.cursPos;
         m_cursorLine = entry.cursLine;
         m_cursorCol = entry.cursCol;
+        */
+        // TODO: Adjust `m_highlightBuffer`
+
         m_isHighlightUpdateNeeded = true;
         scrollViewportToCursor();
         g_isRedrawNeeded = true;
@@ -2175,6 +2125,8 @@ size_t Buffer::deleteSelectedChars()
     Logger::dbg << "Deleted " << delCount << " characters (block has "
         << blockSepCount << " separators)" << Logger::End;
 
+    /*
+     * TODO
     switch (m_selection.mode)
     {
         case Selection::Mode::None: break; // Unreachable
@@ -2218,6 +2170,7 @@ size_t Buffer::deleteSelectedChars()
             break;
 
     }
+    */
 
     // Jump the cursor to the right place
     if (m_cursorCharPos > m_selection.fromCharI)

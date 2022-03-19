@@ -28,24 +28,16 @@ class BufferHistory final
 public:
     struct Entry
     {
-        enum class Action
+        struct LineEntry
         {
-            None,
-            Insert,
-            Replace,
-            Delete,
-            DeleteNormalSelection,
-            DeleteLineSelection,
-            DeleteBlockSelection,
-        }       action{};
-        String  values;
-        size_t  cursPos  = -1;
-        int     cursLine = -1;
-        int     cursCol  = -1;
-        // Selection-only values
-        size_t  selBeginPos{};
-        int     selBeginLine{};
-        int     selBeginCol{};
+            String from  = U"\xffffffff";
+            String to    = U"\xffffffff";
+            size_t lineI = -1_st;
+        };
+        std::vector<LineEntry> lines;
+        size_t cursPos  = -1_st;
+        int    cursLine = -1;
+        int    cursCol  = -1;
     };
 
 private:
@@ -63,6 +55,20 @@ public:
 
     inline void add(const Entry& entry)
     {
+        Logger::dbg << "New history entry added (" << entry.lines.size() << " lines)" << Logger::End;
+        // Check if the entry has uninitialized values
+        assert(!entry.lines.empty());
+        assert(entry.cursPos  != -1_st);
+        assert(entry.cursLine != -1);
+        assert(entry.cursCol  != -1);
+        for (const auto& line : entry.lines)
+        {
+            assert(line.from != U"\xffffffff");
+            assert(line.to != U"\xffffffff");
+            assert(line.lineI != -1_st);
+            assert(line.from != U"" || line.to != U"");
+        }
+
         while (!m_redoStack.empty()) m_redoStack.pop(); // Clear the redo stack
         m_undoStack.push(entry);
     }
