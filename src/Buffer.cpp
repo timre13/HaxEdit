@@ -364,6 +364,8 @@ void Buffer::_updateHighlighting()
             if (highlightBuffer[i] == Syntax::MARK_NONE && buffer[i] == '\''
                     && (i == 0 || (buffer[i-1] != '\\' || (i < 2 || buffer[i-2] == '\\'))))
                 isInsideCharLit = !isInsideCharLit;
+            if (buffer[i] == '\n')
+                isInsideCharLit = false;
             if (isInsideCharLit || (highlightBuffer[i] == Syntax::MARK_NONE && buffer[i] == '\''))
                 highlightBuffer[i] = Syntax::MARK_CHARLIT;
         }
