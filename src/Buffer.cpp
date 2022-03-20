@@ -935,6 +935,8 @@ bool Buffer::isCharSelected(int lineI, int colI, size_t charI) const
         break;
 
     case Selection::Mode::Normal:
+        //assert(charI < countLineListLen(m_content));
+
         if (m_selection.fromCharI < m_cursorCharPos)
         {
             isSelected = charI >= m_selection.fromCharI && charI <= m_cursorCharPos;
@@ -946,6 +948,8 @@ bool Buffer::isCharSelected(int lineI, int colI, size_t charI) const
         break;
 
     case Selection::Mode::Line:
+        assert(lineI >= 0 && lineI < (int)m_content.size());
+
         if (m_selection.fromLine < m_cursorLine)
         {
             isSelected = lineI >= m_selection.fromLine && lineI <= m_cursorLine;
@@ -958,6 +962,9 @@ bool Buffer::isCharSelected(int lineI, int colI, size_t charI) const
 
     case Selection::Mode::Block:
     {
+        assert(lineI >= 0 && lineI < (int)m_content.size());
+        assert(colI >= 0 && colI < (int)m_content[lineI].length());
+
         // Newlines can't be selected with block selection
         if (m_content[lineI][colI] == '\n')
             return false;
@@ -1901,7 +1908,7 @@ void Buffer::undo()
     {
         auto entry = m_history.goBack();
         //Logger::dbg << "Undoing a history entry with " << entry.lines.size() << " lines" << Logger::End;
-        for (size_t i{}; i < entry.lines.size(); ++i)
+        for (size_t i=entry.lines.size()-1; i != -1_st; --i)
         {
             const auto& lineEntry = entry.lines[i];
 
@@ -2059,118 +2066,140 @@ size_t Buffer::deleteSelectedChars()
     if (m_selection.mode == Selection::Mode::None)
         return 0;
 
-    int delCount = 0;
+    BufferHistory::Entry histEntry;
 
-    struct CharPos_t
-    {
-        size_t line  = -1_st;
-        size_t col   = -1_st;
-        size_t index = -1_st;
-    };
+    int delCount{};
 
-    std::vector<CharPos_t> charPosesToDel;
-    {
-        size_t charI{};
-        for (size_t lineI{}; lineI < m_content.size(); ++lineI)
-        {
-            const auto& line = m_content[lineI];
-
-            for (size_t colI{}; colI < line.length(); ++colI)
-            {
-                if (isCharSelected(lineI, colI, charI))
-                {
-                    // We can't select newlines in block selection mode
-                    assert(m_selection.mode != Selection::Mode::Block || line[colI] != U'\n');
-
-                    charPosesToDel.push_back({lineI, colI, charI});
-                    // If we are in block selection mode and this is at the right border of the selection
-                    if (m_selection.mode == Selection::Mode::Block && colI == (size_t)std::max(m_selection.fromCol, m_cursorCol))
-                        charPosesToDel.push_back({}); // End of block line
-                }
-
-                ++charI;
-            }
-        }
-    }
-
-    assert(!charPosesToDel.empty());
-
-    // Save the deleted chars first
-    String deletedStr;
-    for (const CharPos_t& toDel : charPosesToDel)
-    {
-        if (toDel.line == -1_st || toDel.col == -1_st || toDel.index == -1_st)
-            deletedStr += '\n';
-        else
-            deletedStr += m_content[toDel.line][toDel.col];
-    }
-
-    int blockSepCount = 0;
-    // Do the deletion
-    for (size_t i{charPosesToDel.size()-1}; i != -1_st; --i)
-    {
-        const CharPos_t& toDel = charPosesToDel[i];
-        if (toDel.line == -1_st || toDel.col == -1_st || toDel.index == -1_st)
-        {
-            ++blockSepCount;
-            continue;
-        }
-        m_content[toDel.line].erase(toDel.col, 1);
-        if (m_content[toDel.line].empty()) // Remove line if empty
-            m_content.erase(m_content.begin()+toDel.line);
-        m_highlightBuffer.erase(toDel.index, 1);
-    }
-
-    delCount = deletedStr.size()-blockSepCount;
-    Logger::dbg << "Deleted " << delCount << " characters (block has "
-        << blockSepCount << " separators)" << Logger::End;
-
-    /*
-     * TODO
     switch (m_selection.mode)
     {
-        case Selection::Mode::None: break; // Unreachable
+    case Selection::Mode::None:
+        break;
 
-        case Selection::Mode::Normal:
-            m_history.add(BufferHistory::Entry{
-                    .action=BufferHistory::Entry::Action::DeleteNormalSelection,
-                    .values=deletedStr,
-                    .cursPos=m_cursorCharPos,
-                    .cursLine=m_cursorLine,
-                    .cursCol=m_cursorCol,
-                    .selBeginPos=m_selection.fromCharI,
-                    .selBeginLine=m_selection.fromLine,
-                    .selBeginCol=m_selection.fromCol,
-            });
-            break;
+    case Selection::Mode::Normal:
+    {
+        histEntry.cursPos = m_cursorCharPos;
+        histEntry.cursLine = m_cursorLine;
+        histEntry.cursCol = m_cursorCol;
 
-        case Selection::Mode::Line:
-            m_history.add(BufferHistory::Entry{
-                    .action=BufferHistory::Entry::Action::DeleteLineSelection,
-                    .values=deletedStr,
-                    .cursPos=m_cursorCharPos-m_cursorCol, // Calculate line beginning
-                    .cursLine=m_cursorLine,
-                    .cursCol=0,
-                    .selBeginPos=m_selection.fromCharI-m_selection.fromCol, // Calculate line beginning
-                    .selBeginLine=m_selection.fromLine,
-            });
-            break;
+        const int fromLine = std::min(m_selection.fromLine, m_cursorLine);
+        const int toLine = std::max(m_selection.fromLine, m_cursorLine);
+        const size_t fromChar = std::min(m_selection.fromCharI, m_cursorCharPos);
+        const size_t toChar = std::max(m_selection.fromCharI, m_cursorCharPos);
+        // See: `colI` loop
+        const int startCol = (toChar == m_selection.fromCharI ? m_selection.fromCol : m_cursorCol);
+        size_t charI = toChar;
+        size_t entryI{};
+        for (int lineI=toLine; lineI >= fromLine; --lineI)
+        {
+            histEntry.lines.emplace_back();
+            histEntry.lines.back().lineI = lineI;
+            histEntry.lines.back().from = m_content[lineI];
 
-        case Selection::Mode::Block:
-            m_history.add(BufferHistory::Entry{
-                    .action=BufferHistory::Entry::Action::DeleteBlockSelection,
-                    .values=deletedStr,
-                    .cursPos=m_cursorCharPos,
-                    .cursLine=m_cursorLine,
-                    .cursCol=m_cursorCol,
-                    .selBeginPos=m_selection.fromCharI,
-                    .selBeginLine=m_selection.fromLine,
-                    .selBeginCol=m_selection.fromCol,
-            });
-            break;
+            const size_t lineLen = m_content[lineI].length();
+            // Note: We start looking through the first (last by index) line in the selection not
+            // from the last character but from the selection end column
+            for (size_t colI=(lineI == toLine ? startCol : lineLen-1); colI != -1_st; --colI)
+            {
+                if (charI >= fromChar && charI <= toChar)
+                {
+                    m_content[lineI].erase(colI, 1);
+                    ++delCount;
+                }
 
+                charI--;
+            }
+
+            bool deletedWholeLine = false;
+            // Remove line if empty
+            if (m_content[lineI].empty())
+            {
+                m_content.erase(m_content.begin()+lineI);
+                deletedWholeLine = true;
+            }
+
+            if (deletedWholeLine)
+                histEntry.lines[entryI].to = U"";
+            else
+                histEntry.lines[entryI].to = m_content[lineI];
+
+            // If the newline was deleted from the line
+            if (m_content[lineI].back() != U'\n')
+            {
+                if (lineI+1 < (int)m_content.size())
+                {
+                    // Append the next line to the end of this line, delete the next line
+                    // and mark in the history that it was deleted.
+                    histEntry.lines.emplace_back();
+                    ++entryI;
+                    histEntry.lines[entryI].lineI = lineI+1;
+                    histEntry.lines[entryI].from = m_content[lineI+1];
+                    m_content[lineI].append(m_content[lineI+1]);
+                    m_content.erase(m_content.begin()+lineI+1);
+                    histEntry.lines[entryI].to = U"";
+                }
+                else
+                {
+                    m_content[lineI].push_back(U'\n');
+                }
+            }
+
+            ++entryI;
+        }
+        break;
     }
-    */
+
+    case Selection::Mode::Line:
+    {
+        histEntry.cursPos = m_cursorCharPos-m_cursorCol; // Calculate line beginning
+        histEntry.cursLine = m_cursorLine;
+        histEntry.cursCol = 0;
+
+        const size_t fromLine = std::min(m_selection.fromLine, m_cursorLine);
+        const size_t toLine = std::max(m_selection.fromLine, m_cursorLine);
+        for (size_t lineI=fromLine; lineI <= toLine; ++lineI)
+        {
+            delCount += m_content[lineI].length();
+            histEntry.lines.emplace_back();
+            histEntry.lines.back().lineI = lineI;
+            histEntry.lines.back().from = m_content[lineI];
+            m_content.erase(m_content.begin()+lineI);
+            histEntry.lines.back().to = U"";
+        }
+        break;
+    }
+
+    case Selection::Mode::Block:
+    {
+        histEntry.cursPos = m_cursorCharPos;
+        histEntry.cursLine = m_cursorLine;
+        histEntry.cursCol = m_cursorCol;
+
+        const int fromLine = std::min(m_selection.fromLine, m_cursorLine);
+        const int toLine = std::max(m_selection.fromLine, m_cursorLine);
+        for (int lineI=toLine; lineI >= fromLine; --lineI)
+        {
+            histEntry.lines.emplace_back();
+            histEntry.lines.back().lineI = lineI;
+            histEntry.lines.back().from = m_content[lineI];
+
+            const int lineLen = m_content[lineI].length();
+            for (int colI=lineLen-1; colI >= 0; --colI)
+            {
+                if (isCharSelected(lineI, colI, -1))
+                {
+                    assert(m_content[lineI][colI] != U'\n'); // We can't select newlines
+                    m_content[lineI].erase(colI, 1);
+                    ++delCount;
+                }
+            }
+
+            assert(!m_content[lineI].empty());
+            histEntry.lines.back().to = m_content[lineI];
+        }
+
+        break;
+    }
+    }
 
     // Jump the cursor to the right place
     if (m_cursorCharPos > m_selection.fromCharI)
@@ -2180,6 +2209,7 @@ size_t Buffer::deleteSelectedChars()
         m_cursorCharPos = m_selection.fromCharI;
     }
     { // Limit too large cursor column
+        assert(!m_content[m_cursorLine].empty());
         const int cursMaxCol = m_content[m_cursorLine].length()-1;
         if (m_cursorCol > cursMaxCol)
         {
@@ -2188,6 +2218,8 @@ size_t Buffer::deleteSelectedChars()
             m_cursorCol = cursMaxCol;
         }
     }
+
+    m_history.add(std::move(histEntry));
 
     m_selection.mode = Selection::Mode::None; // Cancel the selection
     m_isModified = true;
