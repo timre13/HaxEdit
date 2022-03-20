@@ -2226,6 +2226,7 @@ size_t Buffer::deleteSelectedChars()
     m_isCursorShown = true;
     scrollViewportToCursor();
     m_isHighlightUpdateNeeded = true;
+    g_statMsg.set("Deleted "+std::to_string(delCount)+" characters", StatusMsg::Type::Info);
     g_isRedrawNeeded = true;
 
     return delCount;
