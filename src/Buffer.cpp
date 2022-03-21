@@ -1963,12 +1963,27 @@ void Buffer::redo()
 {
     if (m_history.canGoForward())
     {
-        // TODO
-        /*
-        m_cursorCharPos = entry.cursPos;
-        m_cursorLine = entry.cursLine;
-        m_cursorCol = entry.cursCol;
-        */
+        auto entry = m_history.goForward();
+        for (size_t i{}; i < entry.lines.size(); ++i)
+        {
+            const auto& lineEntry = entry.lines[i];
+
+            // If redoing the creation of a new line
+            if (lineEntry.from.empty())
+            {
+                m_content.insert(m_content.begin()+lineEntry.lineI, lineEntry.to);
+            }
+            // If redoing the deletion of a line
+            else if (lineEntry.to.empty())
+            {
+                m_content.erase(m_content.begin()+lineEntry.lineI);
+            }
+            // Just a regular changed line
+            else
+            {
+                m_content[lineEntry.lineI] = lineEntry.to;
+            }
+        }
         m_cursorCol     = entry.newCursCol;
         m_cursorLine    = entry.newCursLine;
         m_cursorCharPos = entry.newCursPos;
@@ -2139,6 +2154,9 @@ size_t Buffer::deleteSelectedChars()
                 histEntry.lines[entryI].to = U"";
             else
                 histEntry.lines[entryI].to = m_content[lineI];
+
+            // FIXME: Redo history gets messed up
+            // FIXME: Somehow there are lines without line break in the history
 
             // If the newline was deleted from the line
             if (m_content[lineI].back() != U'\n')
