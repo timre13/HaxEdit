@@ -1657,9 +1657,9 @@ void Buffer::insert(Char character)
 
 
     BufferHistory::Entry histEntry;
-    histEntry.cursPos = m_cursorCharPos,
-    histEntry.cursLine = m_cursorLine,
-    histEntry.cursCol = m_cursorCol;
+    histEntry.oldCursPos = m_cursorCharPos,
+    histEntry.oldCursLine = m_cursorLine,
+    histEntry.oldCursCol = m_cursorCol;
     histEntry.lines.emplace_back();
     histEntry.lines[0].lineI = m_cursorLine;
 
@@ -1717,6 +1717,9 @@ void Buffer::insert(Char character)
         }
     }
 
+    histEntry.newCursPos = m_cursorCharPos,
+    histEntry.newCursLine = m_cursorLine,
+    histEntry.newCursCol = m_cursorCol;
     m_history.add(std::move(histEntry));
 
     m_isModified = true;
@@ -1745,9 +1748,9 @@ void Buffer::replaceChar(Char character)
     }
 
     BufferHistory::Entry histEntry;
-    histEntry.cursPos = m_cursorCharPos,
-    histEntry.cursLine = m_cursorLine,
-    histEntry.cursCol = m_cursorCol;
+    histEntry.oldCursPos = m_cursorCharPos,
+    histEntry.oldCursLine = m_cursorLine,
+    histEntry.oldCursCol = m_cursorCol;
     histEntry.lines.emplace_back();
     histEntry.lines.back().from = m_content[m_cursorLine];
     histEntry.lines.back().lineI = m_cursorLine;
@@ -1759,6 +1762,9 @@ void Buffer::replaceChar(Char character)
     m_isModified = true;
 
     histEntry.lines.back().to = m_content[m_cursorLine];
+    histEntry.newCursPos = m_cursorCharPos,
+    histEntry.newCursLine = m_cursorLine,
+    histEntry.newCursCol = m_cursorCol;
     m_history.add(std::move(histEntry));
 
     m_isCursorShown = true;
@@ -1779,9 +1785,9 @@ void Buffer::deleteCharBackwards()
     assert(m_cursorLine >= 0);
 
     BufferHistory::Entry histEntry;
-    histEntry.cursPos = m_cursorCharPos,
-    histEntry.cursLine = m_cursorLine,
-    histEntry.cursCol = m_cursorCol;
+    histEntry.oldCursPos = m_cursorCharPos,
+    histEntry.oldCursLine = m_cursorLine,
+    histEntry.oldCursCol = m_cursorCol;
     histEntry.lines.emplace_back();
 
     // If deleting at the beginning of the line and we have stuff to delete
@@ -1825,6 +1831,9 @@ void Buffer::deleteCharBackwards()
     assert(m_cursorCol >= 0);
     assert(m_cursorLine >= 0);
 
+    histEntry.newCursPos = m_cursorCharPos,
+    histEntry.newCursLine = m_cursorLine,
+    histEntry.newCursCol = m_cursorCol;
     m_history.add(std::move(histEntry));
 
     m_isCursorShown = true;
@@ -1854,9 +1863,9 @@ void Buffer::deleteCharForwardOrSelected()
     assert(m_cursorLine >= 0);
 
     BufferHistory::Entry histEntry;
-    histEntry.cursPos = m_cursorCharPos,
-    histEntry.cursLine = m_cursorLine,
-    histEntry.cursCol = m_cursorCol;
+    histEntry.oldCursPos = m_cursorCharPos,
+    histEntry.oldCursLine = m_cursorLine,
+    histEntry.oldCursCol = m_cursorCol;
     histEntry.lines.emplace_back();
 
     const int lineLen = m_content[m_cursorLine].length();
@@ -1895,6 +1904,9 @@ void Buffer::deleteCharForwardOrSelected()
     assert(m_cursorCol >= 0);
     assert(m_cursorLine >= 0);
 
+    histEntry.newCursPos = m_cursorCharPos,
+    histEntry.newCursLine = m_cursorLine,
+    histEntry.newCursCol = m_cursorCol;
     m_history.add(std::move(histEntry));
 
     m_isCursorShown = true;
@@ -1924,15 +1936,15 @@ void Buffer::undo()
             {
                 m_content.insert(m_content.begin()+lineEntry.lineI, lineEntry.from);
             }
+            // Just a regular changed line
             else
             {
                 m_content[lineEntry.lineI] = lineEntry.from;
             }
-
         }
-        m_cursorCol = entry.cursCol;
-        m_cursorLine = entry.cursLine;
-        m_cursorCharPos = entry.cursPos;
+        m_cursorCol     = entry.oldCursCol;
+        m_cursorLine    = entry.oldCursLine;
+        m_cursorCharPos = entry.oldCursPos;
 
         // TODO: Adjust `m_highlightBuffer`
 
@@ -1957,6 +1969,10 @@ void Buffer::redo()
         m_cursorLine = entry.cursLine;
         m_cursorCol = entry.cursCol;
         */
+        m_cursorCol     = entry.newCursCol;
+        m_cursorLine    = entry.newCursLine;
+        m_cursorCharPos = entry.newCursPos;
+
         // TODO: Adjust `m_highlightBuffer`
 
         m_isHighlightUpdateNeeded = true;
@@ -2079,9 +2095,9 @@ size_t Buffer::deleteSelectedChars()
 
     case Selection::Mode::Normal:
     {
-        histEntry.cursPos = m_cursorCharPos;
-        histEntry.cursLine = m_cursorLine;
-        histEntry.cursCol = m_cursorCol;
+        histEntry.oldCursPos = m_cursorCharPos;
+        histEntry.oldCursLine = m_cursorLine;
+        histEntry.oldCursCol = m_cursorCol;
 
         const int fromLine = std::min(m_selection.fromLine, m_cursorLine);
         const int toLine = std::max(m_selection.fromLine, m_cursorLine);
@@ -2152,9 +2168,9 @@ size_t Buffer::deleteSelectedChars()
 
     case Selection::Mode::Line:
     {
-        histEntry.cursPos = m_cursorCharPos-m_cursorCol; // Calculate line beginning
-        histEntry.cursLine = m_cursorLine;
-        histEntry.cursCol = 0;
+        histEntry.oldCursPos = m_cursorCharPos-m_cursorCol; // Calculate line beginning
+        histEntry.oldCursLine = m_cursorLine;
+        histEntry.oldCursCol = 0;
 
         const size_t fromLine = std::min(m_selection.fromLine, m_cursorLine);
         const size_t toLine = std::max(m_selection.fromLine, m_cursorLine);
@@ -2172,9 +2188,9 @@ size_t Buffer::deleteSelectedChars()
 
     case Selection::Mode::Block:
     {
-        histEntry.cursPos = m_cursorCharPos;
-        histEntry.cursLine = m_cursorLine;
-        histEntry.cursCol = m_cursorCol;
+        histEntry.oldCursPos = m_cursorCharPos;
+        histEntry.oldCursLine = m_cursorLine;
+        histEntry.oldCursCol = m_cursorCol;
 
         const int fromLine = std::min(m_selection.fromLine, m_cursorLine);
         const int toLine = std::max(m_selection.fromLine, m_cursorLine);
@@ -2221,6 +2237,9 @@ size_t Buffer::deleteSelectedChars()
         }
     }
 
+    histEntry.newCursPos = m_cursorCharPos,
+    histEntry.newCursLine = m_cursorLine,
+    histEntry.newCursCol = m_cursorCol;
     m_history.add(std::move(histEntry));
 
     m_selection.mode = Selection::Mode::None; // Cancel the selection

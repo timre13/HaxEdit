@@ -35,9 +35,12 @@ public:
             size_t lineI = -1_st;
         };
         std::vector<LineEntry> lines;
-        size_t cursPos  = -1_st;
-        int    cursLine = -1;
-        int    cursCol  = -1;
+        size_t oldCursPos  = -1_st;
+        int    oldCursLine = -1;
+        int    oldCursCol  = -1;
+        size_t newCursPos  = -1_st;
+        int    newCursLine = -1;
+        int    newCursCol  = -1;
     };
 
 private:
@@ -58,9 +61,12 @@ public:
         Logger::dbg << "New history entry added (" << entry.lines.size() << " lines)" << Logger::End;
         // Check if the entry has uninitialized values
         assert(!entry.lines.empty());
-        assert(entry.cursPos  != -1_st);
-        assert(entry.cursLine != -1);
-        assert(entry.cursCol  != -1);
+        assert(entry.oldCursPos  != -1_st);
+        assert(entry.oldCursLine != -1);
+        assert(entry.oldCursCol  != -1);
+        assert(entry.newCursPos  != -1_st);
+        assert(entry.newCursLine != -1);
+        assert(entry.newCursCol  != -1);
         for (const auto& line : entry.lines)
         {
             assert(line.from != U"\xffffffff");
