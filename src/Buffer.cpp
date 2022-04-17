@@ -2119,7 +2119,8 @@ size_t Buffer::deleteSelectedChars()
         const size_t fromChar = std::min(m_selection.fromCharI, m_cursorCharPos);
         const size_t toChar = std::max(m_selection.fromCharI, m_cursorCharPos);
         // See: `colI` loop
-        const int startCol = (toChar == m_selection.fromCharI ? m_selection.fromCol : m_cursorCol);
+        const int bottLineCol = (toChar == m_selection.fromCharI ? m_selection.fromCol : m_cursorCol);
+        const int topLineCol = (fromChar == m_selection.fromCharI ? m_selection.fromCol : m_cursorCol);
         size_t charI = toChar;
         size_t entryI{};
         for (int lineI=toLine; lineI >= fromLine; --lineI)
@@ -2131,7 +2132,7 @@ size_t Buffer::deleteSelectedChars()
             const size_t lineLen = m_content[lineI].length();
             // Note: We start looking through the first (last by index) line in the selection not
             // from the last character but from the selection end column
-            for (size_t colI=(lineI == toLine ? startCol : lineLen-1); colI != -1_st; --colI)
+            for (int colI=(lineI == toLine ? bottLineCol : lineLen-1); colI >= (lineI == fromLine ? topLineCol : 0); --colI)
             {
                 if (charI >= fromChar && charI <= toChar)
                 {
@@ -2165,6 +2166,7 @@ size_t Buffer::deleteSelectedChars()
                 {
                     // Append the next line to the end of this line, delete the next line
                     // and mark in the history that it was deleted.
+                    // TODO: Maybe do the history saving as a second run?
                     histEntry.lines.emplace_back();
                     ++entryI;
                     histEntry.lines[entryI].lineI = lineI+1;
@@ -2190,9 +2192,9 @@ size_t Buffer::deleteSelectedChars()
         histEntry.oldCursLine = m_cursorLine;
         histEntry.oldCursCol = 0;
 
-        const size_t fromLine = std::min(m_selection.fromLine, m_cursorLine);
-        const size_t toLine = std::max(m_selection.fromLine, m_cursorLine);
-        for (size_t lineI=fromLine; lineI <= toLine; ++lineI)
+        const int fromLine = std::min(m_selection.fromLine, m_cursorLine);
+        const int toLine = std::max(m_selection.fromLine, m_cursorLine);
+        for (int lineI=toLine; lineI >= fromLine; --lineI)
         {
             delCount += m_content[lineI].length();
             histEntry.lines.emplace_back();
