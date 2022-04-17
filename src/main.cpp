@@ -11,6 +11,12 @@ int main(int argc, char** argv)
 {
     Logger::setLoggerVerbosity(Logger::LoggerVerbosity::Debug);
 
+    g_exePath = App::getExePath();
+    Logger::log << "Exe path: " << g_exePath << Logger::End;
+    g_exeDirPath = std::filesystem::path{g_exePath}.parent_path();
+    Logger::log << "Exe dir: " << g_exeDirPath << Logger::End;
+
+    Logger::dbg << "Initializing GLFW" << Logger::End;
     if (!glfwInit())
     {
         Logger::fatal << "Failed to initialize GLFW" << Logger::End;
@@ -18,12 +24,15 @@ int main(int argc, char** argv)
 
     double appStartTime = glfwGetTime();
 
+    Logger::dbg << "Creating GLFW window" << Logger::End;
     g_window = App::createWindow();
     Logger::dbg << "Created GLFW window" << Logger::End;
 
+    Logger::dbg << "Initializing GLEW" << Logger::End;
     App::initGlew();
     Logger::dbg << "Initialized GLEW" << Logger::End;
 
+    Logger::dbg << "Configurign OpenGL context" << Logger::End;
     App::setupGlFeatures();
     Logger::dbg << "OpenGL context configured" << Logger::End;
 

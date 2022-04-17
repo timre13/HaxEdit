@@ -97,6 +97,8 @@ public:
     App() = delete;
 
     // ----- Setup functions -----
+    static std::string getExePath();
+    static std::string getResPath(const std::string& suffix);
     static GLFWwindow* createWindow();
     static void initGlew();
     static void setupGlFeatures();

@@ -1,5 +1,6 @@
 #include "signs.h"
 #include "Logger.h"
+#include "App.h"
 #include <cassert>
 
 std::unique_ptr<Image> signImages[(int)Sign::_Count]{};
@@ -15,7 +16,7 @@ void loadSigns()
     Logger::dbg << "Loading sign images" << Logger::End;
     for (int i{}; i < (int)Sign::_Count; ++i)
     {
-        signImages[i] = std::make_unique<Image>(signImgFileNames[i]);
+        signImages[i] = std::make_unique<Image>(App::getResPath(signImgFileNames[i]));
     }
 }
 

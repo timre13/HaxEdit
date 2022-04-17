@@ -19,6 +19,9 @@ class RecentFileList;
 
 #ifdef _DEF_GLOBALS_
 
+std::string g_exePath;
+std::string g_exeDirPath;
+
 GLFWwindow* g_window = nullptr;
 int g_windowWidth = 0;
 int g_windowHeight = 0;
@@ -67,6 +70,9 @@ StatusMsg g_statMsg;
 bool g_hasBindingToCall = false;
 
 #else // ----------------------------------------------------------------------
+
+extern std::string g_exePath;
+extern std::string g_exeDirPath;
 
 extern GLFWwindow* g_window;
 extern int g_windowWidth;

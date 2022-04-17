@@ -1,4 +1,5 @@
 #include "TextRenderer.h"
+#include "App.h"
 #include "Logger.h"
 #include "config.h"
 #include "glstuff.h"
@@ -97,7 +98,7 @@ TextRenderer::TextRenderer(
     m_boldFontPath{boldFontPath},
     m_italicFontPath{italicFontPath},
     m_boldItalicFontPath{boldItalicFontPath},
-    m_glyphShader{"../shaders/glyph.vert.glsl", "../shaders/glyph.frag.glsl"}
+    m_glyphShader{App::getResPath("../shaders/glyph.vert.glsl"), App::getResPath("../shaders/glyph.frag.glsl")}
 {
     setFontSize(DEF_FONT_SIZE_PX);
 

@@ -1,4 +1,5 @@
 #include "UiRenderer.h"
+#include "App.h"
 #include "Logger.h"
 #include "config.h"
 #include "glstuff.h"
@@ -9,8 +10,8 @@
 
 UiRenderer::UiRenderer()
     :
-    m_shader{"../shaders/ui.vert.glsl", "../shaders/ui.frag.glsl"},
-    m_imgShader{"../shaders/image.vert.glsl", "../shaders/image.frag.glsl"}
+    m_shader{App::getResPath("../shaders/ui.vert.glsl"), App::getResPath("../shaders/ui.frag.glsl")},
+    m_imgShader{App::getResPath("../shaders/image.vert.glsl"), App::getResPath("../shaders/image.frag.glsl")}
 {
     // --- UI stuff setup ---
 

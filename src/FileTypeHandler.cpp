@@ -1,4 +1,5 @@
 #include "FileTypeHandler.h"
+#include "App.h"
 #include "Logger.h"
 #include "config.h"
 #include "paths.h"
@@ -176,18 +177,18 @@ FileTypeHandler::FileTypeHandler(
 
     // Load file icons
     for (auto& ft : m_fileTypes)
-        ft.icon = std::make_unique<Image>(PATH_DIR_FT_ICON"/"+ft.iconName+".png");
+        ft.icon = std::make_unique<Image>(App::getResPath(PATH_DIR_FT_ICON"/"+ft.iconName+".png"));
 
     // Load default file icon
-    m_defFileIcon = std::make_unique<Image>(PATH_DIR_FT_ICON"/file.png");
+    m_defFileIcon = std::make_unique<Image>(App::getResPath(PATH_DIR_FT_ICON"/file.png"));
 
 
     // Load folder icons
     for (auto& ft : m_folderTypes)
-        ft.icon = std::make_unique<Image>(PATH_DIR_FT_ICON"/"+ft.iconName+".png");
+        ft.icon = std::make_unique<Image>(App::getResPath(PATH_DIR_FT_ICON"/"+ft.iconName+".png"));
 
     // Load default folder icon
-    m_defFolderIcon = std::make_unique<Image>(PATH_DIR_FT_ICON"/folder-other.png");
+    m_defFolderIcon = std::make_unique<Image>(App::getResPath(PATH_DIR_FT_ICON"/folder-other.png"));
 }
 
 const Image* FileTypeHandler::getIconFromFilename(std::string fname, bool isDir)

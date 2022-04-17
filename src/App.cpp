@@ -5,7 +5,43 @@
 #include "os.h"
 #include "Git.h"
 #include <filesystem>
+#ifdef OS_LINUX
+#   include <unistd.h>
+#elif defined(OS_WIN)
+#   error "TODO
+#else
+#   error "Unsupported OS"
+#endif
 namespace fs = std::filesystem;
+
+#ifdef OS_LINUX
+
+std::string App::getExePath()
+{
+    char pathName[PATH_MAX]{};
+    realpath("/proc/self/exe", pathName);
+    return pathName;
+}
+
+#elif defined(OS_WIN)
+
+#   error "TODO"
+
+#else
+#   error "Unsupported OS"
+#endif
+
+/*
+ * Get resource path.
+ */
+std::string App::getResPath(const std::string& suffix)
+{
+    assert(!g_exeDirPath.empty());
+
+    if (std::filesystem::path{suffix}.is_absolute())
+        return suffix;
+    return (std::filesystem::path{g_exeDirPath} / suffix);
+}
 
 #define BUFFER_RESIZE_MAX_CURS_DIST 10
 #define START_SCRN_INDENT_PX 100
@@ -84,16 +120,21 @@ UiRenderer* App::createUiRenderer()
 
 std::unique_ptr<Image> App::loadProgramIcon()
 {
-    return std::unique_ptr<Image>(new Image{ICON_FILE_PATH});
+    return std::unique_ptr<Image>(new Image{App::getResPath(ICON_FILE_PATH)});
 }
+
+#define CURS_PATH_BUSY "../img/busy_cursor.png"
 
 void App::loadCursors()
 {
     Logger::dbg << "Loading cursors" << Logger::End;
 
     GLFWimage image;
-    image.pixels = stbi_load("../img/busy_cursor.png", &image.width, &image.height, nullptr, 4);
-    Cursors::busy = glfwCreateCursor(&image, 0, 0);
+    image.pixels = stbi_load(getResPath(CURS_PATH_BUSY).c_str(), &image.width, &image.height, nullptr, 4);
+    if (!image.pixels)
+        Logger::err << "Failed to load cursor: " CURS_PATH_BUSY ": " << stbi_failure_reason() << Logger::End;
+    else
+        Cursors::busy = glfwCreateCursor(&image, 0, 0);
     stbi_image_free(image.pixels); // glfwCreateCursor() copies the data, so free the original
 }
 
@@ -104,7 +145,7 @@ void App::loadSignImages()
 
 FileTypeHandler* App::createFileTypeHandler()
 {
-    return new FileTypeHandler{"../icons/file_icon_index.txt", "../icons/folder_icon_index.txt"};
+    return new FileTypeHandler{getResPath("../icons/file_icon_index.txt"), getResPath("../icons/folder_icon_index.txt")};
 }
 
 void App::createAutocompleteProviders()
@@ -115,7 +156,7 @@ void App::createAutocompleteProviders()
 
     try
     {
-        const String content = loadUnicodeFile(DICTIONARY_FILE_PATH);
+        const String content = loadUnicodeFile(getResPath(DICTIONARY_FILE_PATH));
         LineIterator it = content;
         String line;
         while (it.next(line))
@@ -144,7 +185,7 @@ void App::createAutocompleteProviders()
 void App::loadTheme()
 {
     ThemeLoader tl;
-    g_theme = std::unique_ptr<Theme>(tl.load(THEME_PATH));
+    g_theme = std::unique_ptr<Theme>(tl.load(getResPath(THEME_PATH)));
 }
 
 void App::setupKeyBindings()
@@ -343,7 +384,7 @@ void App::renderTabLine()
     const int tabPageSize = roundf(float(g_windowWidth-BUFFCLOSE_BTN_SIZE_PX)/TABLINE_TAB_WIDTH_PX);
 
 
-    static const Image closeImg = Image("../img/buff_close.png");
+    static const Image closeImg = Image(getResPath("../img/buff_close.png"));
     // Draw buffer close button
     g_uiRenderer->renderFilledRectangle(
             {g_windowWidth-BUFFCLOSE_BTN_SIZE_PX, 0}, {g_windowWidth, BUFFCLOSE_BTN_SIZE_PX},
