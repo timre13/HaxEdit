@@ -220,6 +220,7 @@ void App::setupKeyBindings()
         bindNonprimChar(U'$',                  Callbacks::moveCursorToLineEnd);
         bindNonprimChar(U'>',                  Callbacks::indentSelectedLines);
         bindNonprimChar(U'<',                  Callbacks::unindentSelectedLines);
+        bindNonprimChar(U':',                  Callbacks::togglePromptAnimated);
         bindFuncKey(GLFW_KEY_ESCAPE,        0, Callbacks::bufferCancelSelection);
         bindFuncKey(GLFW_KEY_INSERT,        0, Callbacks::switchToInsertMode);
         bindFuncKey(GLFW_KEY_RIGHT,         0, Callbacks::moveCursorRight);
@@ -521,6 +522,11 @@ void App::renderStartupScreen()
     }
 }
 
+void App::renderPrompt()
+{
+    Prompt::get()->render();
+}
+
 Buffer* App::openFileInNewBuffer(
         const std::string& path, bool addToRecFileList/*=true*/)
 {
@@ -641,6 +647,12 @@ void App::windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods)
         return;
     }
 
+    if (Prompt::get()->isOpen())
+    {
+        Prompt::get()->handleKey(key, mods);
+        return;
+    }
+
     // If there are dialogs open, pass the event to the top one
     if (!g_dialogs.empty())
     {
@@ -699,6 +711,12 @@ void App::windowCharCB(GLFWwindow*, uint codePoint)
     if (!g_dialogs.empty())
     {
         g_dialogs.back()->handleChar(codePoint);
+        return;
+    }
+
+    if (Prompt::get()->isOpen())
+    {
+        Prompt::get()->handleChar(codePoint);
         return;
     }
 

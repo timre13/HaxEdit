@@ -123,6 +123,7 @@ int main(int argc, char** argv)
             }
             App::renderStatusLine();
             App::renderDialogs();
+            App::renderPrompt();
 
             g_isRedrawNeeded = false;
         }
@@ -140,6 +141,7 @@ int main(int argc, char** argv)
         g_statMsg.tick(frameTimeSec);
         if (g_dialogFlashTime > 0)
             g_dialogFlashTime -= frameTimeSec*1000;
+        Prompt::get()->update(frameTimeSec*1000);
     }
 
     Logger::log << "Shutting down!" << Logger::End;

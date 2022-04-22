@@ -23,6 +23,7 @@
 #include "globals.h"
 #include "autocomp/DictionaryProvider.h"
 #include "ThemeLoader.h"
+#include "Prompt.h"
 
 class RecentFileList
 {
@@ -119,6 +120,7 @@ public:
     static void renderTabLine();
     static void renderDialogs();
     static void renderStartupScreen();
+    static void renderPrompt();
 
     // ----- Helper functions -----
     [[nodiscard]] static Buffer* openFileInNewBuffer(

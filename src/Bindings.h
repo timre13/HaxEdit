@@ -136,6 +136,10 @@ void bufferFindGotoPrev();
 void indentSelectedLines();
 void unindentSelectedLines();
 
+void togglePromptAnimated();
+void showPromptAnimated();
+void hidePromptAnimated();
+
 }
 
 extern BindingMapSet nmap; // Normal mode mapping

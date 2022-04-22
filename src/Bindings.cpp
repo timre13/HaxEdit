@@ -973,6 +973,21 @@ void unindentSelectedLines()
     g_activeBuff->unindentSelectedLines();
 }
 
+void togglePromptAnimated()
+{
+    Prompt::get()->toggleWithAnim();
+}
+
+void showPromptAnimated()
+{
+    Prompt::get()->showWithAnim();
+}
+
+void hidePromptAnimated()
+{
+    Prompt::get()->hideWithAnim();
+}
+
 } // Namespace Callbacks
 
 BindingMapSet nmap = {};
