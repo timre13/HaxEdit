@@ -49,14 +49,23 @@ void Prompt::runCommand()
     }
     else if (cmd == U"q" || cmd == U"quit")
     {
+        if (!args.empty())
+            goto err_arg_not_req;
+
         Bindings::Callbacks::closeActiveBuffer();
     }
     else if (cmd == U"w" || cmd == U"write")
     {
+        if (!args.empty())
+            goto err_arg_not_req;
+
         Bindings::Callbacks::saveCurrentBuffer();
     }
     else if (cmd == U"o" || cmd == U"open")
     {
+        if (!args.empty())
+            goto err_arg_not_req;
+
         Bindings::Callbacks::openFile();
     }
     else
@@ -68,6 +77,10 @@ void Prompt::runCommand()
 
 err_arg_req:
     g_statMsg.set("Argument required", StatusMsg::Type::Error);
+    goto end;
+
+err_arg_not_req:
+    g_statMsg.set("Argument NOT required", StatusMsg::Type::Error);
     goto end;
 
 end:;
