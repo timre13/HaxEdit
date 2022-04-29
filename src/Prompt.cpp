@@ -1,4 +1,5 @@
 #include "Prompt.h"
+#include "common/string.h"
 #include "dialogs/Dialog.h"
 #include "UiRenderer.h"
 #include "TextRenderer.h"
@@ -26,6 +27,10 @@ void Prompt::render() const
 
     g_textRenderer->renderString(
             ">", {pos1.x, (pos1.y+pos2.y)/2-g_fontSizePx/2}, FONT_STYLE_BOLD);
+
+    g_textRenderer->renderString(
+            strToAscii(m_buffer), {pos1.x+g_fontWidthPx*1.5f, (pos1.y+pos2.y)/2-g_fontSizePx/2});
+
 }
 
 void Prompt::update(float frameTimeMs)
@@ -50,6 +55,24 @@ void Prompt::update(float frameTimeMs)
     }
 }
 
+void Prompt::toggleWithAnim()
+{
+    m_isSlideDirDown = !m_isSlideDirDown;
+    m_buffer.clear();
+}
+
+void Prompt::hideWithAnim()
+{
+    m_isSlideDirDown = false;
+    m_buffer.clear();
+}
+
+void Prompt::showWithAnim()
+{
+    m_isSlideDirDown = true;
+    m_buffer.clear();
+}
+
 void Prompt::handleKey(int key, int mods)
 {
     if (mods == 0 && key == GLFW_KEY_ESCAPE)
@@ -58,12 +81,28 @@ void Prompt::handleKey(int key, int mods)
     }
     else if (mods == 0 && (key == GLFW_KEY_ENTER || key == GLFW_KEY_KP_ENTER))
     {
-        runCommand();
+        if (m_buffer.empty())
+            hideWithAnim();
+        else
+            runCommand();
     }
+    else if (mods == 0 && key == GLFW_KEY_BACKSPACE)
+    {
+        if (!m_buffer.empty())
+            m_buffer.pop_back();
+    }
+
+    g_isRedrawNeeded = true;
 }
 
 void Prompt::handleChar(uint codePoint)
 {
-    // TODO
-    Logger::log << "TODO" << Logger::End;
+    if (m_buffer.empty() && codePoint == U':')
+    {
+        hideWithAnim();
+        return;
+    }
+
+    m_buffer.push_back((char32_t)codePoint);
+    g_isRedrawNeeded = true;
 }
