@@ -3,14 +3,74 @@
 #include "dialogs/Dialog.h"
 #include "UiRenderer.h"
 #include "TextRenderer.h"
+#include "App.h"
+#include "Bindings.h"
 #include "globals.h"
 
 #define PROMPT_ANIM_LEN_MS (100)
 
 void Prompt::runCommand()
 {
-    // TODO
-    Logger::log << "TODO" << Logger::End;
+    auto getWord{[](const String& str, size_t start=0){
+        String out;
+        for (size_t i=start; i < str.size(); ++i)
+        {
+            Char c = str[i];
+            if (c == U' ')
+                break;
+            out += c;
+        }
+        return out;
+    }};
+
+    const String cmd = getWord(m_buffer);
+    const String args = (m_buffer.length() <= cmd.length()+1) ? U"" : m_buffer.substr(cmd.length()+1);
+    if (cmd == U"tabe")
+    {
+        if (args.empty())
+            goto err_arg_req;
+
+        auto buffer = App::openFileInNewBuffer(strToAscii(args));
+        if (g_tabs.empty())
+        {
+            g_tabs.push_back(std::make_unique<Split>(buffer));
+            g_activeBuff = buffer;
+            g_currTabI = 0;
+        }
+        else
+        {
+            // Insert the buffer next to the current one
+            g_tabs.insert(g_tabs.begin()+g_currTabI+1, std::make_unique<Split>(buffer));
+            g_activeBuff = buffer;
+            ++g_currTabI; // Go to the current buffer
+        }
+        g_isTitleUpdateNeeded = true;
+        g_isRedrawNeeded = true;
+    }
+    else if (cmd == U"q" || cmd == U"quit")
+    {
+        Bindings::Callbacks::closeActiveBuffer();
+    }
+    else if (cmd == U"w" || cmd == U"write")
+    {
+        Bindings::Callbacks::saveCurrentBuffer();
+    }
+    else if (cmd == U"o" || cmd == U"open")
+    {
+        Bindings::Callbacks::openFile();
+    }
+    else
+    {
+        g_statMsg.set("Unknown command", StatusMsg::Type::Error);
+    }
+
+    goto end;
+
+err_arg_req:
+    g_statMsg.set("Argument required", StatusMsg::Type::Error);
+    goto end;
+
+end:;
 }
 
 void Prompt::render() const
@@ -81,9 +141,8 @@ void Prompt::handleKey(int key, int mods)
     }
     else if (mods == 0 && (key == GLFW_KEY_ENTER || key == GLFW_KEY_KP_ENTER))
     {
-        if (m_buffer.empty())
-            hideWithAnim();
-        else
+        m_isSlideDirDown = false; // Hide without clearing the buffer
+        if (!m_buffer.empty())
             runCommand();
     }
     else if (mods == 0 && key == GLFW_KEY_BACKSPACE)
