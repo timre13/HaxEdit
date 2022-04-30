@@ -27,22 +27,27 @@ void Prompt::runCommand()
     const String args = (m_buffer.length() <= cmd.length()+1) ? U"" : m_buffer.substr(cmd.length()+1);
     if (cmd == U"tabe")
     {
+        // If we don't have a filename to open, create a new buffer
         if (args.empty())
-            goto err_arg_req;
-
-        auto buffer = App::openFileInNewBuffer(strToAscii(args));
-        if (g_tabs.empty())
         {
-            g_tabs.push_back(std::make_unique<Split>(buffer));
-            g_activeBuff = buffer;
-            g_currTabI = 0;
+            Bindings::Callbacks::createBufferInNewTab();
         }
         else
         {
-            // Insert the buffer next to the current one
-            g_tabs.insert(g_tabs.begin()+g_currTabI+1, std::make_unique<Split>(buffer));
-            g_activeBuff = buffer;
-            ++g_currTabI; // Go to the current buffer
+            auto buffer = App::openFileInNewBuffer(strToAscii(args));
+            if (g_tabs.empty())
+            {
+                g_tabs.push_back(std::make_unique<Split>(buffer));
+                g_activeBuff = buffer;
+                g_currTabI = 0;
+            }
+            else
+            {
+                // Insert the buffer next to the current one
+                g_tabs.insert(g_tabs.begin()+g_currTabI+1, std::make_unique<Split>(buffer));
+                g_activeBuff = buffer;
+                ++g_currTabI; // Go to the current buffer
+            }
         }
         g_isTitleUpdateNeeded = true;
         g_isRedrawNeeded = true;
