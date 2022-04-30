@@ -187,6 +187,7 @@ int Buffer::saveToFile()
 
     m_isModified = false;
     m_isReadOnly = false;
+    m_gitRepo = std::make_unique<Git::Repo>(m_filePath);
     updateGitDiff();
 
     TIMER_END_FUNC();
