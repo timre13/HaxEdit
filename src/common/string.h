@@ -9,6 +9,8 @@
 #include <time.h>
 #include <filesystem>
 #include <vector>
+#include <algorithm>
+#include <cctype>
 #include "../Logger.h"
 
 String strToUtf32(const icu::UnicodeString& input);
@@ -127,6 +129,79 @@ inline bool isValidFilePath(const T& str)
          || std::filesystem::is_block_file(path)
          || std::filesystem::is_character_file(path)
     );
+}
+
+template <typename T>
+inline bool isFormallyValidUrl(const T& str)
+{
+    _CHECK_T_STR_TYPE;
+
+    // Check if it has a valid prefix
+    bool prefValid = false;
+    size_t prefLen{};
+    if (str.starts_with(U"https://"))
+    {
+        prefValid = true;
+        prefLen = 8;
+        if (str.substr(prefLen).starts_with(U"www."))
+            prefLen += 4;
+    }
+    else if (str.starts_with(U"http://"))
+    {
+        prefValid = true;
+        prefLen = 7;
+        if (str.substr(prefLen).starts_with(U"www."))
+            prefLen += 4;
+    }
+    else if (str.starts_with(U"www."))
+    {
+        prefValid = true;
+        prefLen = 4;
+    }
+    if (!prefValid)
+        return false;
+
+    // Check if there are only valid characters
+    const bool charsValid = std::all_of(str.begin()+prefLen, str.end(), [](typename T::value_type c){
+        if (std::isalnum(c))
+            return true;
+        switch (c)
+        {
+        case '-':
+        case '.':
+        case '_':
+        case '~':
+        case ':':
+        case '/':
+        case '?':
+        case '#':
+        case '[':
+        case ']':
+        case '@':
+        case '!':
+        case '$':
+        case '&':
+        case '\'':
+        case '(':
+        case ')':
+        case '*':
+        case '+':
+        case ',':
+        case ';':
+        case '%':
+        case '=':
+            return true;
+        }
+        return false;
+    });
+    if (!charsValid)
+        return false;
+
+    // Check if there is a TLD separator
+    if (std::find(str.begin()+prefLen, str.end(), '.') == str.end())
+        return false;
+
+    return true;
 }
 
 template <typename T>

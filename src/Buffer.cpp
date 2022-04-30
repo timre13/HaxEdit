@@ -381,8 +381,10 @@ void Buffer::_updateHighlighting()
         }
     }};
 
-    auto highlightFilePaths{[&](){
-        auto _isValidFilePath{[&](const String& path){ // -> bool
+    auto highlightFilePathsAndUrls{[&](){
+        auto _isValidFilePathOrUrl{[&](const String& path){ // -> bool
+            if (isFormallyValidUrl(path))
+                return true;
             try
             {
                 if (path[0] == '/')
@@ -408,7 +410,7 @@ void Buffer::_updateHighlighting()
             while (i < buffer.length() && !isspace((uchar)buffer[i]) && buffer[i] != '"')
                 word += buffer[i++];
 
-            if (_isValidFilePath(word))
+            if (_isValidFilePathOrUrl(word))
             {
                 highlightBuffer.replace(i-word.size(), word.size(), word.size(), Syntax::MARK_FILEPATH);
             }
@@ -504,8 +506,8 @@ void Buffer::_updateHighlighting()
 
     if (m_isHighlightUpdateNeeded) return;
     timer.reset();
-    highlightFilePaths();
-    Logger::dbg << "Highlighting of paths took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
+    highlightFilePathsAndUrls();
+    Logger::dbg << "Highlighting of paths and URLs took " << timer.getElapsedTimeMs() << "ms" << Logger::End;
 
 
     m_highlightBuffer = highlightBuffer;
