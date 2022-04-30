@@ -66,6 +66,13 @@ void Prompt::runCommand()
 
         Bindings::Callbacks::saveCurrentBuffer();
     }
+    else if (cmd == U"sav" || cmd == U"saveas")
+    {
+        if (!args.empty())
+            goto err_arg_not_req;
+
+        Bindings::Callbacks::saveCurrentBufferAs();
+    }
     else if (cmd == U"o" || cmd == U"open")
     {
         if (!args.empty())
