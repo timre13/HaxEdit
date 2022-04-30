@@ -66,6 +66,7 @@ void switchToInsertMode();
 void switchToReplaceMode();
 
 void createBufferInNewTab();
+void createTempBufferInNewTab();
 void saveCurrentBuffer();
 void saveCurrentBufferAs();
 void openFile();

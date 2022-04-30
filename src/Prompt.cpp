@@ -80,6 +80,13 @@ void Prompt::runCommand()
 
         Bindings::Callbacks::openFile();
     }
+    else if (cmd == U"tmp")
+    {
+        if (!args.empty())
+            goto err_arg_not_req;
+
+        Bindings::Callbacks::createTempBufferInNewTab();
+    }
     else
     {
         g_statMsg.set("Unknown command", StatusMsg::Type::Error);

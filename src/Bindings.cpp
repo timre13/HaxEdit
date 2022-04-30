@@ -13,6 +13,7 @@
 #include <vector>
 #include <memory>
 #include <cstring>
+#include <ctime>
 #include <unicode/uchar.h>
 
 #define BINDINGS_VERBOSE 1
@@ -268,6 +269,36 @@ void createBufferInNewTab()
         ++g_currTabI; // Go to the current buffer
         g_activeBuff = g_tabs[g_currTabI]->getActiveBufferRecursively();
     }
+    g_isRedrawNeeded = true;
+    g_isTitleUpdateNeeded = true;
+}
+
+static std::string genTempFilePath()
+{
+    const time_t time = std::time(nullptr);
+    return (std::filesystem::temp_directory_path()
+            / std::filesystem::path{"haxed_tmp_" + std::to_string(time)}
+            ).string() + ".txt";
+}
+
+void createTempBufferInNewTab()
+{
+    // TODO: Render temporary buffer filenames differently in tab and status bar
+    Buffer* buffer = new Buffer{};
+    if (g_tabs.empty())
+    {
+        g_tabs.push_back(std::make_unique<Split>(buffer));
+        g_activeBuff = buffer;
+        g_currTabI = 0;
+    }
+    else
+    {
+        // Insert the buffer next to the current one
+        g_tabs.insert(g_tabs.begin()+g_currTabI+1, std::make_unique<Split>(buffer));
+        g_activeBuff = buffer;
+        ++g_currTabI; // Go to the current buffer
+    }
+    buffer->saveAsToFile(genTempFilePath());
     g_isRedrawNeeded = true;
     g_isTitleUpdateNeeded = true;
 }
