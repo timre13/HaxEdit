@@ -32,5 +32,16 @@ std::string getFontFilePath(const std::string& fontName, FontStyle style)
 #endif
 }
 
+void openUrlInDefBrowser(const std::string& url)
+{
+#ifdef OS_LINUX
+    // FIXME: Freezes the editor if the browser doesn't fork
+    //        We should open it in a new process
+    std::system(("xdg-open "+url).c_str());
+#else
+#error "TODO: Unimplemented"
+#endif
+}
+
 }
 

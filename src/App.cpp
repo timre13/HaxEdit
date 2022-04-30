@@ -251,7 +251,7 @@ void App::setupKeyBindings()
         bindFuncKey(GLFW_KEY_TAB,           GLFW_MOD_CONTROL, Callbacks::goToNextSplit);
         bindFuncKey(GLFW_KEY_HOME,          GLFW_MOD_CONTROL, Callbacks::goToFirstChar);
         bindFuncKey(GLFW_KEY_END,           GLFW_MOD_CONTROL, Callbacks::goToLastChar);
-        bindFuncKey(GLFW_KEY_ENTER,         GLFW_MOD_CONTROL, Callbacks::openPathAtCursor);
+        bindFuncKey(GLFW_KEY_ENTER,         GLFW_MOD_CONTROL, Callbacks::openPathOrUrlAtCursor);
 
         // Ctrl-shift held down
         bindPrimKey("s",                    GLFW_MOD_CONTROL|GLFW_MOD_SHIFT, Callbacks::saveCurrentBufferAs);

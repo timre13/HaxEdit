@@ -18,6 +18,7 @@ namespace OS
 
 std::string runExternalCommand(const std::string& command);
 std::string getFontFilePath(const std::string& fontName, FontStyle style);
+void openUrlInDefBrowser(const std::string& url);
 
 }
 

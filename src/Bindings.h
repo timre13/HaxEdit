@@ -71,7 +71,7 @@ void saveCurrentBuffer();
 void saveCurrentBufferAs();
 void openFile();
 void closeActiveBuffer();
-void openPathAtCursor();
+void openPathOrUrlAtCursor();
 
 void goToNextTab();
 void goToPrevTab();

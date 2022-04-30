@@ -471,46 +471,58 @@ void closeActiveBuffer()
     g_isRedrawNeeded = true;
 }
 
-void openPathAtCursor()
+void openPathOrUrlAtCursor()
 {
-    if (g_activeBuff)
+    if (!g_activeBuff)
+        return;
+
+    const String word = g_activeBuff->getCursorWord();
+    std::string aword = strToAscii(word);
+    if (aword.empty())
     {
-        std::string path = strToAscii(g_activeBuff->getCursorWord());
-        if (path.empty())
-        {
-            g_statMsg.set("No word at cursor", StatusMsg::Type::Error);
-            return;
-        }
-        if (path[0] == '"') path = path.substr(1);
-        if (path[path.size()-1] == '"') path = path.substr(0, path.size()-1);
-
-        if (path[0] != '/')
-            path = getParentPath(g_activeBuff->getFilePath())/std::filesystem::path{path};
-
-        Logger::dbg << "Checking path: " << path << Logger::End;
-        if (!isValidFilePath(path))
-        {
-            g_statMsg.set("Not a valid file path: "+quoteStr(path), StatusMsg::Type::Error);
-            return;
-        }
-
-        auto* buffer = App::openFileInNewBuffer(path);
-        if (g_tabs.empty())
-        {
-            g_tabs.push_back(std::make_unique<Split>(buffer));
-            g_activeBuff = buffer;
-            g_currTabI = 0;
-        }
-        else
-        {
-            // Insert the buffer next to the current one
-            g_tabs.insert(g_tabs.begin()+g_currTabI+1, std::make_unique<Split>(buffer));
-            g_activeBuff = buffer;
-            ++g_currTabI; // Go to the current buffer
-        }
-        g_isTitleUpdateNeeded = true;
-        g_isRedrawNeeded = true;
+        g_statMsg.set("No word at cursor", StatusMsg::Type::Error);
+        return;
     }
+
+    Logger::dbg << "Checking path/url: " << aword << Logger::End;
+
+    if (isFormallyValidUrl(word))
+    {
+        g_statMsg.set("Opening URL in browser: \""+aword+"\"", StatusMsg::Type::Info);
+        OS::openUrlInDefBrowser(aword);
+        return;
+    }
+    else
+    {
+        if (aword[0] == '"') aword = aword.substr(1);
+        if (aword[aword.size()-1] == '"') aword = aword.substr(0, aword.size()-1);
+
+        if (aword[0] != '/')
+            aword = getParentPath(g_activeBuff->getFilePath())/std::filesystem::path{aword};
+
+        if (isValidFilePath(aword))
+        {
+            auto* buffer = App::openFileInNewBuffer(aword);
+            if (g_tabs.empty())
+            {
+                g_tabs.push_back(std::make_unique<Split>(buffer));
+                g_activeBuff = buffer;
+                g_currTabI = 0;
+            }
+            else
+            {
+                // Insert the buffer next to the current one
+                g_tabs.insert(g_tabs.begin()+g_currTabI+1, std::make_unique<Split>(buffer));
+                g_activeBuff = buffer;
+                ++g_currTabI; // Go to the current buffer
+            }
+            g_isTitleUpdateNeeded = true;
+            g_isRedrawNeeded = true;
+            return;
+        }
+    }
+
+    g_statMsg.set("Not a valid file path or URL: "+quoteStr(strToAscii(word)), StatusMsg::Type::Error);
 }
 
 void goToNextTab()
