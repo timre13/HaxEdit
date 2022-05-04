@@ -51,7 +51,12 @@ Buffer::Buffer()
     Logger::log << "Created a buffer: " << this << Logger::End;
 }
 
-void Buffer::open(const std::string& filePath)
+static inline Buffer::fileModTime_t getFileModTime(const std::string& path)
+{
+    return std::filesystem::last_write_time(std::filesystem::path{path}).time_since_epoch().count();
+}
+
+void Buffer::open(const std::string& filePath, bool isReload/*=false*/)
 {
     TIMER_BEGIN_FUNC();
 
@@ -62,7 +67,11 @@ void Buffer::open(const std::string& filePath)
     m_history.clear();
     m_gitRepo.reset();
     m_signs.clear();
-    Logger::dbg << "Opening file: " << filePath << Logger::End;
+    m_lastFileUpdateTime = 0;
+    if (isReload)
+        Logger::dbg << "Reloading file: " << filePath << Logger::End;
+    else
+        Logger::dbg << "Opening file: " << filePath << Logger::End;
 
     try
     {
@@ -71,6 +80,7 @@ void Buffer::open(const std::string& filePath)
         m_highlightBuffer = std::u8string(countLineListLen(m_content), Syntax::MARK_NONE);
         m_isHighlightUpdateNeeded = true;
         m_gitRepo = std::make_unique<Git::Repo>(filePath);
+        m_lastFileUpdateTime = getFileModTime(m_filePath);
         updateGitDiff();
 
         Logger::dbg << "Read "
@@ -96,11 +106,22 @@ void Buffer::open(const std::string& filePath)
         m_gitRepo.reset();
         m_signs.clear();
 
-        Logger::err << "Failed to open file: " << quoteStr(filePath) << ": " << e.what() << Logger::End;
-        g_statMsg.set("Failed to open file: "+quoteStr(filePath)+": "+e.what(), StatusMsg::Type::Error);
-        MessageDialog::create(Dialog::EMPTY_CB, nullptr,
-                "Failed to open file: "+quoteStr(filePath)+": "+e.what(),
-                MessageDialog::Type::Error);
+        if (isReload)
+        {
+            Logger::err << "Failed to reload file: " << quoteStr(filePath) << ": " << e.what() << Logger::End;
+            g_statMsg.set("Failed to reload file: "+quoteStr(filePath)+": "+e.what(), StatusMsg::Type::Error);
+            MessageDialog::create(Dialog::EMPTY_CB, nullptr,
+                    "Failed to reload file: "+quoteStr(filePath)+": "+e.what(),
+                    MessageDialog::Type::Error);
+        }
+        else
+        {
+            Logger::err << "Failed to open file: " << quoteStr(filePath) << ": " << e.what() << Logger::End;
+            g_statMsg.set("Failed to open file: "+quoteStr(filePath)+": "+e.what(), StatusMsg::Type::Error);
+            MessageDialog::create(Dialog::EMPTY_CB, nullptr,
+                    "Failed to open file: "+quoteStr(filePath)+": "+e.what(),
+                    MessageDialog::Type::Error);
+        }
 
         glfwSetCursor(g_window, nullptr);
         TIMER_END_FUNC();
@@ -141,8 +162,16 @@ void Buffer::open(const std::string& filePath)
     }
     regenAutocompList();
 
-    g_statMsg.set("Opened file"+std::string(m_isReadOnly ? " (read-only)" : "")+": \""+filePath+"\"",
-            StatusMsg::Type::Info);
+    if (isReload)
+    {
+        g_statMsg.set("Reloaded file"+std::string(m_isReadOnly ? " (read-only)" : "")+": \""+filePath+"\"",
+                StatusMsg::Type::Info);
+    }
+    else
+    {
+        g_statMsg.set("Opened file"+std::string(m_isReadOnly ? " (read-only)" : "")+": \""+filePath+"\"",
+                StatusMsg::Type::Info);
+    }
 
     glfwSetCursor(g_window, nullptr);
     TIMER_END_FUNC();
@@ -188,6 +217,7 @@ int Buffer::saveToFile()
     m_isModified = false;
     m_isReadOnly = false;
     m_gitRepo = std::make_unique<Git::Repo>(m_filePath);
+    m_lastFileUpdateTime = getFileModTime(m_filePath);
     updateGitDiff();
 
     TIMER_END_FUNC();
@@ -2488,6 +2518,29 @@ void Buffer::goToMousePos()
     }
     m_isCursorShown = true;
     g_isRedrawNeeded = true;
+}
+
+void Buffer::tickAutoReload(float frameTimeMs)
+{
+    m_msUntilAutoReloadCheck -= frameTimeMs;
+
+    if (m_msUntilAutoReloadCheck <= 0)
+    {
+        Logger::dbg << "Checking file change" << Logger::End;
+
+        if (getFileModTime(m_filePath) == m_lastFileUpdateTime)
+        {
+            Logger::dbg << "No change" << Logger::End;
+        }
+        else
+        {
+            // TODO: Optionally ask the user
+            Logger::log << "Change detected! Reloading." << Logger::End;
+            open(m_filePath, true);
+        }
+
+        m_msUntilAutoReloadCheck = AUTO_RELOAD_CHECK_FREQ_MS;
+    }
 }
 
 Buffer::~Buffer()

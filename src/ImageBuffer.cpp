@@ -9,7 +9,7 @@
 #include <fstream>
 #include <sstream>
 
-void ImageBuffer::open(const std::string& filePath)
+void ImageBuffer::open(const std::string& filePath, bool isReload/*=false*/)
 {
     TIMER_BEGIN_FUNC();
     glfwSetCursor(g_window, Cursors::busy);
@@ -18,20 +18,37 @@ void ImageBuffer::open(const std::string& filePath)
 
     m_filePath = filePath;
     m_isReadOnly = true;
-    Logger::dbg << "Opening image file: " << filePath << Logger::End;
+    if (isReload)
+        Logger::dbg << "Reloading image file: " << filePath << Logger::End;
+    else
+        Logger::dbg << "Opening image file: " << filePath << Logger::End;
     m_image = std::make_unique<Image>(filePath, GL_NEAREST, GL_NEAREST);
 
     if (m_image->isOpenFailed())
     {
         // TODO: Show reason
-        Logger::err << "Failed to open image file: " << quoteStr(filePath) << Logger::End;
-        g_statMsg.set("Failed to open image file: "+quoteStr(filePath), StatusMsg::Type::Error);
-        MessageDialog::create(Dialog::EMPTY_CB, nullptr,
-                "Failed to open image file: "+quoteStr(filePath),
-                MessageDialog::Type::Error);
+        if (isReload)
+        {
+            Logger::err << "Failed to reload image file: " << quoteStr(filePath) << Logger::End;
+            g_statMsg.set("Failed to reload image file: "+quoteStr(filePath), StatusMsg::Type::Error);
+            MessageDialog::create(Dialog::EMPTY_CB, nullptr,
+                    "Failed to reload image file: "+quoteStr(filePath),
+                    MessageDialog::Type::Error);
+        }
+        else
+        {
+            Logger::err << "Failed to open image file: " << quoteStr(filePath) << Logger::End;
+            g_statMsg.set("Failed to open image file: "+quoteStr(filePath), StatusMsg::Type::Error);
+            MessageDialog::create(Dialog::EMPTY_CB, nullptr,
+                    "Failed to open image file: "+quoteStr(filePath),
+                    MessageDialog::Type::Error);
+        }
     }
 
-    g_statMsg.set("Opened image file: "+quoteStr(filePath), StatusMsg::Type::Info);
+    if (isReload)
+        g_statMsg.set("Reloaded image file: "+quoteStr(filePath), StatusMsg::Type::Info);
+    else
+        g_statMsg.set("Opened image file: "+quoteStr(filePath), StatusMsg::Type::Info);
 
     glfwSetCursor(g_window, nullptr);
     TIMER_END_FUNC();

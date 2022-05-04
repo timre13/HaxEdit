@@ -90,7 +90,7 @@ int main(int argc, char** argv)
     int msUntilCursorBlinking = CURSOR_BLINK_MS;
     while (!glfwWindowShouldClose(g_window))
     {
-        double startTime = glfwGetTime();
+        const double startTime = glfwGetTime();
 
         glfwPollEvents();
 
@@ -137,11 +137,16 @@ int main(int argc, char** argv)
         glfwSwapBuffers(g_window);
 
         const double frameTimeSec = glfwGetTime()-startTime;
+
         msUntilCursorBlinking -= frameTimeSec*1000;
         g_statMsg.tick(frameTimeSec);
         if (g_dialogFlashTime > 0)
             g_dialogFlashTime -= frameTimeSec*1000;
         Prompt::get()->update(frameTimeSec*1000);
+        if (g_activeBuff)
+        {
+            g_activeBuff->tickAutoReload(frameTimeSec*1000);
+        }
     }
 
     Logger::log << "Shutting down!" << Logger::End;

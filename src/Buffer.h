@@ -143,6 +143,8 @@ public:
         size_t fromCharI{};
     };
 
+    using fileModTime_t = std::filesystem::file_time_type::rep;
+
 protected:
     std::string m_filePath = FILENAME_NEW;
     std::vector<String> m_content;
@@ -198,6 +200,9 @@ protected:
     std::vector<size_t> m_findResultIs{};
     int m_findCurrResultI{};
 
+    float m_msUntilAutoReloadCheck{};
+    fileModTime_t m_lastFileUpdateTime{};
+
     virtual void renderAutocompPopup();
 
     /*
@@ -250,7 +255,7 @@ protected:
     /*
      * Do not call this. Use `App::openFileInNewBuffer`.
      */
-    virtual void open(const std::string& filePath);
+    virtual void open(const std::string& filePath, bool isReload=false);
 
 public:
     Buffer();
@@ -430,6 +435,8 @@ public:
     virtual void unindentSelectedLines();
 
     virtual void goToMousePos();
+
+    virtual void tickAutoReload(float frameTimeMs);
 
     virtual ~Buffer();
 };

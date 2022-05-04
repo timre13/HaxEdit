@@ -38,7 +38,7 @@ private:
     /*
      * Do not call this. Use `App::openFileInNewBuffer`.
      */
-    virtual void open(const std::string& filePath) override;
+    virtual void open(const std::string& filePath, bool isReload=false) override;
 
 public:
     ImageBuffer()

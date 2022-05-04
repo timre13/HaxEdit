@@ -87,6 +87,7 @@
 // Milliseconds to wait before toggling cursor visibility
 // Set to -1 to disable blinking
 #define CURSOR_BLINK_MS                 500
+#define AUTO_RELOAD_CHECK_FREQ_MS       2000
 #define IMG_BUF_ZOOM_STEP               0.05f
 #define HIDE_MOUSE_WHILE_TYPING         true
 
