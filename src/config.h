@@ -88,6 +88,12 @@
 // Set to -1 to disable blinking
 #define CURSOR_BLINK_MS                 500
 #define AUTO_RELOAD_CHECK_FREQ_MS       2000
+
+#define AUTO_RELOAD_MODE_DONT 0
+#define AUTO_RELOAD_MODE_AUTO 1
+#define AUTO_RELOAD_MODE_ASK  2
+#define AUTO_RELOAD_MODE                AUTO_RELOAD_MODE_ASK
+
 #define IMG_BUF_ZOOM_STEP               0.05f
 #define HIDE_MOUSE_WHILE_TYPING         true
 

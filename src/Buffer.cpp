@@ -2520,8 +2520,30 @@ void Buffer::goToMousePos()
     g_isRedrawNeeded = true;
 }
 
+void _autoReloadDialogCb(int btn, Dialog*, void* userData)
+{
+    Buffer* buffer = (Buffer*)userData;
+
+    if (btn == 0) // If pressed "Yes"
+    {
+        Logger::dbg << "User answered \"Yes\". Reloading" << Logger::End;
+        buffer->open(buffer->m_filePath, true);
+    }
+    else // If pressed "No"
+    {
+        Logger::dbg << "User answered \"No\". Not reloading" << Logger::End;
+        buffer->m_lastFileUpdateTime = getFileModTime(buffer->m_filePath);
+    }
+
+    buffer->m_isReloadAskerDialogOpen = false;
+}
+
 void Buffer::tickAutoReload(float frameTimeMs)
 {
+    // Don't auto reload if it is disabled
+    if constexpr (AUTO_RELOAD_MODE == AUTO_RELOAD_MODE_DONT)
+        return;
+
     m_msUntilAutoReloadCheck -= frameTimeMs;
 
     if (m_msUntilAutoReloadCheck <= 0)
@@ -2534,9 +2556,30 @@ void Buffer::tickAutoReload(float frameTimeMs)
         }
         else
         {
-            // TODO: Optionally ask the user
-            Logger::log << "Change detected! Reloading." << Logger::End;
-            open(m_filePath, true);
+            if constexpr (AUTO_RELOAD_MODE == AUTO_RELOAD_MODE_ASK) // Ask to reload
+            {
+                if (m_isReloadAskerDialogOpen)
+                {
+                    Logger::log << "Change detected, already asked user" << Logger::End;
+                }
+                else
+                {
+                    Logger::log << "Change detected! Asking to reload." << Logger::End;
+                    m_isReloadAskerDialogOpen = true;
+                    MessageDialog::create(_autoReloadDialogCb, this,
+                            "The file "+quoteStr(m_filePath)+"\nhas been changed from outside."
+                                "\nDo you want to reload it?",
+                            MessageDialog::Type::Information,
+                            {{"Yes", GLFW_KEY_Y}, {"No", GLFW_KEY_N}});
+                }
+            }
+            else // Reload without asking
+            {
+                (void)_autoReloadDialogCb; // Let's "use" this bad boy
+
+                Logger::log << "Change detected! Reloading." << Logger::End;
+                open(m_filePath, true);
+            }
         }
 
         m_msUntilAutoReloadCheck = AUTO_RELOAD_CHECK_FREQ_MS;

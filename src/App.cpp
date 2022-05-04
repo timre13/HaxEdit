@@ -8,7 +8,7 @@
 #ifdef OS_LINUX
 #   include <unistd.h>
 #elif defined(OS_WIN)
-#   error "TODO
+#   error "TODO"
 #else
 #   error "Unsupported OS"
 #endif

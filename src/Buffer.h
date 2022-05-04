@@ -200,8 +200,10 @@ protected:
     std::vector<size_t> m_findResultIs{};
     int m_findCurrResultI{};
 
+    friend void _autoReloadDialogCb(int, Dialog*, void*);
     float m_msUntilAutoReloadCheck{};
     fileModTime_t m_lastFileUpdateTime{};
+    bool m_isReloadAskerDialogOpen{};
 
     virtual void renderAutocompPopup();
 
