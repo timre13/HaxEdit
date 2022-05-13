@@ -571,6 +571,13 @@ void Buffer::updateGitDiff()
     }
 }
 
+std::string Buffer::getCheckedOutObjName(int hashLen/*=-1*/) const
+{
+    const std::string currObjName = m_gitRepo->getCheckedOutObjName(hashLen);
+    Logger::log << "Current checked out Git object: " << currObjName << Logger::End;
+    return currObjName;
+}
+
 void Buffer::updateCursor()
 {
     TIMER_BEGIN_FUNC();

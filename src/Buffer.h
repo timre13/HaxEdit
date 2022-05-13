@@ -220,6 +220,7 @@ protected:
 
     virtual void _updateHighlighting();
     virtual void updateGitDiff();
+    virtual std::string getCheckedOutObjName(int hashLen=-1) const;
 
     virtual inline Char getCharAt(size_t pos) const
     {

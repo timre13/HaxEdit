@@ -29,9 +29,11 @@ private:
 public:
     Repo(const std::string& path);
 
+    inline const std::string& getRepoRoot() const { return m_repoRootPath; }
+    inline bool isRepo() const { return m_isRepo; }
+
     diffList_t getDiff(const std::string& filename);
-    const std::string& getRepoRoot() const { return m_repoRootPath; }
-    bool isRepo() const { return m_isRepo; }
+    std::string getCheckedOutObjName(int hashLen=-1) const;
 
     ~Repo();
 };

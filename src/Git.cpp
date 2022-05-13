@@ -130,6 +130,48 @@ Repo::diffList_t Repo::getDiff(const std::string& filename)
     return diffList;
 }
 
+std::string Repo::getCheckedOutObjName(int hashLen/*=-1*/) const
+{
+    if (!m_isRepo) return "";
+
+    git_reference* headRef;
+    git_repository_head(&headRef, m_repo);
+    git_reference_t refType = git_reference_type(headRef);
+    if (refType == GIT_REFERENCE_DIRECT)
+    {
+        // TODO: Maybe we should return the tag name instead of the tagged commit
+        //       when a tag is checked out
+        Logger::dbg << "Git HEAD reference type: DIRECT" << Logger::End;
+        const bool isHeadDetached = !!git_repository_head_detached(m_repo);
+        Logger::dbg << "HEAD is " << (isHeadDetached ? "" : "NOT ") << "detached" << Logger::End;
+        if (isHeadDetached) // If the HEAD is detached, get the commit that is checked out
+        {
+            const git_oid* ref = git_reference_target(headRef);
+            char name[41]{};
+            git_oid_fmt(name, ref);
+            name[40] = '\0';
+            if (hashLen >= 4 && hashLen <= 40)
+                name[hashLen] = '\0';
+            return name;
+        }
+        else // Simply get the branch name
+        {
+            const char* name = git_reference_name(headRef);
+            return name;
+        }
+    }
+    else if (refType == GIT_REFERENCE_SYMBOLIC)
+    {
+        Logger::dbg << "Git HEAD reference type: SYMBOLIC" << Logger::End;
+        return git_reference_symbolic_target(headRef);
+    }
+    else
+    {
+        assert(false);
+        return "";
+    }
+}
+
 Repo::~Repo()
 {
     git_repository_free(m_repo);
