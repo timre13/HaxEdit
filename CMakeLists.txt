@@ -12,8 +12,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS true)
 include_directories(
     /usr/include/freetype2
     /usr/include/libpng16
-    ../external/icu/icu4c/source/common
-    ../external/icu/icu4c/source/io
 )
 
 find_library(ICUUC_LIB icuuc REQUIRED)
