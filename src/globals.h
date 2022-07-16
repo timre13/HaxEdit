@@ -7,6 +7,7 @@
 #include "modes.h"
 #include "StatusMsg.h"
 #include "autocomp/DictionaryProvider.h"
+#include "autocomp/LspProvider.h"
 
 class Dialog;
 class Split;
@@ -62,6 +63,7 @@ GLFWcursor* busy{};
 namespace Autocomp
 {
 std::unique_ptr<Autocomp::DictionaryProvider> dictProvider;
+std::unique_ptr<Autocomp::LspProvider>        lspProvider;
 }
 
 EditorMode g_editorMode;
@@ -109,6 +111,7 @@ extern GLFWcursor* busy;
 namespace Autocomp
 {
 extern std::unique_ptr<Autocomp::DictionaryProvider> dictProvider;
+extern std::unique_ptr<Autocomp::LspProvider>        lspProvider;
 }
 
 extern EditorMode g_editorMode;

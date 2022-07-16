@@ -12,14 +12,19 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS true)
 include_directories(
     /usr/include/freetype2
     /usr/include/libpng16
+    ./external/LspCpp/include
 )
 
 find_library(ICUUC_LIB icuuc REQUIRED)
 find_library(ICUDATA_LIB icudata REQUIRED)
 find_library(ICUIO_LIB icuio  REQUIRED)
 find_library(ICUI18N_LIB icui18n  REQUIRED)
+find_library(LSPCPP_LIB lspcpp PATHS ./external/LspCpp/build REQUIRED)
+find_library(BOOST_FS_LIB boost_filesystem)
 
-link_libraries(GLEW GL glfw freetype ${ICUUC_LIB} ${ICUDATA_LIB} ${ICUIO_LIB} ${ICUI18N_LIB} git2)
+link_directories(./external/LspCpp/build/third_party/uri/src)
+link_libraries(GLEW GL glfw freetype ${ICUUC_LIB} ${ICUDATA_LIB} ${ICUIO_LIB} ${ICUI18N_LIB} git2
+    ${LSPCPP_LIB} network-uri ${BOOST_FS_LIB})
 
 
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic -g3 -pthread")
@@ -70,6 +75,7 @@ add_executable(haxed
     src/autocomp/DictionaryProvider.cpp
     src/autocomp/BufferWordProvider.cpp
     src/autocomp/PathProvider.cpp
+    src/autocomp/LspProvider.cpp
     src/ThemeLoader.cpp
     src/Git.cpp
     external/cJSON/cJSON.c

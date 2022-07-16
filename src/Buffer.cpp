@@ -2109,6 +2109,7 @@ void Buffer::regenAutocompList()
     Logger::dbg << "Regenerating autocomplete list for buffer " << this << Logger::End;
     m_autocompPopup->clear();
     Autocomp::dictProvider->get(m_autocompPopup.get());
+    Autocomp::lspProvider->get(m_autocompPopup.get());
     m_buffWordProvid->get(m_autocompPopup.get());
     m_pathProvid->get(m_autocompPopup.get());
 }

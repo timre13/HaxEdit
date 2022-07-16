@@ -7,3 +7,6 @@
 [submodule "external/cJSON"]
 	path = external/cJSON
 	url = https://github.com/DaveGamble/cJSON
+[submodule "external/LspCpp"]
+	path = external/LspCpp
+	url = https://github.com/kuafuwang/LspCpp.git

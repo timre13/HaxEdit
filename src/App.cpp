@@ -180,6 +180,10 @@ void App::createAutocompleteProviders()
     {
         Logger::warn << "Dictionary has a lot of words, autocompletion may be slow" << Logger::End;
     }
+
+
+    Autocomp::lspProvider.reset(new Autocomp::LspProvider{});
+
 }
 
 void App::loadTheme()
