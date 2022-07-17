@@ -21,8 +21,6 @@
 #include "ImageBuffer.h"
 #include "Split.h"
 #include "globals.h"
-#include "autocomp/DictionaryProvider.h"
-#include "autocomp/LspProvider.h"
 #include "ThemeLoader.h"
 #include "Prompt.h"
 

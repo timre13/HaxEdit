@@ -5,8 +5,11 @@
 #include <string>
 #include <memory>
 #include <boost/process.hpp>
+#include <boost/process/pipe.hpp>
 #include <boost/asio.hpp>
 #include <system_error>
+#include <chrono>
+using namespace std::chrono_literals;
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Weverything"
@@ -16,7 +19,9 @@
 #include "LibLsp/JsonRpc/Endpoint.h"
 #include "LibLsp/JsonRpc/RemoteEndPoint.h"
 #include "LibLsp/JsonRpc/MessageIssue.h"
+#include "LibLsp/JsonRpc/stream.h"
 #ifdef __clang__
+
 #pragma clang diagnostic pop
 #endif // __clang__
 
@@ -63,6 +68,42 @@ public:
     }
 };
 
+struct BoostProcIpstream : lsp::base_istream<bproc::ipstream>
+{
+public:
+    explicit BoostProcIpstream(bproc::ipstream& is)
+        : base_istream<bproc::ipstream>(is)
+    {
+    }
+
+    virtual std::string what() override
+    {
+        return "";
+    }
+
+    virtual void clear() override
+    {
+    }
+};
+
+struct BoostProcOpstream : lsp::base_ostream<bproc::opstream>
+{
+public:
+    explicit BoostProcOpstream(bproc::opstream& _t)
+        : lsp::base_ostream<bproc::opstream>(_t)
+    {
+    }
+
+    virtual std::string what() override
+    {
+        return "";
+    }
+
+    virtual void clear() override
+    {
+    }
+};
+
 class LspClient final
 {
 public:
@@ -75,6 +116,8 @@ public:
     LspLog m_logger;
     std::shared_ptr<GenericEndpoint> m_endpoint = std::make_shared<GenericEndpoint>(m_logger);
     RemoteEndPoint m_remoteEndpoint{m_protJsonHandler, m_endpoint, m_logger};
+    std::shared_ptr<lsp::ostream> m_writeProxy = std::make_shared<BoostProcOpstream>(m_writeStream);
+    std::shared_ptr<lsp::istream>  m_readProxy = std::make_shared<BoostProcIpstream>(m_readStream);
 
     LspClient(const std::string& exePath, const std::vector<std::string>& args)
     {
@@ -92,18 +135,27 @@ public:
                 bproc::std_out > m_readStream,
                 bproc::std_in < m_writeStream,
                 bproc::on_exit([](int exitCode, const std::error_code& err){
-                    Logger::log << "LSP server exited with code "
-                        << exitCode << ", error: " << err << Logger::End;
+                    if (exitCode == 0)
+                    {
+                        Logger::dbg << "LSP server exited successfully" << Logger::End;
+                    }
+                    else
+                    {
+                        Logger::err << "LSP server exited with code "
+                            << exitCode << ", error: " << err.message() << Logger::End;
+                    }
                 })
         );
 
         if (errCode)
         {
-            Logger::fatal << "Failed to start LSP server" << Logger::End;
+            Logger::fatal << "Failed to start LSP server: ["
+                << errCode.category().name() << "]: " << errCode.message() << Logger::End;
         }
         else
         {
             Logger::log << "Started LSP server" << Logger::End;
+            m_remoteEndpoint.startProcessingMessages(m_readProxy, m_writeProxy);
         }
     }
 
@@ -111,7 +163,11 @@ public:
 
     ~LspClient()
     {
+        Logger::dbg << "Closing LSP endpoint" << Logger::End;
         m_remoteEndpoint.stop();
+        Logger::dbg << "Stopping process I/O" << Logger::End;
+        m_asioIo.stop();
+        Logger::log << "LSP server shutdown routine finished" << Logger::End;
     }
 };
 
@@ -122,9 +178,10 @@ private:
 
 public:
     LspProvider();
-    ~LspProvider();
 
     virtual void get(Popup* popupP) override;
+
+    ~LspProvider();
 };
 
 } // namespace Autocomp

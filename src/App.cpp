@@ -1,4 +1,6 @@
 #include "App.h"
+#include "autocomp/DictionaryProvider.h"
+#include "autocomp/LspProvider.h"
 #include "Bindings.h"
 #include "../external/stb/stb_image.h"
 #include "common/file.h"
