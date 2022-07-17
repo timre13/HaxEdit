@@ -173,6 +173,11 @@ void Buffer::open(const std::string& filePath, bool isReload/*=false*/)
                 StatusMsg::Type::Info);
     }
 
+    // TODO: This is bad
+    const std::string content = strToAscii(lineVecConcat(m_content));
+    // TODO: Properly tell reloading to LSP server (close first)
+    Autocomp::lspProvider->onFileOpen(m_filePath, content);
+
     glfwSetCursor(g_window, nullptr);
     TIMER_END_FUNC();
 }
@@ -2600,6 +2605,7 @@ Buffer::~Buffer()
     m_isHighlightUpdateNeeded = true; // Exit the current update
     m_shouldHighlighterLoopRun = false; // Signal the thread that we don't want more syntax updates
     m_highlighterThread.join(); // Wait for the thread
+    Autocomp::lspProvider->onFileClose(m_filePath);
     Logger::log << "Destroyed a buffer: " << this << " (" << m_filePath << ')' << Logger::End;
     glfwSetCursor(g_window, nullptr);
 }

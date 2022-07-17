@@ -16,6 +16,7 @@ using namespace std::chrono_literals;
 #endif // __clang__
 #include "LibLsp/lsp/ProcessIoService.h"
 #include "LibLsp/lsp/ProtocolJsonHandler.h"
+#include "LibLsp/lsp/general/lsServerCapabilities.h"
 #include "LibLsp/JsonRpc/Endpoint.h"
 #include "LibLsp/JsonRpc/RemoteEndPoint.h"
 #include "LibLsp/JsonRpc/MessageIssue.h"
@@ -175,11 +176,16 @@ class LspProvider final : public IProvider
 {
 private:
     std::unique_ptr<LspClient> m_client;
+    lsServerCapabilities m_servCaps;
 
 public:
     LspProvider();
 
     virtual void get(Popup* popupP) override;
+
+    void onFileOpen(const std::string& path, const std::string& fileContent);
+    void onFileChange(const std::string& path);
+    void onFileClose(const std::string& path);
 
     ~LspProvider();
 };
