@@ -1031,6 +1031,14 @@ void hidePromptAnimated()
     Prompt::get()->hideWithAnim();
 }
 
+void bufferShowSymbolHover()
+{
+    if (!g_activeBuff)
+        return;
+
+    g_activeBuff->showSymbolHover();
+}
+
 } // Namespace Callbacks
 
 BindingMapSet nmap = {};

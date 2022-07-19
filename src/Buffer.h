@@ -445,5 +445,7 @@ public:
 
     virtual void tickAutoReload(float frameTimeMs);
 
+    virtual void showSymbolHover();
+
     virtual ~Buffer();
 };

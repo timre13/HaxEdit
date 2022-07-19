@@ -2620,6 +2620,17 @@ void Buffer::tickAutoReload(float frameTimeMs)
     }
 }
 
+void Buffer::showSymbolHover()
+{
+    const std::string hoverStr = Autocomp::lspProvider->getHover(m_filePath, m_cursorLine, m_cursorCol);
+
+    // TODO: Implement a tooltip window
+    //       It can also be useful for other stuff like call help.
+
+    if (!hoverStr.empty())
+        g_statMsg.set(hoverStr, StatusMsg::Type::Info);
+}
+
 Buffer::~Buffer()
 {
     glfwSetCursor(g_window, Cursors::busy);

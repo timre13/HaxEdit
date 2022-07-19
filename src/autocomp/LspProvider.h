@@ -187,6 +187,8 @@ public:
     void onFileChange(const std::string& path, int version, const std::string& newContent);
     void onFileClose(const std::string& path);
 
+    std::string getHover(const std::string& path, uint line, uint col);
+
     ~LspProvider();
 };
 

@@ -141,6 +141,8 @@ void togglePromptAnimated();
 void showPromptAnimated();
 void hidePromptAnimated();
 
+void bufferShowSymbolHover();
+
 }
 
 extern BindingMapSet nmap; // Normal mode mapping

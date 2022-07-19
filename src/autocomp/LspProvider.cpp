@@ -14,6 +14,7 @@
 #include "LibLsp/lsp/textDocument/did_open.h"
 #include "LibLsp/lsp/textDocument/did_close.h"
 #include "LibLsp/lsp/textDocument/did_change.h"
+#include "LibLsp/lsp/textDocument/hover.h"
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif // __clang__
@@ -148,6 +149,35 @@ void LspProvider::onFileClose(const std::string& path)
     else
     {
         Logger::dbg << "LSP: textDocument/didClose is not supported" << Logger::End;
+    }
+}
+
+std::string LspProvider::getHover(const std::string& path, uint line, uint col)
+{
+    if (m_servCaps.hoverProvider.get_value_or(false))
+    {
+        td_hover::request req;
+        req.params.position.line = line;
+        req.params.position.character = col;
+        req.params.textDocument.uri.SetPath(path);
+        Logger::dbg << "LSP: Sending textDocument/hover request: " << req.ToJson() << Logger::End;
+
+        auto resp = m_client->getEndpoint()->waitResponse(req);
+        Logger::dbg << "LSP: Response: " << resp->ToJson() << Logger::End;
+        if (resp->IsError())
+            return "";
+
+        if (resp->response.result.contents.second)
+        {
+            return resp->response.result.contents.second->value;
+        }
+        return "";
+
+    }
+    else
+    {
+        Logger::dbg << "LSP: textDocument/hover is not supported" << Logger::End;
+        return "";
     }
 }
 

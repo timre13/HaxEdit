@@ -227,6 +227,7 @@ void App::setupKeyBindings()
         bindNonprimChar(U'>',                  Callbacks::indentSelectedLines);
         bindNonprimChar(U'<',                  Callbacks::unindentSelectedLines);
         bindNonprimChar(U':',                  Callbacks::togglePromptAnimated);
+        bindNonprimChar(U'á',                  Callbacks::bufferShowSymbolHover);
         bindFuncKey(GLFW_KEY_ESCAPE,        0, Callbacks::bufferCancelSelection);
         bindFuncKey(GLFW_KEY_INSERT,        0, Callbacks::switchToInsertMode);
         bindFuncKey(GLFW_KEY_RIGHT,         0, Callbacks::moveCursorRight);
