@@ -205,6 +205,10 @@ protected:
     fileModTime_t m_lastFileUpdateTime{};
     bool m_isReloadAskerDialogOpen{};
 
+    // This is incremented after each change.
+    // Sent to the LSP server.
+    int m_version{};
+
     virtual void renderAutocompPopup();
 
     /*

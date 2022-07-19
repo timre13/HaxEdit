@@ -68,6 +68,7 @@ void Buffer::open(const std::string& filePath, bool isReload/*=false*/)
     m_gitRepo.reset();
     m_signs.clear();
     m_lastFileUpdateTime = 0;
+    m_version = 0;
     if (isReload)
         Logger::dbg << "Reloading file: " << filePath << Logger::End;
     else
@@ -1770,6 +1771,8 @@ void Buffer::insert(Char character)
     m_isModified = true;
     m_isCursorShown = true;
     m_isHighlightUpdateNeeded = true;
+    m_version++;
+    Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(lineVecConcat(m_content)));
     scrollViewportToCursor();
 
     TIMER_END_FUNC();
@@ -1814,6 +1817,8 @@ void Buffer::replaceChar(Char character)
 
     m_isCursorShown = true;
     m_isHighlightUpdateNeeded = true;
+    m_version++;
+    Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(lineVecConcat(m_content)));
     scrollViewportToCursor();
 
     TIMER_END_FUNC();
@@ -1883,6 +1888,8 @@ void Buffer::deleteCharBackwards()
 
     m_isCursorShown = true;
     m_isHighlightUpdateNeeded = true;
+    m_version++;
+    Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(lineVecConcat(m_content)));
     scrollViewportToCursor();
 
     if (m_autocompPopup->isRendered())
@@ -1957,6 +1964,8 @@ void Buffer::deleteCharForwardOrSelected()
     m_isCursorShown = true;
     scrollViewportToCursor();
     m_isHighlightUpdateNeeded = true;
+    m_version++;
+    Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(lineVecConcat(m_content)));
 
     TIMER_END_FUNC();
 }
@@ -1995,6 +2004,8 @@ void Buffer::undo()
 
         scrollViewportToCursor();
         m_isHighlightUpdateNeeded = true;
+        m_version++;
+        Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(lineVecConcat(m_content)));
         g_isRedrawNeeded = true;
         Logger::dbg << "Went back in history" << Logger::End;
     }
@@ -2036,6 +2047,8 @@ void Buffer::redo()
         // TODO: Adjust `m_highlightBuffer`
 
         m_isHighlightUpdateNeeded = true;
+        m_version++;
+        Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(lineVecConcat(m_content)));
         scrollViewportToCursor();
         g_isRedrawNeeded = true;
         Logger::dbg << "Went forward in history" << Logger::End;
@@ -2103,6 +2116,8 @@ void Buffer::autocompPopupInsert()
         m_cursorCharPos += toInsert.length();
         m_cursorCol += toInsert.length();
         m_isHighlightUpdateNeeded = true;
+        m_version++;
+        Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(lineVecConcat(m_content)));
     }
     m_autocompPopup->setVisibility(false);
     m_isCursorShown = true;
@@ -2313,6 +2328,8 @@ size_t Buffer::deleteSelectedChars()
     m_isCursorShown = true;
     scrollViewportToCursor();
     m_isHighlightUpdateNeeded = true;
+    m_version++;
+    Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(lineVecConcat(m_content)));
     g_statMsg.set("Deleted "+std::to_string(delCount)+" characters", StatusMsg::Type::Info);
     g_isRedrawNeeded = true;
 
@@ -2465,6 +2482,8 @@ void Buffer::indentSelectedLines()
     m_selection.mode = Selection::Mode::None;
     // TODO: Insert to highlight buffer instead of reparsing
     m_isHighlightUpdateNeeded = true;
+    m_version++;
+    Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(lineVecConcat(m_content)));
     g_isRedrawNeeded = true;
 }
 
@@ -2508,6 +2527,8 @@ void Buffer::unindentSelectedLines()
     m_selection.mode = Selection::Mode::None;
     // TODO: Remove from highlight buffer instead of reparsing
     m_isHighlightUpdateNeeded = true;
+    m_version++;
+    Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(lineVecConcat(m_content)));
     g_isRedrawNeeded = true;
 }
 

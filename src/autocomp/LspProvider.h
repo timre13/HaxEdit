@@ -184,7 +184,7 @@ public:
     virtual void get(Popup* popupP) override;
 
     void onFileOpen(const std::string& path, const std::string& fileContent);
-    void onFileChange(const std::string& path);
+    void onFileChange(const std::string& path, int version, const std::string& newContent);
     void onFileClose(const std::string& path);
 
     ~LspProvider();
