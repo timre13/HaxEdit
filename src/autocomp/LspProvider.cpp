@@ -7,6 +7,7 @@
 #endif // __clang__
 #include "LibLsp/lsp/ProcessIoService.h"
 #include "LibLsp/lsp/general/initialize.h"
+#include "LibLsp/lsp/general/initialized.h"
 #include "LibLsp/lsp/general/exit.h"
 #include "LibLsp/lsp/general/lsClientCapabilities.h"
 #include "LibLsp/lsp/AbsolutePath.h"
@@ -41,7 +42,7 @@ LspProvider::LspProvider()
         initreq.params.clientInfo->version = "0.1";
     }
 
-    Logger::dbg << "LSP: Sending init request: " << initreq.ToJson() << Logger::End;
+    Logger::dbg << "LSP: Sending initialize request: " << initreq.ToJson() << Logger::End;
 
     auto initRes = m_client->getEndpoint()->waitResponse(initreq);
     if (!initRes)
@@ -56,6 +57,10 @@ LspProvider::LspProvider()
     Logger::dbg << "\tHover supported?: " << (cap.hoverProvider ? "YES" : "NO") << Logger::End;
     assert(cap.hoverProvider);
     m_servCaps = std::move(cap);
+
+
+    Notify_InitializedNotification::notify initednotif;
+    Logger::dbg << "LSP: Sending initialized notification: " << initednotif.ToJson() << Logger::End;
 }
 
 void LspProvider::get(Popup* popupP)
