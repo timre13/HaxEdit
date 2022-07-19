@@ -7,9 +7,11 @@
 
 Image::Image(
         const std::string& filePath,
-        uint upscaleFilt/*=GL_LINEAR*/, uint downscaleFilt/*=GL_LINEAR*/)
+        uint upscaleFilt/*=UPSCALE_FILT_DEF*/, uint downscaleFilt/*=DOWNSCALE_FILT_DEF*/,
+        bool preventLogging/*=false*/)
 {
     m_filePath = filePath;
+    m_preventLogging = preventLogging;
 
     stbi_set_flip_vertically_on_load(1);
     int channelCount;
@@ -31,7 +33,8 @@ Image::Image(
     }
     else
     {
-        Logger::dbg << "Loaded image file: " << filePath << Logger::End;
+        if (!m_preventLogging)
+            Logger::dbg << "Loaded image file: " << filePath << Logger::End;
         m_isOpenFailed = false;
     }
 
@@ -71,5 +74,6 @@ Image::~Image()
 {
     stbi_image_free(m_data);
     glDeleteTextures(1, &m_sampler);
-    Logger::dbg << "Cleaned up texture data for image " << this << " (" << m_filePath << ')' << Logger::End;
+    if (!m_preventLogging)
+        Logger::dbg << "Cleaned up texture data for image " << this << " (" << m_filePath << ')' << Logger::End;
 }

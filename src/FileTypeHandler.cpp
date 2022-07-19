@@ -168,6 +168,16 @@ void FileTypeHandler::loadFolderTypes(const std::string& databasePath)
     Logger::log << "Loaded " << m_folderTypes.size() << " folder types" << Logger::End;
 }
 
+#define SEQ_CLEAR_LINE "\33[2K"
+#define SEQ_UP_LINE "\033[A"
+
+static Image* loadIcon(const std::string& name)
+{
+    Logger::dbg << SEQ_UP_LINE SEQ_CLEAR_LINE "\rLoading icon: " << name << '\n';
+    std::cout << std::flush;
+    return new Image{App::getResPath(PATH_DIR_FT_ICON"/"+name+".png"), Image::UPSCALE_FILT_DEF, Image::DOWNSCALE_FILT_DEF, true};
+}
+
 FileTypeHandler::FileTypeHandler(
         const std::string& fileDbPath,
         const std::string& folderDbPath)
@@ -175,20 +185,24 @@ FileTypeHandler::FileTypeHandler(
     loadFileTypes(fileDbPath);
     loadFolderTypes(folderDbPath);
 
+    Logger::dbg << "Loading icons" << Logger::End;
+
     // Load file icons
     for (auto& ft : m_fileTypes)
-        ft.icon = std::make_unique<Image>(App::getResPath(PATH_DIR_FT_ICON"/"+ft.iconName+".png"));
+        ft.icon = std::unique_ptr<Image>(loadIcon(ft.iconName));
 
     // Load default file icon
-    m_defFileIcon = std::make_unique<Image>(App::getResPath(PATH_DIR_FT_ICON"/file.png"));
+    m_defFileIcon = std::unique_ptr<Image>(loadIcon("file"));
 
 
     // Load folder icons
     for (auto& ft : m_folderTypes)
-        ft.icon = std::make_unique<Image>(App::getResPath(PATH_DIR_FT_ICON"/"+ft.iconName+".png"));
+        ft.icon = std::unique_ptr<Image>(loadIcon(ft.iconName));
 
     // Load default folder icon
-    m_defFolderIcon = std::make_unique<Image>(App::getResPath(PATH_DIR_FT_ICON"/folder-other.png"));
+    m_defFolderIcon = std::unique_ptr<Image>(loadIcon("folder-other"));
+
+    Logger::dbg << SEQ_UP_LINE SEQ_CLEAR_LINE "\rLoaded icons" << Logger::End;
 }
 
 const Image* FileTypeHandler::getIconFromFilename(std::string fname, bool isDir)

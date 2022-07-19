@@ -13,6 +13,11 @@ private:
     std::string m_filePath;
     bool m_isOpenFailed{};
     uint8_t* m_data{};
+    bool m_preventLogging{};
+
+public:
+    static constexpr int UPSCALE_FILT_DEF = GL_LINEAR;
+    static constexpr int DOWNSCALE_FILT_DEF = GL_LINEAR;
 
 public:
     /*
@@ -24,7 +29,8 @@ public:
      */
     Image(
             const std::string& filePath,
-            uint upscaleFilt=GL_LINEAR, uint downscaleFilt=GL_LINEAR);
+            uint upscaleFilt=UPSCALE_FILT_DEF, uint downscaleFilt=DOWNSCALE_FILT_DEF,
+            bool preventLogging=false);
 
     /*
      * Render the image on the screen.
