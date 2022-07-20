@@ -65,6 +65,7 @@ add_executable(haxed
     src/Image.cpp
     src/Timer.cpp
     src/Prompt.cpp
+    src/FloatingWin.cpp
     src/dialogs/Dialog.cpp
     src/dialogs/MessageDialog.cpp
     src/dialogs/FileDialog.cpp

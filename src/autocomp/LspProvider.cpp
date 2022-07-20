@@ -152,7 +152,7 @@ void LspProvider::onFileClose(const std::string& path)
     }
 }
 
-std::string LspProvider::getHover(const std::string& path, uint line, uint col)
+LspProvider::HoverInfo LspProvider::getHover(const std::string& path, uint line, uint col)
 {
     if (m_servCaps.hoverProvider.get_value_or(false))
     {
@@ -165,19 +165,26 @@ std::string LspProvider::getHover(const std::string& path, uint line, uint col)
         auto resp = m_client->getEndpoint()->waitResponse(req);
         Logger::dbg << "LSP: Response: " << resp->ToJson() << Logger::End;
         if (resp->IsError())
-            return "";
+            return {};
 
+        HoverInfo info;
         if (resp->response.result.contents.second)
         {
-            return resp->response.result.contents.second->value;
+            info.text = resp->response.result.contents.second->value;
         }
-        return "";
-
+        if (resp->response.result.range)
+        {
+            info.startLine = resp->response.result.range->start.line;
+            info.startCol  = resp->response.result.range->start.character;
+            info.endLine   = resp->response.result.range->end.line;
+            info.endCol    = resp->response.result.range->end.character;
+        }
+        return info;
     }
     else
     {
         Logger::dbg << "LSP: textDocument/hover is not supported" << Logger::End;
-        return "";
+        return {};
     }
 }
 

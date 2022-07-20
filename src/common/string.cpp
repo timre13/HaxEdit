@@ -34,7 +34,7 @@ std::string strToAscii(const String& str)
     return output;
 }
 
-int getLongestLineLen(const std::string& str)
+size_t getLongestLineLen(const std::string& str)
 {
     size_t maxLen{};
     std::stringstream ss;
@@ -45,7 +45,7 @@ int getLongestLineLen(const std::string& str)
         if (line.length() > maxLen)
             maxLen = line.length();
     }
-    return (int)maxLen;
+    return maxLen;
 }
 
 size_t countLineListLen(const std::vector<String>& lines)

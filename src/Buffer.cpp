@@ -10,6 +10,7 @@
 #include "common/string.h"
 #include "Clipboard.h"
 #include "ThemeLoader.h"
+#include "FloatingWin.h"
 #include <fstream>
 #include <sstream>
 #include <chrono>
@@ -907,6 +908,7 @@ void Buffer::updateCursor()
         scrollViewportToCursor();
         m_isCursorShown = true;
         m_cursorMovCmd = CursorMovCmd::None;
+        g_hoverPopup->hideAndClear();
     }
 
     TIMER_END_FUNC();
@@ -2551,6 +2553,7 @@ void Buffer::goToMousePos()
         m_cursorCharPos = countLineListLen(m_content)-1;
     }
     m_isCursorShown = true;
+    g_hoverPopup->hideAndClear();
     g_isRedrawNeeded = true;
 }
 
@@ -2622,13 +2625,30 @@ void Buffer::tickAutoReload(float frameTimeMs)
 
 void Buffer::showSymbolHover()
 {
-    const std::string hoverStr = Autocomp::lspProvider->getHover(m_filePath, m_cursorLine, m_cursorCol);
+    const auto hoverInfo = Autocomp::lspProvider->getHover(m_filePath, m_cursorLine, m_cursorCol);
 
-    // TODO: Implement a tooltip window
-    //       It can also be useful for other stuff like call help.
+    if (!hoverInfo.text.empty())
+    {
+        // TODO: Support multi-line symbol names
+        assert(hoverInfo.startLine == hoverInfo.endLine);
+        assert(hoverInfo.endCol > hoverInfo.startCol);
 
-    if (!hoverStr.empty())
-        g_statMsg.set(hoverStr, StatusMsg::Type::Info);
+        assert(hoverInfo.startLine >= 0 && hoverInfo.startLine < (int)m_content.size());
+        assert(hoverInfo.startCol >= 0 && hoverInfo.startCol < (int)m_content[hoverInfo.startLine].size());
+        assert(hoverInfo.endCol >= 0 && hoverInfo.endCol < (int)m_content[hoverInfo.startLine].size());
+
+        const std::string hoveredSymbol = strToAscii(
+                m_content[hoverInfo.startLine].substr(
+                    hoverInfo.startCol, hoverInfo.endCol-hoverInfo.startCol));
+        g_hoverPopup->setTitle(hoveredSymbol);
+        g_hoverPopup->setContent(hoverInfo.text);
+        g_hoverPopup->setPos({m_cursorXPx+g_fontWidthPx, m_cursorYPx-g_hoverPopup->calcHeight()});
+        g_hoverPopup->show();
+    }
+    else
+    {
+        g_hoverPopup->hideAndClear();
+    }
 }
 
 Buffer::~Buffer()

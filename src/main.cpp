@@ -48,6 +48,7 @@ int main(int argc, char** argv)
 
     g_textRenderer.reset(App::createTextRenderer());
     g_uiRenderer.reset(App::createUiRenderer());
+    g_hoverPopup.reset(new FloatingWindow);
     g_fileTypeHandler.reset(App::createFileTypeHandler());
     g_recentFilePaths = std::make_unique<RecentFileList>();
     App::createAutocompleteProviders();
@@ -122,6 +123,7 @@ int main(int argc, char** argv)
                 App::renderTabLine();
             }
             App::renderStatusLine();
+            App::renderPopups();
             App::renderDialogs();
             App::renderPrompt();
 

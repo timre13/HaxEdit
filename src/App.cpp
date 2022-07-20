@@ -449,6 +449,12 @@ void App::renderDialogs()
     }
 }
 
+void App::renderPopups()
+{
+    if (g_activeBuff)
+        g_hoverPopup->render();
+}
+
 static const std::string genWelcomeMsg(std::string templ)
 {
     static std::map<std::string, std::string> map;

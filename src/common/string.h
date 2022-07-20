@@ -36,7 +36,7 @@ inline int strCountLines(const T& str)
     return lines;
 }
 
-int getLongestLineLen(const std::string& str);
+size_t getLongestLineLen(const std::string& str);
 
 std::string strToLower(std::string str);
 String strToLower(String str);

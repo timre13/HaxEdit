@@ -17,6 +17,7 @@ class UiRenderer;
 class FileTypeHandler;
 struct Theme;
 class RecentFileList;
+class FloatingWindow;
 
 #ifdef _DEF_GLOBALS_
 
@@ -53,6 +54,8 @@ std::unique_ptr<Theme> g_theme;
 
 int g_fontSizePx = DEF_FONT_SIZE_PX;
 float g_fontWidthPx = 0;
+
+std::unique_ptr<FloatingWindow> g_hoverPopup;
 
 // Loaded by App::loadCursors()
 namespace Cursors
@@ -102,6 +105,8 @@ extern std::unique_ptr<RecentFileList> g_recentFilePaths;
 
 extern int g_fontSizePx;
 extern float g_fontWidthPx;
+
+extern std::unique_ptr<FloatingWindow> g_hoverPopup;
 
 namespace Cursors
 {

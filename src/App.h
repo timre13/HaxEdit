@@ -23,6 +23,7 @@
 #include "globals.h"
 #include "ThemeLoader.h"
 #include "Prompt.h"
+#include "FloatingWin.h"
 
 class RecentFileList
 {
@@ -118,6 +119,7 @@ public:
     static void renderStatusLine();
     static void renderTabLine();
     static void renderDialogs();
+    static void renderPopups();
     static void renderStartupScreen();
     static void renderPrompt();
 

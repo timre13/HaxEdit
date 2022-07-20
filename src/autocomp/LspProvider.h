@@ -187,7 +187,16 @@ public:
     void onFileChange(const std::string& path, int version, const std::string& newContent);
     void onFileClose(const std::string& path);
 
-    std::string getHover(const std::string& path, uint line, uint col);
+    struct HoverInfo
+    {
+        std::string text;
+        int startLine = -1;
+        int startCol  = -1;
+        int endLine   = -1;
+        int endCol    = -1;
+    };
+
+    HoverInfo getHover(const std::string& path, uint line, uint col);
 
     ~LspProvider();
 };
