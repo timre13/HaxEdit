@@ -21,12 +21,22 @@ void FloatingWindow::render()
     if (!m_isShown)
         return;
 
-    const uint width = calcWidth();
-    const uint height = calcHeight();
+    const int width = calcWidth();
+    const int height = calcHeight();
+
+    auto pos = m_pos;
+    if (pos.x+width > g_windowWidth)
+        pos.x = g_windowWidth-width;
+    if (pos.y+height > g_windowHeight)
+        pos.y = g_windowHeight-height;
+    if (pos.x < 0)
+        pos.x = 0;
+    if (pos.y < 0)
+        pos.y = 0;
 
     g_uiRenderer->renderFilledRectangle(
-            m_pos,
-            m_pos + glm::ivec2{width, height},
+            pos,
+            pos + glm::ivec2{width, height},
             {0.5f, 0.5f, 0.5f, 0.8f}
     );
 
@@ -34,7 +44,7 @@ void FloatingWindow::render()
     {
         g_textRenderer->renderString(
                 m_title,
-                m_pos + glm::ivec2{2, 2},
+                pos + glm::ivec2{2, 2},
                 FONT_STYLE_BOLD
         );
     }
@@ -43,7 +53,7 @@ void FloatingWindow::render()
     {
         g_textRenderer->renderString(
                 m_content,
-                m_pos + glm::ivec2{2, 2+(m_title.empty() ? 0 : g_fontSizePx)+4}
+                pos + glm::ivec2{2, 2+(m_title.empty() ? 0 : g_fontSizePx)+4}
         );
     }
 }
