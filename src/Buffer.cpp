@@ -10,7 +10,6 @@
 #include "common/string.h"
 #include "Clipboard.h"
 #include "ThemeLoader.h"
-#include "FloatingWin.h"
 #include <fstream>
 #include <sstream>
 #include <chrono>

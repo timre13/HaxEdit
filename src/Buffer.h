@@ -18,6 +18,7 @@
 #include "autocomp/DictionaryProvider.h"
 #include "autocomp/BufferWordProvider.h"
 #include "autocomp/PathProvider.h"
+#include "FloatingWin.h"
 
 namespace std_fs = std::filesystem;
 
@@ -351,6 +352,8 @@ public:
     {
         TIMER_BEGIN_FUNC();
 
+        const int origScroll = m_scrollY;
+
         m_scrollY += val;
         // Don't scroll above the first line
         if (m_scrollY > 0)
@@ -363,6 +366,9 @@ public:
         //{
         //    m_scrollY = -(int)(m_numOfLines-1)*g_fontSizePx;
         //}
+
+        // Make the hover popup follow the original origin
+        g_hoverPopup->moveYBy(m_scrollY-origScroll);
 
         TIMER_END_FUNC();
     }

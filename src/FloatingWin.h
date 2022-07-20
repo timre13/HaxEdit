@@ -42,5 +42,8 @@ public:
         return 2 + ((m_title.empty() ? 0 : 1) + strCountLines(m_content)+1)*g_fontSizePx + 4 + 5;
     }
 
+    inline void moveYBy(int amount) { m_pos.y += amount; }
+    inline void moveXBy(int amount) { m_pos.y += amount; }
+
     void render();
 };
