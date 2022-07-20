@@ -2628,18 +2628,24 @@ void Buffer::showSymbolHover()
 
     if (!hoverInfo.text.empty())
     {
-        // TODO: Support multi-line symbol names
-        assert(hoverInfo.startLine == hoverInfo.endLine);
-        assert(hoverInfo.endCol > hoverInfo.startCol);
+        if (hoverInfo.gotRange)
+        {
+            // TODO: Support multi-line symbol names
+            assert(hoverInfo.startLine == hoverInfo.endLine);
+            assert(hoverInfo.endCol > hoverInfo.startCol);
 
-        assert(hoverInfo.startLine >= 0 && hoverInfo.startLine < (int)m_content.size());
-        assert(hoverInfo.startCol >= 0 && hoverInfo.startCol < (int)m_content[hoverInfo.startLine].size());
-        assert(hoverInfo.endCol >= 0 && hoverInfo.endCol < (int)m_content[hoverInfo.startLine].size());
-
-        const std::string hoveredSymbol = strToAscii(
-                m_content[hoverInfo.startLine].substr(
-                    hoverInfo.startCol, hoverInfo.endCol-hoverInfo.startCol));
-        g_hoverPopup->setTitle(hoveredSymbol);
+            assert(hoverInfo.startLine >= 0 && hoverInfo.startLine < (int)m_content.size());
+            assert(hoverInfo.startCol >= 0 && hoverInfo.startCol < (int)m_content[hoverInfo.startLine].size());
+            assert(hoverInfo.endCol >= 0 && hoverInfo.endCol < (int)m_content[hoverInfo.startLine].size());
+            const std::string hoveredSymbol = strToAscii(
+                    m_content[hoverInfo.startLine].substr(
+                        hoverInfo.startCol, hoverInfo.endCol-hoverInfo.startCol));
+            g_hoverPopup->setTitle(hoveredSymbol);
+        }
+        else
+        {
+            g_hoverPopup->setTitle("Symbol hover");
+        }
         g_hoverPopup->setContent(hoverInfo.text);
         g_hoverPopup->setPos({m_cursorXPx+g_fontWidthPx, m_cursorYPx-g_hoverPopup->calcHeight()});
         g_hoverPopup->show();

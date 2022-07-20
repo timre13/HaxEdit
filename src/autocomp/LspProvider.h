@@ -190,6 +190,7 @@ public:
     struct HoverInfo
     {
         std::string text;
+        bool gotRange = false;
         int startLine = -1;
         int startCol  = -1;
         int endLine   = -1;

@@ -174,6 +174,7 @@ LspProvider::HoverInfo LspProvider::getHover(const std::string& path, uint line,
         }
         if (resp->response.result.range)
         {
+            info.gotRange  = true;
             info.startLine = resp->response.result.range->start.line;
             info.startCol  = resp->response.result.range->start.character;
             info.endLine   = resp->response.result.range->end.line;
