@@ -10,6 +10,7 @@
 #include "common/string.h"
 #include "Clipboard.h"
 #include "ThemeLoader.h"
+#include "App.h"
 #include <fstream>
 #include <sstream>
 #include <chrono>
@@ -2727,6 +2728,59 @@ void Buffer::showSymbolHover()
     else
     {
         g_hoverPopup->hideAndClear();
+    }
+}
+
+void Buffer::gotoDef()
+{
+    const auto loc = Autocomp::lspProvider->getDefinition(m_filePath, m_cursorLine, m_cursorCol);
+    if (loc.path.empty())
+        return;
+
+    // If it is in the current file, scroll there
+    if (std::filesystem::canonical(loc.path) == std::filesystem::canonical(m_filePath))
+    {
+        // TODO: This is terrible
+        {
+            m_cursorCharPos = 0;
+            m_cursorLine = 0;
+            m_cursorCol = 0;
+            for (int i{}; i < loc.line; ++i)
+            {
+                moveCursor(CursorMovCmd::Down);
+                updateCursor();
+            }
+            for (int i{}; i < loc.col; ++i)
+            {
+                moveCursor(CursorMovCmd::Right);
+                updateCursor();
+            }
+            centerCursor();
+        }
+    }
+    else // Different file, open in a new tab
+    {
+        Buffer* buff = App::openFileInNewBuffer(loc.path);
+
+        // TODO: This is terrible
+        {
+            for (int i{}; i < loc.line; ++i)
+            {
+                buff->moveCursor(CursorMovCmd::Down);
+                buff->updateCursor();
+            }
+            for (int i{}; i < loc.col; ++i)
+            {
+                buff->moveCursor(CursorMovCmd::Right);
+                buff->updateCursor();
+            }
+            buff->centerCursor();
+        }
+
+        // Insert the buffer next to the current one
+        g_tabs.emplace(g_tabs.begin()+g_currTabI+1, std::make_unique<Split>(buff));
+        ++g_currTabI; // Go to the current buffer
+        g_activeBuff = buff;
     }
 }
 

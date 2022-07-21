@@ -207,6 +207,14 @@ public:
 
     HoverInfo getHover(const std::string& path, uint line, uint col);
 
+    struct Location
+    {
+        std::string path;
+        int line = -1;
+        int col  = -1;
+    };
+    Location getDefinition(const std::string& path, uint line, uint col);
+
     ~LspProvider();
 };
 

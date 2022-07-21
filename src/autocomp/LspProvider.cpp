@@ -16,6 +16,7 @@
 #include "LibLsp/lsp/textDocument/did_change.h"
 #include "LibLsp/lsp/textDocument/hover.h"
 #include "LibLsp/lsp/textDocument/publishDiagnostics.h"
+#include "LibLsp/lsp/textDocument/declaration_definition.h"
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif // __clang__
@@ -216,6 +217,51 @@ LspProvider::HoverInfo LspProvider::getHover(const std::string& path, uint line,
     else
     {
         Logger::dbg << "LSP: textDocument/hover is not supported" << Logger::End;
+        return {};
+    }
+}
+
+LspProvider::Location LspProvider::getDefinition(const std::string& path, uint line, uint col)
+{
+    if (m_servCaps.definitionProvider
+     && (  m_servCaps.definitionProvider->first.get_value_or(false)
+        || m_servCaps.definitionProvider->second)
+     )
+    {
+        td_definition::request req;
+        req.params.position.line = line;
+        req.params.position.character = col;
+        req.params.textDocument.uri.SetPath(path);
+        req.params.uri.emplace();
+        req.params.uri->SetPath(path);
+        Logger::dbg << "LSP: Sending textDocument/definition request: " << req.ToJson() << Logger::End;
+
+        auto resp = m_client->getEndpoint()->waitResponse(req);
+        Logger::dbg << "LSP: Response: " << resp->ToJson() << Logger::End;
+        if (resp->IsError())
+            return {};
+
+        Location loc;
+        if (resp->response.result.first && !resp->response.result.first->empty())
+        {
+            // TODO: Don't use only the first one
+            loc.path = resp->response.result.first.get()[0].uri.GetAbsolutePath().path;
+            loc.line = resp->response.result.first.get()[0].range.start.line;
+            loc.col = resp->response.result.first.get()[0].range.start.character;
+        }
+        else if (resp->response.result.second && !resp->response.result.second->empty())
+        {
+            // TODO: Don't use only the first one
+            loc.path = resp->response.result.second.get()[0].targetUri.GetAbsolutePath().path;
+            loc.line = resp->response.result.second.get()[0].targetSelectionRange.start.line;
+            loc.col = resp->response.result.second.get()[0].targetSelectionRange.start.character;
+        }
+
+        return loc;
+    }
+    else
+    {
+        Logger::dbg << "LSP: textDocument/definition is not supported" << Logger::End;
         return {};
     }
 }

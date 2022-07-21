@@ -460,6 +460,7 @@ public:
     virtual void tickGitBranchUpdate(float frameTimeMs);
 
     virtual void showSymbolHover();
+    virtual void gotoDef();
 
     virtual ~Buffer();
 };

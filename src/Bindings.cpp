@@ -1039,6 +1039,14 @@ void bufferShowSymbolHover()
     g_activeBuff->showSymbolHover();
 }
 
+void bufferGotoDef()
+{
+    if (!g_activeBuff)
+        return;
+
+    g_activeBuff->gotoDef();
+}
+
 } // Namespace Callbacks
 
 BindingMapSet nmap = {};
