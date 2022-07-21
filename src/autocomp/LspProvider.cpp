@@ -22,6 +22,7 @@
 #endif // __clang__
 #include <boost/interprocess/detail/os_thread_functions.hpp>
 #include <filesystem>
+#include <type_traits>
 
 namespace Autocomp
 {
@@ -221,20 +222,39 @@ LspProvider::HoverInfo LspProvider::getHover(const std::string& path, uint line,
     }
 }
 
-LspProvider::Location LspProvider::getDefinition(const std::string& path, uint line, uint col)
+template <typename ReqType>
+LspProvider::Location LspProvider::_getDefOrDecl(const std::string& path, uint line, uint col)
 {
-    if (m_servCaps.definitionProvider
-     && (  m_servCaps.definitionProvider->first.get_value_or(false)
-        || m_servCaps.definitionProvider->second)
-     )
+    static_assert(
+            std::is_same<ReqType, td_definition::request>()
+         || std::is_same<ReqType, td_declaration::request>());
+
+    constexpr bool needsDef = std::is_same<ReqType, td_definition::request>();
+
+    bool funcSupported;
+    if constexpr (needsDef)
     {
-        td_definition::request req;
+        funcSupported = (m_servCaps.definitionProvider
+                && (m_servCaps.definitionProvider->first.get_value_or(false)
+                    || m_servCaps.definitionProvider->second));
+    }
+    else
+    {
+        funcSupported = true;
+    }
+
+    if (funcSupported)
+    {
+        ReqType req;
         req.params.position.line = line;
         req.params.position.character = col;
         req.params.textDocument.uri.SetPath(path);
         req.params.uri.emplace();
         req.params.uri->SetPath(path);
-        Logger::dbg << "LSP: Sending textDocument/definition request: " << req.ToJson() << Logger::End;
+        if constexpr (needsDef)
+            Logger::dbg << "LSP: Sending textDocument/definition request: " << req.ToJson() << Logger::End;
+        else
+            Logger::dbg << "LSP: Sending textDocument/declaration request: " << req.ToJson() << Logger::End;
 
         auto resp = m_client->getEndpoint()->waitResponse(req);
         Logger::dbg << "LSP: Response: " << resp->ToJson() << Logger::End;
@@ -261,9 +281,22 @@ LspProvider::Location LspProvider::getDefinition(const std::string& path, uint l
     }
     else
     {
-        Logger::dbg << "LSP: textDocument/definition is not supported" << Logger::End;
+        if constexpr (needsDef)
+            Logger::dbg << "LSP: textDocument/definition is not supported" << Logger::End;
+        else
+            Logger::dbg << "LSP: textDocument/declaration is not supported" << Logger::End;
         return {};
     }
+}
+
+LspProvider::Location LspProvider::getDefinition(const std::string& path, uint line, uint col)
+{
+    return _getDefOrDecl<td_definition::request>(path, line, col);
+}
+
+LspProvider::Location LspProvider::getDeclaration(const std::string& path, uint line, uint col)
+{
+    return _getDefOrDecl<td_declaration::request>(path, line, col);
 }
 
 LspProvider::~LspProvider()

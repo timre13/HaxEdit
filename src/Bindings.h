@@ -143,6 +143,7 @@ void hidePromptAnimated();
 
 void bufferShowSymbolHover();
 void bufferGotoDef();
+void bufferGotoDecl();
 
 }
 

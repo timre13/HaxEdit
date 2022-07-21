@@ -2731,12 +2731,8 @@ void Buffer::showSymbolHover()
     }
 }
 
-void Buffer::gotoDef()
+void Buffer::_goToDeclOrDef(const Autocomp::LspProvider::Location& loc)
 {
-    const auto loc = Autocomp::lspProvider->getDefinition(m_filePath, m_cursorLine, m_cursorCol);
-    if (loc.path.empty())
-        return;
-
     // If it is in the current file, scroll there
     if (std::filesystem::canonical(loc.path) == std::filesystem::canonical(m_filePath))
     {
@@ -2782,6 +2778,22 @@ void Buffer::gotoDef()
         ++g_currTabI; // Go to the current buffer
         g_activeBuff = buff;
     }
+}
+
+void Buffer::gotoDef()
+{
+    const auto loc = Autocomp::lspProvider->getDefinition(m_filePath, m_cursorLine, m_cursorCol);
+    if (loc.path.empty())
+        return;
+    _goToDeclOrDef(loc);
+}
+
+void Buffer::gotoDecl()
+{
+    const auto loc = Autocomp::lspProvider->getDeclaration(m_filePath, m_cursorLine, m_cursorCol);
+    if (loc.path.empty())
+        return;
+    _goToDeclOrDef(loc);
 }
 
 Buffer::~Buffer()

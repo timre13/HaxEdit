@@ -266,6 +266,8 @@ protected:
 
     void _goToCurrFindResult(bool showStatMsg);
 
+    void _goToDeclOrDef(const Autocomp::LspProvider::Location& loc);
+
     friend class App;
     /*
      * Do not call this. Use `App::openFileInNewBuffer`.
@@ -461,6 +463,7 @@ public:
 
     virtual void showSymbolHover();
     virtual void gotoDef();
+    virtual void gotoDecl();
 
     virtual ~Buffer();
 };

@@ -1047,6 +1047,14 @@ void bufferGotoDef()
     g_activeBuff->gotoDef();
 }
 
+void bufferGotoDecl()
+{
+    if (!g_activeBuff)
+        return;
+
+    g_activeBuff->gotoDecl();
+}
+
 } // Namespace Callbacks
 
 BindingMapSet nmap = {};

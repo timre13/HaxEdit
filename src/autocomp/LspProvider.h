@@ -213,7 +213,14 @@ public:
         int line = -1;
         int col  = -1;
     };
+
+private:
+    template <typename ReqType>
+    Location _getDefOrDecl(const std::string& path, uint line, uint col);
+
+public:
     Location getDefinition(const std::string& path, uint line, uint col);
+    Location getDeclaration(const std::string& path, uint line, uint col);
 
     ~LspProvider();
 };
