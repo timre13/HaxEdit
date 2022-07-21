@@ -358,7 +358,7 @@ void App::renderStatusLine()
     std::string leftStr;
     if (g_statMsg.isEmpty())
     {
-        const std::string checkedOutObjName = g_activeBuff->getCheckedOutObjName(7); // TODO: Don't fetch it all the time
+        const std::string checkedOutObjName = g_activeBuff->getCheckedOutObjName(7);
         const std::string basePath = fs::path(g_activeBuff->m_filePath).remove_filename().string();
         const std::string fileName = fs::path(g_activeBuff->m_filePath).filename().string();
         leftStr = (checkedOutObjName.empty() ? "" : "["+checkedOutObjName+"] ")+basePath+"\033[1m"+fileName+(g_activeBuff->m_isReadOnly ? "\033[0m\033[91m [RO]" : "");

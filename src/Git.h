@@ -33,7 +33,12 @@ public:
     inline bool isRepo() const { return m_isRepo; }
 
     diffList_t getDiff(const std::string& filename);
-    std::string getCheckedOutObjName(int hashLen=-1) const;
+    struct GitObjectName
+    {
+        std::string name;
+        bool isHash{}; // Hashes can be truncated, but branch names can't
+    };
+    GitObjectName getCheckedOutObjName() const;
 
     ~Repo();
 };

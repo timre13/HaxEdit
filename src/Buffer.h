@@ -195,7 +195,10 @@ protected:
 
     // Line number : Sign
     std::vector<std::pair<int, Sign>> m_signs;
+
     std::unique_ptr<Git::Repo> m_gitRepo;
+    Git::Repo::GitObjectName m_gitBranchName;
+    float m_msUntilGitBranchUpdate{};
 
     String m_toFind;
     std::vector<size_t> m_findResultIs{};
@@ -450,6 +453,7 @@ public:
     virtual void goToMousePos();
 
     virtual void tickAutoReload(float frameTimeMs);
+    virtual void tickGitBranchUpdate(float frameTimeMs);
 
     virtual void showSymbolHover();
 

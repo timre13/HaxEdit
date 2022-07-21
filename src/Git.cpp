@@ -130,9 +130,9 @@ Repo::diffList_t Repo::getDiff(const std::string& filename)
     return diffList;
 }
 
-std::string Repo::getCheckedOutObjName(int hashLen/*=-1*/) const
+Repo::GitObjectName Repo::getCheckedOutObjName() const
 {
-    if (!m_isRepo) return "";
+    if (!m_isRepo) return {};
 
     git_reference* headRef;
     git_repository_head(&headRef, m_repo);
@@ -150,25 +150,23 @@ std::string Repo::getCheckedOutObjName(int hashLen/*=-1*/) const
             char name[41]{};
             git_oid_fmt(name, ref);
             name[40] = '\0';
-            if (hashLen >= 4 && hashLen <= 40)
-                name[hashLen] = '\0';
-            return name;
+            return {name, true};
         }
         else // Simply get the branch name
         {
             const char* name = git_reference_name(headRef);
-            return name;
+            return {name, false};
         }
     }
     else if (refType == GIT_REFERENCE_SYMBOLIC)
     {
         Logger::dbg << "Git HEAD reference type: SYMBOLIC" << Logger::End;
-        return git_reference_symbolic_target(headRef);
+        return {git_reference_symbolic_target(headRef), false};
     }
     else
     {
         assert(false);
-        return "";
+        return {};
     }
 }
 
