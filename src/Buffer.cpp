@@ -1374,7 +1374,7 @@ void Buffer::_renderDrawFoundMark(const glm::ivec2& textPos, int initTextY) cons
 }
 
 void Buffer::_renderDrawDiagnosticMsg(
-        const Autocomp::LspProvider::diagList_t& diags, int lineI,
+        const Autocomp::LspProvider::diagList_t& diags, int lineI, bool isCurrent,
         const glm::ivec2& textPos, int initTextY
         ) const
 {
@@ -1401,10 +1401,21 @@ void Buffer::_renderDrawDiagnosticMsg(
             const int sevIndex = (int)sev-1;
             const RGBColor textColor = severityColors[sevIndex];
 
+            std::string msgToDisplay;
+            if (isCurrent)
+            {
+                msgToDisplay = diagn.message;
+            }
+            else
+            {
+                LineIterator msgLineIt{diagn.message};
+                (void)msgLineIt.next(msgToDisplay);
+            }
+
             g_textRenderer->renderString(
-                    charToStr(severityMarks[sevIndex])+": "+diagn.message,
+                    charToStr(severityMarks[sevIndex])+": "+msgToDisplay,
                     {textPos.x+g_fontWidthPx*4, initTextY+textPos.y-m_scrollY-m_position.y},
-                    FONT_STYLE_ITALIC,
+                    FONT_STYLE_ITALIC|(isCurrent ? FONT_STYLE_BOLD : 0),
                     textColor);
             break;
         }
@@ -1715,7 +1726,7 @@ void Buffer::render()
         }
 
         if (fileDiagsIt != Autocomp::LspProvider::s_diags.end())
-            _renderDrawDiagnosticMsg(fileDiagsIt->second, lineI, {textX, textY}, initTextY);
+            _renderDrawDiagnosticMsg(fileDiagsIt->second, lineI, lineI == m_cursorLine, {textX, textY}, initTextY);
 
         ++lineI;
         textX = initTextX;

@@ -260,7 +260,7 @@ protected:
     void _renderDrawLineNumBar(const glm::ivec2& textPos, int lineI) const;
     void _renderDrawFoundMark(const glm::ivec2& textPos, int initTextY) const;
     void _renderDrawDiagnosticMsg(
-        const Autocomp::LspProvider::diagList_t& diags, int lineI,
+        const Autocomp::LspProvider::diagList_t& diags, int lineI, bool isCurrent,
         const glm::ivec2& textPos, int initTextY
     ) const;
 
