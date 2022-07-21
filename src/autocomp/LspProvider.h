@@ -9,6 +9,8 @@
 #include <boost/asio.hpp>
 #include <system_error>
 #include <chrono>
+#include <unordered_map>
+#include <vector>
 using namespace std::chrono_literals;
 #ifdef __clang__
 #pragma clang diagnostic push
@@ -21,6 +23,7 @@ using namespace std::chrono_literals;
 #include "LibLsp/JsonRpc/RemoteEndPoint.h"
 #include "LibLsp/JsonRpc/MessageIssue.h"
 #include "LibLsp/JsonRpc/stream.h"
+#include "LibLsp/lsp/lsp_diagnostic.h"
 #ifdef __clang__
 
 #pragma clang diagnostic pop
@@ -161,6 +164,7 @@ public:
     }
 
     inline RemoteEndPoint* getEndpoint() { return &m_remoteEndpoint; }
+    inline GenericEndpoint* getClientEndpoint() { return m_endpoint.get(); }
 
     ~LspClient()
     {
@@ -180,6 +184,10 @@ private:
 
 public:
     LspProvider();
+
+    using diagList_t = std::vector<lsDiagnostic>;
+    using diagListMap_t = std::unordered_map<std::string, diagList_t>;
+    static diagListMap_t s_diags;
 
     virtual void get(Popup* popupP) override;
 

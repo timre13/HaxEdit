@@ -15,6 +15,7 @@
 #include "LibLsp/lsp/textDocument/did_close.h"
 #include "LibLsp/lsp/textDocument/did_change.h"
 #include "LibLsp/lsp/textDocument/hover.h"
+#include "LibLsp/lsp/textDocument/publishDiagnostics.h"
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif // __clang__
@@ -23,6 +24,27 @@
 
 namespace Autocomp
 {
+
+// static
+LspProvider::diagListMap_t LspProvider::s_diags{};
+
+static bool publishDiagnosticsCallback(std::unique_ptr<LspMessage> msg)
+{
+    Logger::dbg << "LSP: Received a textDocument/publishDiagnostics notification: "
+        << msg->ToJson() << Logger::End;
+
+    auto notif = dynamic_cast<Notify_TextDocumentPublishDiagnostics::notify*>(msg.get());
+    assert(notif);
+
+    Logger::dbg << "Path: " << notif->params.uri.GetAbsolutePath().path << Logger::End;
+    Logger::dbg << "Diagn. count: " << notif->params.diagnostics.size() << Logger::End;
+
+    auto insertedIt = LspProvider::s_diags.insert_or_assign(
+            notif->params.uri.GetAbsolutePath().path, LspProvider::diagList_t{}).first;
+    insertedIt->second = std::move(notif->params.diagnostics);
+
+    return true; // TODO: What's this?
+}
 
 LspProvider::LspProvider()
 {
@@ -35,6 +57,7 @@ LspProvider::LspProvider()
     };
 
     m_client = std::make_unique<LspClient>(exe, args);
+
     td_initialize::request initreq;
     initreq.params.processId = boost::interprocess::ipcdetail::get_current_process_id();
     initreq.params.clientInfo.emplace();
@@ -57,11 +80,19 @@ LspProvider::LspProvider()
     assert(cap.completionProvider);
     Logger::dbg << "\tHover supported?: " << (cap.hoverProvider ? "YES" : "NO") << Logger::End;
     assert(cap.hoverProvider);
-    m_servCaps = std::move(cap);
+
+
+    m_client->getClientEndpoint()->registerNotifyHandler(
+            "textDocument/publishDiagnostics",
+            publishDiagnosticsCallback
+    );
 
 
     Notify_InitializedNotification::notify initednotif;
     Logger::dbg << "LSP: Sending initialized notification: " << initednotif.ToJson() << Logger::End;
+
+
+    m_servCaps = std::move(cap);
 }
 
 void LspProvider::get(Popup* popupP)

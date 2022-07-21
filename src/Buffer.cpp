@@ -1373,6 +1373,44 @@ void Buffer::_renderDrawFoundMark(const glm::ivec2& textPos, int initTextY) cons
     g_textRenderer->prepareForDrawing();
 }
 
+void Buffer::_renderDrawDiagnosticMsg(
+        const Autocomp::LspProvider::diagList_t& diags, int lineI,
+        const glm::ivec2& textPos, int initTextY
+        ) const
+{
+    static constexpr RGBColor severityColors[4] = {
+        {1.0f, 0.2f, 0.1f}, // Error
+        {0.9f, 0.6f, 0.2f}, // Warning
+        {0.5f, 0.5f, 0.8f}, // Information
+        {0.3f, 0.3f, 0.3f}, // Hint
+    };
+
+    static constexpr char severityMarks[4] = {
+        'E', // Error
+        'W', // Warning
+        'I', // Information
+        'H', // Hint
+    };
+
+    for (const auto& diagn : diags)
+    {
+        if ((int)diagn.range.start.line == lineI)
+        {
+            // Note: We default to Information, maybe this needs to be changed later
+            const lsDiagnosticSeverity sev = diagn.severity.get_value_or(lsDiagnosticSeverity::Information);
+            const int sevIndex = (int)sev-1;
+            const RGBColor textColor = severityColors[sevIndex];
+
+            g_textRenderer->renderString(
+                    charToStr(severityMarks[sevIndex])+": "+diagn.message,
+                    {textPos.x+g_fontWidthPx*4, initTextY+textPos.y-m_scrollY-m_position.y},
+                    FONT_STYLE_ITALIC,
+                    textColor);
+            break;
+        }
+    }
+}
+
 void Buffer::render()
 {
     TIMER_BEGIN_FUNC();
@@ -1409,6 +1447,8 @@ void Buffer::render()
     // This is used for line wrapping
     const int maxLineLenChar = m_size.x/g_fontWidthPx;
 #endif
+
+    auto fileDiagsIt = Autocomp::LspProvider::s_diags.find(m_filePath);
 
     m_charUnderMouseCol = -1;
     m_charUnderMouseRow = -1;
@@ -1673,6 +1713,9 @@ void Buffer::render()
             ++_charFoundOffs;
             isLineBeginning = false;
         }
+
+        if (fileDiagsIt != Autocomp::LspProvider::s_diags.end())
+            _renderDrawDiagnosticMsg(fileDiagsIt->second, lineI, {textX, textY}, initTextY);
 
         ++lineI;
         textX = initTextX;
