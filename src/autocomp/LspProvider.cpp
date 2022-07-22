@@ -10,6 +10,7 @@
 #include "LibLsp/lsp/general/initialized.h"
 #include "LibLsp/lsp/general/exit.h"
 #include "LibLsp/lsp/general/lsClientCapabilities.h"
+#include "LibLsp/lsp/general/lsServerCapabilities.h"
 #include "LibLsp/lsp/AbsolutePath.h"
 #include "LibLsp/lsp/textDocument/did_open.h"
 #include "LibLsp/lsp/textDocument/did_close.h"
@@ -17,6 +18,7 @@
 #include "LibLsp/lsp/textDocument/hover.h"
 #include "LibLsp/lsp/textDocument/publishDiagnostics.h"
 #include "LibLsp/lsp/textDocument/declaration_definition.h"
+#include "LibLsp/lsp/textDocument/implementation.h"
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif // __clang__
@@ -223,13 +225,16 @@ LspProvider::HoverInfo LspProvider::getHover(const std::string& path, uint line,
 }
 
 template <typename ReqType>
-LspProvider::Location LspProvider::_getDefOrDecl(const std::string& path, uint line, uint col)
+LspProvider::Location LspProvider::_getDefOrDeclOrImp(const std::string& path, uint line, uint col)
 {
     static_assert(
             std::is_same<ReqType, td_definition::request>()
-         || std::is_same<ReqType, td_declaration::request>());
+         || std::is_same<ReqType, td_declaration::request>()
+         || std::is_same<ReqType, td_implementation::request>());
 
-    constexpr bool needsDef = std::is_same<ReqType, td_definition::request>();
+    constexpr bool needsDef  = std::is_same<ReqType, td_definition::request>();
+    constexpr bool needsDecl = std::is_same<ReqType, td_declaration::request>();
+    constexpr bool needsImp  = std::is_same<ReqType, td_implementation::request>();
 
     bool funcSupported;
     if constexpr (needsDef)
@@ -238,7 +243,11 @@ LspProvider::Location LspProvider::_getDefOrDecl(const std::string& path, uint l
                 && (m_servCaps.definitionProvider->first.get_value_or(false)
                     || m_servCaps.definitionProvider->second));
     }
-    else
+    else if constexpr (needsDecl)
+    {
+        funcSupported = true;
+    }
+    else if constexpr (needsImp)
     {
         funcSupported = true;
     }
@@ -253,8 +262,10 @@ LspProvider::Location LspProvider::_getDefOrDecl(const std::string& path, uint l
         req.params.uri->SetPath(path);
         if constexpr (needsDef)
             Logger::dbg << "LSP: Sending textDocument/definition request: " << req.ToJson() << Logger::End;
-        else
+        else if constexpr (needsDecl)
             Logger::dbg << "LSP: Sending textDocument/declaration request: " << req.ToJson() << Logger::End;
+        else if constexpr (needsImp)
+            Logger::dbg << "LSP: Sending textDocument/implementation request: " << req.ToJson() << Logger::End;
 
         auto resp = m_client->getEndpoint()->waitResponse(req);
         Logger::dbg << "LSP: Response: " << resp->ToJson() << Logger::End;
@@ -283,20 +294,27 @@ LspProvider::Location LspProvider::_getDefOrDecl(const std::string& path, uint l
     {
         if constexpr (needsDef)
             Logger::dbg << "LSP: textDocument/definition is not supported" << Logger::End;
-        else
+        else if constexpr (needsDecl)
             Logger::dbg << "LSP: textDocument/declaration is not supported" << Logger::End;
+        else if constexpr (needsImp)
+            Logger::dbg << "LSP: textDocument/implementation is not supported" << Logger::End;
         return {};
     }
 }
 
 LspProvider::Location LspProvider::getDefinition(const std::string& path, uint line, uint col)
 {
-    return _getDefOrDecl<td_definition::request>(path, line, col);
+    return _getDefOrDeclOrImp<td_definition::request>(path, line, col);
 }
 
 LspProvider::Location LspProvider::getDeclaration(const std::string& path, uint line, uint col)
 {
-    return _getDefOrDecl<td_declaration::request>(path, line, col);
+    return _getDefOrDeclOrImp<td_declaration::request>(path, line, col);
+}
+
+LspProvider::Location LspProvider::getImplementation(const std::string& path, uint line, uint col)
+{
+    return _getDefOrDeclOrImp<td_implementation::request>(path, line, col);
 }
 
 LspProvider::~LspProvider()

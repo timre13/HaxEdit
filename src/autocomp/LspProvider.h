@@ -216,11 +216,12 @@ public:
 
 private:
     template <typename ReqType>
-    Location _getDefOrDecl(const std::string& path, uint line, uint col);
+    Location _getDefOrDeclOrImp(const std::string& path, uint line, uint col);
 
 public:
     Location getDefinition(const std::string& path, uint line, uint col);
     Location getDeclaration(const std::string& path, uint line, uint col);
+    Location getImplementation(const std::string& path, uint line, uint col);
 
     ~LspProvider();
 };

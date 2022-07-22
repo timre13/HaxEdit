@@ -266,7 +266,7 @@ protected:
 
     void _goToCurrFindResult(bool showStatMsg);
 
-    void _goToDeclOrDef(const Autocomp::LspProvider::Location& loc);
+    void _goToDeclOrDefOrImp(const Autocomp::LspProvider::Location& loc);
 
     friend class App;
     /*
@@ -464,6 +464,7 @@ public:
     virtual void showSymbolHover();
     virtual void gotoDef();
     virtual void gotoDecl();
+    virtual void gotoImp();
 
     virtual ~Buffer();
 };
