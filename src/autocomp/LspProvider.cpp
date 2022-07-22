@@ -1,6 +1,8 @@
 #include "LspProvider.h"
 #include "Popup.h"
 #include "../Logger.h"
+#include "../App.h"
+#include "../glstuff.h"
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Weverything"
@@ -53,7 +55,23 @@ static bool publishDiagnosticsCallback(std::unique_ptr<LspMessage> msg)
 
 LspProvider::LspProvider()
 {
+    {
+        Logger::log << "Loading LSP status icons" << Logger::End;
+        static constexpr const char* statusIconPaths[] = {
+            "../img/lsp_status/lsp_ok.png",           // Ok
+            "../img/lsp_status/lsp_waiting.png",      // Waiting
+            "../img/lsp_status/lsp_crashed.png",      // Crashed -- TODO: This is not used yet
+        };
+        static_assert(sizeof(statusIconPaths)/sizeof(statusIconPaths[0]) == (size_t)LspServerStatus::_Count);
+        for (size_t i{}; i < (size_t)LspServerStatus::_Count; ++i)
+        {
+            m_statusIcons[i] = std::make_unique<Image>(App::getResPath(statusIconPaths[i]));
+        }
+    }
+
     Logger::log << "Starting LSP server" << Logger::End;
+
+    busyBegin();
 
     static const std::string exe = "/home/mike/.local/share/nvim/plugged/lua-language-server/bin/lua-language-server";
     //static const std::string exe = "ccls";
@@ -92,17 +110,33 @@ LspProvider::LspProvider()
             publishDiagnosticsCallback
     );
 
-
     Notify_InitializedNotification::notify initednotif;
     Logger::dbg << "LSP: Sending initialized notification: " << initednotif.ToJson() << Logger::End;
 
-
     m_servCaps = std::move(cap);
+
+    busyEnd();
 }
 
 void LspProvider::get(Popup* popupP)
 {
     Logger::dbg << "LspProvider: " << "TODO" << Logger::End;
+}
+
+void LspProvider::busyBegin()
+{
+    glfwSetCursor(g_window, Cursors::busy);
+    m_status = LspServerStatus::Waiting;
+    App::renderStatusLine();
+    glfwSwapBuffers(g_window);
+}
+
+void LspProvider::busyEnd()
+{
+    glfwSetCursor(g_window, nullptr);
+    m_status = LspServerStatus::Ok;
+    App::renderStatusLine();
+    glfwSwapBuffers(g_window);
 }
 
 void LspProvider::onFileOpen(const std::string& path, const std::string& fileContent)
@@ -190,6 +224,8 @@ void LspProvider::onFileClose(const std::string& path)
 
 LspProvider::HoverInfo LspProvider::getHover(const std::string& path, uint line, uint col)
 {
+    busyBegin();
+
     if (m_servCaps.hoverProvider.get_value_or(false))
     {
         td_hover::request req;
@@ -201,7 +237,10 @@ LspProvider::HoverInfo LspProvider::getHover(const std::string& path, uint line,
         auto resp = m_client->getEndpoint()->waitResponse(req);
         Logger::dbg << "LSP: Response: " << resp->ToJson() << Logger::End;
         if (resp->IsError())
+        {
+            busyEnd();
             return {};
+        }
 
         HoverInfo info;
         if (resp->response.result.contents.second)
@@ -216,11 +255,14 @@ LspProvider::HoverInfo LspProvider::getHover(const std::string& path, uint line,
             info.endLine   = resp->response.result.range->end.line;
             info.endCol    = resp->response.result.range->end.character;
         }
+
+        busyEnd();
         return info;
     }
     else
     {
         Logger::dbg << "LSP: textDocument/hover is not supported" << Logger::End;
+        busyEnd();
         return {};
     }
 }
@@ -228,6 +270,8 @@ LspProvider::HoverInfo LspProvider::getHover(const std::string& path, uint line,
 template <typename ReqType>
 LspProvider::Location LspProvider::_getDefOrDeclOrImp(const std::string& path, uint line, uint col)
 {
+    busyBegin();
+
     static_assert(
             std::is_same<ReqType, td_definition::request>()
          || std::is_same<ReqType, td_declaration::request>()
@@ -271,7 +315,10 @@ LspProvider::Location LspProvider::_getDefOrDeclOrImp(const std::string& path, u
         auto resp = m_client->getEndpoint()->waitResponse(req);
         Logger::dbg << "LSP: Response: " << resp->ToJson() << Logger::End;
         if (resp->IsError())
+        {
+            busyEnd();
             return {};
+        }
 
         Location loc;
         if (resp->response.result.first && !resp->response.result.first->empty())
@@ -289,6 +336,7 @@ LspProvider::Location LspProvider::_getDefOrDeclOrImp(const std::string& path, u
             loc.col = resp->response.result.second.get()[0].targetSelectionRange.start.character;
         }
 
+        busyEnd();
         return loc;
     }
     else
@@ -299,6 +347,8 @@ LspProvider::Location LspProvider::_getDefOrDeclOrImp(const std::string& path, u
             Logger::dbg << "LSP: textDocument/declaration is not supported" << Logger::End;
         else if constexpr (needsImp)
             Logger::dbg << "LSP: textDocument/implementation is not supported" << Logger::End;
+
+        busyEnd();
         return {};
     }
 }
@@ -340,6 +390,12 @@ LspProvider::~LspProvider()
         Logger::dbg << "LSP: Sending exit notification: " << exitNotif.ToJson() << Logger::End;
         m_client->getEndpoint()->send(exitNotif);
     }
+}
+
+std::shared_ptr<Image> LspProvider::getStatusIcon() const
+{
+    assert(m_status < LspServerStatus::_Count);
+    return m_statusIcons[(int)m_status];
 }
 
 } // namespace Autocomp

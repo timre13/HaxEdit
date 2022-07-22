@@ -2,6 +2,7 @@
 
 #include "IProvider.h"
 #include "../Logger.h"
+#include "../Image.h"
 #include <string>
 #include <memory>
 #include <boost/process.hpp>
@@ -178,9 +179,24 @@ public:
 
 class LspProvider final : public IProvider
 {
+public:
+    enum class LspServerStatus
+    {
+        Ok,
+        Waiting,
+        Crashed,
+        _Count,
+    };
+
 private:
     std::unique_ptr<LspClient> m_client;
     lsServerCapabilities m_servCaps;
+
+    LspServerStatus m_status = LspServerStatus::Waiting;
+    std::array<std::shared_ptr<Image>, (int)LspServerStatus::_Count> m_statusIcons;
+
+    void busyBegin();
+    void busyEnd();
 
 public:
     LspProvider();
@@ -222,6 +238,8 @@ public:
     Location getDefinition(const std::string& path, uint line, uint col);
     Location getDeclaration(const std::string& path, uint line, uint col);
     Location getImplementation(const std::string& path, uint line, uint col);
+
+    std::shared_ptr<Image> getStatusIcon() const;
 
     ~LspProvider();
 };

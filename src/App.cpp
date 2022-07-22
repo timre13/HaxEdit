@@ -379,10 +379,14 @@ void App::renderStatusLine()
         assert(g_activeBuff->m_statusLineStr.maxLen > 0);
         g_textRenderer->renderString(
                 g_activeBuff->m_statusLineStr.str,
-                {g_windowWidth-g_fontWidthPx*g_activeBuff->m_statusLineStr.maxLen,
+                {g_windowWidth-g_fontWidthPx*(g_activeBuff->m_statusLineStr.maxLen+4),
                  g_windowHeight-g_fontSizePx-4},
                  FONT_STYLE_REGULAR,
                  g_activeBuff->isSelectionInProgress() ? RGBColor{0.3f, 0.9f, 0.6f} : RGBColor{1.f, 1.f, 1.f});
+
+        Autocomp::lspProvider->getStatusIcon()->render(
+                {g_windowWidth-g_fontSizePx*2-3, g_windowHeight-g_fontSizePx*1.2f-6},
+                {g_fontSizePx*1.2f+12, g_fontSizePx*1.2f+12});
     }
 }
 
