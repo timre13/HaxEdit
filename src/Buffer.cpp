@@ -2779,6 +2779,7 @@ void Buffer::_goToDeclOrDefOrImp(const Autocomp::LspProvider::Location& loc)
         ++g_currTabI; // Go to the current buffer
         g_activeBuff = buff;
     }
+    closeSelection();
     g_isRedrawNeeded = true;
 }
 
