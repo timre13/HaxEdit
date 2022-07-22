@@ -8,6 +8,7 @@
 #include "LibLsp/lsp/ProcessIoService.h"
 #include "LibLsp/lsp/general/initialize.h"
 #include "LibLsp/lsp/general/initialized.h"
+#include "LibLsp/lsp/general/shutdown.h"
 #include "LibLsp/lsp/general/exit.h"
 #include "LibLsp/lsp/general/lsClientCapabilities.h"
 #include "LibLsp/lsp/general/lsServerCapabilities.h"
@@ -321,9 +322,24 @@ LspProvider::~LspProvider()
 {
     Logger::log << "Shutting down LSP server" << Logger::End;
 
-    Notify_Exit::notify notify;
-    Logger::dbg << "LSP: Sending shutdown notification: " << notify.ToJson() << Logger::End;
-    m_client->getEndpoint()->send(notify);
+    // Send shutdown request
+    {
+        td_shutdown::request shutdownReq;
+        Logger::dbg << "LSP: Sending shutdown request: " << shutdownReq.ToJson() << Logger::End;
+        auto response = m_client->getEndpoint()->waitResponse(shutdownReq);
+        if (response->IsError())
+        {
+            Logger::fatal << "LSP: Server responded with error: " << response->error.error.ToString() << Logger::End;
+        }
+        Logger::dbg << "LSP: Server response: " << response->ToJson() << Logger::End;
+    }
+
+    // Send exit notification
+    {
+        Notify_Exit::notify exitNotif;
+        Logger::dbg << "LSP: Sending exit notification: " << exitNotif.ToJson() << Logger::End;
+        m_client->getEndpoint()->send(exitNotif);
+    }
 }
 
 } // namespace Autocomp

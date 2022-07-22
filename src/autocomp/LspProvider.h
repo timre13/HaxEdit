@@ -141,7 +141,7 @@ public:
                 bproc::on_exit([](int exitCode, const std::error_code& err){
                     if (exitCode == 0)
                     {
-                        Logger::dbg << "LSP server exited successfully" << Logger::End;
+                        Logger::dbg << "LSP server exited successfully (code 0)" << Logger::End;
                     }
                     else
                     {
