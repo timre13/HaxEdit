@@ -50,6 +50,8 @@ static bool publishDiagnosticsCallback(std::unique_ptr<LspMessage> msg)
             notif->params.uri.GetAbsolutePath().path, LspProvider::diagList_t{}).first;
     insertedIt->second = std::move(notif->params.diagnostics);
 
+    g_isRedrawNeeded = true;
+
     return true; // TODO: What's this?
 }
 

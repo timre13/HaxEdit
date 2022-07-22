@@ -2729,6 +2729,7 @@ void Buffer::showSymbolHover()
     {
         g_hoverPopup->hideAndClear();
     }
+    g_isRedrawNeeded = true;
 }
 
 void Buffer::_goToDeclOrDefOrImp(const Autocomp::LspProvider::Location& loc)
@@ -2778,6 +2779,7 @@ void Buffer::_goToDeclOrDefOrImp(const Autocomp::LspProvider::Location& loc)
         ++g_currTabI; // Go to the current buffer
         g_activeBuff = buff;
     }
+    g_isRedrawNeeded = true;
 }
 
 void Buffer::gotoDef()
