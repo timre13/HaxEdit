@@ -32,6 +32,8 @@
 namespace Autocomp
 {
 
+bool didServerCrash = false;
+
 // static
 LspProvider::diagListMap_t LspProvider::s_diags{};
 
@@ -62,7 +64,7 @@ LspProvider::LspProvider()
         static constexpr const char* statusIconPaths[] = {
             "../img/lsp_status/lsp_ok.png",           // Ok
             "../img/lsp_status/lsp_waiting.png",      // Waiting
-            "../img/lsp_status/lsp_crashed.png",      // Crashed -- TODO: This is not used yet
+            "../img/lsp_status/lsp_crashed.png",      // Crashed
         };
         static_assert(sizeof(statusIconPaths)/sizeof(statusIconPaths[0]) == (size_t)LspServerStatus::_Count);
         for (size_t i{}; i < (size_t)LspServerStatus::_Count; ++i)
@@ -81,7 +83,16 @@ LspProvider::LspProvider()
     static const std::vector<std::string> args = {
     };
 
-    m_client = std::make_unique<LspClient>(exe, args);
+    try
+    {
+        m_client = std::make_unique<LspClient>(exe, args);
+    }
+    catch (const std::exception& e)
+    {
+        didServerCrash = true;
+        g_isRedrawNeeded = true;
+        return;
+    }
 
     td_initialize::request initreq;
     initreq.params.processId = boost::interprocess::ipcdetail::get_current_process_id();
@@ -94,12 +105,24 @@ LspProvider::LspProvider()
     Logger::dbg << "LSP: Sending initialize request: " << initreq.ToJson() << Logger::End;
 
     auto initRes = m_client->getEndpoint()->waitResponse(initreq);
+    if (didServerCrash) // Maybe it crashed in the meantime
+        return;
     if (!initRes)
     {
-        Logger::fatal << "LSP: Initialize timed out" << Logger::End;
+        Logger::err << "LSP: Initialize timed out" << Logger::End;
+        didServerCrash = true;
+        g_isRedrawNeeded = true;
+        return;
     }
 
     Logger::dbg << "LSP server response: " << initRes->ToJson() << Logger::End;
+    if (initRes->IsError())
+    {
+        Logger::err << "LSP server responded with error: " << initRes->error.error.ToString() << Logger::End;
+        didServerCrash = true;
+        g_isRedrawNeeded = true;
+        return;
+    }
     const auto& cap = initRes->response.result.capabilities;
     Logger::dbg << "\tCompletion supported?: " << (cap.completionProvider ? "YES" : "NO") << Logger::End;
     assert(cap.completionProvider);
@@ -113,6 +136,8 @@ LspProvider::LspProvider()
     );
 
     Notify_InitializedNotification::notify initednotif;
+    if (didServerCrash) // Maybe it crashed in the meantime
+        return;
     Logger::dbg << "LSP: Sending initialized notification: " << initednotif.ToJson() << Logger::End;
 
     m_servCaps = std::move(cap);
@@ -127,6 +152,7 @@ void LspProvider::get(Popup* popupP)
 
 void LspProvider::busyBegin()
 {
+    assert(!didServerCrash);
     glfwSetCursor(g_window, Cursors::busy);
     m_status = LspServerStatus::Waiting;
     App::renderStatusLine();
@@ -166,6 +192,8 @@ void LspProvider::onFileOpen(const std::string& path, const std::string& fileCon
 
 void LspProvider::onFileChange(const std::string& path, int version, const std::string& newContent)
 {
+    if (didServerCrash) return;
+
     using tDocSyncKind = lsTextDocumentSyncKind;
     //Logger::log << m_servCaps.textDocumentSync->first.get_value_or(tDocSyncKind::None) << Logger::End;
 
@@ -205,6 +233,8 @@ void LspProvider::onFileChange(const std::string& path, int version, const std::
 
 void LspProvider::onFileClose(const std::string& path)
 {
+    if (didServerCrash) return;
+
     // TODO: Make the path absolute
     //       or maybe not if it is surely handled outside
     assert(std::filesystem::path{path}.is_absolute());
@@ -226,6 +256,8 @@ void LspProvider::onFileClose(const std::string& path)
 
 LspProvider::HoverInfo LspProvider::getHover(const std::string& path, uint line, uint col)
 {
+    if (didServerCrash) return {};
+
     busyBegin();
 
     if (m_servCaps.hoverProvider.get_value_or(false))
@@ -272,6 +304,8 @@ LspProvider::HoverInfo LspProvider::getHover(const std::string& path, uint line,
 template <typename ReqType>
 LspProvider::Location LspProvider::_getDefOrDeclOrImp(const std::string& path, uint line, uint col)
 {
+    if (didServerCrash) return {};
+
     busyBegin();
 
     static_assert(
@@ -370,8 +404,18 @@ LspProvider::Location LspProvider::getImplementation(const std::string& path, ui
     return _getDefOrDeclOrImp<td_implementation::request>(path, line, col);
 }
 
+std::shared_ptr<Image> LspProvider::getStatusIcon()
+{
+    if (didServerCrash)
+        m_status = LspServerStatus::Crashed;
+
+    assert(m_status < LspServerStatus::_Count);
+    return m_statusIcons[(int)m_status];
+}
 LspProvider::~LspProvider()
 {
+    if (didServerCrash) return;
+
     Logger::log << "Shutting down LSP server" << Logger::End;
 
     // Send shutdown request
@@ -392,12 +436,6 @@ LspProvider::~LspProvider()
         Logger::dbg << "LSP: Sending exit notification: " << exitNotif.ToJson() << Logger::End;
         m_client->getEndpoint()->send(exitNotif);
     }
-}
-
-std::shared_ptr<Image> LspProvider::getStatusIcon() const
-{
-    assert(m_status < LspServerStatus::_Count);
-    return m_statusIcons[(int)m_status];
 }
 
 } // namespace Autocomp

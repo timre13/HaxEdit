@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <cctype>
 #include "../Logger.h"
+using namespace std::string_literals;
 
 String strToUtf32(const icu::UnicodeString& input);
 String strToUtf32(const std::string& input);

@@ -3,6 +3,7 @@
 #include "IProvider.h"
 #include "../Logger.h"
 #include "../Image.h"
+#include "../common/string.h"
 #include <string>
 #include <memory>
 #include <boost/process.hpp>
@@ -29,6 +30,8 @@ using namespace std::chrono_literals;
 
 #pragma clang diagnostic pop
 #endif // __clang__
+
+extern bool g_isRedrawNeeded;
 
 namespace Autocomp
 {
@@ -109,6 +112,8 @@ public:
     }
 };
 
+extern bool didServerCrash;
+
 class LspClient final
 {
 public:
@@ -148,14 +153,29 @@ public:
                     {
                         Logger::err << "LSP server exited with code "
                             << exitCode << ", error: " << err.message() << Logger::End;
+                        didServerCrash = true; // Crashed
+                        g_isRedrawNeeded = true; // Update status icon
                     }
                 })
         );
 
         if (errCode)
         {
-            Logger::fatal << "Failed to start LSP server: ["
+            Logger::err << "Failed to start LSP server: ["
                 << errCode.category().name() << "]: " << errCode.message() << Logger::End;
+
+            // Exit thread so we won't get terminated
+            {
+                Logger::dbg << "Closing LSP endpoint" << Logger::End;
+                m_remoteEndpoint.stop();
+                Logger::dbg << "Stopping process I/O" << Logger::End;
+                m_asioIo.stop();
+            }
+
+            didServerCrash = true; // Failed to start
+            g_isRedrawNeeded = true; // Update status icon
+            throw std::runtime_error{"Failed to start LSP server: ["s
+                + errCode.category().name() + "]: " + errCode.message()};
         }
         else
         {
@@ -164,8 +184,8 @@ public:
         }
     }
 
-    inline RemoteEndPoint* getEndpoint() { return &m_remoteEndpoint; }
-    inline GenericEndpoint* getClientEndpoint() { return m_endpoint.get(); }
+    inline RemoteEndPoint* getEndpoint() { assert(!didServerCrash); return &m_remoteEndpoint; }
+    inline GenericEndpoint* getClientEndpoint() { assert(!didServerCrash); return m_endpoint.get(); }
 
     ~LspClient()
     {
@@ -192,6 +212,8 @@ private:
     std::unique_ptr<LspClient> m_client;
     lsServerCapabilities m_servCaps;
 
+    // Don't rely on this. This is only used to display the status icon and its
+    // update is delayed. Use `didCrash` to check if the server crashed.
     LspServerStatus m_status = LspServerStatus::Waiting;
     std::array<std::shared_ptr<Image>, (int)LspServerStatus::_Count> m_statusIcons;
 
@@ -239,7 +261,7 @@ public:
     Location getDeclaration(const std::string& path, uint line, uint col);
     Location getImplementation(const std::string& path, uint line, uint col);
 
-    std::shared_ptr<Image> getStatusIcon() const;
+    std::shared_ptr<Image> getStatusIcon();
 
     ~LspProvider();
 };
