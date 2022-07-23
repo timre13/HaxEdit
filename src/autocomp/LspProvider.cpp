@@ -29,6 +29,8 @@
 #include <filesystem>
 #include <type_traits>
 
+#define LSP_TIMEOUT_MILLI 10000
+
 namespace Autocomp
 {
 
@@ -104,9 +106,9 @@ LspProvider::LspProvider()
 
     Logger::dbg << "LSP: Sending initialize request: " << initreq.ToJson() << Logger::End;
 
-    auto initRes = m_client->getEndpoint()->waitResponse(initreq);
     if (didServerCrash) // Maybe it crashed in the meantime
         return;
+    auto initRes = m_client->getEndpoint()->waitResponse(initreq, LSP_TIMEOUT_MILLI);
     if (!initRes)
     {
         Logger::err << "LSP: Initialize timed out" << Logger::End;
@@ -268,7 +270,7 @@ LspProvider::HoverInfo LspProvider::getHover(const std::string& path, uint line,
         req.params.textDocument.uri.SetPath(path);
         Logger::dbg << "LSP: Sending textDocument/hover request: " << req.ToJson() << Logger::End;
 
-        auto resp = m_client->getEndpoint()->waitResponse(req);
+        auto resp = m_client->getEndpoint()->waitResponse(req, LSP_TIMEOUT_MILLI);
         Logger::dbg << "LSP: Response: " << resp->ToJson() << Logger::End;
         if (resp->IsError())
         {
@@ -348,7 +350,7 @@ LspProvider::Location LspProvider::_getDefOrDeclOrImp(const std::string& path, u
         else if constexpr (needsImp)
             Logger::dbg << "LSP: Sending textDocument/implementation request: " << req.ToJson() << Logger::End;
 
-        auto resp = m_client->getEndpoint()->waitResponse(req);
+        auto resp = m_client->getEndpoint()->waitResponse(req, LSP_TIMEOUT_MILLI);
         Logger::dbg << "LSP: Response: " << resp->ToJson() << Logger::End;
         if (resp->IsError())
         {
@@ -412,6 +414,7 @@ std::shared_ptr<Image> LspProvider::getStatusIcon()
     assert(m_status < LspServerStatus::_Count);
     return m_statusIcons[(int)m_status];
 }
+
 LspProvider::~LspProvider()
 {
     if (didServerCrash) return;
@@ -422,7 +425,7 @@ LspProvider::~LspProvider()
     {
         td_shutdown::request shutdownReq;
         Logger::dbg << "LSP: Sending shutdown request: " << shutdownReq.ToJson() << Logger::End;
-        auto response = m_client->getEndpoint()->waitResponse(shutdownReq);
+        auto response = m_client->getEndpoint()->waitResponse(shutdownReq, LSP_TIMEOUT_MILLI);
         if (response->IsError())
         {
             Logger::fatal << "LSP: Server responded with error: " << response->error.error.ToString() << Logger::End;
