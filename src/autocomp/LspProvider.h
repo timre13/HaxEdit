@@ -4,6 +4,7 @@
 #include "../Logger.h"
 #include "../Image.h"
 #include "../common/string.h"
+#include "../languages.h"
 #include <string>
 #include <memory>
 #include <boost/process.hpp>
@@ -229,7 +230,7 @@ public:
 
     virtual void get(Popup* popupP) override;
 
-    void onFileOpen(const std::string& path, const std::string& fileContent);
+    void onFileOpen(const std::string& path, Langs::LangId language, const std::string& fileContent);
     void onFileChange(const std::string& path, int version, const std::string& newContent);
     void onFileClose(const std::string& path);
 

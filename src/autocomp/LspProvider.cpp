@@ -169,7 +169,7 @@ void LspProvider::busyEnd()
     glfwSwapBuffers(g_window);
 }
 
-void LspProvider::onFileOpen(const std::string& path, const std::string& fileContent)
+void LspProvider::onFileOpen(const std::string& path, Langs::LangId language, const std::string& fileContent)
 {
     // TODO: Make the path absolute
     //       or maybe not if it is surely handled outside
@@ -181,7 +181,7 @@ void LspProvider::onFileOpen(const std::string& path, const std::string& fileCon
     {
         Notify_TextDocumentDidOpen::notify notif;
         notif.params.textDocument.uri.SetPath(path);
-        notif.params.textDocument.languageId = "lua"; // TODO: Detect this
+        notif.params.textDocument.languageId = Langs::langIdToLspId(language);
         notif.params.textDocument.text = fileContent;
         Logger::dbg << "LSP: Sending textDocument/didOpen notification: " << notif.ToJson() << Logger::End;
         m_client->getEndpoint()->send(notif);

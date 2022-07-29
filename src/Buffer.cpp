@@ -64,6 +64,7 @@ void Buffer::open(const std::string& filePath, bool isReload/*=false*/)
     glfwSetCursor(g_window, Cursors::busy);
 
     m_filePath = filePath;
+    m_language = Langs::LangId::Unknown;
     m_isReadOnly = false;
     m_history.clear();
     m_gitRepo.reset();
@@ -84,6 +85,9 @@ void Buffer::open(const std::string& filePath, bool isReload/*=false*/)
         m_gitRepo = std::make_unique<Git::Repo>(filePath);
         m_lastFileUpdateTime = getFileModTime(m_filePath);
         updateGitDiff();
+        m_language = Langs::lookupExtension(std_fs::path(m_filePath).extension().string().substr(1));
+        Logger::dbg << "Buffer language: " << Langs::langIdToName(m_language)
+            << " (LSP id: " << Langs::langIdToLspId(m_language) << ')' << Logger::End;
 
         Logger::dbg << "Read "
             << countLineListLen(m_content) << " characters ("
@@ -178,7 +182,7 @@ void Buffer::open(const std::string& filePath, bool isReload/*=false*/)
     // TODO: This is bad
     const std::string content = strToAscii(lineVecConcat(m_content));
     // TODO: Properly tell reloading to LSP server (close first)
-    Autocomp::lspProvider->onFileOpen(m_filePath, content);
+    Autocomp::lspProvider->onFileOpen(m_filePath, m_language, content);
 
     glfwSetCursor(g_window, nullptr);
     TIMER_END_FUNC();

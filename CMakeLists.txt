@@ -78,6 +78,7 @@ add_executable(haxed
     src/autocomp/PathProvider.cpp
     src/autocomp/LspProvider.cpp
     src/ThemeLoader.cpp
+    src/languages.cpp
     src/Git.cpp
     external/cJSON/cJSON.c
 )

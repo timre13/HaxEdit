@@ -19,6 +19,7 @@
 #include "autocomp/BufferWordProvider.h"
 #include "autocomp/PathProvider.h"
 #include "FloatingWin.h"
+#include "languages.h"
 
 namespace std_fs = std::filesystem;
 
@@ -148,6 +149,7 @@ public:
 
 protected:
     std::string m_filePath = FILENAME_NEW;
+    Langs::LangId m_language = Langs::LangId::Unknown;
     std::vector<String> m_content;
     bool m_isModified{};
     bool m_isReadOnly{};
