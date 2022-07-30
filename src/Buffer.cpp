@@ -1421,7 +1421,8 @@ void Buffer::_renderDrawDiagnosticMsg(
                     charToStr(severityMarks[sevIndex])+": "+msgToDisplay,
                     {textPos.x+g_fontWidthPx*4, initTextY+textPos.y-m_scrollY-m_position.y},
                     FONT_STYLE_ITALIC|(isCurrent ? FONT_STYLE_BOLD : 0),
-                    textColor);
+                    textColor,
+                    true);
             break;
         }
     }
