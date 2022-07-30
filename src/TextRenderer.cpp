@@ -200,7 +200,7 @@ static inline TextRenderer::GlyphDimensions renderGlyph(
 
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
-    return {glyph.size, glyph.size, glyph.advance};
+    return {glyph.advance};
 }
 
 
@@ -267,30 +267,38 @@ static constexpr RGBColor brightFgColors[8]{
 
 }
 
-void TextRenderer::renderString(
+std::pair<glm::ivec2, glm::ivec2> TextRenderer::renderString(
         const std::string& str,
         const glm::ivec2& position,
         FontStyle initStyle/*=FONT_STYLE_REGULAR*/,
         const RGBColor& initColor/*={1.0f, 1.0f, 1.0f}*/,
-        bool shouldWrap/*=false*/
+        bool shouldWrap/*=false*/,
+        bool onlyMeasure/*=false*/
     )
 {
     static constexpr float scale = 1.0f;
     FontStyle currStyle = initStyle;
-    std::map<Char, TextRenderer::Glyph>* glyphs;
+    std::map<Char, Glyph>* glyphs;
 
     auto setStyle{[&currStyle, &glyphs, this](FontStyle style){
         currStyle = style;
         glyphs = getGlyphListFromStyle(currStyle);
     }};
 
+    std::pair<glm::ivec2, glm::ivec2> area;
+    area.first = position;
+    area.second = position;
+
     const float initTextX = position.x;
     const float initTextY = position.y;
     float textX = initTextX;
     float textY = initTextY;
 
-    prepareForDrawing();
-    setDrawingColor(initColor);
+    if (!onlyMeasure)
+    {
+        prepareForDrawing();
+        setDrawingColor(initColor);
+    }
     setStyle(initStyle);
 
     std::string ansiSeq;
@@ -309,6 +317,7 @@ void TextRenderer::renderString(
 
         case '\t': // Tab
             textX += g_fontSizePx*4;
+            area.second.x = std::max(area.second.x, (int)std::ceil(textX));
             continue;
 
         case '\v': // Vertical tab
@@ -339,7 +348,8 @@ void TextRenderer::renderString(
                     if (ansiSeq.size() == 4) // Foregound seqence identifier
                     {
                         assert(ansiSeq[3] >= '0' && ansiSeq[3] <= '7');
-                        setDrawingColor(AnsiColors::fgColors[ansiSeq[3]-'0']);
+                        if (!onlyMeasure)
+                            setDrawingColor(AnsiColors::fgColors[ansiSeq[3]-'0']);
                     }
                     else if (ansiSeq.size() == 3) // Italic style sequence
                     {
@@ -354,7 +364,8 @@ void TextRenderer::renderString(
                 case ANSI_ESC_BRFG_CHAR: // Bright foregound seqence identifier
                     assert(ansiSeq.size() == 4);
                     assert(ansiSeq[3] >= '0' && ansiSeq[3] <= '7');
-                    setDrawingColor(AnsiColors::brightFgColors[ansiSeq[3]-'0']);
+                    if (!onlyMeasure)
+                        setDrawingColor(AnsiColors::brightFgColors[ansiSeq[3]-'0']);
                     break;
 
                 case ANSI_ESC_BOLD_CHAR: // Bold style sequence
@@ -362,7 +373,8 @@ void TextRenderer::renderString(
                     break;
 
                 case ANSI_ESC_RESET_CHAR: // Reset sequence identifier
-                    setDrawingColor(initColor); // Reset color
+                    if (!onlyMeasure)
+                        setDrawingColor(initColor); // Reset color
                     setStyle(initStyle); // Reset style
                     break;
 
@@ -390,7 +402,8 @@ void TextRenderer::renderString(
         }
         if (textY > g_windowHeight)
         {
-            return;
+            area.second.y = std::ceil(textY+g_fontSizePx*scale);
+            return area;
         }
 
         const auto& glyphIt = glyphs->find(c);
@@ -401,7 +414,14 @@ void TextRenderer::renderString(
         renderGlyph(glyphIt->second, textX, textY, scale, m_fontVbo);
 
         textX += (glyphIt->second.advance/64.0f) * scale;
+            if (!onlyMeasure)
+                renderGlyph(glyphUnkIt->second, textX, textY, scale, m_fontVbo);
+            textX += (glyphUnkIt->second.advance/64.0f) * scale;
+        area.second.x = std::max(area.second.x, (int)std::ceil(textX));
     }
+
+    area.second.y = std::ceil(textY+g_fontSizePx*scale);
+    return area;
 }
 
 TextRenderer::~TextRenderer()

@@ -40,8 +40,6 @@ public:
 
     struct GlyphDimensions
     {
-        glm::ivec2 position;
-        glm::ivec2 bearing;
         uint advance;
     };
 
@@ -105,13 +103,19 @@ public:
      *  + initStyle: The initial style, can be changed with ANSI sequences.
      *  + initColor: The initial foreground color, can be changed with ANSI sequences.
      *  + shouldWrap: If true, a new line is started when reaching the end of the screen.
+     *  + onlyMeasure: If true, nothing will be rendered, but the used area will be calculated as usual.
+     *                 Useful to draw background for some text.
+     *
+     * Returns:
+     *  + the enclosing area as {{x1, y1}, {x2, y2}}.
      */
-    void renderString(
+    std::pair<glm::ivec2, glm::ivec2> renderString(
             const std::string& str,
             const glm::ivec2& position,
             FontStyle initStyle=FONT_STYLE_REGULAR,
             const RGBColor& initColor={1.0f, 1.0f, 1.0f},
-            bool shouldWrap=false
+            bool shouldWrap=false,
+            bool onlyMeasure=false
     );
 
     ~TextRenderer();
