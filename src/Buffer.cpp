@@ -1417,15 +1417,30 @@ void Buffer::_renderDrawDiagnosticMsg(
                 (void)msgLineIt.next(msgToDisplay);
             }
 
-            g_textRenderer->renderString(
+            auto rendOrMeasure{[&](bool render){
+                return g_textRenderer->renderString(
                     charToStr(severityMarks[sevIndex])+": "+msgToDisplay,
                     {textPos.x+g_fontWidthPx*4, initTextY+textPos.y-m_scrollY-m_position.y},
                     FONT_STYLE_ITALIC|(isCurrent ? FONT_STYLE_BOLD : 0),
                     textColor,
-                    true);
+                    true,
+                    !render);
+            }};
+
+            // Calculate and fill the background of the diagnositc message
+            const auto diagnArea = rendOrMeasure(false);
+            g_uiRenderer->renderFilledRectangle(
+                    diagnArea.first,
+                    {diagnArea.second.x, diagnArea.second.y+g_fontSizePx*0.2f},
+                    {UNPACK_RGB_COLOR(textColor), 0.1f});
+
+            rendOrMeasure(true);
             break;
         }
     }
+
+    // Bind the text renderer shader again
+    g_textRenderer->prepareForDrawing();
 }
 
 void Buffer::render()
