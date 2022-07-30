@@ -279,10 +279,13 @@ std::pair<glm::ivec2, glm::ivec2> TextRenderer::renderString(
     static constexpr float scale = 1.0f;
     FontStyle currStyle = initStyle;
     std::map<Char, Glyph>* glyphs;
+    std::map<Char, Glyph>::iterator glyphUnkIt;
 
-    auto setStyle{[&currStyle, &glyphs, this](FontStyle style){
+    auto setStyle{[&currStyle, &glyphs, &glyphUnkIt, this](FontStyle style){
         currStyle = style;
         glyphs = getGlyphListFromStyle(currStyle);
+        glyphUnkIt = glyphs->find(0);
+        assert(glyphUnkIt != glyphs->end());
     }};
 
     std::pair<glm::ivec2, glm::ivec2> area;
@@ -406,17 +409,12 @@ std::pair<glm::ivec2, glm::ivec2> TextRenderer::renderString(
             return area;
         }
 
-        const auto& glyphIt = glyphs->find(c);
-        if (glyphIt == glyphs->end())
-        {
-            continue; // No such glyph, skip :(
-        }
-        renderGlyph(glyphIt->second, textX, textY, scale, m_fontVbo);
-
+        auto glyphIt = glyphs->find(c);
+        if (glyphIt == glyphs->end()) // Glyph not found
+            glyphIt = glyphUnkIt; // Use the unknown glyph glyph
+        if (!onlyMeasure)
+            renderGlyph(glyphIt->second, textX, textY, scale, m_fontVbo);
         textX += (glyphIt->second.advance/64.0f) * scale;
-            if (!onlyMeasure)
-                renderGlyph(glyphUnkIt->second, textX, textY, scale, m_fontVbo);
-            textX += (glyphUnkIt->second.advance/64.0f) * scale;
         area.second.x = std::max(area.second.x, (int)std::ceil(textX));
     }
 
@@ -431,4 +429,3 @@ TextRenderer::~TextRenderer()
     glDeleteVertexArrays(1, &m_fontVao);
     Logger::dbg << "Cleaned up font vertex data" << Logger::End;
 }
-
