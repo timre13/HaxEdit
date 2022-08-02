@@ -921,6 +921,7 @@ void Buffer::updateCursor()
         scrollViewportToCursor();
         m_isCursorShown = true;
         m_cursorMovCmd = CursorMovCmd::None;
+        m_cursorHoldTime = 0;
         g_hoverPopup->hideAndClear();
     }
 
@@ -1147,6 +1148,7 @@ size_t Buffer::copySelectionToClipboard(bool shouldUnselect/*=true*/)
 
     scrollViewportToCursor();
     m_isCursorShown = true;
+    m_cursorHoldTime = 0;
     g_isRedrawNeeded = true;
     return toCopy.size();
 }
@@ -1855,6 +1857,7 @@ void Buffer::insert(Char character)
 
     m_isModified = true;
     m_isCursorShown = true;
+    m_cursorHoldTime = 0;
     m_isHighlightUpdateNeeded = true;
     m_version++;
     Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(lineVecConcat(m_content)));
@@ -1901,6 +1904,7 @@ void Buffer::replaceChar(Char character)
     m_history.add(std::move(histEntry));
 
     m_isCursorShown = true;
+    m_cursorHoldTime = 0;
     m_isHighlightUpdateNeeded = true;
     m_version++;
     Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(lineVecConcat(m_content)));
@@ -1972,6 +1976,7 @@ void Buffer::deleteCharBackwards()
     m_history.add(std::move(histEntry));
 
     m_isCursorShown = true;
+    m_cursorHoldTime = 0;
     m_isHighlightUpdateNeeded = true;
     m_version++;
     Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(lineVecConcat(m_content)));
@@ -2047,6 +2052,7 @@ void Buffer::deleteCharForwardOrSelected()
     m_history.add(std::move(histEntry));
 
     m_isCursorShown = true;
+    m_cursorHoldTime = 0;
     scrollViewportToCursor();
     m_isHighlightUpdateNeeded = true;
     m_version++;
@@ -2166,6 +2172,7 @@ void Buffer::triggerAutocompPopup()
     Autocomp::pathProvid->setPrefix(m_id, getPathFromLine(m_content[m_cursorLine].substr(0, m_cursorCol)));
     m_autocompPopup->setVisibility(true);
     m_isCursorShown = true;
+    m_cursorHoldTime = 0;
     g_isRedrawNeeded = true;
 }
 
@@ -2173,6 +2180,7 @@ void Buffer::autocompPopupSelectNextItem()
 {
     m_autocompPopup->selectNextItem();
     m_isCursorShown = true;
+    m_cursorHoldTime = 0;
     g_isRedrawNeeded = true;
 }
 
@@ -2180,6 +2188,7 @@ void Buffer::autocompPopupSelectPrevItem()
 {
     m_autocompPopup->selectPrevItem();
     m_isCursorShown = true;
+    m_cursorHoldTime = 0;
     g_isRedrawNeeded = true;
 }
 
@@ -2187,6 +2196,7 @@ void Buffer::autocompPopupHide()
 {
     m_autocompPopup->setVisibility(false);
     m_isCursorShown = true;
+    m_cursorHoldTime = 0;
     g_isRedrawNeeded = true;
 }
 
@@ -2206,6 +2216,7 @@ void Buffer::autocompPopupInsert()
     }
     m_autocompPopup->setVisibility(false);
     m_isCursorShown = true;
+    m_cursorHoldTime = 0;
     g_isRedrawNeeded = true;
 }
 
@@ -2411,6 +2422,7 @@ size_t Buffer::deleteSelectedChars()
     m_selection.mode = Selection::Mode::None; // Cancel the selection
     m_isModified = true;
     m_isCursorShown = true;
+    m_cursorHoldTime = 0;
     scrollViewportToCursor();
     m_isHighlightUpdateNeeded = true;
     m_version++;
@@ -2450,6 +2462,7 @@ void Buffer::_goToCurrFindResult(bool showStatMsg)
     }
     centerCursor();
     m_isCursorShown = true;
+    m_cursorHoldTime = 0;
     g_isRedrawNeeded = true;
 }
 
@@ -2636,8 +2649,24 @@ void Buffer::goToMousePos()
         m_cursorCharPos = countLineListLen(m_content)-1;
     }
     m_isCursorShown = true;
+    m_cursorHoldTime = 0;
     g_hoverPopup->hideAndClear();
     g_isRedrawNeeded = true;
+}
+
+void Buffer::tickCursorHold(float frameTimeMs)
+{
+    auto isTriggered{[this, frameTimeMs](uint triggerAfter){
+        return m_cursorHoldTime < triggerAfter
+            && m_cursorHoldTime+frameTimeMs >= triggerAfter;
+    }};
+
+    if (isTriggered(CURSOR_HOLD_TIME_CODE_ACTION))
+    {
+        Logger::dbg << "TODO: Needs to fetch code actions" << Logger::End;
+    }
+
+    m_cursorHoldTime += frameTimeMs;
 }
 
 void _autoReloadDialogCb(int btn, Dialog*, void* userData)

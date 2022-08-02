@@ -98,6 +98,8 @@
 #define IMG_BUF_ZOOM_STEP               0.05f
 #define HIDE_MOUSE_WHILE_TYPING         true
 
+#define CURSOR_HOLD_TIME_CODE_ACTION    1000
+
 //-------------------- Dialogs --------------------
 
 #define FILE_DIALOG_ICON_SIZE_PX        32

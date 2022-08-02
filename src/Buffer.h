@@ -175,6 +175,7 @@ protected:
     int m_cursorYPx{};
     bool m_isCursorShown{true}; // Used to blink the cursor
     CursorMovCmd m_cursorMovCmd{CursorMovCmd::None};
+    uint m_cursorHoldTime{};
 
     int m_charUnderMouseCol{};
     int m_charUnderMouseRow{};
@@ -458,6 +459,7 @@ public:
 
     virtual void goToMousePos();
 
+    virtual void tickCursorHold(float frameTimeMs);
     virtual void tickAutoReload(float frameTimeMs);
     virtual void tickGitBranchUpdate(float frameTimeMs);
 

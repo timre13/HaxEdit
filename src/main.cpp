@@ -147,6 +147,7 @@ int main(int argc, char** argv)
         Prompt::get()->update(frameTimeSec*1000);
         if (g_activeBuff)
         {
+            g_activeBuff->tickCursorHold(frameTimeSec*1000);
             g_activeBuff->tickAutoReload(frameTimeSec*1000);
             g_activeBuff->tickGitBranchUpdate(frameTimeSec*1000);
         }
