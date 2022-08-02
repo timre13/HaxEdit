@@ -15,9 +15,7 @@
 #include "signs.h"
 #include "Git.h"
 #include "autocomp/Popup.h"
-#include "autocomp/DictionaryProvider.h"
-#include "autocomp/BufferWordProvider.h"
-#include "autocomp/PathProvider.h"
+#include "autocomp/LspProvider.h"
 #include "FloatingWin.h"
 #include "languages.h"
 
@@ -149,6 +147,8 @@ public:
 
 protected:
     std::string m_filePath = FILENAME_NEW;
+    static bufid_t s_lastUsedId;
+    bufid_t m_id{};
     Langs::LangId m_language = Langs::LangId::Unknown;
     std::vector<String> m_content;
     bool m_isModified{};
@@ -190,8 +190,6 @@ protected:
     BufferHistory m_history;
 
     std::unique_ptr<Autocomp::Popup> m_autocompPopup;
-    std::unique_ptr<Autocomp::BufferWordProvider> m_buffWordProvid;
-    std::unique_ptr<Autocomp::PathProvider> m_pathProvid;
 
     Selection m_selection{};
 

@@ -7,6 +7,8 @@
 #include "modes.h"
 #include "StatusMsg.h"
 #include "autocomp/DictionaryProvider.h"
+#include "autocomp/BufferWordProvider.h"
+#include "autocomp/PathProvider.h"
 #include "autocomp/LspProvider.h"
 
 class Dialog;
@@ -66,6 +68,8 @@ GLFWcursor* busy{};
 namespace Autocomp
 {
 std::unique_ptr<Autocomp::DictionaryProvider> dictProvider;
+std::unique_ptr<Autocomp::BufferWordProvider> buffWordProvid;
+std::unique_ptr<Autocomp::PathProvider>       pathProvid;
 std::unique_ptr<Autocomp::LspProvider>        lspProvider;
 }
 
@@ -116,6 +120,8 @@ extern GLFWcursor* busy;
 namespace Autocomp
 {
 extern std::unique_ptr<Autocomp::DictionaryProvider> dictProvider;
+extern std::unique_ptr<Autocomp::BufferWordProvider> buffWordProvid;
+extern std::unique_ptr<Autocomp::PathProvider>       pathProvid;
 extern std::unique_ptr<Autocomp::LspProvider>        lspProvider;
 }
 

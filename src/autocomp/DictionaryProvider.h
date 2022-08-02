@@ -9,12 +9,15 @@ namespace Autocomp
 
 class DictionaryProvider final : public IProvider
 {
-public:
+private:
     // This is the list of words in the dictionary
-    // It is shared accross all the `DictionaryProvider` instances
-    static std::vector<String> s_words;
+    // It is used by all the buffers
+    std::vector<String> m_words;
 
-    virtual void get(Popup* popupP) override;
+public:
+    DictionaryProvider();
+
+    virtual void get(bufid_t, Popup* popupP) override;
 };
 
 } // namespace Autocomp

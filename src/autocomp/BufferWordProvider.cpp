@@ -5,18 +5,26 @@
 namespace Autocomp
 {
 
-void BufferWordProvider::get(Popup* popupP)
+void BufferWordProvider::get(bufid_t bufid, Popup* popupP)
 {
     Logger::dbg << "BufferWordProvider: feeding words into Popup (count: " << m_words.size() << ")" << Logger::End;
-    for (const auto& word : m_words)
+
+    if (m_words.find(bufid) == m_words.end())
+        return;
+
+    auto words = m_words.find(bufid)->second;
+    for (const auto& word : words)
     {
         popupP->addItem(Popup::Item{Popup::Item::Type::BufferWord, word});
     }
 }
 
-void BufferWordProvider::add(const String& word)
+void BufferWordProvider::add(bufid_t bufid, const String& word)
 {
-    m_words.push_back(word);
+    if (m_words.find(bufid) == m_words.end())
+        m_words.insert({bufid, {word}});
+    else
+        m_words.at(bufid).push_back(word);
 }
 
 void BufferWordProvider::clear()

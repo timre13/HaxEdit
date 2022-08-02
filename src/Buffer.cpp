@@ -18,8 +18,12 @@
 #include <cctype>
 using namespace std::chrono_literals;
 
+bufid_t Buffer::s_lastUsedId = 0;
+
 Buffer::Buffer()
 {
+    m_id = s_lastUsedId++;
+
     /*
      * This thread runs in the background while the buffer is alive.
      * It constantly checks if an update is needed and if it does,
@@ -46,8 +50,6 @@ Buffer::Buffer()
 
     Logger::dbg << "Setting up autocomplete for buffer: " << this << Logger::End;
     m_autocompPopup = std::make_unique<Autocomp::Popup>();
-    m_buffWordProvid = std::make_unique<Autocomp::BufferWordProvider>();
-    m_pathProvid = std::make_unique<Autocomp::PathProvider>();
 
     Logger::log << "Created a buffer: " << this << Logger::End;
 }
@@ -140,8 +142,8 @@ void Buffer::open(const std::string& filePath, bool isReload/*=false*/)
         m_isReadOnly = true;
     }
 
-    { // Regenerate the initial autocomplete list for `m_buffWordProvid`
-        m_buffWordProvid->clear();
+    { // Regenerate the initial autocomplete list for `buffWordProvid`
+        Autocomp::buffWordProvid->clear();
 
         for (const auto& line : m_content)
         {
@@ -155,7 +157,7 @@ void Buffer::open(const std::string& filePath, bool isReload/*=false*/)
                     if (!word.empty())
                     {
                         //Logger::dbg << "Feeding word: " << quoteStr(strToAscii(word)) << Logger::End;
-                        m_buffWordProvid->add(word);
+                        Autocomp::buffWordProvid->add(m_id, word);
                         word.clear();
                     }
                 }
@@ -1842,7 +1844,7 @@ void Buffer::insert(Char character)
         if (!word.empty())
         {
             //Logger::dbg << "Feeding word to buffer word provider: " << quoteStr(strToAscii(word)) << Logger::End;
-            m_buffWordProvid->add(word);
+            Autocomp::buffWordProvid->add(m_id, word);
         }
     }
 
@@ -2161,7 +2163,7 @@ static std::string getPathFromLine(const String& line)
 
 void Buffer::triggerAutocompPopup()
 {
-    m_pathProvid->setPrevix(getPathFromLine(m_content[m_cursorLine].substr(0, m_cursorCol)));
+    Autocomp::pathProvid->setPrefix(m_id, getPathFromLine(m_content[m_cursorLine].substr(0, m_cursorCol)));
     m_autocompPopup->setVisibility(true);
     m_isCursorShown = true;
     g_isRedrawNeeded = true;
@@ -2211,10 +2213,10 @@ void Buffer::regenAutocompList()
 {
     Logger::dbg << "Regenerating autocomplete list for buffer " << this << Logger::End;
     m_autocompPopup->clear();
-    Autocomp::dictProvider->get(m_autocompPopup.get());
-    Autocomp::lspProvider->get(m_autocompPopup.get());
-    m_buffWordProvid->get(m_autocompPopup.get());
-    m_pathProvid->get(m_autocompPopup.get());
+    Autocomp::dictProvider->get(m_id, m_autocompPopup.get());
+    Autocomp::lspProvider->get(m_id, m_autocompPopup.get());
+    Autocomp::buffWordProvid->get(m_id, m_autocompPopup.get());
+    Autocomp::pathProvid->get(m_id, m_autocompPopup.get());
 }
 
 void Buffer::startSelection(Selection::Mode mode)
@@ -2830,8 +2832,8 @@ void Buffer::gotoImp()
 Buffer::~Buffer()
 {
     glfwSetCursor(g_window, Cursors::busy);
-    m_isHighlightUpdateNeeded = true; // Exit the current update
     m_shouldHighlighterLoopRun = false; // Signal the thread that we don't want more syntax updates
+    m_isHighlightUpdateNeeded = true; // Exit the current update
     m_highlighterThread.join(); // Wait for the thread
     Autocomp::lspProvider->onFileClose(m_filePath);
     Logger::log << "Destroyed a buffer: " << this << " (" << m_filePath << ')' << Logger::End;

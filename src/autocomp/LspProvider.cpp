@@ -147,7 +147,7 @@ LspProvider::LspProvider()
     busyEnd();
 }
 
-void LspProvider::get(Popup* popupP)
+void LspProvider::get(bufid_t bufid, Popup* popupP)
 {
     Logger::dbg << "LspProvider: " << "TODO" << Logger::End;
 }

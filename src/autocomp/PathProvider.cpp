@@ -8,10 +8,15 @@
 namespace Autocomp
 {
 
-void PathProvider::get(Popup *popupP)
+void PathProvider::get(bufid_t bufid, Popup *popupP)
 {
+    if (m_prefixes.find(bufid) == m_prefixes.end())
+        return;
+
+    const std::string prefix = m_prefixes.find(bufid)->second;
+
     std::vector<std::string> paths;
-    std::string dirToList = m_prefix;
+    std::string dirToList = prefix;
     const bool isDir = std::filesystem::is_directory(dirToList);
     if (!isDir)
         dirToList = std::filesystem::path{dirToList}.parent_path();
@@ -22,15 +27,14 @@ void PathProvider::get(Popup *popupP)
         auto it = std::filesystem::directory_iterator{dirToList, std::filesystem::directory_options::skip_permission_denied};
         for (const auto& entry : it)
         {
-            if (entry.path().string().starts_with(m_prefix))
-                paths.push_back(entry.path().string().substr(m_prefix.size() == 1 ? 1 : m_prefix.size()+1));
+            if (entry.path().string().starts_with(prefix))
+                paths.push_back(entry.path().string().substr(prefix.size() == 1 ? 1 : prefix.size()+1));
         }
     }
     catch (std::exception&)
     {
         Logger::warn << "PathProvider: Failed to list dir: \"" << dirToList << '"' << Logger::End;
     }
-
 
     Logger::log << "PathProvider: feeding paths into Popup (count: " << paths.size() << ")" << Logger::End;
     for (const auto& path : paths)
@@ -40,14 +44,19 @@ void PathProvider::get(Popup *popupP)
     }
 }
 
-void PathProvider::setPrevix(const std::string& prefix)
+void PathProvider::setPrefix(bufid_t bufid, const std::string& prefix)
 {
-    m_prefix = prefix;
-    if (m_prefix.size() > 1 && m_prefix.back() == '/')
-        m_prefix.pop_back();
-    else if (m_prefix.empty())
-        m_prefix = "/";
-    Logger::dbg << "Prefix: " << m_prefix << Logger::End;
+    if (m_prefixes.find(bufid) == m_prefixes.end())
+        m_prefixes.insert({bufid, prefix});
+
+    auto& pref = m_prefixes.find(bufid)->second;
+    pref = prefix;
+
+    if (pref.size() > 1 && pref.back() == '/')
+        pref.pop_back();
+    else if (pref.empty())
+        pref = "/";
+    Logger::dbg << "Prefix: " << pref << Logger::End;
 }
 
 } // namespace Autocomp

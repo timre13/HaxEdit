@@ -1,5 +1,7 @@
 #include "App.h"
 #include "autocomp/DictionaryProvider.h"
+#include "autocomp/BufferWordProvider.h"
+#include "autocomp/PathProvider.h"
 #include "autocomp/LspProvider.h"
 #include "Bindings.h"
 #include "../external/stb/stb_image.h"
@@ -152,40 +154,12 @@ FileTypeHandler* App::createFileTypeHandler()
 
 void App::createAutocompleteProviders()
 {
-    Autocomp::dictProvider.reset(new Autocomp::DictionaryProvider{});
+    Autocomp::dictProvider      = std::make_unique<Autocomp::DictionaryProvider>();
+    Autocomp::buffWordProvid    = std::make_unique<Autocomp::BufferWordProvider>();
+    Autocomp::pathProvid        = std::make_unique<Autocomp::PathProvider>();
+    Autocomp::lspProvider       = std::make_unique<Autocomp::LspProvider>();
 
-    Logger::log << "Loading dictionary: " << quoteStr(DICTIONARY_FILE_PATH) << Logger::End;
-
-    try
-    {
-        const String content = loadUnicodeFile(getResPath(DICTIONARY_FILE_PATH));
-        LineIterator it = content;
-        String line;
-        while (it.next(line))
-        {
-            if (line.length() > 2)
-            {
-                Autocomp::DictionaryProvider::s_words.push_back(line);
-            }
-        }
-    }
-    catch (std::exception& e)
-    {
-        Logger::err << "Failed to load dictionary: " << quoteStr(DICTIONARY_FILE_PATH)
-            << ": " << e.what() << Logger::End;
-        return;
-    }
-
-    Logger::log << "Loaded dictionary " << quoteStr(DICTIONARY_FILE_PATH) << " with "
-        << Autocomp::DictionaryProvider::s_words.size() << " words (filtered)" << Logger::End;
-    if (Autocomp::DictionaryProvider::s_words.size() > 50'000)
-    {
-        Logger::warn << "Dictionary has a lot of words, autocompletion may be slow" << Logger::End;
-    }
-
-
-    Autocomp::lspProvider.reset(new Autocomp::LspProvider{});
-
+    Logger::log << "Autocompletion set up" << Logger::End;
 }
 
 void App::loadTheme()

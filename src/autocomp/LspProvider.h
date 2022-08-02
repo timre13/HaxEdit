@@ -228,7 +228,7 @@ public:
     using diagListMap_t = std::unordered_map<std::string, diagList_t>;
     static diagListMap_t s_diags;
 
-    virtual void get(Popup* popupP) override;
+    virtual void get(bufid_t bufid, Popup* popupP) override;
 
     void onFileOpen(const std::string& path, Langs::LangId language, const std::string& fileContent);
     void onFileChange(const std::string& path, int version, const std::string& newContent);

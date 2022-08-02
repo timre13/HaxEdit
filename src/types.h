@@ -8,6 +8,8 @@ using uchar     = unsigned char;
 using String    = std::u32string;
 using Char      = char32_t;
 
+using bufid_t   = uint;
+
 inline size_t operator "" _st(unsigned long long val) { return val; }
 
 class RGBColor
