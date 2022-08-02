@@ -41,15 +41,21 @@ Theme* ThemeLoader::load(const std::string& path)
 {
     Logger::log << "Loading theme: " << path << Logger::End;
 
-    const std::string content = loadAsciiFile(path);
-    LineIterator<std::string> it{content};
-
     Theme* theme = new Theme{};
     // Initialize theme with default values
     for (size_t i{}; i < theme->values.size(); ++i)
     {
         theme->values[i].color = Syntax::defColors[i];
     }
+
+    if (!std::filesystem::is_regular_file(path))
+    {
+        Logger::log << "Theme file not found, using defaults" << Logger::End;
+        return theme;
+    }
+
+    const std::string content = loadAsciiFile(path);
+    LineIterator<std::string> it{content};
 
     std::string line;
     while (it.next(line))
