@@ -143,6 +143,12 @@ public:
         size_t fromCharI{};
     };
 
+    struct CodeAction
+    {
+        uint forLine{};
+        Autocomp::LspProvider::codeActionResult_t action;
+    };
+
     using fileModTime_t = std::filesystem::file_time_type::rep;
 
 protected:
@@ -176,6 +182,8 @@ protected:
     bool m_isCursorShown{true}; // Used to blink the cursor
     CursorMovCmd m_cursorMovCmd{CursorMovCmd::None};
     uint m_cursorHoldTime{};
+
+    CodeAction m_lineCodeAction;
 
     int m_charUnderMouseCol{};
     int m_charUnderMouseRow{};
@@ -264,6 +272,7 @@ protected:
         const Autocomp::LspProvider::diagList_t& diags, int lineI, bool isCurrent,
         const glm::ivec2& textPos, int initTextY
     ) const;
+    void _renderDrawCursorLineCodeAct(int yPos, int initTextY);
 
     void _goToCurrFindResult(bool showStatMsg);
 

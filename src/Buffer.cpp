@@ -1447,6 +1447,21 @@ void Buffer::_renderDrawDiagnosticMsg(
     g_textRenderer->prepareForDrawing();
 }
 
+void Buffer::_renderDrawCursorLineCodeAct(int yPos, int initTextY)
+{
+    if (m_lineCodeAction.forLine == (uint)m_cursorLine && !m_lineCodeAction.action.empty())
+    {
+        static auto codeActImg = std::make_unique<Image>(App::getResPath("../img/lightbulb.png"));
+        codeActImg->render(
+                {m_position.x+g_fontSizePx*(LINEN_BAR_WIDTH_CHAR-1), initTextY+yPos-m_scrollY-m_position.y},
+                {g_fontSizePx, g_fontSizePx}
+        );
+
+        // Bind the text renderer shader again
+        g_textRenderer->prepareForDrawing();
+    }
+}
+
 void Buffer::render()
 {
     TIMER_BEGIN_FUNC();
@@ -1752,6 +1767,8 @@ void Buffer::render()
 
         if (fileDiagsIt != Autocomp::LspProvider::s_diags.end())
             _renderDrawDiagnosticMsg(fileDiagsIt->second, lineI, lineI == m_cursorLine, {textX, textY}, initTextY);
+        if (m_cursorLine == lineI)
+            _renderDrawCursorLineCodeAct(textY, initTextY);
 
         ++lineI;
         textX = initTextX;
@@ -2663,7 +2680,11 @@ void Buffer::tickCursorHold(float frameTimeMs)
 
     if (isTriggered(CURSOR_HOLD_TIME_CODE_ACTION))
     {
-        Logger::dbg << "TODO: Needs to fetch code actions" << Logger::End;
+        auto codeAct = Autocomp::lspProvider->getCodeActionForLine(m_filePath, m_cursorLine);
+        m_lineCodeAction.forLine = m_cursorLine;
+        m_lineCodeAction.action = std::move(codeAct);
+        // Draw the code action mark
+        g_isRedrawNeeded = true;
     }
 
     m_cursorHoldTime += frameTimeMs;

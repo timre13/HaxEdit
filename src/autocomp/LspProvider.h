@@ -27,6 +27,7 @@ using namespace std::chrono_literals;
 #include "LibLsp/JsonRpc/MessageIssue.h"
 #include "LibLsp/JsonRpc/stream.h"
 #include "LibLsp/lsp/lsp_diagnostic.h"
+#include "LibLsp/lsp/textDocument/code_action.h"
 #ifdef __clang__
 
 #pragma clang diagnostic pop
@@ -261,6 +262,8 @@ public:
     Location getDefinition(const std::string& path, uint line, uint col);
     Location getDeclaration(const std::string& path, uint line, uint col);
     Location getImplementation(const std::string& path, uint line, uint col);
+    using codeActionResult_t = decltype(td_codeAction::response::result);
+    codeActionResult_t getCodeActionForLine(const std::string& path, uint line);
 
     std::shared_ptr<Image> getStatusIcon();
 

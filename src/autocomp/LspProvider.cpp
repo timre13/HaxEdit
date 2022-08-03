@@ -406,6 +406,35 @@ LspProvider::Location LspProvider::getImplementation(const std::string& path, ui
     return _getDefOrDeclOrImp<td_implementation::request>(path, line, col);
 }
 
+LspProvider::codeActionResult_t LspProvider::getCodeActionForLine(const std::string& path, uint line)
+{
+    if (didServerCrash) return {};
+    busyBegin();
+
+    td_codeAction::request req;
+    req.params.textDocument.uri.SetPath(path);
+    req.params.range.start.line = line;
+    req.params.range.start.character = 0;
+    req.params.range.end.line = line+1;
+    req.params.range.end.character = 0;
+    Logger::dbg << "LSP: Sending textDocument/codeAction request: " << req.ToJson() << Logger::End;
+
+    auto resp = m_client->getEndpoint()->waitResponse(req, LSP_TIMEOUT_MILLI);
+    assert(resp);
+
+    if (resp->IsError())
+    {
+        Logger::err << "LSP server responded with error: " << resp->error.error.ToString() << Logger::End;
+        busyEnd();
+        return {};
+    }
+
+    Logger::dbg << "LSP server response: " << resp->ToJson() << Logger::End;
+
+    busyEnd();
+    return resp->response.result;
+}
+
 std::shared_ptr<Image> LspProvider::getStatusIcon()
 {
     if (didServerCrash)
