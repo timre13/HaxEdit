@@ -146,7 +146,7 @@ public:
     struct CodeAction
     {
         uint forLine{};
-        Autocomp::LspProvider::codeActionResult_t action;
+        Autocomp::LspProvider::codeActionResult_t actions;
     };
 
     using fileModTime_t = std::filesystem::file_time_type::rep;
@@ -476,6 +476,8 @@ public:
     virtual void gotoDef();
     virtual void gotoDecl();
     virtual void gotoImp();
+    virtual inline const CodeAction& getLineCodeAct() const { return m_lineCodeAction; }
+    virtual void applyLineCodeAct();
 
     virtual ~Buffer();
 };

@@ -22,6 +22,7 @@
 #include "LibLsp/lsp/textDocument/publishDiagnostics.h"
 #include "LibLsp/lsp/textDocument/declaration_definition.h"
 #include "LibLsp/lsp/textDocument/implementation.h"
+#include "LibLsp/lsp/workspace/execute_command.h"
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif // __clang__
@@ -433,6 +434,33 @@ LspProvider::codeActionResult_t LspProvider::getCodeActionForLine(const std::str
 
     busyEnd();
     return resp->response.result;
+}
+
+void LspProvider::executeCommand(const std::string& cmd, const boost::optional<std::vector<lsp::Any>>& args)
+{
+    if (didServerCrash) return;
+    busyBegin();
+
+    wp_executeCommand::request req;
+    req.params.command = cmd;
+    req.params.arguments = args;
+
+    Logger::dbg << "LSP: Sending workspace/executeCommand request: " << req.ToJson() << Logger::End;
+
+    //m_client->getEndpoint()->send(req);
+    auto resp = m_client->getEndpoint()->waitResponse(req, LSP_TIMEOUT_MILLI);
+    assert(resp);
+
+    if (resp->IsError())
+    {
+        Logger::err << "LSP server responded with error: " << resp->error.error.ToString() << Logger::End;
+        busyEnd();
+        return;
+    }
+
+    Logger::dbg << "LSP server response: " << resp->ToJson() << Logger::End;
+
+    busyEnd();
 }
 
 std::shared_ptr<Image> LspProvider::getStatusIcon()

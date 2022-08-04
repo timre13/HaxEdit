@@ -63,4 +63,6 @@ public:
     virtual void handleChar(uint) override {}
     virtual bool isInsideButton(const glm::ivec2& pos) const override;
     virtual void pressButtonAt(const glm::ivec2 pos) override;
+
+    virtual inline const std::vector<BtnInfo>& getBtns() const { return m_btnInfo; }
 };

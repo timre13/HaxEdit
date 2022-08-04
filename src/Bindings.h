@@ -145,6 +145,7 @@ void bufferShowSymbolHover();
 void bufferGotoDef();
 void bufferGotoDecl();
 void bufferGotoImp();
+void bufferApplyCodeAct();
 
 }
 

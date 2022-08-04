@@ -1063,6 +1063,14 @@ void bufferGotoImp()
     g_activeBuff->gotoImp();
 }
 
+void bufferApplyCodeAct()
+{
+    if (!g_activeBuff)
+        return;
+
+    g_activeBuff->applyLineCodeAct();
+}
+
 } // Namespace Callbacks
 
 BindingMapSet nmap = {};

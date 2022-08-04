@@ -1449,7 +1449,7 @@ void Buffer::_renderDrawDiagnosticMsg(
 
 void Buffer::_renderDrawCursorLineCodeAct(int yPos, int initTextY)
 {
-    if (m_lineCodeAction.forLine == (uint)m_cursorLine && !m_lineCodeAction.action.empty())
+    if (m_lineCodeAction.forLine == (uint)m_cursorLine && !m_lineCodeAction.actions.empty())
     {
         static auto codeActImg = std::make_unique<Image>(App::getResPath("../img/lightbulb.png"));
         codeActImg->render(
@@ -2682,7 +2682,7 @@ void Buffer::tickCursorHold(float frameTimeMs)
     {
         auto codeAct = Autocomp::lspProvider->getCodeActionForLine(m_filePath, m_cursorLine);
         m_lineCodeAction.forLine = m_cursorLine;
-        m_lineCodeAction.action = std::move(codeAct);
+        m_lineCodeAction.actions = std::move(codeAct);
         // Draw the code action mark
         g_isRedrawNeeded = true;
     }
@@ -2877,6 +2877,41 @@ void Buffer::gotoImp()
     if (loc.path.empty())
         return;
     _goToDeclOrDefOrImp(loc);
+}
+
+static void applyLineCodeActDialogCb(int btn, Dialog* dlg, void* buff)
+{
+    MessageDialog* dlg_ = dynamic_cast<MessageDialog*>(dlg);
+    assert(dlg_);
+
+    // Exit if cancelled
+    if (dlg_->getBtns()[btn].key == GLFW_KEY_Q)
+        return;
+
+    const Buffer* buff_ = static_cast<const Buffer*>(buff);
+
+    const auto& codeAct = buff_->getLineCodeAct();
+    Autocomp::lspProvider->executeCommand(codeAct.actions[btn].command, codeAct.actions[btn].arguments);
+}
+
+void Buffer::applyLineCodeAct()
+{
+    if (m_lineCodeAction.forLine != (uint)m_cursorLine || m_lineCodeAction.actions.empty())
+    {
+        g_statMsg.set("No code actions for line", StatusMsg::Type::Error);
+        return;
+    }
+
+    std::vector<MessageDialog::BtnInfo> btns;
+    for (size_t i{}; i < m_lineCodeAction.actions.size(); ++i)
+    {
+        const auto& act = m_lineCodeAction.actions[i];
+        btns.push_back({act.title, (i < 9 ? GLFW_KEY_1+(int)i : GLFW_KEY_A+(int)i)});
+    }
+    btns.push_back({"Cancel", GLFW_KEY_Q});
+
+    MessageDialog::create(
+            applyLineCodeActDialogCb, this, "Choose code action to apply", MessageDialog::Type::Information, btns);
 }
 
 Buffer::~Buffer()
