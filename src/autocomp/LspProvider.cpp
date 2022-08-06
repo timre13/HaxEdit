@@ -23,6 +23,7 @@
 #include "LibLsp/lsp/textDocument/declaration_definition.h"
 #include "LibLsp/lsp/textDocument/implementation.h"
 #include "LibLsp/lsp/workspace/execute_command.h"
+#include "LibLsp/lsp/workspace/applyEdit.h"
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif // __clang__
@@ -56,6 +57,17 @@ static bool publishDiagnosticsCallback(std::unique_ptr<LspMessage> msg)
     insertedIt->second = std::move(notif->params.diagnostics);
 
     g_isRedrawNeeded = true;
+
+    return true; // TODO: What's this?
+}
+
+static bool workspaceApplyEditCallback(std::unique_ptr<LspMessage> msg)
+{
+    Logger::dbg << "LSP: Received a workspace/applyEdit request: "
+        << msg->ToJson() << Logger::End;
+
+    auto req = dynamic_cast<WorkspaceApply::request*>(msg.get());
+    assert(req);
 
     return true; // TODO: What's this?
 }
@@ -136,6 +148,11 @@ LspProvider::LspProvider()
     m_client->getClientEndpoint()->registerNotifyHandler(
             "textDocument/publishDiagnostics",
             publishDiagnosticsCallback
+    );
+
+    m_client->getClientEndpoint()->registerRequestHandler(
+            "workspace/applyEdit",
+            workspaceApplyEditCallback
     );
 
     Notify_InitializedNotification::notify initednotif;
