@@ -314,6 +314,8 @@ public:
     virtual inline int getCursorCharPos() const { return m_cursorCharPos; }
 
     virtual inline void moveCursor(CursorMovCmd cmd) { m_cursorMovCmd = cmd; }
+    inline void moveCursorToLineCol(int line, int col);
+    inline void moveCursorToChar(int pos);
 
     virtual inline int getCursorWordBeginning()
     {

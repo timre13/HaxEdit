@@ -928,6 +928,56 @@ void Buffer::updateCursor()
     TIMER_END_FUNC();
 }
 
+void Buffer::moveCursorToLineCol(int line, int col)
+{
+    m_cursorLine = line;
+    if (m_cursorLine >= (int)m_content.size())
+        m_cursorLine = (int)m_content.size()-1;
+
+    m_cursorCol = col;
+    if (m_cursorCol >= (int)m_content[m_cursorLine].length())
+        m_cursorCol = m_content[m_cursorLine].length()-1;
+
+    // Calculate `m_cursorCharPos`
+    m_cursorCharPos = 0;
+    {
+        // Add up the whole line lengths
+        for (size_t lineI{}; (int)lineI < m_cursorLine; ++lineI)
+            m_cursorCharPos += m_content[lineI].length();
+
+        // Add the remaining
+        m_cursorCharPos += m_cursorCol;
+    }
+
+    m_isCursorShown = true;
+    m_cursorHoldTime = 0;
+    g_hoverPopup->hideAndClear();
+}
+
+void Buffer::moveCursorToChar(int pos)
+{
+    size_t i{};
+    for (size_t lineI{}; lineI < m_content.size(); ++lineI)
+    {
+        const size_t lineLen = m_content[lineI].length();
+        if (int(i + lineLen - 1) < pos)
+        {
+            i += lineLen;
+        }
+        else
+        {
+            m_cursorCol = pos-i;
+            m_cursorLine = lineI;
+            m_cursorCharPos = pos;
+            break;
+        }
+    }
+
+    m_isCursorShown = true;
+    m_cursorHoldTime = 0;
+    g_hoverPopup->hideAndClear();
+}
+
 #define STATUS_LINE_STR_LEN_MAX\
     EDITMODE_STATLINE_STR_PWIDTH /* Mode string */\
     + 3 /* Separator */\
@@ -2453,24 +2503,7 @@ size_t Buffer::deleteSelectedChars()
 void Buffer::_goToCurrFindResult(bool showStatMsg)
 {
     const size_t goTo = m_findResultIs[m_findCurrResultI];
-    {
-        size_t i{};
-        for (size_t lineI{}; lineI < m_content.size(); ++lineI)
-        {
-            const size_t lineLen = m_content[lineI].length();
-            if (i + lineLen - 1 < goTo)
-            {
-                i += lineLen;
-            }
-            else
-            {
-                m_cursorCol = goTo-i;
-                m_cursorLine = lineI;
-                m_cursorCharPos = goTo;
-                break;
-            }
-        }
-    }
+    moveCursorToChar(goTo);
     if (showStatMsg)
     {
         g_statMsg.set("Jumped to search result "+std::to_string(m_findCurrResultI+1)+
@@ -2809,42 +2842,21 @@ void Buffer::_goToDeclOrDefOrImp(const Autocomp::LspProvider::Location& loc)
     // If it is in the current file, scroll there
     if (std::filesystem::canonical(loc.path) == std::filesystem::canonical(m_filePath))
     {
-        // TODO: This is terrible
-        {
-            m_cursorCharPos = 0;
-            m_cursorLine = 0;
-            m_cursorCol = 0;
-            for (int i{}; i < loc.line; ++i)
-            {
-                moveCursor(CursorMovCmd::Down);
-                updateCursor();
-            }
-            for (int i{}; i < loc.col; ++i)
-            {
-                moveCursor(CursorMovCmd::Right);
-                updateCursor();
-            }
-            centerCursor();
-        }
+        moveCursorToLineCol(loc.line, loc.col);
+        centerCursor();
+        m_isCursorShown = true;
+        m_cursorHoldTime = 0;
+        g_hoverPopup->hideAndClear();
     }
     else // Different file, open in a new tab
     {
         Buffer* buff = App::openFileInNewBuffer(loc.path);
 
-        // TODO: This is terrible
-        {
-            for (int i{}; i < loc.line; ++i)
-            {
-                buff->moveCursor(CursorMovCmd::Down);
-                buff->updateCursor();
-            }
-            for (int i{}; i < loc.col; ++i)
-            {
-                buff->moveCursor(CursorMovCmd::Right);
-                buff->updateCursor();
-            }
-            buff->centerCursor();
-        }
+        buff->moveCursorToLineCol(loc.line, loc.col);
+        buff->centerCursor();
+        buff->m_isCursorShown = true;
+        buff->m_cursorHoldTime = 0;
+        g_hoverPopup->hideAndClear();
 
         // Insert the buffer next to the current one
         g_tabs.emplace(g_tabs.begin()+g_currTabI+1, std::make_unique<Split>(buff));
