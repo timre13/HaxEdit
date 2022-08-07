@@ -480,6 +480,7 @@ public:
     virtual void gotoImp();
     virtual inline const CodeAction& getLineCodeAct() const { return m_lineCodeAction; }
     virtual void applyLineCodeAct();
+    virtual void applyEdit(const lsAnnotatedTextEdit& edit);
 
     virtual ~Buffer();
 };

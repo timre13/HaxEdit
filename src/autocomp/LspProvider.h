@@ -265,6 +265,7 @@ public:
     using codeActionResult_t = decltype(td_codeAction::response::result);
     codeActionResult_t getCodeActionForLine(const std::string& path, uint line);
     void executeCommand(const std::string& cmd, const boost::optional<std::vector<lsp::Any>>& args);
+    void replyToWsApplyEdit(const std::string& msgIfErr);
 
     std::shared_ptr<Image> getStatusIcon();
 

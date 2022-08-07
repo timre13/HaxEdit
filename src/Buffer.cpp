@@ -2706,13 +2706,18 @@ void Buffer::goToMousePos()
 
 void Buffer::tickCursorHold(float frameTimeMs)
 {
-    auto isTriggered{[this, frameTimeMs](uint triggerAfter){
+    auto isTriggered{[this, frameTimeMs](int triggerAfter){
         return m_cursorHoldTime < triggerAfter
             && m_cursorHoldTime+frameTimeMs >= triggerAfter;
     }};
 
     if (isTriggered(CURSOR_HOLD_TIME_CODE_ACTION))
     {
+        /*
+         * Here we get the code actions for the line.
+         * If the user applies one of them, we send a workspace/executeCommand request with the selected command.
+         * The server replies with a workspace/applyEdit request. We apply the edits and send back a response.
+         */
         auto codeAct = Autocomp::lspProvider->getCodeActionForLine(m_filePath, m_cursorLine);
         m_lineCodeAction.forLine = m_cursorLine;
         m_lineCodeAction.actions = std::move(codeAct);
@@ -2900,6 +2905,8 @@ static void applyLineCodeActDialogCb(int btn, Dialog* dlg, void* buff)
     if (dlg_->getBtns()[btn].key == GLFW_KEY_Q)
         return;
 
+    // TODO: Show preview
+
     const Buffer* buff_ = static_cast<const Buffer*>(buff);
 
     const auto& codeAct = buff_->getLineCodeAct();
@@ -2924,6 +2931,33 @@ void Buffer::applyLineCodeAct()
 
     MessageDialog::create(
             applyLineCodeActDialogCb, this, "Choose code action to apply", MessageDialog::Type::Information, btns);
+}
+
+void Buffer::applyEdit(const lsAnnotatedTextEdit& edit)
+{
+    Logger::dbg << "Buffer: Applying edit: " << edit.ToString() << Logger::End;
+
+    assert(edit.range.start.line == edit.range.end.line);
+
+    // The edit is not a simple insertion, but an overwrite
+    if (edit.range.start != edit.range.end)
+    {
+        m_content[edit.range.start.line].erase(
+                edit.range.start.character, edit.range.end.character-edit.range.start.character);
+    }
+    m_content[edit.range.start.line].insert(edit.range.start.character, strToUtf32(edit.newText));
+
+    // TODO: Add to history
+    m_isModified = true;
+    m_isCursorShown = true;
+    m_cursorHoldTime = 0;
+    m_isHighlightUpdateNeeded = true;
+    m_version++;
+    Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(lineVecConcat(m_content)));
+    if (g_activeBuff == this)
+        scrollViewportToCursor();
+
+    moveCursorToLineCol(m_cursorLine, m_cursorCol);
 }
 
 Buffer::~Buffer()

@@ -10,6 +10,8 @@
 class Split final
 {
 public:
+    static constexpr size_t CHILD_TYPE_BUFF = 0;
+    static constexpr size_t CHILD_TYPE_SPLIT = 1;
     using child_t = std::variant<std::unique_ptr<Buffer>, std::unique_ptr<Split>>;
 
     enum class Orientation

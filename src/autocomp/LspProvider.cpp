@@ -3,6 +3,7 @@
 #include "../Logger.h"
 #include "../App.h"
 #include "../glstuff.h"
+#include "../globals.h"
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Weverything"
@@ -61,6 +62,38 @@ static bool publishDiagnosticsCallback(std::unique_ptr<LspMessage> msg)
     return true; // TODO: What's this?
 }
 
+static void _applyEditRec(
+        const std::vector<Split::child_t>& children, const std::string& filePath, const lsTextEdit& edit)
+{
+    Logger::dbg << "Applying edit to " << filePath << Logger::End;
+    for (auto& child : children)
+    {
+        if (child.index() == Split::CHILD_TYPE_SPLIT) // A split
+        {
+            _applyEditRec(std::get<std::unique_ptr<Split>>(child)->getChildren(), filePath, edit);
+        }
+        else // A buffer
+        {
+            auto& buff = std::get<std::unique_ptr<Buffer>>(child);
+            if (std::filesystem::canonical(buff->getFilePath()) == filePath)
+            {
+                buff->applyEdit(edit);
+            }
+        }
+    }
+}
+
+static void applyEditToBuffers(
+        const std::string& filePath, const lsTextEdit& edit)
+{
+    for (const auto& split : g_tabs)
+    {
+        if (!split->hasChild())
+            continue;
+        _applyEditRec(split->getChildren(), filePath, edit);
+    }
+}
+
 static bool workspaceApplyEditCallback(std::unique_ptr<LspMessage> msg)
 {
     Logger::dbg << "LSP: Received a workspace/applyEdit request: "
@@ -68,6 +101,37 @@ static bool workspaceApplyEditCallback(std::unique_ptr<LspMessage> msg)
 
     auto req = dynamic_cast<WorkspaceApply::request*>(msg.get());
     assert(req);
+
+    const lsWorkspaceEdit &edit = req->params.edit;
+    if (edit.documentChanges) // `documentChanges` is preferred over `changes`
+    {
+        for (const auto& change : edit.documentChanges.get())
+        {
+            // TODO: `change` can also be of type TextDocumentEdit, CreateFile, RenameFile or DeleteFile
+            //       In that case it is stored in `change.second`
+            assert(change.first);
+            const auto& filePath = change.first.get().textDocument.uri.GetAbsolutePath().path;
+            for (const lsTextEdit& edit : change.first.get().edits)
+            {
+                applyEditToBuffers(filePath, edit);
+            }
+        }
+    }
+    else if (edit.changes)
+    {
+        for (const auto& change : edit.changes.get())
+        {
+            const auto& filePath = std::filesystem::canonical(
+                    change.first.starts_with("file://") ? change.first.substr(6) : change.first);
+            for (const auto& edit : change.second)
+            {
+                applyEditToBuffers(filePath, edit);
+            }
+        }
+    }
+
+    // Tell the server that we applied the edits
+    Autocomp::lspProvider->replyToWsApplyEdit("");
 
     return true; // TODO: What's this?
 }
@@ -185,6 +249,24 @@ void LspProvider::busyEnd()
     m_status = LspServerStatus::Ok;
     App::renderStatusLine();
     glfwSwapBuffers(g_window);
+}
+
+void LspProvider::replyToWsApplyEdit(const std::string& msgIfErr)
+{
+    if (didServerCrash) return;
+
+    WorkspaceApply::response resp;
+    if (msgIfErr.empty()) // No error
+    {
+        resp.result.applied = true;
+    }
+    else // Error
+    {
+        resp.result.applied = false;
+        resp.result.failureReason.emplace(msgIfErr);
+    }
+
+    Logger::dbg << "LSP: Sending reply to workspace/applyEdit: " << resp.ToJson() << Logger::End;
 }
 
 void LspProvider::onFileOpen(const std::string& path, Langs::LangId language, const std::string& fileContent)
@@ -464,7 +546,9 @@ void LspProvider::executeCommand(const std::string& cmd, const boost::optional<s
 
     Logger::dbg << "LSP: Sending workspace/executeCommand request: " << req.ToJson() << Logger::End;
 
-    //m_client->getEndpoint()->send(req);
+#if 1
+    m_client->getEndpoint()->send(req);
+#else
     auto resp = m_client->getEndpoint()->waitResponse(req, LSP_TIMEOUT_MILLI);
     assert(resp);
 
@@ -476,6 +560,7 @@ void LspProvider::executeCommand(const std::string& cmd, const boost::optional<s
     }
 
     Logger::dbg << "LSP server response: " << resp->ToJson() << Logger::End;
+#endif
 
     busyEnd();
 }
