@@ -1564,6 +1564,28 @@ void Buffer::render()
 
     for (const String& line : m_content)
     {
+#ifndef NDEBUG
+        if (!line.ends_with('\n'))
+        {
+            Logger::err << "Line " << lineI << " does not end in a line break" << Logger::End;
+            for(;;);
+        }
+#endif
+
+#if !defined(NDEBUG) && 1
+        // NOTE: SLOW
+        for (size_t i{}; i < line.length()-1; ++i)
+        {
+            if (line[i] == '\n')
+            {
+                Logger::err << "Line " << lineI << " has multiple line breaks"
+                    " (found at col " << i << ")" << Logger::End;
+                for(;;);
+            }
+        }
+#endif
+
+
         // Don't draw the part of the buffer that is below the viewport
         if (textY > m_position.y+m_size.y)
         {
@@ -1634,6 +1656,7 @@ void Buffer::render()
                         isError = true;
                     }
 
+#if 0
                     if (isError)
                     {
                         Logger::fatal << "Cursor char pos: " << m_cursorCharPos
@@ -1641,6 +1664,12 @@ void Buffer::render()
                             << "\nCursor col:  " << m_cursorCol << ", expected: " << colI
                             << Logger::End;
                     }
+#else
+                    (void)isError;
+                    m_cursorLine = lineI;
+                    m_cursorCol = colI;
+#endif
+
 #    endif
 #endif
 
@@ -2935,17 +2964,97 @@ void Buffer::applyLineCodeAct()
 
 void Buffer::applyEdit(const lsAnnotatedTextEdit& edit)
 {
-    Logger::dbg << "Buffer: Applying edit: " << edit.ToString() << Logger::End;
+    Logger::dbg << "Buffer: Applying edit (file=" + m_filePath + ": " << edit.ToString() << Logger::End;
 
-    assert(edit.range.start.line == edit.range.end.line);
-
-    // The edit is not a simple insertion, but an overwrite
+    // If this is a deletion/overwite, do the deletion
     if (edit.range.start != edit.range.end)
     {
-        m_content[edit.range.start.line].erase(
-                edit.range.start.character, edit.range.end.character-edit.range.start.character);
+        int lineI = edit.range.end.line;
+        int colI = edit.range.end.character;
+        // The range is exclusive
+        if (colI == 0)
+        {
+            --lineI;
+            assert(lineI >= 0);
+            assert(lineI < (int)m_content.size());
+            colI = m_content[lineI].size()-1;
+        }
+        else
+        {
+            --colI;
+        }
+
+        while (true)
+        {
+            //Logger::dbg << lineI << ':' << colI << Logger::End;
+
+            assert(lineI >= 0);
+            assert(lineI < (int)m_content.size());
+            assert(colI >= 0);
+            assert(colI < (int)m_content[lineI].size());
+
+            // Do the deletion
+            m_content[lineI].erase(colI);
+            if (m_content[lineI].empty())
+            {
+                m_content.erase(m_content.begin()+lineI);
+                assert(colI == 0);
+            }
+
+            // Exit if this was the last char
+            if (lineI == (int)edit.range.start.line && colI == (int)edit.range.start.character)
+            {
+                if (colI != 0)
+                {
+                    assert(!m_content[lineI].ends_with('\n'));
+
+                    // Append the next line to the end of the current one if the line break was deleted
+                    assert(lineI+1 < (int)m_content.size());
+                    const String nextLine = m_content[lineI+1];
+                    m_content.erase(m_content.begin()+lineI+1);
+                    m_content[lineI].append(nextLine);
+                }
+                break;
+            }
+
+            // Go to next char
+            --colI;
+            if (colI == -1)
+            {
+                --lineI;
+                assert(lineI >= 0);
+                assert(lineI < (int)m_content.size());
+                colI = m_content[lineI].size()-1;
+                //Logger::dbg << "Line " << lineI << " is " << m_content[lineI].size() << " chars long" << Logger::End;
+                //Logger::dbg << "Line: " << strToAscii(m_content[lineI]) << Logger::End;
+                assert(colI >= 0);
+            }
+        }
     }
-    m_content[edit.range.start.line].insert(edit.range.start.character, strToUtf32(edit.newText));
+
+    // Do the insertion
+    if (!edit.newText.empty())
+    {
+        int lineI = edit.range.start.line;
+        int colI = edit.range.start.character;
+        for (auto c : edit.newText)
+        {
+            m_content[lineI].insert(colI, 1, c);
+
+            ++colI;
+            // End
+            if (c == '\n')
+            {
+                const String lineEnd = m_content[lineI].substr(colI);
+                m_content[lineI].erase(colI);
+                m_content.insert(m_content.begin()+lineI+1, lineEnd);
+                colI = 0;
+
+                ++lineI;
+            }
+        }
+    }
+
 
     // TODO: Add to history
     m_isModified = true;

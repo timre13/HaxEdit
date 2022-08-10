@@ -65,7 +65,6 @@ static bool publishDiagnosticsCallback(std::unique_ptr<LspMessage> msg)
 static void _applyEditRec(
         const std::vector<Split::child_t>& children, const std::string& filePath, const lsTextEdit& edit)
 {
-    Logger::dbg << "Applying edit to " << filePath << Logger::End;
     for (auto& child : children)
     {
         if (child.index() == Split::CHILD_TYPE_SPLIT) // A split
@@ -83,14 +82,31 @@ static void _applyEditRec(
     }
 }
 
-static void applyEditToBuffers(
-        const std::string& filePath, const lsTextEdit& edit)
+static void applyEditsToFile(const std::string& filePath, const std::vector<lsTextEdit>& edits)
 {
-    for (const auto& split : g_tabs)
+    Logger::dbg << "Applying " << edits.size() << " edits to " << filePath << Logger::End;
+
+    // Sort the edits backwards, so the changes won't affect the coordinates
+    auto edits_ = edits;
+    std::sort(edits_.begin(), edits_.end(), [](const lsTextEdit& first, const lsTextEdit& second){
+            const auto& pos1 = first.range.start;
+            const auto& pos2 = second.range.start;
+            // Note: We don't have to handle overlapping edits(, as it is garanteed that there won't be any),
+            // so we only compare the `start`
+            if (pos1.line == pos2.line)
+                return (pos1.character > pos2.character);
+            return (pos1.line > pos2.line);
+    });
+
+    for (const lsTextEdit& edit : edits_)
     {
-        if (!split->hasChild())
-            continue;
-        _applyEditRec(split->getChildren(), filePath, edit);
+        Logger::log << "Edit start: line: " << edit.range.start.line << ", col: " << edit.range.start.character << Logger::End;
+        for (const auto& split : g_tabs)
+        {
+            if (!split->hasChild())
+                continue;
+            _applyEditRec(split->getChildren(), filePath, edit);
+        }
     }
 }
 
@@ -102,31 +118,30 @@ static bool workspaceApplyEditCallback(std::unique_ptr<LspMessage> msg)
     auto req = dynamic_cast<WorkspaceApply::request*>(msg.get());
     assert(req);
 
-    const lsWorkspaceEdit &edit = req->params.edit;
+    const lsWorkspaceEdit& edit = req->params.edit;
     if (edit.documentChanges) // `documentChanges` is preferred over `changes`
     {
-        for (const auto& change : edit.documentChanges.get())
+        Logger::dbg << "Will apply changes to " << edit.documentChanges->size() << " files" << Logger::End;
+        for (const auto& fileChange : edit.documentChanges.get())
         {
-            // TODO: `change` can also be of type TextDocumentEdit, CreateFile, RenameFile or DeleteFile
+            // TODO: `change` can also be of type TextDocumentEdit, CreateFile,
+            // RenameFile or DeleteFile
             //       In that case it is stored in `change.second`
-            assert(change.first);
-            const auto& filePath = change.first.get().textDocument.uri.GetAbsolutePath().path;
-            for (const lsTextEdit& edit : change.first.get().edits)
-            {
-                applyEditToBuffers(filePath, edit);
-            }
+            assert(fileChange.first);
+
+            const auto& filePath =
+                fileChange.first.get().textDocument.uri.GetAbsolutePath().path;
+            applyEditsToFile(filePath, fileChange.first.get().edits);
         }
     }
     else if (edit.changes)
     {
-        for (const auto& change : edit.changes.get())
+        Logger::dbg << "Will apply changes to " << edit.changes->size() << " files" << Logger::End;
+        for (const auto& fileChange : edit.changes.get())
         {
-            const auto& filePath = std::filesystem::canonical(
-                    change.first.starts_with("file://") ? change.first.substr(6) : change.first);
-            for (const auto& edit : change.second)
-            {
-                applyEditToBuffers(filePath, edit);
-            }
+            const auto &filePath = std::filesystem::canonical(
+                    fileChange.first.starts_with("file://") ? fileChange.first.substr(6) : fileChange.first);
+            applyEditsToFile(filePath, fileChange.second);
         }
     }
 
