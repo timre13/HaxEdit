@@ -23,6 +23,7 @@
 #include "LibLsp/lsp/textDocument/publishDiagnostics.h"
 #include "LibLsp/lsp/textDocument/declaration_definition.h"
 #include "LibLsp/lsp/textDocument/implementation.h"
+#include "LibLsp/lsp/textDocument/rename.h"
 #include "LibLsp/lsp/workspace/execute_command.h"
 #include "LibLsp/lsp/workspace/applyEdit.h"
 #ifdef __clang__
@@ -33,6 +34,8 @@
 #include <type_traits>
 
 #define LSP_TIMEOUT_MILLI 10000
+
+#define RESP_GET_ERR_MSG(x) x->error.error.message
 
 namespace Autocomp
 {
@@ -82,7 +85,7 @@ static void _applyEditRec(
     }
 }
 
-static void applyEditsToFile(const std::string& filePath, const std::vector<lsTextEdit>& edits)
+static void _applyEditsToFile(const std::string& filePath, const std::vector<lsTextEdit>& edits)
 {
     Logger::dbg << "Applying " << edits.size() << " edits to " << filePath << Logger::End;
 
@@ -110,15 +113,8 @@ static void applyEditsToFile(const std::string& filePath, const std::vector<lsTe
     }
 }
 
-static bool workspaceApplyEditCallback(std::unique_ptr<LspMessage> msg)
+static void applyWorkspaceEdit(const lsWorkspaceEdit& edit)
 {
-    Logger::dbg << "LSP: Received a workspace/applyEdit request: "
-        << msg->ToJson() << Logger::End;
-
-    auto req = dynamic_cast<WorkspaceApply::request*>(msg.get());
-    assert(req);
-
-    const lsWorkspaceEdit& edit = req->params.edit;
     if (edit.documentChanges) // `documentChanges` is preferred over `changes`
     {
         Logger::dbg << "Will apply changes to " << edit.documentChanges->size() << " files" << Logger::End;
@@ -131,7 +127,7 @@ static bool workspaceApplyEditCallback(std::unique_ptr<LspMessage> msg)
 
             const auto& filePath =
                 fileChange.first.get().textDocument.uri.GetAbsolutePath().path;
-            applyEditsToFile(filePath, fileChange.first.get().edits);
+            _applyEditsToFile(filePath, fileChange.first.get().edits);
         }
     }
     else if (edit.changes)
@@ -141,12 +137,24 @@ static bool workspaceApplyEditCallback(std::unique_ptr<LspMessage> msg)
         {
             const auto &filePath = std::filesystem::canonical(
                     fileChange.first.starts_with("file://") ? fileChange.first.substr(6) : fileChange.first);
-            applyEditsToFile(filePath, fileChange.second);
+            _applyEditsToFile(filePath, fileChange.second);
         }
     }
+}
+
+static bool workspaceApplyEditCallback(std::unique_ptr<LspMessage> msg)
+{
+    Logger::dbg << "LSP: Received a workspace/applyEdit request: "
+        << msg->ToJson() << Logger::End;
+
+    auto req = dynamic_cast<WorkspaceApply::request*>(msg.get());
+    assert(req);
+
+    const lsWorkspaceEdit& edit = req->params.edit;
+    applyWorkspaceEdit(edit);
 
     // Tell the server that we applied the edits
-    Autocomp::lspProvider->replyToWsApplyEdit("");
+    Autocomp::lspProvider->_replyToWsApplyEdit("");
 
     return true; // TODO: What's this?
 }
@@ -266,7 +274,7 @@ void LspProvider::busyEnd()
     glfwSwapBuffers(g_window);
 }
 
-void LspProvider::replyToWsApplyEdit(const std::string& msgIfErr)
+void LspProvider::_replyToWsApplyEdit(const std::string& msgIfErr)
 {
     if (didServerCrash) return;
 
@@ -576,6 +584,33 @@ void LspProvider::executeCommand(const std::string& cmd, const boost::optional<s
 
     Logger::dbg << "LSP server response: " << resp->ToJson() << Logger::End;
 #endif
+
+    busyEnd();
+}
+
+void LspProvider::renameSymbol(const std::string& filePath, const lsPosition& pos, const std::string& newName)
+{
+    if (didServerCrash) return;
+    busyBegin();
+
+    td_rename::request req;
+    req.params.textDocument.uri.SetPath(filePath);
+    req.params.position = pos;
+    req.params.newName = newName;
+
+    auto resp = m_client->getEndpoint()->waitResponse(req, LSP_TIMEOUT_MILLI);
+    assert(resp);
+    if (resp->IsError())
+    {
+        Logger::err << "LSP: Server responded with error: " << RESP_GET_ERR_MSG(resp) << Logger::End;
+        g_statMsg.set("Failed to rename symbol: "+RESP_GET_ERR_MSG(resp), StatusMsg::Type::Error);
+        busyEnd();
+        return;
+    }
+
+    Logger::dbg << "LSP server response: " << resp->ToJson() << Logger::End;
+    const auto& edit = resp->response.result;
+    applyWorkspaceEdit(edit);
 
     busyEnd();
 }

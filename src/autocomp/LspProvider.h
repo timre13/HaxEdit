@@ -262,10 +262,14 @@ public:
     Location getDefinition(const std::string& path, uint line, uint col);
     Location getDeclaration(const std::string& path, uint line, uint col);
     Location getImplementation(const std::string& path, uint line, uint col);
+
     using codeActionResult_t = decltype(td_codeAction::response::result);
     codeActionResult_t getCodeActionForLine(const std::string& path, uint line);
     void executeCommand(const std::string& cmd, const boost::optional<std::vector<lsp::Any>>& args);
-    void replyToWsApplyEdit(const std::string& msgIfErr);
+    // Used by the workspace/applyEdit callback
+    void _replyToWsApplyEdit(const std::string& msgIfErr);
+
+    void renameSymbol(const std::string& filePath, const lsPosition& pos, const std::string& newName);
 
     std::shared_ptr<Image> getStatusIcon();
 

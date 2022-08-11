@@ -146,6 +146,7 @@ void bufferGotoDef();
 void bufferGotoDecl();
 void bufferGotoImp();
 void bufferApplyCodeAct();
+void bufferRenameSymbol();
 
 }
 

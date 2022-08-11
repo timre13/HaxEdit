@@ -206,6 +206,7 @@ void App::setupKeyBindings()
         bindNonprimChar(U'ú',                  Callbacks::bufferGotoDecl);
         bindNonprimChar(U'ű',                  Callbacks::bufferGotoImp);
         bindNonprimChar(U'ö',                  Callbacks::bufferApplyCodeAct);
+        bindNonprimChar(U'ü',                  Callbacks::bufferRenameSymbol);
         bindFuncKey(GLFW_KEY_ESCAPE,        0, Callbacks::bufferCancelSelection);
         bindFuncKey(GLFW_KEY_INSERT,        0, Callbacks::switchToInsertMode);
         bindFuncKey(GLFW_KEY_RIGHT,         0, Callbacks::moveCursorRight);

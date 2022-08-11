@@ -1071,6 +1071,14 @@ void bufferApplyCodeAct()
     g_activeBuff->applyLineCodeAct();
 }
 
+void bufferRenameSymbol()
+{
+    if (!g_activeBuff)
+        return;
+
+    g_activeBuff->renameSymbolAtCursor();
+}
+
 } // Namespace Callbacks
 
 BindingMapSet nmap = {};

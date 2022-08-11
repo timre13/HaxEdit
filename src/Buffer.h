@@ -481,6 +481,7 @@ public:
     virtual inline const CodeAction& getLineCodeAct() const { return m_lineCodeAction; }
     virtual void applyLineCodeAct();
     virtual void applyEdit(const lsAnnotatedTextEdit& edit);
+    virtual void renameSymbolAtCursor();
 
     virtual ~Buffer();
 };

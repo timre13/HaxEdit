@@ -3071,6 +3071,18 @@ void Buffer::applyEdit(const lsAnnotatedTextEdit& edit)
     moveCursorToLineCol(m_cursorLine, m_cursorCol);
 }
 
+void Buffer::renameSymbolAtCursor()
+{
+    auto cb = [this](int, Dialog* dlg, void*){
+        const lsPosition pos{m_cursorLine, m_cursorCol};
+        auto dlg_ = dynamic_cast<AskerDialog*>(dlg);
+        assert(dlg_);
+        Autocomp::lspProvider->renameSymbol(m_filePath, pos, dlg_->getValue());
+    };
+
+    AskerDialog::create(cb, nullptr, "New name:");
+}
+
 Buffer::~Buffer()
 {
     glfwSetCursor(g_window, Cursors::busy);
