@@ -3006,13 +3006,15 @@ void Buffer::applyEdit(const lsAnnotatedTextEdit& edit)
             {
                 if (colI != 0)
                 {
-                    assert(!m_content[lineI].ends_with('\n'));
-
-                    // Append the next line to the end of the current one if the line break was deleted
-                    assert(lineI+1 < (int)m_content.size());
-                    const String nextLine = m_content[lineI+1];
-                    m_content.erase(m_content.begin()+lineI+1);
-                    m_content[lineI].append(nextLine);
+                    // If we deleted the line break,
+                    if (!m_content[lineI].ends_with('\n'))
+                    {
+                        // Append the next line to the end of the current one
+                        assert(lineI+1 < (int)m_content.size());
+                        const String nextLine = m_content[lineI+1];
+                        m_content.erase(m_content.begin()+lineI+1);
+                        m_content[lineI].append(nextLine);
+                    }
                 }
                 break;
             }
