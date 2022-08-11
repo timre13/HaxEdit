@@ -2994,7 +2994,7 @@ void Buffer::applyEdit(const lsAnnotatedTextEdit& edit)
             assert(colI < (int)m_content[lineI].size());
 
             // Do the deletion
-            m_content[lineI].erase(colI);
+            m_content[lineI].erase(colI, 1);
             if (m_content[lineI].empty())
             {
                 m_content.erase(m_content.begin()+lineI);
