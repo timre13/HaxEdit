@@ -26,6 +26,8 @@
 #include "LibLsp/lsp/textDocument/rename.h"
 #include "LibLsp/lsp/workspace/execute_command.h"
 #include "LibLsp/lsp/workspace/applyEdit.h"
+#include "LibLsp/lsp/general/progress.h"
+#include "LibLsp/lsp/lsAny.h"
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif // __clang__
@@ -159,6 +161,99 @@ static bool workspaceApplyEditCallback(std::unique_ptr<LspMessage> msg)
     return true; // TODO: What's this?
 }
 
+namespace
+{
+
+struct ProgressValue
+{
+    std::string kind;
+    std::string title;
+    std::string message;
+    uint percentage{};
+};
+REFLECT_MAP_TO_STRUCT(ProgressValue, kind, title, message, percentage);
+
+}
+
+bool LspProvider::progressCallback(std::unique_ptr<LspMessage> msg)
+{
+    Logger::dbg << "LSP: Received a $/progress notification: "
+        << msg->ToJson() << Logger::End;
+
+    auto notif = dynamic_cast<Notify_Progress::notify*>(msg.get());
+    assert(notif);
+
+    std::string token;
+    if (notif->params.token.first.has_value())
+        token = notif->params.token.first.get();
+    else if (notif->params.token.second.has_value())
+        token = "#"+std::to_string(notif->params.token.second.get());
+    else
+        assert(false);
+
+    ProgressValue progress;
+    // Parse `value`, an `Any` object to our struct
+    notif->params.value.GetFromMap(progress);
+
+    Logger::dbg << "Received a $/progress notification: "
+        << "token: " << token
+        << ", kind: " << progress.kind
+        << ", title: \"" << progress.title << '"'
+        << ", message: \"" << progress.message << '"'
+        << ", percentage: " << progress.percentage
+        << Logger::End;
+    /*
+     * A progress notification of kind "begin" should begin an already existing progress
+     * created by the "window/workDoneProgress/create" request.
+     * We don't handle said requests (I find it overkill to have a separate request
+     * for progress creation and we'd also need to patch LspCpp to support it), so we create the progress here.
+     */
+    if (progress.kind == "begin") // Set up a new token
+    {
+        // Fail if this token already exists
+        assert(Autocomp::lspProvider->m_progresses.find(token) == Autocomp::lspProvider->m_progresses.end());
+        // Create the new token
+        auto& insertedRef = Autocomp::lspProvider->m_progresses.emplace(token, WorkProgress{}).first->second;
+
+        insertedRef.title = progress.title;
+        insertedRef.message = progress.message;
+        insertedRef.percentage = progress.percentage;
+    }
+    else if (progress.kind == "report") // Update progress
+    {
+        auto progIt = Autocomp::lspProvider->m_progresses.find(token);
+        assert(progIt != Autocomp::lspProvider->m_progresses.end()); // Fail if this is an invalid token
+        auto& progRef = progIt->second;
+
+        assert(progress.title.empty()); // The title can't be changed in the report notification
+
+        // Update values if given
+        if (!progress.message.empty())
+            progRef.message = progress.message;
+        if (progress.percentage)
+            progRef.percentage = progress.percentage;
+    }
+    else if (progress.kind == "end") // Delete token
+    {
+        auto tokenIt = Autocomp::lspProvider->m_progresses.find(token);
+        // Fail if attempted to delete a nonexistent token
+        assert(tokenIt != Autocomp::lspProvider->m_progresses.end());
+        Autocomp::lspProvider->m_progresses.erase(tokenIt);
+
+        assert(progress.title.empty()); // The title can't be changed in the end notification
+        assert(progress.percentage == 0); // The percentage can't be changed in the end notification
+
+        // TODO: Show a notification or something with the final message?
+    }
+    else
+    {
+        Logger::err << "Invalid $/progress notification kind (ignoring): \"" << progress.kind << '"' << Logger::End;
+        return true;
+    }
+
+    return true; // TODO: What's this?
+}
+
 LspProvider::LspProvider()
 {
     {
@@ -196,6 +291,24 @@ LspProvider::LspProvider()
         return;
     }
 
+    // Register handlers
+    {
+        m_client->getClientEndpoint()->registerNotifyHandler(
+                "textDocument/publishDiagnostics",
+                publishDiagnosticsCallback
+        );
+
+        m_client->getClientEndpoint()->registerRequestHandler(
+                "workspace/applyEdit",
+                workspaceApplyEditCallback
+        );
+
+        m_client->getClientEndpoint()->registerNotifyHandler(
+                "$/progress",
+                progressCallback
+        );
+    }
+
     td_initialize::request initreq;
     initreq.params.processId = boost::interprocess::ipcdetail::get_current_process_id();
     initreq.params.clientInfo.emplace();
@@ -230,17 +343,6 @@ LspProvider::LspProvider()
     assert(cap.completionProvider);
     Logger::dbg << "\tHover supported?: " << (cap.hoverProvider ? "YES" : "NO") << Logger::End;
     assert(cap.hoverProvider);
-
-
-    m_client->getClientEndpoint()->registerNotifyHandler(
-            "textDocument/publishDiagnostics",
-            publishDiagnosticsCallback
-    );
-
-    m_client->getClientEndpoint()->registerRequestHandler(
-            "workspace/applyEdit",
-            workspaceApplyEditCallback
-    );
 
     Notify_InitializedNotification::notify initednotif;
     if (didServerCrash) // Maybe it crashed in the meantime

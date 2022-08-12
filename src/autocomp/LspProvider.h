@@ -210,6 +210,13 @@ public:
         _Count,
     };
 
+    struct WorkProgress
+    {
+        std::string title;
+        std::string message;
+        uint percentage{};
+    };
+
 private:
     std::unique_ptr<LspClient> m_client;
     lsServerCapabilities m_servCaps;
@@ -218,6 +225,8 @@ private:
     // update is delayed. Use `didCrash` to check if the server crashed.
     LspServerStatus m_status = LspServerStatus::Waiting;
     std::array<std::shared_ptr<Image>, (int)LspServerStatus::_Count> m_statusIcons;
+
+    std::map<std::string, WorkProgress> m_progresses;
 
     void busyBegin();
     void busyEnd();
@@ -272,6 +281,9 @@ public:
     void renameSymbol(const std::string& filePath, const lsPosition& pos, const std::string& newName);
 
     std::shared_ptr<Image> getStatusIcon();
+
+    // $/progress notification callback
+    static bool progressCallback(std::unique_ptr<LspMessage> msg);
 
     ~LspProvider();
 };
