@@ -24,6 +24,7 @@
 #include "ThemeLoader.h"
 #include "Prompt.h"
 #include "FloatingWin.h"
+#include "ProgressFloatingWin.h"
 
 class RecentFileList
 {

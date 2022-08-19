@@ -260,8 +260,8 @@ bool LspProvider::progressCallback(std::unique_ptr<LspMessage> msg)
         // TODO: Render all of the progresses (FloatingWindows in a vector?)
         const auto& prog = Autocomp::lspProvider->m_progresses.begin()->second;
         g_progressPopup->setTitle(strCapitalize(prog.title));
-        g_progressPopup->setContent(strCapitalize(prog.message)+"\n\n"+std::to_string(prog.percentage)+"%");
-        // TODO: Show progressbar (widget in each FloatingWindow?)
+        g_progressPopup->setContent(strCapitalize(prog.message));
+        g_progressPopup->setPercentage(prog.percentage);
         g_progressPopup->setPos({
                 std::max(g_windowWidth-(int)g_progressPopup->calcWidth()-10, 0),
                 std::max(g_windowHeight-(int)g_progressPopup->calcHeight()-g_fontSizePx*2-10, 0),

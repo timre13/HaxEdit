@@ -20,6 +20,7 @@ class FileTypeHandler;
 struct Theme;
 class RecentFileList;
 class FloatingWindow;
+class ProgressFloatingWin;
 
 #ifdef _DEF_GLOBALS_
 
@@ -58,7 +59,7 @@ int g_fontSizePx = DEF_FONT_SIZE_PX;
 float g_fontWidthPx = 0;
 
 std::unique_ptr<FloatingWindow> g_hoverPopup;
-std::unique_ptr<FloatingWindow> g_progressPopup;
+std::unique_ptr<ProgressFloatingWin> g_progressPopup;
 
 // Loaded by App::loadCursors()
 namespace Cursors
@@ -112,7 +113,7 @@ extern int g_fontSizePx;
 extern float g_fontWidthPx;
 
 extern std::unique_ptr<FloatingWindow> g_hoverPopup;
-extern std::unique_ptr<FloatingWindow> g_progressPopup;
+extern std::unique_ptr<ProgressFloatingWin> g_progressPopup;
 
 namespace Cursors
 {

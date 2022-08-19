@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <string>
+#include <cmath>
 
 using uint      = unsigned int;
 using uchar     = unsigned char;
@@ -70,6 +71,16 @@ public:
     std::string asStrHex() const;
 };
 #define UNPACK_RGBA_COLOR(x) x.r, x.g, x.b, x.a
+
+template <typename T>
+inline T lerpColors(const T& first, const T& second, const float t)
+{
+    T out;
+    out.r = std::lerp(first.r, second.r, t);
+    out.g = std::lerp(first.g, second.g, t);
+    out.b = std::lerp(first.b, second.b, t);
+    return out;
+}
 
 #define RGB_COLOR_TO_RGBA(x) RGBAColor{x.r, x.g, x.b, 1.0f}
 

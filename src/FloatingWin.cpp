@@ -21,11 +21,8 @@ FloatingWindow::FloatingWindow()
 {
 }
 
-void FloatingWindow::render()
+glm::ivec2 FloatingWindow::calcPos() const
 {
-    if (!m_isShown)
-        return;
-
     const int width = calcWidth();
     const int height = calcHeight();
 
@@ -38,6 +35,17 @@ void FloatingWindow::render()
         pos.x = 0;
     if (pos.y < 0)
         pos.y = 0;
+    return pos;
+}
+
+void FloatingWindow::render() const
+{
+    if (!m_isShown)
+        return;
+
+    const int width = calcWidth();
+    const int height = calcHeight();
+    const glm::ivec2 pos = calcPos();
 
     g_uiRenderer->renderFilledRectangle(
             pos,
