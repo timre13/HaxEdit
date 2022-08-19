@@ -385,7 +385,9 @@ void LspProvider::get(bufid_t bufid, Popup* popupP)
 void LspProvider::busyBegin()
 {
     assert(!didServerCrash);
+#ifndef TESTING
     glfwSetCursor(g_window, Cursors::busy);
+#endif
     m_status = LspServerStatus::Waiting;
     App::renderStatusLine();
     glfwSwapBuffers(g_window);
@@ -393,7 +395,9 @@ void LspProvider::busyBegin()
 
 void LspProvider::busyEnd()
 {
+#ifndef TESTING
     glfwSetCursor(g_window, nullptr);
+#endif
     m_status = LspServerStatus::Ok;
     App::renderStatusLine();
     glfwSwapBuffers(g_window);
@@ -442,6 +446,7 @@ void LspProvider::onFileOpen(const std::string& path, Langs::LangId language, co
 
 void LspProvider::onFileChange(const std::string& path, int version, const std::string& newContent)
 {
+#ifndef TESTING
     if (didServerCrash) return;
 
     using tDocSyncKind = lsTextDocumentSyncKind;
@@ -479,6 +484,7 @@ void LspProvider::onFileChange(const std::string& path, int version, const std::
     {
         Logger::dbg << "LSP: textDocument/didChange is not supported" << Logger::End;
     }
+#endif
 }
 
 void LspProvider::onFileClose(const std::string& path)

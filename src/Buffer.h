@@ -484,4 +484,6 @@ public:
     virtual void renameSymbolAtCursor();
 
     virtual ~Buffer();
+
+    friend class TestRunner;
 };

@@ -33,6 +33,7 @@ Buffer::Buffer()
      * update is outdated, so the function exits and the loop executes it again.
      */
     m_highlighterThread = std::thread([&](){
+#ifndef TESTING
             Logger::dbg << "Syntax highlighter thread started (buffer: " << this << ')' << Logger::End;
             while (m_shouldHighlighterLoopRun)
             {
@@ -46,6 +47,7 @@ Buffer::Buffer()
                 std::this_thread::sleep_for(10ms);
             }
             Logger::dbg << "Syntax highlighter thread exited (buffer: " << this << ')' << Logger::End;
+#endif
     });
 
     Logger::dbg << "Setting up autocomplete for buffer: " << this << Logger::End;
@@ -63,7 +65,9 @@ void Buffer::open(const std::string& filePath, bool isReload/*=false*/)
 {
     TIMER_BEGIN_FUNC();
 
+#ifndef TESTING
     glfwSetCursor(g_window, Cursors::busy);
+#endif
 
     m_filePath = filePath;
     m_language = Langs::LangId::Unknown;
@@ -131,7 +135,9 @@ void Buffer::open(const std::string& filePath, bool isReload/*=false*/)
                     MessageDialog::Type::Error);
         }
 
+#ifndef TESTING
         glfwSetCursor(g_window, nullptr);
+#endif
         TIMER_END_FUNC();
         return;
     }
@@ -186,7 +192,9 @@ void Buffer::open(const std::string& filePath, bool isReload/*=false*/)
     // TODO: Properly tell reloading to LSP server (close first)
     Autocomp::lspProvider->onFileOpen(m_filePath, m_language, content);
 
+#ifndef TESTING
     glfwSetCursor(g_window, nullptr);
+#endif
     TIMER_END_FUNC();
 }
 
@@ -951,7 +959,9 @@ void Buffer::moveCursorToLineCol(int line, int col)
 
     m_isCursorShown = true;
     m_cursorHoldTime = 0;
+#ifndef TESTING
     g_hoverPopup->hideAndClear();
+#endif
 }
 
 void Buffer::moveCursorToChar(int pos)
@@ -3085,11 +3095,15 @@ void Buffer::renameSymbolAtCursor()
 
 Buffer::~Buffer()
 {
+#ifndef TESTING
     glfwSetCursor(g_window, Cursors::busy);
     m_shouldHighlighterLoopRun = false; // Signal the thread that we don't want more syntax updates
     m_isHighlightUpdateNeeded = true; // Exit the current update
+#endif
     m_highlighterThread.join(); // Wait for the thread
+#ifndef TESTING
     Autocomp::lspProvider->onFileClose(m_filePath);
     Logger::log << "Destroyed a buffer: " << this << " (" << m_filePath << ')' << Logger::End;
     glfwSetCursor(g_window, nullptr);
+#endif
 }
