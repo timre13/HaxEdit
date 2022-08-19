@@ -12,6 +12,11 @@ FloatingWindow::FloatingWindow(const std::string& title)
 {
 }
 
+FloatingWindow::FloatingWindow(const glm::ivec2 pos)
+    : m_pos{pos}
+{
+}
+
 FloatingWindow::FloatingWindow()
 {
 }

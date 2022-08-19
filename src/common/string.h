@@ -42,6 +42,17 @@ size_t getLongestLineLen(const std::string& str);
 std::string strToLower(std::string str);
 String strToLower(String str);
 
+template <typename T>
+inline T strCapitalize(T str)
+{
+    _CHECK_T_STR_TYPE;
+
+    if (str.empty())
+        return str;
+    str[0] = toupper(str[0]);
+    return str;
+}
+
 inline std::string quoteStr(const std::string& str) { return '"'+str+'"'; }
 inline String quoteStr(const String& str) { return U'"'+str+U'"'; }
 

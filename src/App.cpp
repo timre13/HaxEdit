@@ -436,6 +436,7 @@ void App::renderPopups()
 {
     if (g_activeBuff)
         g_hoverPopup->render();
+    g_progressPopup->render();
 }
 
 static const std::string genWelcomeMsg(std::string templ)
@@ -613,6 +614,10 @@ void App::windowResizeCB(GLFWwindow*, int width, int height)
     {
         tab->makeChildrenSizesEqual();
     }
+    g_progressPopup->setPos({
+            std::max(width-(int)g_progressPopup->calcWidth()-10, 0),
+            std::max(height-(int)g_progressPopup->calcHeight()-g_fontSizePx*2-10, 0),
+    });
     g_isRedrawNeeded = true;
 }
 

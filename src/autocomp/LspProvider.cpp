@@ -255,6 +255,24 @@ bool LspProvider::progressCallback(std::unique_ptr<LspMessage> msg)
         return true;
     }
 
+    if (!Autocomp::lspProvider->m_progresses.empty())
+    {
+        // TODO: Render all of the progresses (FloatingWindows in a vector?)
+        const auto& prog = Autocomp::lspProvider->m_progresses.begin()->second;
+        g_progressPopup->setTitle(strCapitalize(prog.title));
+        g_progressPopup->setContent(strCapitalize(prog.message)+"\n\n"+std::to_string(prog.percentage)+"%");
+        // TODO: Show progressbar (widget in each FloatingWindow?)
+        g_progressPopup->setPos({
+                std::max(g_windowWidth-(int)g_progressPopup->calcWidth()-10, 0),
+                std::max(g_windowHeight-(int)g_progressPopup->calcHeight()-g_fontSizePx*2-10, 0),
+        });
+        g_progressPopup->show();
+    }
+    else
+    {
+        g_progressPopup->hideAndClear();
+    }
+    g_isRedrawNeeded = true;
 
     return true; // TODO: What's this?
 }

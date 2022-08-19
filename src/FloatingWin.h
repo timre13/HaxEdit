@@ -18,6 +18,7 @@ private:
 public:
     FloatingWindow(const glm::ivec2& pos, const std::string& title);
     FloatingWindow(const std::string& title);
+    FloatingWindow(const glm::ivec2 pos);
     FloatingWindow();
 
     inline void setPos(const glm::ivec2& pos) { m_pos = pos; }
