@@ -34,6 +34,7 @@
 #include <boost/interprocess/detail/os_thread_functions.hpp>
 #include <filesystem>
 #include <type_traits>
+#include <mutex>
 
 #define LSP_TIMEOUT_MILLI 10000
 
@@ -175,8 +176,11 @@ REFLECT_MAP_TO_STRUCT(ProgressValue, kind, title, message, percentage);
 
 }
 
+static std::mutex progCallbackMutex;
 bool LspProvider::progressCallback(std::unique_ptr<LspMessage> msg)
 {
+    std::lock_guard<std::mutex> lock{progCallbackMutex};
+
     Logger::dbg << "LSP: Received a $/progress notification: "
         << msg->ToJson() << Logger::End;
 
@@ -250,6 +254,7 @@ bool LspProvider::progressCallback(std::unique_ptr<LspMessage> msg)
         Logger::err << "Invalid $/progress notification kind (ignoring): \"" << progress.kind << '"' << Logger::End;
         return true;
     }
+
 
     return true; // TODO: What's this?
 }
