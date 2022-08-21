@@ -525,12 +525,14 @@ LspProvider::HoverInfo LspProvider::getHover(const std::string& path, uint line,
         Logger::dbg << "LSP: Sending textDocument/hover request: " << req.ToJson() << Logger::End;
 
         auto resp = m_client->getEndpoint()->waitResponse(req, LSP_TIMEOUT_MILLI);
-        Logger::dbg << "LSP: Response: " << resp->ToJson() << Logger::End;
+        assert(resp);
         if (resp->IsError())
         {
+            Logger::err << "LSP server responded with error: " << resp->error.error.ToString() << Logger::End;
             busyEnd();
             return {};
         }
+        Logger::dbg << "LSP: Response: " << resp->ToJson() << Logger::End;
 
         HoverInfo info;
         if (resp->response.result.contents.second)
