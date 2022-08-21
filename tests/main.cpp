@@ -39,8 +39,10 @@ public:
             return strToAscii(lineVecConcat(buffer->m_content));
         };
 
-        // No insertion
+        // Noop
         checkTest(getApplyEditResult({ 0,  0}, { 0,  0}, ""));
+
+        //-------------------- Insertion --------------------
 
         // Insertion at line beginning
         checkTest(getApplyEditResult({ 0,  0}, { 0,  0}, "werwqerwer"));
@@ -74,6 +76,57 @@ public:
         checkTest(getApplyEditResult({ 3,  3}, { 3,  3}, "\n234234"));
         // Single-line insertion inside a line (ending with a line break)
         checkTest(getApplyEditResult({ 3,  3}, { 3,  3}, "234234\n"));
+
+        //-------------------- Deletion --------------------
+
+        // Deletion of a single char
+        checkTest(getApplyEditResult({ 5,  3}, { 5,  4}, ""));
+
+        // Deletion of a line break
+        checkTest(getApplyEditResult({ 4,  4}, { 4,  5}, ""));
+
+        // Deletion from the beginning of a line
+        checkTest(getApplyEditResult({ 4,  0}, { 4,  2}, ""));
+
+        // Deletion from the middle of a line
+        checkTest(getApplyEditResult({ 5,  3}, { 5, 8}, ""));
+
+        // Deletion from the end of a line
+        checkTest(getApplyEditResult({ 4,  1}, { 4, 5}, ""));
+
+        // Deletion of a line break surraunded by line breaks
+        checkTest(getApplyEditResult({ 1,  0}, { 1, 1}, ""));
+
+        ///// Ending inside
+        // Deletion of multiple lines starting inside a line and ending inside a line
+        checkTest(getApplyEditResult({ 3,  2}, { 7, 2}, ""));
+        // Deletion of multiple lines starting at the beginning of a line and ending inside a line
+        checkTest(getApplyEditResult({ 4,  0}, { 7, 2}, ""));
+        // Deletion of multiple lines starting at the end of a line and ending inside a line
+        checkTest(getApplyEditResult({ 4,  4}, { 9, 2}, ""));
+
+        ///// Ending at the beginning
+        // Deletion of multiple lines starting inside a line and ending at the beginning of a line
+        checkTest(getApplyEditResult({ 3,  2}, { 8, 0}, ""));
+        // Deletion of multiple lines starting at the beginning of a line and ending at the beginning of a line
+        checkTest(getApplyEditResult({ 5,  0}, { 8, 0}, ""));
+        // Deletion of multiple lines starting at the end of a line and ending at the beginning of a line
+        checkTest(getApplyEditResult({ 4,  4}, { 8, 0}, ""));
+
+        ///// Ending at the end
+        // Deletion of multiple lines starting inside a line and ending at the end of a line
+        checkTest(getApplyEditResult({ 3,  4}, { 7, 4}, ""));
+        // Deletion of multiple lines starting at the beginning of a line and ending at the end of a line
+        checkTest(getApplyEditResult({ 4,  0}, { 7, 4}, ""));
+        // Deletion of multiple lines starting at the end of a line and ending at the end of a line
+        checkTest(getApplyEditResult({ 4,  4}, { 7, 4}, ""));
+
+        //-------------------- Replacement --------------------
+
+        // Deletion of multiple lines and insertion of multiple lines
+        checkTest(getApplyEditResult({ 3,  3}, { 9, 2}, "2342342341\n1234\n1\n4\n\n\n123412341234\n\n1234\n"));
+        // Deletion of multiple lines and insertion of a single line
+        checkTest(getApplyEditResult({ 3,  3}, { 9, 2}, "2432435345"));
 
         Logger::log << "---------- Finished running tests ----------" << Logger::End;
     }
