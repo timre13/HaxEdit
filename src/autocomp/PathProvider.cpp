@@ -40,7 +40,10 @@ void PathProvider::get(bufid_t bufid, Popup *popupP)
     for (const auto& path : paths)
     {
         Logger::dbg << path << Logger::End;
-        popupP->addItem(Popup::Item{Popup::Item::Type::Path, strToUtf32(path)});
+        Popup::Item item;
+        item.label = path;
+        item.kind.emplace(lsCompletionItemKind::File);
+        popupP->addItem(std::move(item));
     }
 }
 

@@ -410,10 +410,7 @@ void LspProvider::get(bufid_t bufid, Popup* popupP)
 
     for (const auto& item : resp->response.result.items)
     {
-        Autocomp::Popup::Item toAdd;
-        toAdd.type = Autocomp::Popup::Item::Type::Misc;
-        toAdd.value = strToUtf32(item.label);
-        popupP->addItem(toAdd);
+        popupP->addItem({std::move(item)});
     }
 
     //g_activeBuff->getFilePath();

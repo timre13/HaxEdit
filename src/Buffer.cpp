@@ -2309,12 +2309,16 @@ void Buffer::autocompPopupHide()
 
 void Buffer::autocompPopupInsert()
 {
+    // Hide the popup and insert the current item
+
     if (m_autocompPopup->isRendered())
     {
-        // Hide the popup and insert the current item
-        const String toInsert = m_autocompPopup->getSelectedItem()->value
-            .substr(m_autocompPopup->getFilterLen());
-        m_content[m_cursorLine].insert(m_cursorCol, toInsert);
+        // If there is `insertText`, use it. Otherwise use `label`.
+        const auto* item = m_autocompPopup->getSelectedItem();
+        const std::string toInsert = item->insertText.get_value_or(item->label);
+        // TODO: Prefer textEdit
+        //    .substr(m_autocompPopup->getFilterLen());
+        m_content[m_cursorLine].insert(m_cursorCol, strToUtf32(toInsert));
         m_cursorCharPos += toInsert.length();
         m_cursorCol += toInsert.length();
         m_isHighlightUpdateNeeded = true;

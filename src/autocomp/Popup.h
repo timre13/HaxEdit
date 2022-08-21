@@ -13,34 +13,8 @@ namespace Autocomp
 class Popup final
 {
 public:
-    class Item
+    struct Item : lsCompletionItem
     {
-    public:
-        enum class Type
-        {
-            Misc,
-            DictionaryWord,
-            BufferWord,
-            Path,
-        } type;
-
-        String value;
-
-        friend inline bool operator==(const Item& a, const Item& b)
-        {
-            return a.type == b.type && a.value == b.value;
-        }
-
-        std::string getTypeAsStr()
-        {
-            switch (type)
-            {
-            case Type::Misc:                return "Misc";
-            case Type::DictionaryWord:      return "Dict";
-            case Type::BufferWord:          return "Buff";
-            case Type::Path:                return "Path";
-            }
-        }
     };
 
 private:

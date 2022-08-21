@@ -15,8 +15,8 @@ void Popup::recalcSize()
     size_t maxItemValLen = 0;
     for (const auto& item : m_filteredItems)
     {
-        if (item->value.length() > maxItemValLen)
-            maxItemValLen = item->value.length();
+        if (item->label.length() > maxItemValLen)
+            maxItemValLen = item->label.length();
     }
     m_size.x = maxItemValLen*g_fontWidthPx;
     m_size.y = std::min(m_filteredItems.size()*g_fontSizePx, 800_st);
@@ -26,31 +26,19 @@ void Popup::sortItems()
 {
     std::sort(m_items.begin(), m_items.end(),
             [](const std::unique_ptr<Item>& a, const std::unique_ptr<Item>& b) {
-                // Prioritize Path items
-                if (a->type == Item::Type::Path && b->type != Item::Type::Path)
-                    return true;
-                else if (a->type != Item::Type::Path && b->type == Item::Type::Path)
-                    return false;
-
-                auto la = strToLower(a->value);
-                auto lb = strToLower(b->value);
-                // Generally case is ignored
-                if (la < lb)
-                    return true;
-                // If the two strings only differ in the case, don't ignore it
-                else if (la == lb)
-                    return a->value < b->value;
-                else
-                    return false;
+                // Sort by `sortText` if exists, otherwise use `label`
+                const auto& textA = a->sortText.get_value_or(a->label);
+                const auto& textB = b->sortText.get_value_or(b->label);
+                return textA < textB;
             }
     );
 
     // Remove duplicates
-    m_items.erase(std::unique(m_items.begin(), m_items.end(),
-                [](const std::unique_ptr<Item>& a, const std::unique_ptr<Item>& b){
-                    return a->type == b->type && a->value == b->value;
-                }),
-            m_items.end());
+    //m_items.erase(std::unique(m_items.begin(), m_items.end(),
+    //            [](const std::unique_ptr<Item>& a, const std::unique_ptr<Item>& b){
+    //                return a->type == b->type && a->label == b->label;
+    //            }),
+    //        m_items.end());
 
     m_isItemSortingNeeded = false;
 }
@@ -60,7 +48,7 @@ void Popup::filterItems()
     m_filteredItems.clear();
     for (size_t i{}; i < m_items.size(); ++i)
     {
-        if (m_items[i]->value.rfind(m_filterBuffer, 0) == 0)
+        if (m_items[i]->label.rfind(strToAscii(m_filterBuffer), 0) == 0)
         {
             m_filteredItems.push_back(m_items[i].get());
         }
@@ -114,9 +102,8 @@ void Popup::render()
                     {0.2f, 0.2f, 0.2f});
         }
 
-        // TODO: Support Unicode
         g_textRenderer->renderString(
-                strToAscii(m_filteredItems[i]->value),
+                m_filteredItems[i]->label,
                 {m_position.x, m_position.y+m_scrollByItems*g_fontSizePx+i*g_fontSizePx},
                 FONT_STYLE_REGULAR,
                 {0.400f, 0.851f, 0.937f});

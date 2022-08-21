@@ -15,7 +15,10 @@ void BufferWordProvider::get(bufid_t bufid, Popup* popupP)
     auto words = m_words.find(bufid)->second;
     for (const auto& word : words)
     {
-        popupP->addItem(Popup::Item{Popup::Item::Type::BufferWord, word});
+        Popup::Item item;
+        item.label = strToAscii(word);
+        item.kind.emplace(lsCompletionItemKind::Text);
+        popupP->addItem(std::move(item));
     }
 }
 

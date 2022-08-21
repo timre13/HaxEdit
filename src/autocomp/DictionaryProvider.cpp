@@ -43,7 +43,10 @@ void DictionaryProvider::get(bufid_t, Popup* popupP)
     Logger::dbg << "DictionaryProvider: feeding words into Popup (count: " << m_words.size() << ")" << Logger::End;
     for (const auto& word : m_words)
     {
-        popupP->addItem(Popup::Item{Popup::Item::Type::DictionaryWord, word});
+        Popup::Item item;
+        item.label = strToAscii(word);
+        item.kind.emplace(lsCompletionItemKind::Text);
+        popupP->addItem(std::move(item));
     }
 }
 
