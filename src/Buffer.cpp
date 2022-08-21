@@ -2275,6 +2275,7 @@ static std::string getPathFromLine(const String& line)
 
 void Buffer::triggerAutocompPopup()
 {
+    regenAutocompList();
     Autocomp::pathProvid->setPrefix(m_id, getPathFromLine(m_content[m_cursorLine].substr(0, m_cursorCol)));
     m_autocompPopup->setVisibility(true);
     m_isCursorShown = true;
@@ -2330,10 +2331,12 @@ void Buffer::regenAutocompList()
 {
     Logger::dbg << "Regenerating autocomplete list for buffer " << this << Logger::End;
     m_autocompPopup->clear();
+#if 0
     Autocomp::dictProvider->get(m_id, m_autocompPopup.get());
-    Autocomp::lspProvider->get(m_id, m_autocompPopup.get());
     Autocomp::buffWordProvid->get(m_id, m_autocompPopup.get());
     Autocomp::pathProvid->get(m_id, m_autocompPopup.get());
+#endif
+    Autocomp::lspProvider->get(m_id, m_autocompPopup.get());
 }
 
 void Buffer::startSelection(Selection::Mode mode)

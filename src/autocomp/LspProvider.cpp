@@ -24,6 +24,7 @@
 #include "LibLsp/lsp/textDocument/declaration_definition.h"
 #include "LibLsp/lsp/textDocument/implementation.h"
 #include "LibLsp/lsp/textDocument/rename.h"
+#include "LibLsp/lsp/textDocument/completion.h"
 #include "LibLsp/lsp/workspace/execute_command.h"
 #include "LibLsp/lsp/workspace/applyEdit.h"
 #include "LibLsp/lsp/general/progress.h"
@@ -383,7 +384,39 @@ LspProvider::LspProvider()
 
 void LspProvider::get(bufid_t bufid, Popup* popupP)
 {
-    Logger::dbg << "LspProvider: " << "TODO" << Logger::End;
+    //Logger::dbg << "LspProvider: " << "TODO" << Logger::End;
+    if (!g_activeBuff) return;
+
+    td_completion::request req;
+    req.params.context.emplace();
+    req.params.context->triggerKind = lsCompletionTriggerKind::Invoked;
+    req.params.position.line = g_activeBuff->getCursorLine();
+    req.params.position.character = g_activeBuff->getCursorCol();
+    req.params.textDocument.uri.SetPath(g_activeBuff->getFilePath());
+    req.params.uri.emplace();
+    req.params.uri->SetPath(g_activeBuff->getFilePath());
+
+    Logger::dbg << "LSP: Sending textDocument/completion request: " << req.ToJson() << Logger::End;
+
+    auto resp = m_client->getEndpoint()->waitResponse(req, LSP_TIMEOUT_MILLI);
+    assert(resp);
+    if (resp->IsError())
+    {
+        Logger::err << "LSP server responded with error: " << respGetErrMsg(resp) << Logger::End;
+        busyEnd();
+        return;
+    }
+    Logger::dbg << "LSP: Response: " << resp->ToJson() << Logger::End;
+
+    for (const auto& item : resp->response.result.items)
+    {
+        Autocomp::Popup::Item toAdd;
+        toAdd.type = Autocomp::Popup::Item::Type::Misc;
+        toAdd.value = strToUtf32(item.label);
+        popupP->addItem(toAdd);
+    }
+
+    //g_activeBuff->getFilePath();
 }
 
 void LspProvider::busyBegin()
