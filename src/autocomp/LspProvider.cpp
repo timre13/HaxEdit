@@ -38,7 +38,11 @@
 
 #define LSP_TIMEOUT_MILLI 10000
 
-#define RESP_GET_ERR_MSG(x) x->error.error.message
+template <typename T>
+static std::string respGetErrMsg(const std::unique_ptr<lsp::ResponseOrError<T>>& resp)
+{
+    return resp->error.error.ToString();
+}
 
 namespace Autocomp
 {
@@ -356,7 +360,7 @@ LspProvider::LspProvider()
     Logger::dbg << "LSP server response: " << initRes->ToJson() << Logger::End;
     if (initRes->IsError())
     {
-        Logger::err << "LSP server responded with error: " << initRes->error.error.ToString() << Logger::End;
+        Logger::err << "LSP server responded with error: " << respGetErrMsg(initRes) << Logger::End;
         didServerCrash = true;
         g_isRedrawNeeded = true;
         return;
@@ -528,7 +532,7 @@ LspProvider::HoverInfo LspProvider::getHover(const std::string& path, uint line,
         assert(resp);
         if (resp->IsError())
         {
-            Logger::err << "LSP server responded with error: " << resp->error.error.ToString() << Logger::End;
+            Logger::err << "LSP server responded with error: " << respGetErrMsg(resp) << Logger::End;
             busyEnd();
             return {};
         }
@@ -680,7 +684,7 @@ LspProvider::codeActionResult_t LspProvider::getCodeActionForLine(const std::str
 
     if (resp->IsError())
     {
-        Logger::err << "LSP server responded with error: " << resp->error.error.ToString() << Logger::End;
+        Logger::err << "LSP server responded with error: " << respGetErrMsg(resp) << Logger::End;
         busyEnd();
         return {};
     }
@@ -710,7 +714,7 @@ void LspProvider::executeCommand(const std::string& cmd, const boost::optional<s
 
     if (resp->IsError())
     {
-        Logger::err << "LSP server responded with error: " << resp->error.error.ToString() << Logger::End;
+        Logger::err << "LSP server responded with error: " << respGetErrMsg(resp) << Logger::End;
         busyEnd();
         return;
     }
@@ -735,8 +739,8 @@ void LspProvider::renameSymbol(const std::string& filePath, const lsPosition& po
     assert(resp);
     if (resp->IsError())
     {
-        Logger::err << "LSP: Server responded with error: " << RESP_GET_ERR_MSG(resp) << Logger::End;
-        g_statMsg.set("Failed to rename symbol: "+RESP_GET_ERR_MSG(resp), StatusMsg::Type::Error);
+        Logger::err << "LSP: Server responded with error: " << respGetErrMsg(resp) << Logger::End;
+        g_statMsg.set("Failed to rename symbol: "+respGetErrMsg(resp), StatusMsg::Type::Error);
         busyEnd();
         return;
     }
@@ -770,7 +774,7 @@ LspProvider::~LspProvider()
         auto response = m_client->getEndpoint()->waitResponse(shutdownReq, LSP_TIMEOUT_MILLI);
         if (response->IsError())
         {
-            Logger::fatal << "LSP: Server responded with error: " << response->error.error.ToString() << Logger::End;
+            Logger::fatal << "LSP: Server responded with error: " << respGetErrMsg(response) << Logger::End;
         }
         Logger::dbg << "LSP: Server response: " << response->ToJson() << Logger::End;
     }
