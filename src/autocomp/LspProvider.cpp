@@ -73,21 +73,22 @@ static bool publishDiagnosticsCallback(std::unique_ptr<LspMessage> msg)
     return true; // TODO: What's this?
 }
 
-static void _applyEditRec(
-        const std::vector<Split::child_t>& children, const std::string& filePath, const lsTextEdit& edit)
+static void _applyEditsToTabRec(
+        const std::vector<Split::child_t>& children,
+        const std::string& filePath, const std::vector<lsTextEdit>& edits)
 {
     for (auto& child : children)
     {
         if (child.index() == Split::CHILD_TYPE_SPLIT) // A split
         {
-            _applyEditRec(std::get<std::unique_ptr<Split>>(child)->getChildren(), filePath, edit);
+            _applyEditsToTabRec(std::get<std::unique_ptr<Split>>(child)->getChildren(), filePath, edits);
         }
         else // A buffer
         {
             auto& buff = std::get<std::unique_ptr<Buffer>>(child);
             if (std::filesystem::canonical(buff->getFilePath()) == filePath)
             {
-                buff->applyEdit(edit);
+                buff->applyEdits(edits);
             }
         }
     }
@@ -95,29 +96,11 @@ static void _applyEditRec(
 
 static void _applyEditsToFile(const std::string& filePath, const std::vector<lsTextEdit>& edits)
 {
-    Logger::dbg << "Applying " << edits.size() << " edits to " << filePath << Logger::End;
-
-    // Sort the edits backwards, so the changes won't affect the coordinates
-    auto edits_ = edits;
-    std::sort(edits_.begin(), edits_.end(), [](const lsTextEdit& first, const lsTextEdit& second){
-            const auto& pos1 = first.range.start;
-            const auto& pos2 = second.range.start;
-            // Note: We don't have to handle overlapping edits(, as it is garanteed that there won't be any),
-            // so we only compare the `start`
-            if (pos1.line == pos2.line)
-                return (pos1.character > pos2.character);
-            return (pos1.line > pos2.line);
-    });
-
-    for (const lsTextEdit& edit : edits_)
+    for (const auto& split : g_tabs)
     {
-        Logger::log << "Edit start: line: " << edit.range.start.line << ", col: " << edit.range.start.character << Logger::End;
-        for (const auto& split : g_tabs)
-        {
-            if (!split->hasChild())
-                continue;
-            _applyEditRec(split->getChildren(), filePath, edit);
-        }
+        if (!split->hasChild())
+            continue;
+        _applyEditsToTabRec(split->getChildren(), filePath, edits);
     }
 }
 

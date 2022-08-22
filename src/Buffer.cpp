@@ -3095,6 +3095,29 @@ void Buffer::applyEdit(const lsAnnotatedTextEdit& edit)
     moveCursorToLineCol(m_cursorLine, m_cursorCol);
 }
 
+void Buffer::applyEdits(const std::vector<lsTextEdit>& edits)
+{
+    Logger::log << "Applying " << edits.size() << " edits to " << m_filePath << '(' << this << ')' << Logger::End;
+
+    // Sort the edits backwards, so the inserting/deleting lines won't mess up the line indexing
+    auto edits_ = edits;
+    std::sort(edits_.begin(), edits_.end(), [](const lsTextEdit& first, const lsTextEdit& second){
+            const auto& pos1 = first.range.start;
+            const auto& pos2 = second.range.start;
+            // Note: We don't have to handle overlapping edits(, as it is garanteed that there won't be any),
+            // so we only compare the `start`
+            if (pos1.line == pos2.line)
+                return (pos1.character > pos2.character);
+            return (pos1.line > pos2.line);
+    });
+
+    for (const lsTextEdit& edit : edits_)
+    {
+        Logger::dbg << "Edit start: line: " << edit.range.start.line << ", col: " << edit.range.start.character << Logger::End;
+        applyEdit(edit);
+    }
+}
+
 void Buffer::renameSymbolAtCursor()
 {
     auto cb = [this](int, Dialog* dlg, void*){
