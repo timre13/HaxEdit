@@ -2313,14 +2313,21 @@ void Buffer::autocompPopupInsert()
 
     if (m_autocompPopup->isRendered())
     {
-        // If there is `insertText`, use it. Otherwise use `label`.
         const auto* item = m_autocompPopup->getSelectedItem();
-        const std::string toInsert = item->insertText.get_value_or(item->label);
-        // TODO: Prefer textEdit
-        //    .substr(m_autocompPopup->getFilterLen());
-        m_content[m_cursorLine].insert(m_cursorCol, strToUtf32(toInsert));
-        m_cursorCharPos += toInsert.length();
-        m_cursorCol += toInsert.length();
+        // Use `textEdit` if available
+        if (item->textEdit)
+        {
+            applyEdit(item->textEdit.get());
+        }
+        else
+        {
+            // If there is `insertText`, use it. Otherwise use `label`.
+            const std::string toInsert = item->insertText.get_value_or(item->label);
+            //    .substr(m_autocompPopup->getFilterLen());
+            m_content[m_cursorLine].insert(m_cursorCol, strToUtf32(toInsert));
+            m_cursorCharPos += toInsert.length();
+            m_cursorCol += toInsert.length();
+        }
         m_isHighlightUpdateNeeded = true;
         m_version++;
         Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(lineVecConcat(m_content)));
