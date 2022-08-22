@@ -2328,6 +2328,12 @@ void Buffer::autocompPopupInsert()
             m_cursorCharPos += toInsert.length();
             m_cursorCol += toInsert.length();
         }
+
+        if (item->additionalTextEdits)
+        {
+            applyEdits(item->additionalTextEdits.get());
+        }
+
         m_isHighlightUpdateNeeded = true;
         m_version++;
         Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(lineVecConcat(m_content)));
