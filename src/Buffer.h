@@ -475,6 +475,7 @@ public:
     virtual void tickGitBranchUpdate(float frameTimeMs);
 
     virtual void showSymbolHover(bool atMouse=false);
+    virtual void showSignatureHelp();
     virtual void gotoDef();
     virtual void gotoDecl();
     virtual void gotoImp();

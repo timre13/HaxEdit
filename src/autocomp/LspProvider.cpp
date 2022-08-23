@@ -577,6 +577,32 @@ LspProvider::HoverInfo LspProvider::getHover(const std::string& path, uint line,
     }
 }
 
+lsSignatureHelp LspProvider::getSignatureHelp(const std::string& path, uint line, uint col)
+{
+    if (didServerCrash) return {};
+
+    busyBegin();
+
+    td_signatureHelp::request req;
+    req.params.position.line = line;
+    req.params.position.character = col;
+    req.params.textDocument.uri.SetPath(path);
+    Logger::dbg << "LSP: Sending textDocument/signatureHelp request: " << req.ToJson() << Logger::End;
+
+    auto resp = m_client->getEndpoint()->waitResponse(req, LSP_TIMEOUT_MILLI);
+    assert(resp);
+    if (resp->IsError())
+    {
+        Logger::err << "LSP server responded with error: " << respGetErrMsg(resp) << Logger::End;
+        busyEnd();
+        return {};
+    }
+    Logger::dbg << "LSP: Response: " << resp->ToJson() << Logger::End;
+
+    busyEnd();
+    return std::move(resp->response.result);
+}
+
 template <typename ReqType>
 LspProvider::Location LspProvider::_getDefOrDeclOrImp(const std::string& path, uint line, uint col)
 {
@@ -584,14 +610,10 @@ LspProvider::Location LspProvider::_getDefOrDeclOrImp(const std::string& path, u
 
     busyBegin();
 
-    static_assert(
-            std::is_same<ReqType, td_definition::request>()
-         || std::is_same<ReqType, td_declaration::request>()
-         || std::is_same<ReqType, td_implementation::request>());
-
     constexpr bool needsDef  = std::is_same<ReqType, td_definition::request>();
     constexpr bool needsDecl = std::is_same<ReqType, td_declaration::request>();
     constexpr bool needsImp  = std::is_same<ReqType, td_implementation::request>();
+    static_assert(needsDef || needsDecl || needsImp);
 
     bool funcSupported;
     if constexpr (needsDef)

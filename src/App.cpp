@@ -281,12 +281,17 @@ void App::setupKeyBindings()
         bindFuncKey(GLFW_KEY_KP_SUBTRACT,   0, Callbacks::zoomOutBufferIfImage);
         bindFuncKey(GLFW_KEY_EQUAL,         0, Callbacks::zoomInBufferIfImage);
         bindFuncKey(GLFW_KEY_KP_ADD,        0, Callbacks::zoomInBufferIfImage);
+        bindPrimKey(",",                    0, Callbacks::bufferShowSignHelp);
 
         // Ctrl held down
         bindFuncKey(GLFW_KEY_SPACE,         GLFW_MOD_CONTROL, Callbacks::triggerAutocompPopupOrSelectNextItem);
 
         // Ctrl-Shift held down
         bindFuncKey(GLFW_KEY_SPACE,         GLFW_MOD_CONTROL|GLFW_MOD_SHIFT, Callbacks::triggerAutocompPopupOrSelectPrevItem);
+
+        // Shift held down
+        // TODO: Use server-specified trigger characters to show signature help
+        bindPrimKey("8",                    GLFW_MOD_SHIFT, Callbacks::bufferShowSignHelp);
     }
 
     // Start in normal mode

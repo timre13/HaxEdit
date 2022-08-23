@@ -27,6 +27,7 @@ using namespace std::chrono_literals;
 #include "LibLsp/JsonRpc/MessageIssue.h"
 #include "LibLsp/JsonRpc/stream.h"
 #include "LibLsp/lsp/lsp_diagnostic.h"
+#include "LibLsp/lsp/textDocument/signature_help.h"
 #include "LibLsp/lsp/textDocument/code_action.h"
 #ifdef __clang__
 
@@ -255,6 +256,8 @@ public:
     };
 
     HoverInfo getHover(const std::string& path, uint line, uint col);
+
+    lsSignatureHelp getSignatureHelp(const std::string& path, uint line, uint col);
 
     struct Location
     {

@@ -2919,6 +2919,22 @@ void Buffer::showSymbolHover(bool atMouse/*=false*/)
     }
 }
 
+void Buffer::showSignatureHelp()
+{
+    auto signHelp = Autocomp::lspProvider->getSignatureHelp(m_filePath, m_cursorLine, m_cursorCol);
+    if (!signHelp.signatures.empty())
+    {
+        // TODO: Support multiple signatures and highlight the active
+        // TODO: Highlight the active parameter
+        // TODO: Show signature documentation
+        // TODO: Show parameter documentation
+        g_hoverPopup->setTitle("");
+        g_hoverPopup->setContent(signHelp.signatures[signHelp.activeSignature.get_value_or(0)].label);
+        g_hoverPopup->setPos({m_cursorXPx+g_fontWidthPx, m_cursorYPx-g_hoverPopup->calcHeight()});
+        g_hoverPopup->show();
+    }
+}
+
 void Buffer::_goToDeclOrDefOrImp(const Autocomp::LspProvider::Location& loc)
 {
     // If it is in the current file, scroll there

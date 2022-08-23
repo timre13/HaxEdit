@@ -142,6 +142,7 @@ void showPromptAnimated();
 void hidePromptAnimated();
 
 void bufferShowSymbolHover();
+void bufferShowSignHelp();
 void bufferGotoDef();
 void bufferGotoDecl();
 void bufferGotoImp();

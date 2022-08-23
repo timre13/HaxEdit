@@ -1039,6 +1039,14 @@ void bufferShowSymbolHover()
     g_activeBuff->showSymbolHover();
 }
 
+void bufferShowSignHelp()
+{
+    if (!g_activeBuff)
+        return;
+
+    g_activeBuff->showSignatureHelp();
+}
+
 void bufferGotoDef()
 {
     if (!g_activeBuff)
