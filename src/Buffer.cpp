@@ -2866,9 +2866,23 @@ void Buffer::tickGitBranchUpdate(float frameTimeMs)
     }
 }
 
-void Buffer::showSymbolHover()
+void Buffer::showSymbolHover(bool atMouse/*=false*/)
 {
-    const auto hoverInfo = Autocomp::lspProvider->getHover(m_filePath, m_cursorLine, m_cursorCol);
+    Autocomp::LspProvider::HoverInfo hoverInfo;
+    if (atMouse)
+    {
+        // Return if there is nothing under the cursor
+        if (m_charUnderMouseI == -1)
+            return;
+
+        hoverInfo = Autocomp::lspProvider->getHover(
+                m_filePath, m_charUnderMouseRow, m_charUnderMouseCol);
+    }
+    else
+    {
+        hoverInfo = Autocomp::lspProvider->getHover(
+                m_filePath, m_cursorLine, m_cursorCol);
+    }
 
     if (!hoverInfo.text.empty())
     {
@@ -2891,14 +2905,18 @@ void Buffer::showSymbolHover()
             g_hoverPopup->setTitle("Symbol hover");
         }
         g_hoverPopup->setContent(hoverInfo.text);
-        g_hoverPopup->setPos({m_cursorXPx+g_fontWidthPx, m_cursorYPx-g_hoverPopup->calcHeight()});
+        if (atMouse)
+            g_hoverPopup->setPos({g_cursorX, g_cursorY-g_hoverPopup->calcHeight()});
+        else
+            g_hoverPopup->setPos({m_cursorXPx+g_fontWidthPx, m_cursorYPx-g_hoverPopup->calcHeight()});
         g_hoverPopup->show();
+        g_isRedrawNeeded = true;
     }
-    else
+    else if (!atMouse)
     {
         g_hoverPopup->hideAndClear();
+        g_isRedrawNeeded = true;
     }
-    g_isRedrawNeeded = true;
 }
 
 void Buffer::_goToDeclOrDefOrImp(const Autocomp::LspProvider::Location& loc)

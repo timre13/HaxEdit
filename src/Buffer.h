@@ -181,7 +181,7 @@ protected:
     int m_cursorYPx{};
     bool m_isCursorShown{true}; // Used to blink the cursor
     CursorMovCmd m_cursorMovCmd{CursorMovCmd::None};
-    uint m_cursorHoldTime{};
+    int m_cursorHoldTime{};
 
     CodeAction m_lineCodeAction;
 
@@ -474,7 +474,7 @@ public:
     virtual void tickAutoReload(float frameTimeMs);
     virtual void tickGitBranchUpdate(float frameTimeMs);
 
-    virtual void showSymbolHover();
+    virtual void showSymbolHover(bool atMouse=false);
     virtual void gotoDef();
     virtual void gotoDecl();
     virtual void gotoImp();

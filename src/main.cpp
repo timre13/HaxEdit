@@ -152,6 +152,7 @@ int main(int argc, char** argv)
             g_activeBuff->tickAutoReload(frameTimeSec*1000);
             g_activeBuff->tickGitBranchUpdate(frameTimeSec*1000);
         }
+        App::tickMouseHold(frameTimeSec*1000);
     }
 
     Logger::log << "Shutting down!" << Logger::End;

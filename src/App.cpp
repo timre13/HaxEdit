@@ -824,6 +824,7 @@ void App::cursorPosCB(GLFWwindow* window, double x, double y)
 
     g_cursorX = (int)x;
     g_cursorY = (int)y;
+    g_mouseHoldTime = 0;
     g_isRedrawNeeded = true;
 
     if (!g_dialogs.empty() && !g_dialogs.back()->isClosed())
@@ -1054,4 +1055,22 @@ void App::pathDropCB(GLFWwindow*, int count, const char** paths)
         }
     }
     g_isTitleUpdateNeeded = true;
+}
+
+void App::tickMouseHold(uint frameTime)
+{
+    auto isTriggered{[frameTime](int triggerAfter){
+        return g_mouseHoldTime < triggerAfter
+            && g_mouseHoldTime+int(frameTime) >= triggerAfter;
+    }};
+
+    if (isTriggered(MOUSE_HOLD_TIME_HOVERINFO))
+    {
+        if (g_activeBuff)
+        {
+            g_activeBuff->showSymbolHover(true);
+        }
+    }
+
+    g_mouseHoldTime += frameTime;
 }

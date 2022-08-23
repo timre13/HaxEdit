@@ -36,6 +36,7 @@ int g_mouseHResSplitI = -1;
 bool g_isMouseBtnLPressed = false;
 bool g_isMouseBtnRPressed = false;
 bool g_isMouseBtnMPressed = false;
+int g_mouseHoldTime = 0;
 
 bool g_isRedrawNeeded = false;
 bool g_isTitleUpdateNeeded = true;
@@ -94,6 +95,7 @@ extern int g_mouseHResSplitI;
 extern bool g_isMouseBtnLPressed;
 extern bool g_isMouseBtnRPressed;
 extern bool g_isMouseBtnMPressed;
+extern int g_mouseHoldTime;
 
 extern bool g_isRedrawNeeded;
 extern bool g_isTitleUpdateNeeded;

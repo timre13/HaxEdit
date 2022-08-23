@@ -148,4 +148,6 @@ private:
     static void pathDropCB(GLFWwindow*, int count, const char** paths);
 
     static void toggleDebugDraw();
+public:
+    static void tickMouseHold(uint frameTime);
 };
