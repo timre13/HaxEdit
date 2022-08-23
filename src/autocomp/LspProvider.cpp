@@ -4,6 +4,7 @@
 #include "../App.h"
 #include "../glstuff.h"
 #include "../globals.h"
+#include "../doxygen.h"
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Weverything"
@@ -554,7 +555,7 @@ LspProvider::HoverInfo LspProvider::getHover(const std::string& path, uint line,
         HoverInfo info;
         if (resp->response.result.contents.second)
         {
-            info.text = resp->response.result.contents.second->value;
+            info.text = Doxygen::doxygenToAnsiEscaped(resp->response.result.contents.second->value);
         }
         if (resp->response.result.range)
         {

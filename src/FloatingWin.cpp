@@ -50,7 +50,7 @@ void FloatingWindow::render() const
     g_uiRenderer->renderFilledRectangle(
             pos,
             pos + glm::ivec2{width, height},
-            {0.5f, 0.5f, 0.5f, 0.8f}
+            {0.2f, 0.2f, 0.2f, 0.9f}
     );
 
     if (!m_title.empty())

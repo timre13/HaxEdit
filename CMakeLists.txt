@@ -81,5 +81,6 @@ add_executable(haxed
     src/ThemeLoader.cpp
     src/languages.cpp
     src/Git.cpp
+    src/doxygen.cpp
     external/cJSON/cJSON.c
 )
