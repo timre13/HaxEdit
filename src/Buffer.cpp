@@ -2924,12 +2924,23 @@ void Buffer::showSignatureHelp()
     auto signHelp = Autocomp::lspProvider->getSignatureHelp(m_filePath, m_cursorLine, m_cursorCol);
     if (!signHelp.signatures.empty())
     {
-        // TODO: Support multiple signatures and highlight the active
         // TODO: Highlight the active parameter
         // TODO: Show signature documentation
         // TODO: Show parameter documentation
         g_hoverPopup->setTitle("");
-        g_hoverPopup->setContent(signHelp.signatures[signHelp.activeSignature.get_value_or(0)].label);
+        std::string content;
+        for (size_t i{}; i < signHelp.signatures.size(); ++i)
+        {
+            const auto& sign = signHelp.signatures[i];
+            // Draw the current signature with white, draw all the others with gray
+            if ((int)i == signHelp.activeSignature.get_value_or(0))
+                content += "\033[97m"+sign.label+"\033[0m";
+            else
+                content += "\033[90m"+sign.label+"\033[0m";
+            if (i != signHelp.signatures.size()-1)
+                content += '\n';
+        }
+        g_hoverPopup->setContent(content);
         g_hoverPopup->setPos({m_cursorXPx+g_fontWidthPx, m_cursorYPx-g_hoverPopup->calcHeight()});
         g_hoverPopup->show();
     }
