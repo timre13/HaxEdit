@@ -140,7 +140,7 @@ Repo::GitObjectName Repo::getCheckedOutObjName() const
     if (refType == GIT_REFERENCE_DIRECT)
     {
         // TODO: Maybe we should return the tag name instead of the tagged commit
-        //       when a tag is checked out
+        //       when a tag is checked out. Note: It seems that we need to find the tag manually.
         Logger::dbg << "Git HEAD reference type: DIRECT" << Logger::End;
         const bool isHeadDetached = !!git_repository_head_detached(m_repo);
         Logger::dbg << "HEAD is " << (isHeadDetached ? "" : "NOT ") << "detached" << Logger::End;

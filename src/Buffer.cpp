@@ -2860,7 +2860,14 @@ void Buffer::tickGitBranchUpdate(float frameTimeMs)
     {
         Logger::dbg << "Updating checked out Git object" << Logger::End;
         m_gitBranchName = m_gitRepo->getCheckedOutObjName();
-        Logger::log << "Current checked out Git object: " << m_gitBranchName.name << Logger::End;
+        Logger::log << "Current checked out Git object: " << m_gitBranchName.name;
+        // If this is a branch, show only the branch name
+        if (m_gitBranchName.name.starts_with("refs/heads/"))
+        {
+            m_gitBranchName.name = m_gitBranchName.name.substr(11);
+            Logger::log << " aka '" << m_gitBranchName.name << '\'' << Logger::End;
+        }
+        Logger::log << Logger::End;
 
         m_msUntilGitBranchUpdate = GIT_BRANCH_CHECK_FREQ_MS;
     }
