@@ -2922,28 +2922,56 @@ void Buffer::showSymbolHover(bool atMouse/*=false*/)
 void Buffer::showSignatureHelp()
 {
     auto signHelp = Autocomp::lspProvider->getSignatureHelp(m_filePath, m_cursorLine, m_cursorCol);
-    if (!signHelp.signatures.empty())
+    if (signHelp.signatures.empty())
+        return;
+
+    // TODO: Show signature documentation
+    // TODO: Show parameter documentation
+    g_hoverPopup->setTitle("");
+
+    size_t actSign = signHelp.activeSignature.get_value_or(0);
+    if (actSign >= signHelp.signatures.size()) // Default to 0 when out of range
+        actSign = 0;
+
+    size_t actParamI = signHelp.activeParameter.get_value_or(0);
+
+    std::string content;
+    for (size_t signI{}; signI < signHelp.signatures.size(); ++signI)
     {
-        // TODO: Highlight the active parameter
-        // TODO: Show signature documentation
-        // TODO: Show parameter documentation
-        g_hoverPopup->setTitle("");
-        std::string content;
-        for (size_t i{}; i < signHelp.signatures.size(); ++i)
+        const auto& sign = signHelp.signatures[signI];
+        // Draw the current signature with white, draw all the others with gray
+        if (signI == actSign)
         {
-            const auto& sign = signHelp.signatures[i];
-            // Draw the current signature with white, draw all the others with gray
-            if ((int)i == signHelp.activeSignature.get_value_or(0))
-                content += "\033[97m"+sign.label+"\033[0m";
-            else
-                content += "\033[90m"+sign.label+"\033[0m";
-            if (i != signHelp.signatures.size()-1)
-                content += '\n';
+            std::string signLabel = sign.label;
+            if (!sign.parameters.empty())
+            {
+                // Highlight the active parameter
+
+                const lsParameterInformation& actParam = sign.parameters[
+                    (actParamI < sign.parameters.size()) ? actParamI : 0]; // Default to 0 when out of range
+
+                // The parameters are substrings of the signature
+                // Find the bounds
+                const size_t paramStart = signLabel.find(actParam.label);
+                assert(paramStart != std::string::npos);
+                assert(paramStart + actParam.label.length() <= signLabel.length());
+
+                signLabel.insert(paramStart+actParam.label.length(), "\033[0m\033[97m");
+                signLabel.insert(paramStart, "\033[1m\033[93m");
+
+            }
+            content += "\033[97m"+signLabel+"\033[0m";
         }
-        g_hoverPopup->setContent(content);
-        g_hoverPopup->setPos({m_cursorXPx+g_fontWidthPx, m_cursorYPx-g_hoverPopup->calcHeight()});
-        g_hoverPopup->show();
+        else
+        {
+            content += "\033[90m"+sign.label+"\033[0m";
+        }
+        if (signI != signHelp.signatures.size()-1)
+            content += '\n';
     }
+    g_hoverPopup->setContent(content);
+    g_hoverPopup->setPos({m_cursorXPx+g_fontWidthPx, m_cursorYPx-g_hoverPopup->calcHeight()});
+    g_hoverPopup->show();
 }
 
 void Buffer::_goToDeclOrDefOrImp(const Autocomp::LspProvider::Location& loc)
