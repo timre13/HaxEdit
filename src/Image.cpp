@@ -41,8 +41,16 @@ Image::Image(
     glGenTextures(1, &m_sampler);
     glBindTexture(GL_TEXTURE_2D, m_sampler);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_physicalSize.x, m_physicalSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, m_data);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, downscaleFilt); // Downscale filter
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, upscaleFilt); // Upscale filter
+    if (m_isOpenFailed) // If failed to open, force "nearest" filter
+    {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); // Downscale filter
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); // Upscale filter
+    }
+    else
+    {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, downscaleFilt); // Downscale filter
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, upscaleFilt); // Upscale filter
+    }
 }
 
 void Image::render(const glm::ivec2& pos, const glm::ivec2& size/*={0, 0}*/) const
