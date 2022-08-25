@@ -604,6 +604,8 @@ LspProvider::HoverInfo LspProvider::getHover(const std::string& path, uint line,
                 }
             }
         }
+        info.text = strTrimTrailingLineBreak(info.text);
+
         if (resp->response.result.range)
         {
             info.gotRange  = true;

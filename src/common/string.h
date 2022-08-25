@@ -53,6 +53,20 @@ inline T strCapitalize(T str)
     return str;
 }
 
+template <typename T>
+inline T strTrimTrailingLineBreak(const T& str)
+{
+    _CHECK_T_STR_TYPE;
+
+    if (str.ends_with('\n'))
+    {
+        T output = str;
+        output.pop_back();
+        return output;
+    }
+    return str;
+}
+
 inline std::string quoteStr(const std::string& str) { return '"'+str+'"'; }
 inline String quoteStr(const String& str) { return U'"'+str+U'"'; }
 
