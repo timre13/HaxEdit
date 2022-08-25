@@ -555,7 +555,54 @@ LspProvider::HoverInfo LspProvider::getHover(const std::string& path, uint line,
         HoverInfo info;
         if (resp->response.result.contents.second)
         {
-            info.text = Doxygen::doxygenToAnsiEscaped(resp->response.result.contents.second->value);
+            const auto& markupContent = resp->response.result.contents.second.get();
+            if (markupContent.kind == "markdown") // Kind can be plaintext or markdown
+            {
+                // TODO: Support markdown
+                // Note: Can contain code blocks (MarkupContent is preferred over MarkedString
+                //       because they can contain markdown with code inside, but MarkedString
+                //       can only contain code without markdown)
+                info.text = Doxygen::doxygenToAnsiEscaped(markupContent.value);
+                Logger::warn << "Markdown in MarkupContent is not supported yet" << Logger::End;
+            }
+            else
+            {
+                info.text = Doxygen::doxygenToAnsiEscaped(markupContent.value);
+                if (markupContent.kind != "plaintext")
+                    Logger::warn << "Unknown MarkupContent kind: " << markupContent.kind << Logger::End;
+            }
+        }
+        else if (resp->response.result.contents.first)
+        {
+            const auto& markedStrings = resp->response.result.contents.first.get();
+            info.text = "";
+            for (const auto& mstr : markedStrings)
+            {
+                // If the values are plain text objects
+                if (mstr.first.has_value())
+                {
+                    info.text += mstr.first.get() + '\n';
+                }
+                // If the values are MarkedStrings
+                else if (mstr.second.has_value())
+                {
+                    if (mstr.second->language.get_value_or("").empty())
+                    {
+                        info.text += mstr.second->value + '\n';
+                    }
+                    else
+                    {
+                        // TODO: Highlight based on the specified language
+                        info.text += mstr.second->value + '\n';
+                        Logger::warn << "Unimplemented syntax highligthing for MarkedString language: "
+                            << mstr.second->language.get() << Logger::End;
+                    }
+                }
+                else
+                {
+                    assert(false);
+                }
+            }
         }
         if (resp->response.result.range)
         {
