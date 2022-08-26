@@ -61,6 +61,7 @@ add_executable(haxed
     src/signs.cpp
     src/Buffer.cpp
     src/ImageBuffer.cpp
+    src/Document.cpp
     src/Split.cpp
     src/Image.cpp
     src/Timer.cpp

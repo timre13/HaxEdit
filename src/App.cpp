@@ -737,14 +737,14 @@ void App::windowCharCB(GLFWwindow*, uint codePoint)
         case EditorMode::_EditorMode::Insert:
             if (g_activeBuff)
             {
-                g_activeBuff->insert(codePoint);
+                g_activeBuff->insertCharAtCursor(codePoint);
             }
             break;
 
         case EditorMode::_EditorMode::Replace:
             if (g_activeBuff)
             {
-                g_activeBuff->replaceChar(codePoint);
+                g_activeBuff->replaceCharAtCursor(codePoint);
             }
             break;
     }

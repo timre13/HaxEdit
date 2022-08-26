@@ -1,4 +1,5 @@
 #include "Buffer.h"
+#include "Document.h"
 #include "config.h"
 #include "Timer.h"
 #include "types.h"
@@ -23,6 +24,7 @@ bufid_t Buffer::s_lastUsedId = 0;
 Buffer::Buffer()
 {
     m_id = s_lastUsedId++;
+    m_document = std::make_unique<Document>();
 
     /*
      * This thread runs in the background while the buffer is alive.
@@ -72,7 +74,9 @@ void Buffer::open(const std::string& filePath, bool isReload/*=false*/)
     m_filePath = filePath;
     m_language = Langs::LangId::Unknown;
     m_isReadOnly = false;
+#if 0 // TODO
     m_history.clear();
+#endif
     m_gitRepo.reset();
     m_signs.clear();
     m_lastFileUpdateTime = 0;
@@ -85,8 +89,8 @@ void Buffer::open(const std::string& filePath, bool isReload/*=false*/)
     try
     {
         m_filePath = std::filesystem::canonical(filePath);
-        m_content = splitStrToLines(loadUnicodeFile(filePath), true);
-        m_highlightBuffer = std::u8string(countLineListLen(m_content), Syntax::MARK_NONE);
+        m_document->setContent(loadUnicodeFile(filePath));
+        m_highlightBuffer = std::u8string(m_document->calcCharCount(), Syntax::MARK_NONE);
         m_isHighlightUpdateNeeded = true;
         m_gitRepo = std::make_unique<Git::Repo>(filePath);
         m_lastFileUpdateTime = getFileModTime(m_filePath);
@@ -96,8 +100,8 @@ void Buffer::open(const std::string& filePath, bool isReload/*=false*/)
             << " (LSP id: " << Langs::langIdToLspId(m_language) << ')' << Logger::End;
 
         Logger::dbg << "Read "
-            << countLineListLen(m_content) << " characters ("
-            << m_content.size() << " lines) from file" << Logger::End;
+            << m_document->calcCharCount() << " characters ("
+            << m_document->getLineCount() << " lines) from file" << Logger::End;
     }
     catch (InvalidUnicodeError& e)
     {
@@ -112,7 +116,7 @@ void Buffer::open(const std::string& filePath, bool isReload/*=false*/)
     }
     catch (std::exception& e)
     {
-        m_content.clear();
+        m_document->clearContent();
         m_highlightBuffer.clear();
         m_isHighlightUpdateNeeded = true;
         m_gitRepo.reset();
@@ -151,7 +155,7 @@ void Buffer::open(const std::string& filePath, bool isReload/*=false*/)
     { // Regenerate the initial autocomplete list for `buffWordProvid`
         Autocomp::buffWordProvid->clear();
 
-        for (const auto& line : m_content)
+        for (const auto& line : m_document->getAll())
         {
             String word;
             for (Char c : line)
@@ -188,7 +192,7 @@ void Buffer::open(const std::string& filePath, bool isReload/*=false*/)
     }
 
     // TODO: This is bad
-    const std::string content = strToAscii(lineVecConcat(m_content));
+    const std::string content = strToAscii(m_document->getConcated());
     // TODO: Properly tell reloading to LSP server (close first)
     Autocomp::lspProvider->onFileOpen(m_filePath, m_language, content);
 
@@ -208,7 +212,7 @@ int Buffer::saveToFile()
     {
         // TODO: Is there a way to write the content line-by-line to the file?
         //       That would be faster.
-        const String content = lineVecConcat(m_content);
+        const String content = m_document->getConcated();
         contentLen = content.length();
         const icu::UnicodeString str = icu::UnicodeString::fromUTF32(
                 (const UChar32*)content.data(), content.length());
@@ -232,7 +236,7 @@ int Buffer::saveToFile()
         return 1;
     }
     Logger::log << "Wrote " << contentLen << " characters ("
-        << m_content.size() << " lines)" << Logger::End;
+        << m_document->getLineCount() << " lines)" << Logger::End;
     g_statMsg.set("Wrote buffer to file: \""+m_filePath+"\"", StatusMsg::Type::Info);
 
     m_isModified = false;
@@ -299,7 +303,7 @@ void Buffer::_updateHighlighting()
     m_findResultIs.clear();
     g_isRedrawNeeded = true;
 
-    const auto buffer = lineVecConcat(m_content);
+    const auto buffer = m_document->getConcated();
 
     // This is the temporary buffer we are working with
     // `m_highlightBuffer` is replaced with this at the end
@@ -610,13 +614,10 @@ void Buffer::updateCursor()
 {
     TIMER_BEGIN_FUNC();
 
-    assert(m_cursorLine >= 0);
-    assert(m_content.empty() || (size_t)m_cursorLine < m_content.size());
-    assert(m_cursorCol >= 0);
-    assert(m_content.empty() || m_cursorCharPos < countLineListLen(m_content));
+    m_document->assertPos(m_cursorLine, m_cursorCol, m_cursorCharPos);
 
     auto getCursorLineLen{[&](){
-        return m_content[m_cursorLine].size();
+        return m_document->getLine(m_cursorLine).size();
     }};
 
     switch (m_cursorMovCmd)
@@ -656,7 +657,7 @@ void Buffer::updateCursor()
         break;
 
     case CursorMovCmd::Down:
-        if ((size_t)m_cursorLine < m_content.size()-1)
+        if ((size_t)m_cursorLine < m_document->getLineCount()-1)
         {
             const int prevCursorCol = m_cursorCol;
             const int prevCursorLineLen = getCursorLineLen();
@@ -692,14 +693,14 @@ void Buffer::updateCursor()
         break;
 
     case CursorMovCmd::LastChar:
-        m_cursorLine = m_content.empty() ? 0 : m_content.size()-1;
+        m_cursorLine = m_document->isEmpty() ? 0 : m_document->getLineCount()-1;
         m_cursorCol = getCursorLineLen()-1;
-        m_cursorCharPos = countLineListLen(m_content)-1;
+        m_cursorCharPos = m_document->calcCharCount()-1;
         break;
 
     case CursorMovCmd::SWordEnd:
     {
-        const int contentSize = countLineListLen(m_content);
+        const int contentSize = m_document->calcCharCount();
 
         // Skip spaces
         while ((int)m_cursorCharPos < contentSize)
@@ -707,15 +708,15 @@ void Buffer::updateCursor()
             int newCCol = m_cursorCol + 1;
             int newCLine = m_cursorLine;
             size_t newCPos = m_cursorCharPos + 1;
-            if ((size_t)newCCol == m_content[newCLine].length()) // If at the end of line
+            if ((size_t)newCCol == m_document->getLine(newCLine).length()) // If at the end of line
             {
                 ++newCLine;
                 newCCol = 0;
-                if ((size_t)newCLine >= m_content.size()) // End of bufer?
+                if ((size_t)newCLine >= m_document->getLineCount()) // End of bufer?
                     break;
             }
 
-            if (!u_isspace(m_content[newCLine][newCCol]))
+            if (!u_isspace(m_document->getChar({newCLine, newCCol})))
                 break;
 
             m_cursorCharPos = newCPos;
@@ -729,15 +730,15 @@ void Buffer::updateCursor()
             int newCCol = m_cursorCol + 1;
             int newCLine = m_cursorLine;
             size_t newCPos = m_cursorCharPos + 1;
-            if ((size_t)newCCol == m_content[newCLine].length()) // If at the end of line
+            if ((size_t)newCCol == m_document->getLine(newCLine).length()) // If at the end of line
             {
                 ++newCLine;
                 newCCol = 0;
-                if ((size_t)newCLine >= m_content.size()) // End of bufer?
+                if ((size_t)newCLine >= m_document->getLineCount()) // End of bufer?
                     break;
             }
 
-            if (u_isspace(m_content[newCLine][newCCol]))
+            if (u_isspace(m_document->getChar({newCLine, newCCol})))
                 break;
 
             m_cursorCharPos = newCPos;
@@ -762,10 +763,10 @@ void Buffer::updateCursor()
                 --newCLine;
                 if (newCLine == -1) // Buffer beginning?
                     break;
-                newCCol = m_content[newCLine].length()-1; // Go to line end
+                newCCol = m_document->getLine(newCLine).length()-1; // Go to line end
             }
 
-            if (!u_isspace(m_content[newCLine][newCCol]))
+            if (!u_isspace(m_document->getChar({newCLine, newCCol})))
                 break;
 
             m_cursorCharPos = newCPos;
@@ -784,10 +785,10 @@ void Buffer::updateCursor()
                 --newCLine;
                 if (newCLine == -1) // Buffer beginning?
                     break;
-                newCCol = m_content[newCLine].length()-1; // Go to line end
+                newCCol = m_document->getLine(newCLine).length()-1; // Go to line end
             }
 
-            if (u_isspace(m_content[newCLine][newCCol]))
+            if (u_isspace(m_document->getChar({newCLine, newCCol})))
                 break;
 
             m_cursorCharPos = newCPos;
@@ -801,25 +802,25 @@ void Buffer::updateCursor()
     {
         // FIXME: In VIM an empty line is also a WORD
 
-        const int contentSize = countLineListLen(m_content);
+        const int contentSize = m_document->calcCharCount();
 
         // If inside spaces
-        if (u_isspace(m_content[m_cursorLine][m_cursorCol]))
+        if (u_isspace(m_document->getChar({m_cursorLine, m_cursorCol})))
         {
             // Skip spaces
             while ((int)m_cursorCharPos < contentSize)
             {
-                if (!u_isspace(m_content[m_cursorLine][m_cursorCol]))
+                if (!u_isspace(m_document->getChar({m_cursorLine, m_cursorCol})))
                     break;
 
                 int newCCol = m_cursorCol + 1;
                 int newCLine = m_cursorLine;
                 size_t newCPos = m_cursorCharPos + 1;
-                if ((size_t)newCCol == m_content[newCLine].length()) // If at the end of line
+                if ((size_t)newCCol == m_document->getLineLen(newCLine)) // If at the end of line
                 {
                     ++newCLine;
                     newCCol = 0;
-                    if ((size_t)newCLine >= m_content.size()) // End of bufer?
+                    if ((size_t)newCLine >= m_document->getLineCount()) // End of bufer?
                         break;
                 }
                 m_cursorCharPos = newCPos;
@@ -833,17 +834,17 @@ void Buffer::updateCursor()
             // Go until spaces
             while ((int)m_cursorCharPos < contentSize)
             {
-                if (u_isspace(m_content[m_cursorLine][m_cursorCol]))
+                if (u_isspace(m_document->getChar({m_cursorLine, m_cursorCol})))
                     break;
 
                 int newCCol = m_cursorCol + 1;
                 int newCLine = m_cursorLine;
                 size_t newCPos = m_cursorCharPos + 1;
-                if ((size_t)newCCol == m_content[newCLine].length()) // If at the end of line
+                if ((size_t)newCCol == m_document->getLineLen(newCLine)) // If at the end of line
                 {
                     ++newCLine;
                     newCCol = 0;
-                    if ((size_t)newCLine >= m_content.size()) // End of bufer?
+                    if ((size_t)newCLine >= m_document->getLineCount()) // End of bufer?
                         break;
                 }
 
@@ -855,17 +856,17 @@ void Buffer::updateCursor()
             // Skip spaces
             while ((int)m_cursorCharPos < contentSize)
             {
-                if (!u_isspace(m_content[m_cursorLine][m_cursorCol]))
+                if (!u_isspace(m_document->getChar({m_cursorLine, m_cursorCol})))
                     break;
 
                 int newCCol = m_cursorCol + 1;
                 int newCLine = m_cursorLine;
                 size_t newCPos = m_cursorCharPos + 1;
-                if ((size_t)newCCol == m_content[newCLine].length()) // If at the end of line
+                if ((size_t)newCCol == m_document->getLineLen(newCLine)) // If at the end of line
                 {
                     ++newCLine;
                     newCCol = 0;
-                    if ((size_t)newCLine >= m_content.size()) // End of bufer?
+                    if ((size_t)newCLine >= m_document->getLineCount()) // End of bufer?
                         break;
                 }
 
@@ -898,7 +899,7 @@ void Buffer::updateCursor()
     case CursorMovCmd::PageDown:
     {
         const size_t pageSize = m_size.y / g_fontSizePx;
-        for (size_t i{}; i < pageSize && (size_t)m_cursorLine < m_content.size()-1; ++i)
+        for (size_t i{}; i < pageSize && (size_t)m_cursorLine < m_document->getLineCount()-1; ++i)
         {
             const int prevCursorCol = m_cursorCol;
             const int prevCursorLineLen = getCursorLineLen();
@@ -918,10 +919,7 @@ void Buffer::updateCursor()
         break;
     }
 
-    assert(m_cursorLine >= 0);
-    assert(m_content.empty() || (size_t)m_cursorLine < m_content.size());
-    assert(m_cursorCol >= 0);
-    assert(m_content.empty() || m_cursorCharPos < countLineListLen(m_content));
+    m_document->assertPos(m_cursorLine, m_cursorCol, m_cursorCharPos);
 
     // Scroll up when the cursor goes out of the viewport
     if (m_cursorMovCmd != CursorMovCmd::None)
@@ -936,22 +934,67 @@ void Buffer::updateCursor()
     TIMER_END_FUNC();
 }
 
+int Buffer::getNumOfLines() const
+{
+    return m_document->getLineCount();
+}
+
+Char Buffer::getCharAt(size_t pos) const
+{
+    if (m_document->isEmpty())
+        return '\0';
+
+    size_t i{};
+    for (const String& line : *m_document)
+    {
+        if (i + line.size() - 1 < pos)
+        {
+            i += line.size();
+        }
+        else
+        {
+            return line[pos-i];
+        }
+    }
+    Logger::fatal << "Tried to get character at invalid position: "
+        << pos << " / " << std::to_string((int)pos) << Logger::End;
+    return '\0';
+}
+
+String Buffer::getCursorWord() const
+{
+    if (isspace(m_document->getChar({m_cursorLine, m_cursorCol})))
+        return U"";
+
+    int beginCol = m_cursorCol;
+    while (beginCol >= 0 && !u_isspace(m_document->getChar({m_cursorLine, beginCol})))
+        --beginCol;
+    ++beginCol;
+
+    int endCol = m_cursorCol;
+    while (endCol < (int)m_document->getLine(m_cursorLine).length()
+        && !u_isspace(m_document->getChar({m_cursorLine, endCol})))
+        ++endCol;
+
+    return m_document->getLine(m_cursorLine).substr(beginCol, endCol-beginCol);
+}
+
 void Buffer::moveCursorToLineCol(int line, int col)
 {
     m_cursorLine = line;
-    if (m_cursorLine >= (int)m_content.size())
-        m_cursorLine = (int)m_content.size()-1;
+    if (m_cursorLine >= (int)m_document->getLineCount())
+        m_cursorLine = (int)m_document->getLineCount()-1;
 
     m_cursorCol = col;
-    if (m_cursorCol >= (int)m_content[m_cursorLine].length())
-        m_cursorCol = m_content[m_cursorLine].length()-1;
+    if (m_cursorCol >= (int)m_document->getLineLen(m_cursorLine))
+        m_cursorCol = m_document->getLineLen(m_cursorLine)-1;
 
     // Calculate `m_cursorCharPos`
     m_cursorCharPos = 0;
     {
         // Add up the whole line lengths
         for (size_t lineI{}; (int)lineI < m_cursorLine; ++lineI)
-            m_cursorCharPos += m_content[lineI].length();
+            m_cursorCharPos += m_document->getLineLen(lineI);
 
         // Add the remaining
         m_cursorCharPos += m_cursorCol;
@@ -967,9 +1010,9 @@ void Buffer::moveCursorToLineCol(int line, int col)
 void Buffer::moveCursorToChar(int pos)
 {
     size_t i{};
-    for (size_t lineI{}; lineI < m_content.size(); ++lineI)
+    for (size_t lineI{}; lineI < m_document->getLineCount(); ++lineI)
     {
-        const size_t lineLen = m_content[lineI].length();
+        const size_t lineLen = m_document->getLineLen(lineI);
         if (int(i + lineLen - 1) < pos)
         {
             i += lineLen;
@@ -1072,7 +1115,7 @@ bool Buffer::isCharSelected(int lineI, int colI, size_t charI) const
         break;
 
     case Selection::Mode::Line:
-        assert(lineI >= 0 && lineI < (int)m_content.size());
+        assert(lineI >= 0 && lineI < (int)m_document->getLineCount());
 
         if (m_selection.fromLine < m_cursorLine)
         {
@@ -1086,11 +1129,11 @@ bool Buffer::isCharSelected(int lineI, int colI, size_t charI) const
 
     case Selection::Mode::Block:
     {
-        assert(lineI >= 0 && lineI < (int)m_content.size());
-        assert(colI >= 0 && colI < (int)m_content[lineI].length());
+        assert(lineI >= 0 && lineI < (int)m_document->getLineCount());
+        assert(colI >= 0 && colI < (int)m_document->getLine(lineI).length());
 
         // Newlines can't be selected with block selection
-        if (m_content[lineI][colI] == '\n')
+        if (m_document->getChar({lineI, colI}) == '\n')
             return false;
 
         bool isLineOk = false;
@@ -1131,8 +1174,8 @@ void Buffer::pasteFromClipboard()
         for (char c : aClipbText)
         {
             assert((c & 0b10000000) == 0); // Detect non-ASCII chars
-            insert(c);
         }
+        applyInsertion({m_cursorLine, m_cursorCol}, strToUtf32(aClipbText));
         g_statMsg.set("Pasted text from clipboard ("
                 +std::to_string(aClipbText.size())+" chars)"
                 +(delCount ? " (overwrote "+std::to_string(delCount)+" chars)" : ""),
@@ -1164,9 +1207,9 @@ size_t Buffer::copySelectionToClipboard(bool shouldUnselect/*=true*/)
     String toCopy;
     {
         size_t charI{};
-        for (size_t lineI{}; lineI < m_content.size(); ++lineI)
+        for (size_t lineI{}; lineI < m_document->getLineCount(); ++lineI)
         {
-            const auto& line = m_content[lineI];
+            const auto& line = m_document->getLine(lineI);
 
             for (size_t colI{}; colI < line.length(); ++colI)
             {
@@ -1175,7 +1218,7 @@ size_t Buffer::copySelectionToClipboard(bool shouldUnselect/*=true*/)
                     // We can't select newlines in block selection mode
                     assert(m_selection.mode != Selection::Mode::Block || line[colI] != U'\n');
 
-                    toCopy += m_content[lineI][colI];
+                    toCopy += m_document->getChar({(int)lineI, (int)colI});
 
                     // If we are in block selection mode and this is at the right border of the selection
                     if (m_selection.mode == Selection::Mode::Block && colI == (size_t)std::max(m_selection.fromCol, m_cursorCol))
@@ -1572,7 +1615,7 @@ void Buffer::render()
     // Chars since last search result character
     int _charFoundOffs = INT_MIN;
 
-    for (const String& line : m_content)
+    for (const String& line : m_document->getAll())
     {
 #ifndef NDEBUG
         if (!line.ends_with('\n'))
@@ -1881,54 +1924,22 @@ void Buffer::render()
     TIMER_END_FUNC();
 }
 
-void Buffer::insert(Char character)
+void Buffer::insertCharAtCursor(Char character)
 {
-    if (m_isReadOnly)
-        return;
-
-    TIMER_BEGIN_FUNC();
-
-    assert(m_cursorCol >= 0);
-    assert(m_cursorLine >= 0);
-
     const int oldCol = m_cursorCol;
     const int oldLine = m_cursorLine;
 
-
-    BufferHistory::Entry histEntry;
-    histEntry.oldCursPos = m_cursorCharPos,
-    histEntry.oldCursLine = m_cursorLine,
-    histEntry.oldCursCol = m_cursorCol;
-    histEntry.lines.emplace_back();
-    histEntry.lines[0].lineI = m_cursorLine;
-
+    applyInsertion({m_cursorLine, m_cursorCol}, charToStr(character));
     if (character == '\n')
     {
-        histEntry.lines[0].lineI = oldLine;
-        histEntry.lines[0].from = m_content[oldLine];
         ++m_cursorLine;
-        const String newLineVal = m_content[oldLine].substr(m_cursorCol); // Save chars right to cursor
-        m_content[oldLine] = m_content[oldLine].substr(0, m_cursorCol) + U'\n'; // Remove chars right to cursor
-        histEntry.lines[0].to = m_content[oldLine];
-
-        m_content.insert(m_content.begin()+m_cursorLine, newLineVal); // Create a new line
         m_cursorCol = 0;
-        histEntry.lines.emplace_back();
-        histEntry.lines[1].lineI = m_cursorLine;
-        histEntry.lines[1].from = U"";
-        histEntry.lines[1].to = U"\n";
-
     }
     else
     {
-        histEntry.lines[0].lineI = m_cursorLine;
-        histEntry.lines[0].from = m_content[m_cursorLine];
-        m_content[m_cursorLine].insert(m_content[m_cursorLine].begin()+m_cursorCol, character);
-        histEntry.lines[0].to = m_content[m_cursorLine];
         ++m_cursorCol;
     }
     ++m_cursorCharPos;
-    m_highlightBuffer.insert(m_cursorCharPos, 1, 0);
 
     if (m_autocompPopup->isRendered())
     {
@@ -1944,9 +1955,9 @@ void Buffer::insert(Char character)
     {
         // Find the word
         int wordStart;
-        for (wordStart=oldCol-1; wordStart >= 0 && !u_isspace(m_content[oldLine][wordStart]); wordStart--)
+        for (wordStart=oldCol-1; wordStart >= 0 && !u_isspace(m_document->getChar({oldLine, wordStart})); wordStart--)
             ;
-        const String word = m_content[oldLine].substr(wordStart+1, oldCol-wordStart-1);
+        const String word = m_document->getLine(oldLine).substr(wordStart+1, oldCol-wordStart-1);
 
         // Feed the buffer word provider the word
         if (!word.empty())
@@ -1956,219 +1967,62 @@ void Buffer::insert(Char character)
         }
     }
 
-    histEntry.newCursPos = m_cursorCharPos,
-    histEntry.newCursLine = m_cursorLine,
-    histEntry.newCursCol = m_cursorCol;
-    m_history.add(std::move(histEntry));
-
-    m_isModified = true;
-    m_isCursorShown = true;
-    m_cursorHoldTime = 0;
-    m_isHighlightUpdateNeeded = true;
-    m_version++;
-    Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(lineVecConcat(m_content)));
     scrollViewportToCursor();
-
-    TIMER_END_FUNC();
 }
 
-void Buffer::replaceChar(Char character)
+void Buffer::replaceCharAtCursor(Char character)
 {
-    if (m_isReadOnly)
-        return;
-
-    TIMER_BEGIN_FUNC();
-
-    assert(m_cursorCol >= 0);
-    assert(m_cursorLine >= 0);
-
     // Disallow replacing a newline or replacing a char by a newline
-    if (character == '\n' || m_content[m_cursorLine][m_cursorCol] == '\n')
-    {
-        TIMER_END_FUNC();
+    if (character == '\n' || m_document->getChar({m_cursorLine, m_cursorCol}) == '\n')
         return;
-    }
 
-    BufferHistory::Entry histEntry;
-    histEntry.oldCursPos = m_cursorCharPos,
-    histEntry.oldCursLine = m_cursorLine,
-    histEntry.oldCursCol = m_cursorCol;
-    histEntry.lines.emplace_back();
-    histEntry.lines.back().from = m_content[m_cursorLine];
-    histEntry.lines.back().lineI = m_cursorLine;
-
-    m_content[m_cursorLine][m_cursorCol] = character;
-
+    applyDeletion({{m_cursorLine, m_cursorCol}, {m_cursorLine, m_cursorCol+1}});
+    applyInsertion({m_cursorLine, m_cursorCol}, charToStr(character));
     ++m_cursorCol;
     ++m_cursorCharPos;
-    m_isModified = true;
 
-    histEntry.lines.back().to = m_content[m_cursorLine];
-    histEntry.newCursPos = m_cursorCharPos,
-    histEntry.newCursLine = m_cursorLine,
-    histEntry.newCursCol = m_cursorCol;
-    m_history.add(std::move(histEntry));
-
-    m_isCursorShown = true;
-    m_cursorHoldTime = 0;
-    m_isHighlightUpdateNeeded = true;
-    m_version++;
-    Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(lineVecConcat(m_content)));
     scrollViewportToCursor();
-
-    TIMER_END_FUNC();
 }
 
 void Buffer::deleteCharBackwards()
 {
-    if (m_isReadOnly)
-        return;
-
-    TIMER_BEGIN_FUNC();
-
-    assert(m_cursorCol >= 0);
-    assert(m_cursorLine >= 0);
-
-    BufferHistory::Entry histEntry;
-    histEntry.oldCursPos = m_cursorCharPos,
-    histEntry.oldCursLine = m_cursorLine,
-    histEntry.oldCursCol = m_cursorCol;
-    histEntry.lines.emplace_back();
-
     // If deleting at the beginning of the line and we have stuff to delete
-    if (m_cursorCol == 0 && m_cursorLine != 0)
+    if (m_cursorCol == 0 && m_cursorCharPos > 0)
     {
-        histEntry.lines.emplace_back();
-        histEntry.lines[0].lineI = m_cursorLine-1;
-        histEntry.lines[0].from = m_content[m_cursorLine-1];
-        histEntry.lines[1].lineI = m_cursorLine;
-        histEntry.lines[1].from = m_content[m_cursorLine];
-
-        m_cursorCol = m_content[m_cursorLine-1].length()-1;
-        // Delete newline from end of previous line
-        m_content[m_cursorLine-1].erase(m_content[m_cursorLine-1].length()-1, 1);
-        // Save current line
-        const String currLineVal = m_content[m_cursorLine];
-        // Delete current line
-        m_content.erase(m_content.begin()+m_cursorLine);
-        // Move current line to the end of the prev. one
-        m_content[m_cursorLine-1].append(currLineVal);
-        histEntry.lines[0].to = m_content[m_cursorLine-1];
-        histEntry.lines[1].to = U"";
-        m_highlightBuffer.erase(m_cursorCharPos-1, 1);
+        applyDeletion({
+                {m_cursorLine-1, (int)m_document->getLineLen(m_cursorLine-1)-1},
+                {m_cursorLine, 0}});
         --m_cursorLine;
+        m_cursorCol = m_document->getLineLen(m_cursorLine);
         --m_cursorCharPos;
-        m_isModified = true;
     }
     // If deleting in the middle/end of the line and we have stuff to delete
     else if (m_cursorCharPos > 0)
     {
-        histEntry.lines[0].lineI = m_cursorLine;
-        histEntry.lines[0].from = m_content[m_cursorLine];
-        m_content[m_cursorLine].erase(m_cursorCol-1, 1);
-        m_highlightBuffer.erase(m_cursorCharPos-1, 1);
+        applyDeletion({{m_cursorLine, m_cursorCol-1}, {m_cursorLine, m_cursorCol}});
         --m_cursorCol;
         --m_cursorCharPos;
-        m_isModified = true;
-        histEntry.lines[0].to = m_content[m_cursorLine];
     }
-
-    assert(m_cursorCol >= 0);
-    assert(m_cursorLine >= 0);
-
-    histEntry.newCursPos = m_cursorCharPos,
-    histEntry.newCursLine = m_cursorLine,
-    histEntry.newCursCol = m_cursorCol;
-    m_history.add(std::move(histEntry));
-
     m_isCursorShown = true;
-    m_cursorHoldTime = 0;
-    m_isHighlightUpdateNeeded = true;
-    m_version++;
-    Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(lineVecConcat(m_content)));
     scrollViewportToCursor();
 
-    if (m_autocompPopup->isRendered())
-        m_autocompPopup->removeLastCharFromFilter();
-
-    TIMER_END_FUNC();
+    // TODO: Handle autocomplete filter
 }
 
 void Buffer::deleteCharForwardOrSelected()
 {
-    if (m_isReadOnly)
-        return;
-
     if (m_selection.mode != Selection::Mode::None)
     {
         deleteSelectedChars();
         return;
     }
 
-    TIMER_BEGIN_FUNC();
-
-    assert(m_cursorCol >= 0);
-    assert(m_cursorLine >= 0);
-
-    BufferHistory::Entry histEntry;
-    histEntry.oldCursPos = m_cursorCharPos,
-    histEntry.oldCursLine = m_cursorLine,
-    histEntry.oldCursCol = m_cursorCol;
-    histEntry.lines.emplace_back();
-
-    const int lineLen = m_content[m_cursorLine].length();
-    // If deleting at the end of the line and we have stuff to delete
-    if (m_cursorCol == lineLen-1 && (size_t)m_cursorLine < m_content.size()-1)
-    {
-        histEntry.lines.emplace_back();
-        histEntry.lines[0].lineI = m_cursorLine;
-        histEntry.lines[0].from = m_content[m_cursorLine];
-        histEntry.lines[1].lineI = m_cursorLine+1;
-        histEntry.lines[1].from = m_content[m_cursorLine+1];
-        // Save next line
-        const String nextLine = m_content[m_cursorLine+1];
-        // Remove next line
-        m_content.erase(m_content.begin()+m_cursorLine+1);
-        // Remove newline from current line
-        m_content[m_cursorLine].erase(m_content[m_cursorLine].length()-1, 1);
-        // Append the next line to the current one
-        m_content[m_cursorLine].append(nextLine);
-        histEntry.lines[0].to = m_content[m_cursorLine];
-        histEntry.lines[1].to = U"";
-        m_highlightBuffer.erase(m_cursorCharPos, 1);
-        m_isModified = true;
-    }
-    // If deleting in the middle/beginning of the line and we have stuff to delete
-    else if (m_cursorCol < lineLen-1 && (size_t)m_cursorLine < m_content.size())
-    {
-        histEntry.lines[0].lineI = m_cursorLine;
-        histEntry.lines[0].from = m_content[m_cursorLine];
-        m_content[m_cursorLine].erase(m_cursorCol, 1);
-        m_highlightBuffer.erase(m_cursorCharPos, 1);
-        histEntry.lines[0].to = m_content[m_cursorLine];
-        m_isModified = true;
-    }
-
-    assert(m_cursorCol >= 0);
-    assert(m_cursorLine >= 0);
-
-    histEntry.newCursPos = m_cursorCharPos,
-    histEntry.newCursLine = m_cursorLine,
-    histEntry.newCursCol = m_cursorCol;
-    m_history.add(std::move(histEntry));
-
-    m_isCursorShown = true;
-    m_cursorHoldTime = 0;
-    scrollViewportToCursor();
-    m_isHighlightUpdateNeeded = true;
-    m_version++;
-    Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(lineVecConcat(m_content)));
-
-    TIMER_END_FUNC();
+    applyDeletion({{m_cursorLine, m_cursorCol}, {m_cursorLine, m_cursorCol+1}});
 }
 
 void Buffer::undo()
 {
+#if 0 // TODO
     if (m_history.canGoBack())
     {
         auto entry = m_history.goBack();
@@ -2210,10 +2064,12 @@ void Buffer::undo()
     {
         Logger::dbg << "Cannot go back in history" << Logger::End;
     }
+#endif
 }
 
 void Buffer::redo()
 {
+#if 0 // TODO
     if (m_history.canGoForward())
     {
         auto entry = m_history.goForward();
@@ -2254,6 +2110,7 @@ void Buffer::redo()
     {
         Logger::dbg << "Cannot go forward in history" << Logger::End;
     }
+#endif
 }
 
 // Guesses the currently typed path based on the POSIX portable file name character set
@@ -2276,7 +2133,9 @@ static std::string getPathFromLine(const String& line)
 void Buffer::triggerAutocompPopup()
 {
     regenAutocompList();
+#if 0 // TODO
     Autocomp::pathProvid->setPrefix(m_id, getPathFromLine(m_content[m_cursorLine].substr(0, m_cursorCol)));
+#endif
     m_autocompPopup->setVisibility(true);
     m_isCursorShown = true;
     m_cursorHoldTime = 0;
@@ -2324,9 +2183,11 @@ void Buffer::autocompPopupInsert()
             // If there is `insertText`, use it. Otherwise use `label`.
             const std::string toInsert = item->insertText.get_value_or(item->label);
             //    .substr(m_autocompPopup->getFilterLen());
+# if 0 // TODO
             m_content[m_cursorLine].insert(m_cursorCol, strToUtf32(toInsert));
             m_cursorCharPos += toInsert.length();
             m_cursorCol += toInsert.length();
+#endif
         }
 
         if (item->additionalTextEdits)
@@ -2336,7 +2197,9 @@ void Buffer::autocompPopupInsert()
 
         m_isHighlightUpdateNeeded = true;
         m_version++;
+# if 0 // TODO
         Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(lineVecConcat(m_content)));
+#endif
     }
     m_autocompPopup->setVisibility(false);
     m_isCursorShown = true;
@@ -2382,8 +2245,6 @@ size_t Buffer::deleteSelectedChars()
     if (m_selection.mode == Selection::Mode::None)
         return 0;
 
-    BufferHistory::Entry histEntry;
-
     int delCount{};
 
     switch (m_selection.mode)
@@ -2393,131 +2254,57 @@ size_t Buffer::deleteSelectedChars()
 
     case Selection::Mode::Normal:
     {
-        histEntry.oldCursPos = m_cursorCharPos;
-        histEntry.oldCursLine = m_cursorLine;
-        histEntry.oldCursCol = m_cursorCol;
-
-        const int fromLine = std::min(m_selection.fromLine, m_cursorLine);
-        const int toLine = std::max(m_selection.fromLine, m_cursorLine);
-        const size_t fromChar = std::min(m_selection.fromCharI, m_cursorCharPos);
-        const size_t toChar = std::max(m_selection.fromCharI, m_cursorCharPos);
-        // See: `colI` loop
-        const int bottLineCol = (toChar == m_selection.fromCharI ? m_selection.fromCol : m_cursorCol);
-        const int topLineCol = (fromChar == m_selection.fromCharI ? m_selection.fromCol : m_cursorCol);
-        size_t charI = toChar;
-        size_t entryI{};
-        for (int lineI=toLine; lineI >= fromLine; --lineI)
+        lsRange range;
+        if (m_selection.fromCharI < m_cursorCharPos)
         {
-            histEntry.lines.emplace_back();
-            histEntry.lines.back().lineI = lineI;
-            histEntry.lines.back().from = m_content[lineI];
-
-            const size_t lineLen = m_content[lineI].length();
-            // Note: We start looking through the first (last by index) line in the selection not
-            // from the last character but from the selection end column
-            for (int colI=(lineI == toLine ? bottLineCol : lineLen-1); colI >= (lineI == fromLine ? topLineCol : 0); --colI)
-            {
-                if (charI >= fromChar && charI <= toChar)
-                {
-                    m_content[lineI].erase(colI, 1);
-                    ++delCount;
-                }
-
-                charI--;
-            }
-
-            bool deletedWholeLine = false;
-            // Remove line if empty
-            if (m_content[lineI].empty())
-            {
-                m_content.erase(m_content.begin()+lineI);
-                deletedWholeLine = true;
-            }
-
-            if (deletedWholeLine)
-                histEntry.lines[entryI].to = U"";
-            else
-                histEntry.lines[entryI].to = m_content[lineI];
-
-            // FIXME: Redo history gets messed up
-            // FIXME: Somehow there are lines without line break in the history
-
-            // If the newline was deleted from the line
-            if (m_content[lineI].back() != U'\n')
-            {
-                if (lineI+1 < (int)m_content.size())
-                {
-                    // Append the next line to the end of this line, delete the next line
-                    // and mark in the history that it was deleted.
-                    // TODO: Maybe do the history saving as a second run?
-                    histEntry.lines.emplace_back();
-                    ++entryI;
-                    histEntry.lines[entryI].lineI = lineI+1;
-                    histEntry.lines[entryI].from = m_content[lineI+1];
-                    m_content[lineI].append(m_content[lineI+1]);
-                    m_content.erase(m_content.begin()+lineI+1);
-                    histEntry.lines[entryI].to = U"";
-                }
-                else
-                {
-                    m_content[lineI].push_back(U'\n');
-                }
-            }
-
-            ++entryI;
+            range.start.line = m_selection.fromLine;
+            range.start.character = m_selection.fromCol;
+            range.end.line = m_cursorLine;
+            range.end.character = m_cursorCol+1;
         }
+        else
+        {
+            range.start.line = m_cursorLine;
+            range.start.character = m_cursorCol;
+            range.end.line = m_selection.fromLine;
+            range.end.character = m_selection.fromCol+1;
+        }
+        delCount = applyDeletion(range);
         break;
     }
 
     case Selection::Mode::Line:
     {
-        histEntry.oldCursPos = m_cursorCharPos-m_cursorCol; // Calculate line beginning
-        histEntry.oldCursLine = m_cursorLine;
-        histEntry.oldCursCol = 0;
-
         const int fromLine = std::min(m_selection.fromLine, m_cursorLine);
         const int toLine = std::max(m_selection.fromLine, m_cursorLine);
-        for (int lineI=toLine; lineI >= fromLine; --lineI)
-        {
-            delCount += m_content[lineI].length();
-            histEntry.lines.emplace_back();
-            histEntry.lines.back().lineI = lineI;
-            histEntry.lines.back().from = m_content[lineI];
-            m_content.erase(m_content.begin()+lineI);
-            histEntry.lines.back().to = U"";
-        }
+
+        lsRange range;
+        range.start.line = fromLine;
+        range.start.character = 0;
+        range.end.line = toLine+1;
+        range.end.character = 0;
+        delCount = applyDeletion(range);
         break;
     }
 
     case Selection::Mode::Block:
     {
-        histEntry.oldCursPos = m_cursorCharPos;
-        histEntry.oldCursLine = m_cursorLine;
-        histEntry.oldCursCol = m_cursorCol;
-
         const int fromLine = std::min(m_selection.fromLine, m_cursorLine);
         const int toLine = std::max(m_selection.fromLine, m_cursorLine);
         for (int lineI=toLine; lineI >= fromLine; --lineI)
         {
-            histEntry.lines.emplace_back();
-            histEntry.lines.back().lineI = lineI;
-            histEntry.lines.back().from = m_content[lineI];
-
-            const int lineLen = m_content[lineI].length();
-            for (int colI=lineLen-1; colI >= 0; --colI)
-            {
-                if (isCharSelected(lineI, colI, -1))
-                {
-                    assert(m_content[lineI][colI] != U'\n'); // We can't select newlines
-                    m_content[lineI].erase(colI, 1);
-                    ++delCount;
-                }
-            }
-
-            assert(!m_content[lineI].empty());
-            histEntry.lines.back().to = m_content[lineI];
+            const int lineLen = m_document->getLineLen(lineI);
+            lsRange range;
+            range.start.line = lineI;
+            range.start.character = std::min(m_selection.fromCol, m_cursorCol);
+            if ((int)range.start.character > lineLen-1)
+                range.start.character = lineLen-1;
+            range.end.line = lineI;
+            range.end.character = std::max(m_selection.fromCol, m_cursorCol)+1;
+            if ((int)range.end.character > lineLen-1)
+                range.end.character = lineLen-1;
+            delCount += applyDeletion(range);
         }
-
         break;
     }
     }
@@ -2530,8 +2317,8 @@ size_t Buffer::deleteSelectedChars()
         m_cursorCharPos = m_selection.fromCharI;
     }
     { // Limit too large cursor column
-        assert(!m_content[m_cursorLine].empty());
-        const int cursMaxCol = m_content[m_cursorLine].length()-1;
+        assert(m_document->getLineLen(m_cursorLine) != 0);
+        const int cursMaxCol = m_document->getLineLen(m_cursorLine)-1;
         if (m_cursorCol > cursMaxCol)
         {
             m_cursorCharPos -= m_cursorCol;
@@ -2540,21 +2327,9 @@ size_t Buffer::deleteSelectedChars()
         }
     }
 
-    histEntry.newCursPos = m_cursorCharPos,
-    histEntry.newCursLine = m_cursorLine,
-    histEntry.newCursCol = m_cursorCol;
-    m_history.add(std::move(histEntry));
-
     m_selection.mode = Selection::Mode::None; // Cancel the selection
-    m_isModified = true;
-    m_isCursorShown = true;
-    m_cursorHoldTime = 0;
-    scrollViewportToCursor();
-    m_isHighlightUpdateNeeded = true;
-    m_version++;
-    Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(lineVecConcat(m_content)));
     g_statMsg.set("Deleted "+std::to_string(delCount)+" characters", StatusMsg::Type::Info);
-    g_isRedrawNeeded = true;
+    scrollViewportToCursor();
 
     return delCount;
 }
@@ -2641,7 +2416,7 @@ void Buffer::findUpdate()
         return;
     {
         size_t index{};
-        for (const auto& line : m_content)
+        for (const auto& line : *m_document)
         {
             int col = -1;
             while (true)
@@ -2673,9 +2448,10 @@ void Buffer::indentSelectedLines()
     const size_t startLine = std::min(m_cursorLine, m_selection.fromLine);
     const size_t endLine = std::max(m_cursorLine, m_selection.fromLine);
 
+    const String toInsert = ((TAB_SPACE_COUNT == 0) ? U"\t" : String(TAB_SPACE_COUNT, ' '));
     for (size_t i{startLine}; i <= endLine; ++i)
     {
-        m_content[i].insert(0, (TAB_SPACE_COUNT == 0 ? 1 : TAB_SPACE_COUNT), (TAB_SPACE_COUNT == 0 ? U'\t' : ' '));
+        applyInsertion({(int)i, 0}, toInsert);
     }
 
     // Place the cursor to the upper (less) position
@@ -2687,11 +2463,7 @@ void Buffer::indentSelectedLines()
     }
 
     m_selection.mode = Selection::Mode::None;
-    // TODO: Insert to highlight buffer instead of reparsing
-    m_isHighlightUpdateNeeded = true;
-    m_version++;
-    Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(lineVecConcat(m_content)));
-    g_isRedrawNeeded = true;
+    scrollViewportToCursor();
 }
 
 static size_t countTrailingSpaces(const String& str)
@@ -2707,19 +2479,18 @@ void Buffer::unindentSelectedLines()
     if (m_selection.mode == Selection::Mode::None)
         return;
 
-    const size_t startLine = std::min(m_cursorLine, m_selection.fromLine);
-    const size_t endLine = std::max(m_cursorLine, m_selection.fromLine);
+    const int startLine = std::min(m_cursorLine, m_selection.fromLine);
+    const int endLine = std::max(m_cursorLine, m_selection.fromLine);
 
-    for (size_t i{startLine}; i <= endLine; ++i)
+    for (int i{startLine}; i <= endLine; ++i)
     {
 #if TAB_SPACE_COUNT == 0
-        if (m_content[i][0] == U'\t')
-        {
-            m_content[i].erase(0, 1);
-        }
+        if (m_document->getChar({i, 0}) == U'\t')
+            applyDeletion({{i, 0}, {i, 1}});
+        (void)countTrailingSpaces;
 #else
-        const int spaceCount = countTrailingSpaces(m_content[i]);
-        m_content[i].erase(0, std::min(spaceCount, TAB_SPACE_COUNT));
+        const int spaceCount = countTrailingSpaces(m_document->getLine(i));
+        applyDeletion({{i, 0}, {i, std::min(spaceCount, TAB_SPACE_COUNT)}});
 #endif
     }
 
@@ -2732,11 +2503,7 @@ void Buffer::unindentSelectedLines()
     }
 
     m_selection.mode = Selection::Mode::None;
-    // TODO: Remove from highlight buffer instead of reparsing
-    m_isHighlightUpdateNeeded = true;
-    m_version++;
-    Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(lineVecConcat(m_content)));
-    g_isRedrawNeeded = true;
+    scrollViewportToCursor();
 }
 
 void Buffer::goToMousePos()
@@ -2753,9 +2520,9 @@ void Buffer::goToMousePos()
     else // If past the buffer
     {
         // Go to last character
-        m_cursorLine = m_content.size()-1;
-        m_cursorCol = m_content[m_cursorLine].length()-1;
-        m_cursorCharPos = countLineListLen(m_content)-1;
+        m_cursorLine = m_document->getLineCount()-1;
+        m_cursorCol = m_document->getLineLen(m_cursorLine)-1;
+        m_cursorCharPos = m_document->calcCharCount()-1;
     }
     m_isCursorShown = true;
     m_cursorHoldTime = 0;
@@ -2899,11 +2666,11 @@ void Buffer::showSymbolHover(bool atMouse/*=false*/)
             assert(hoverInfo.startLine == hoverInfo.endLine);
             assert(hoverInfo.endCol > hoverInfo.startCol);
 
-            assert(hoverInfo.startLine >= 0 && hoverInfo.startLine < (int)m_content.size());
-            assert(hoverInfo.startCol >= 0 && hoverInfo.startCol < (int)m_content[hoverInfo.startLine].size());
-            assert(hoverInfo.endCol >= 0 && hoverInfo.endCol < (int)m_content[hoverInfo.startLine].size());
+            assert(hoverInfo.startLine >= 0 && hoverInfo.startLine < (int)m_document->getLineCount());
+            assert(hoverInfo.startCol >= 0 && hoverInfo.startCol < (int)m_document->getLineLen(hoverInfo.startLine));
+            assert(hoverInfo.endCol >= 0 && hoverInfo.endCol < (int)m_document->getLineLen(hoverInfo.startLine));
             const std::string hoveredSymbol = strToAscii(
-                    m_content[hoverInfo.startLine].substr(
+                    m_document->getLine(hoverInfo.startLine).substr(
                         hoverInfo.startCol, hoverInfo.endCol-hoverInfo.startCol));
             g_hoverPopup->setTitle(hoveredSymbol);
         }
@@ -3072,109 +2839,65 @@ void Buffer::applyLineCodeAct()
             applyLineCodeActDialogCb, this, "Choose code action to apply", MessageDialog::Type::Information, btns);
 }
 
+size_t Buffer::applyDeletion(const lsRange& range)
+{
+    if (m_isReadOnly)
+        return 0;
+
+    //assert(range.start != range.end);
+    if (range.start == range.end)
+        return 0;
+
+    const size_t deleted = m_document->delete_(range);
+
+    m_isModified = true;
+    m_isCursorShown = true;
+    m_cursorHoldTime = 0;
+    m_isHighlightUpdateNeeded = true;
+    m_highlightBuffer.resize(m_document->calcCharCount()); // TODO: Just delete from `range`
+    m_version++;
+    g_isRedrawNeeded = true;
+    // TODO: Only send change
+    Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(m_document->getConcated()));
+    return deleted;
+}
+
+void Buffer::applyInsertion(const lsPosition& pos, const String& text)
+{
+    if (m_isReadOnly)
+        return;
+
+    m_document->insert(pos, text);
+
+    m_isModified = true;
+    m_isCursorShown = true;
+    m_cursorHoldTime = 0;
+    m_isHighlightUpdateNeeded = true;
+    m_highlightBuffer.resize(m_document->calcCharCount()); // TODO: Just insert at `pos`
+    m_version++;
+    g_isRedrawNeeded = true;
+    // TODO: Only send change
+    Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(m_document->getConcated()));
+}
+
 void Buffer::applyEdit(const lsAnnotatedTextEdit& edit)
 {
     Logger::dbg << "Buffer: Applying edit (file=" + m_filePath + ": " << edit.ToString() << Logger::End;
 
     // If this is a deletion/overwite, do the deletion
     if (edit.range.start != edit.range.end)
-    {
-        int lineI = edit.range.end.line;
-        int colI = edit.range.end.character;
-        // The range is exclusive
-        if (colI == 0)
-        {
-            --lineI;
-            assert(lineI >= 0);
-            assert(lineI < (int)m_content.size());
-            colI = m_content[lineI].size()-1;
-        }
-        else
-        {
-            --colI;
-        }
-
-        while (true)
-        {
-            //Logger::dbg << lineI << ':' << colI << Logger::End;
-
-            assert(lineI >= 0);
-            assert(lineI < (int)m_content.size());
-            assert(colI >= 0);
-            assert(colI < (int)m_content[lineI].size());
-
-            // Do the deletion
-            m_content[lineI].erase(colI, 1);
-            if (m_content[lineI].empty())
-            {
-                m_content.erase(m_content.begin()+lineI);
-                assert(colI == 0);
-            }
-
-            // Exit if this was the last char
-            if (lineI == (int)edit.range.start.line && colI == (int)edit.range.start.character)
-            {
-                if (colI != 0)
-                {
-                    // If we deleted the line break,
-                    if (!m_content[lineI].ends_with('\n'))
-                    {
-                        // Append the next line to the end of the current one
-                        assert(lineI+1 < (int)m_content.size());
-                        const String nextLine = m_content[lineI+1];
-                        m_content.erase(m_content.begin()+lineI+1);
-                        m_content[lineI].append(nextLine);
-                    }
-                }
-                break;
-            }
-
-            // Go to next char
-            --colI;
-            if (colI == -1)
-            {
-                --lineI;
-                assert(lineI >= 0);
-                assert(lineI < (int)m_content.size());
-                colI = m_content[lineI].size()-1;
-                //Logger::dbg << "Line " << lineI << " is " << m_content[lineI].size() << " chars long" << Logger::End;
-                //Logger::dbg << "Line: " << strToAscii(m_content[lineI]) << Logger::End;
-                assert(colI >= 0);
-            }
-        }
-    }
+        applyDeletion(edit.range);
 
     // Do the insertion
     if (!edit.newText.empty())
-    {
-        int lineI = edit.range.start.line;
-        int colI = edit.range.start.character;
-        for (auto c : edit.newText)
-        {
-            m_content[lineI].insert(colI, 1, c);
+        applyInsertion(edit.range.start, strToUtf32(edit.newText));
 
-            ++colI;
-            // End
-            if (c == '\n')
-            {
-                const String lineEnd = m_content[lineI].substr(colI);
-                m_content[lineI].erase(colI);
-                m_content.insert(m_content.begin()+lineI+1, lineEnd);
-                colI = 0;
-
-                ++lineI;
-            }
-        }
-    }
-
-
-    // TODO: Add to history
     m_isModified = true;
     m_isCursorShown = true;
     m_cursorHoldTime = 0;
     m_isHighlightUpdateNeeded = true;
     m_version++;
-    Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(lineVecConcat(m_content)));
+    Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(m_document->getConcated()));
     if (g_activeBuff == this)
         scrollViewportToCursor();
 

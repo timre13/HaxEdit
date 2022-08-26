@@ -1,7 +1,6 @@
 #pragma once
 
 #include <filesystem>
-#include <stack>
 #include <thread>
 #include <glm/glm.hpp>
 #include "unicode/uchar.h"
@@ -18,95 +17,11 @@
 #include "autocomp/LspProvider.h"
 #include "FloatingWin.h"
 #include "languages.h"
+class Document;
 
 namespace std_fs = std::filesystem;
 
 #define FILENAME_NEW "<new>"
-
-class BufferHistory final
-{
-public:
-    struct Entry
-    {
-        struct LineEntry
-        {
-            String from  = U"\xffffffff";
-            String to    = U"\xffffffff";
-            size_t lineI = -1_st;
-        };
-        std::vector<LineEntry> lines;
-        size_t oldCursPos  = -1_st;
-        int    oldCursLine = -1;
-        int    oldCursCol  = -1;
-        size_t newCursPos  = -1_st;
-        int    newCursLine = -1;
-        int    newCursCol  = -1;
-    };
-
-private:
-    std::stack<Entry> m_undoStack;
-    std::stack<Entry> m_redoStack;
-
-public:
-    BufferHistory() {}
-
-    inline void clear()
-    {
-        while (!m_undoStack.empty()) m_undoStack.pop();
-        while (!m_redoStack.empty()) m_redoStack.pop();
-    }
-
-    inline void add(const Entry& entry)
-    {
-        Logger::dbg << "New history entry added (" << entry.lines.size() << " lines)" << Logger::End;
-        // Check if the entry has uninitialized values
-        assert(!entry.lines.empty());
-        assert(entry.oldCursPos  != -1_st);
-        assert(entry.oldCursLine != -1);
-        assert(entry.oldCursCol  != -1);
-        assert(entry.newCursPos  != -1_st);
-        assert(entry.newCursLine != -1);
-        assert(entry.newCursCol  != -1);
-        for (const auto& line : entry.lines)
-        {
-            assert(line.from != U"\xffffffff");
-            assert(line.to != U"\xffffffff");
-            assert(line.lineI != -1_st);
-            assert(line.from != U"" || line.to != U"");
-        }
-
-        while (!m_redoStack.empty()) m_redoStack.pop(); // Clear the redo stack
-        m_undoStack.push(entry);
-    }
-
-    inline bool canGoBack() const
-    {
-        return !m_undoStack.empty();
-    }
-
-    [[nodiscard]] inline Entry goBack()
-    {
-        assert(canGoBack());
-        Entry entry = m_undoStack.top();
-        m_undoStack.pop();
-        m_redoStack.push(entry);
-        return entry;
-    }
-
-    inline bool canGoForward() const
-    {
-        return !m_redoStack.empty();
-    }
-
-    [[nodiscard]] inline Entry goForward()
-    {
-        assert(canGoForward());
-        Entry entry = m_redoStack.top();
-        m_redoStack.pop();
-        m_undoStack.push(entry);
-        return entry;
-    }
-};
 
 class Buffer
 {
@@ -156,11 +71,10 @@ protected:
     static bufid_t s_lastUsedId;
     bufid_t m_id{};
     Langs::LangId m_language = Langs::LangId::Unknown;
-    std::vector<String> m_content;
+    std::unique_ptr<Document> m_document;
     bool m_isModified{};
     bool m_isReadOnly{};
 
-    // Note: We use uint8_t values
     std::u8string m_highlightBuffer;
     bool m_isHighlightUpdateNeeded{};
     std::thread m_highlighterThread;
@@ -194,9 +108,6 @@ protected:
         std::string str;
         size_t maxLen{};
     } m_statusLineStr{};
-
-    // To handle Undo and Redo
-    BufferHistory m_history;
 
     std::unique_ptr<Autocomp::Popup> m_autocompPopup;
 
@@ -239,27 +150,7 @@ protected:
     virtual void updateGitDiff();
     virtual std::string getCheckedOutObjName(int hashLen=-1) const;
 
-    virtual inline Char getCharAt(size_t pos) const
-    {
-        if (m_content.empty())
-            return '\0';
-
-        size_t i{};
-        for (const String& line : m_content)
-        {
-            if (i + line.size() - 1 < pos)
-            {
-                i += line.size();
-            }
-            else
-            {
-                return line[pos-i];
-            }
-        }
-        Logger::fatal << "Tried to get character at invalid position: "
-            << pos << " / " << std::to_string((int)pos) << Logger::End;
-        return '\0';
-    }
+    virtual Char getCharAt(size_t pos) const;
 
     // -------------------- Rendering functions -----------------------------
     void _renderDrawCursor(const glm::ivec2& textPos, int initTextY, int width);
@@ -279,6 +170,7 @@ protected:
     void _goToDeclOrDefOrImp(const Autocomp::LspProvider::Location& loc);
 
     friend class App;
+    friend class Document; // So we can make Buffer::open() friend of Document
     /*
      * Do not call this. Use `App::openFileInNewBuffer`.
      */
@@ -307,7 +199,7 @@ public:
     virtual inline const std::string getFileExt() const final {
         return std_fs::path{m_filePath}.extension().string(); }
     virtual inline bool isNewFile() const final { return m_filePath.compare(FILENAME_NEW) == 0; }
-    virtual inline int getNumOfLines() const { return m_content.size(); }
+    virtual int getNumOfLines() const;
 
     virtual inline int getCursorLine() const { return m_cursorLine; }
     virtual inline int getCursorCol() const { return m_cursorCol; }
@@ -347,22 +239,7 @@ public:
 #endif
         return 0;
     }
-    virtual inline String getCursorWord()
-    {
-        if (isspace(m_content[m_cursorLine][m_cursorCol]))
-            return U"";
-
-        int beginCol = m_cursorCol;
-        while (beginCol >= 0 && !u_isspace(m_content[m_cursorLine][beginCol]))
-            --beginCol;
-        ++beginCol;
-
-        int endCol = m_cursorCol;
-        while (endCol < (int)m_content[m_cursorLine].length() && !u_isspace(m_content[m_cursorLine][endCol]))
-            ++endCol;
-
-        return m_content[m_cursorLine].substr(beginCol, endCol-beginCol);
-    }
+    virtual String getCursorWord() const;
 
     virtual inline void setCursorVisibility(bool isVisible) {
         m_isCursorShown = isVisible; }
@@ -394,9 +271,17 @@ public:
         TIMER_END_FUNC();
     }
 
+    /*
+     * These are the main editing functions.
+     * Only these can actually edit the Document.
+     * All the other editing functions call these two.
+     */
+    virtual size_t applyDeletion(const lsRange& range);
+    virtual void applyInsertion(const lsPosition& pos, const String& text);
+
     // Text editing
-    virtual void insert(Char character);
-    virtual void replaceChar(Char character);
+    virtual void insertCharAtCursor(Char character);
+    virtual void replaceCharAtCursor(Char character);
     virtual void deleteCharBackwards();
     virtual void deleteCharForwardOrSelected();
     virtual inline bool isModified() const final { return m_isModified; }

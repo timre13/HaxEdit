@@ -722,7 +722,7 @@ void putLineBreakAfterLineAndEnterInsertMode()
     {
         g_activeBuff->moveCursor(Buffer::CursorMovCmd::LineEnd);
         g_activeBuff->updateCursor();
-        g_activeBuff->insert('\n');
+        g_activeBuff->insertCharAtCursor('\n');
         g_editorMode.set(EditorMode::_EditorMode::Insert);
     }
 }
@@ -733,7 +733,7 @@ void putLineBreakBeforeLineAndEnterInsertMode()
     {
         g_activeBuff->moveCursor(Buffer::CursorMovCmd::LineBeginning);
         g_activeBuff->updateCursor();
-        g_activeBuff->insert('\n');
+        g_activeBuff->insertCharAtCursor('\n');
         g_activeBuff->moveCursor(Buffer::CursorMovCmd::Up);
         g_activeBuff->updateCursor();
         g_editorMode.set(EditorMode::_EditorMode::Insert);
@@ -764,13 +764,13 @@ void insertTabOrSpaces()
     {
         if (TAB_SPACE_COUNT < 1)
         {
-            g_activeBuff->insert('\t');
+            g_activeBuff->insertCharAtCursor('\t');
         }
         else
         {
             for (int i{}; i < TAB_SPACE_COUNT; ++i)
             {
-                g_activeBuff->insert(' ');
+                g_activeBuff->insertCharAtCursor(' ');
             }
         }
         g_isRedrawNeeded = true;
