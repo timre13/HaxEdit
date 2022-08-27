@@ -1999,19 +1999,18 @@ void Buffer::deleteCharBackwards()
                 {m_cursorLine, 0}});
         --m_cursorLine;
         m_cursorCol = m_document->getLineLen(m_cursorLine);
-        --m_cursorCharPos;
     }
     // If deleting in the middle/end of the line and we have stuff to delete
     else if (m_cursorCharPos > 0)
     {
         applyDeletion({{m_cursorLine, m_cursorCol-1}, {m_cursorLine, m_cursorCol}});
         --m_cursorCol;
-        --m_cursorCharPos;
     }
-    m_isCursorShown = true;
+    --m_cursorCharPos;
     scrollViewportToCursor();
 
-    // TODO: Handle autocomplete filter
+    if (m_autocompPopup->isRendered())
+        m_autocompPopup->removeLastCharFromFilter();
 }
 
 void Buffer::deleteCharForwardOrSelected()
@@ -2138,9 +2137,8 @@ static std::string getPathFromLine(const String& line)
 void Buffer::triggerAutocompPopup()
 {
     regenAutocompList();
-#if 0 // TODO
-    Autocomp::pathProvid->setPrefix(m_id, getPathFromLine(m_content[m_cursorLine].substr(0, m_cursorCol)));
-#endif
+    Autocomp::pathProvid->setPrefix(m_id, getPathFromLine(
+                m_document->getLine(m_cursorLine).substr(0, m_cursorCol)));
     m_autocompPopup->setVisibility(true);
     m_isCursorShown = true;
     m_cursorHoldTime = 0;
@@ -2181,6 +2179,7 @@ void Buffer::autocompPopupInsert()
         // Use `textEdit` if available
         if (item->textEdit)
         {
+            // TODO: Jump to end
             applyEdit(item->textEdit.get());
         }
         else
@@ -2188,28 +2187,16 @@ void Buffer::autocompPopupInsert()
             // If there is `insertText`, use it. Otherwise use `label`.
             const std::string toInsert = item->insertText.get_value_or(item->label);
             //    .substr(m_autocompPopup->getFilterLen());
-# if 0 // TODO
-            m_content[m_cursorLine].insert(m_cursorCol, strToUtf32(toInsert));
-            m_cursorCharPos += toInsert.length();
-            m_cursorCol += toInsert.length();
-#endif
+            const lsPosition moveTo = applyInsertion({m_cursorLine, m_cursorCol}, strToUtf32(toInsert));
+            moveCursorToLineCol(moveTo);
         }
 
         if (item->additionalTextEdits)
         {
             applyEdits(item->additionalTextEdits.get());
         }
-
-        m_isHighlightUpdateNeeded = true;
-        m_version++;
-# if 0 // TODO
-        Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(lineVecConcat(m_content)));
-#endif
     }
     m_autocompPopup->setVisibility(false);
-    m_isCursorShown = true;
-    m_cursorHoldTime = 0;
-    g_isRedrawNeeded = true;
 }
 
 void Buffer::regenAutocompList()
@@ -2313,6 +2300,8 @@ size_t Buffer::deleteSelectedChars()
         break;
     }
     }
+
+    assert(delCount);
 
     // Jump the cursor to the right place
     if (m_cursorCharPos > m_selection.fromCharI)
@@ -2898,12 +2887,6 @@ void Buffer::applyEdit(const lsAnnotatedTextEdit& edit)
     if (!edit.newText.empty())
         applyInsertion(edit.range.start, strToUtf32(edit.newText));
 
-    m_isModified = true;
-    m_isCursorShown = true;
-    m_cursorHoldTime = 0;
-    m_isHighlightUpdateNeeded = true;
-    m_version++;
-    Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(m_document->getConcated()));
     if (g_activeBuff == this)
         scrollViewportToCursor();
 
