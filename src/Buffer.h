@@ -206,8 +206,9 @@ public:
     virtual inline int getCursorCharPos() const { return m_cursorCharPos; }
 
     virtual inline void moveCursor(CursorMovCmd cmd) { m_cursorMovCmd = cmd; }
-    inline void moveCursorToLineCol(int line, int col);
-    inline void moveCursorToChar(int pos);
+    virtual void moveCursorToLineCol(int line, int col);
+    virtual void moveCursorToLineCol(const lsPosition& pos);
+    virtual void moveCursorToChar(int pos);
 
     virtual inline int getCursorWordBeginning()
     {
@@ -276,8 +277,14 @@ public:
      * Only these can actually edit the Document.
      * All the other editing functions call these two.
      */
+    /*
+     * @returns The number of characters deleted.
+     */
     virtual size_t applyDeletion(const lsRange& range);
-    virtual void applyInsertion(const lsPosition& pos, const String& text);
+    /*
+     * @returns The position of the last inserted character.
+     */
+    virtual lsPosition applyInsertion(const lsPosition& pos, const String& text);
 
     // Text editing
     virtual void insertCharAtCursor(Char character);

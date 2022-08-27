@@ -112,12 +112,12 @@ public:
 
 private:
     friend size_t Buffer::applyDeletion(const range_t& range);
-    friend void Buffer::applyInsertion(const pos_t& pos, const String& text);
+    friend pos_t Buffer::applyInsertion(const pos_t& pos, const String& text);
     friend void Buffer::open(const std::string& filePath, bool isReload/*=false*/);
 
     void setContent(const String& content);
     size_t delete_(const range_t& range);
-    void insert(const pos_t& pos, const String& text);
+    lsPosition insert(const pos_t& pos, const String& text);
     inline void clearContent() { m_content.clear(); }
 
 public:

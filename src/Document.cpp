@@ -81,8 +81,10 @@ size_t Document::delete_(const range_t& range)
     return deletedCount;
 }
 
-void Document::insert(const pos_t& pos, const String& text)
+lsPosition Document::insert(const pos_t& pos, const String& text)
 {
+    // TODO: Check position
+
     int lineI = pos.line;
     int colI = pos.character;
     for (auto c : text)
@@ -103,6 +105,9 @@ void Document::insert(const pos_t& pos, const String& text)
     }
 
     // TODO: Add to history
+
+    // Return the end
+    return {lineI, colI};
 }
 
 const std::vector<String>& Document::getAll() const

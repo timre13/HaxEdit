@@ -1007,6 +1007,11 @@ void Buffer::moveCursorToLineCol(int line, int col)
 #endif
 }
 
+void Buffer::moveCursorToLineCol(const lsPosition& pos)
+{
+    moveCursorToLineCol(pos.line, pos.character);
+}
+
 void Buffer::moveCursorToChar(int pos)
 {
     size_t i{};
@@ -1172,15 +1177,15 @@ void Buffer::pasteFromClipboard()
         Logger::dbg << "Pasting: " << quoteStr(aClipbText) << Logger::End;
         const size_t delCount = deleteSelectedChars(); // Overwrite selected chars if a selection is active
         for (char c : aClipbText)
-        {
             assert((c & 0b10000000) == 0); // Detect non-ASCII chars
-        }
-        applyInsertion({m_cursorLine, m_cursorCol}, strToUtf32(aClipbText));
+        // Do the insertion and move the cursor to the insertion end
+        // TODO: Maybe a parameter to prevent moving the cursor?
+        moveCursorToLineCol(applyInsertion({m_cursorLine, m_cursorCol}, strToUtf32(aClipbText)));
+        scrollViewportToCursor();
         g_statMsg.set("Pasted text from clipboard ("
                 +std::to_string(aClipbText.size())+" chars)"
                 +(delCount ? " (overwrote "+std::to_string(delCount)+" chars)" : ""),
                 StatusMsg::Type::Info);
-
     }
     else
     {
@@ -2862,12 +2867,12 @@ size_t Buffer::applyDeletion(const lsRange& range)
     return deleted;
 }
 
-void Buffer::applyInsertion(const lsPosition& pos, const String& text)
+lsPosition Buffer::applyInsertion(const lsPosition& pos, const String& text)
 {
     if (m_isReadOnly)
-        return;
+        return {m_cursorLine, m_cursorCol};
 
-    m_document->insert(pos, text);
+    const lsPosition endPos = m_document->insert(pos, text);
 
     m_isModified = true;
     m_isCursorShown = true;
@@ -2878,6 +2883,7 @@ void Buffer::applyInsertion(const lsPosition& pos, const String& text)
     g_isRedrawNeeded = true;
     // TODO: Only send change
     Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(m_document->getConcated()));
+    return endPos;
 }
 
 void Buffer::applyEdit(const lsAnnotatedTextEdit& edit)
