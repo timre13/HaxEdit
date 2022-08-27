@@ -617,7 +617,7 @@ void Buffer::updateCursor()
     m_document->assertPos(m_cursorLine, m_cursorCol, m_cursorCharPos);
 
     auto getCursorLineLen{[&](){
-        return m_document->getLine(m_cursorLine).size();
+        return m_document->getLineLen(m_cursorLine);
     }};
 
     switch (m_cursorMovCmd)
@@ -708,7 +708,7 @@ void Buffer::updateCursor()
             int newCCol = m_cursorCol + 1;
             int newCLine = m_cursorLine;
             size_t newCPos = m_cursorCharPos + 1;
-            if ((size_t)newCCol == m_document->getLine(newCLine).length()) // If at the end of line
+            if ((size_t)newCCol == m_document->getLineLen(newCLine)) // If at the end of line
             {
                 ++newCLine;
                 newCCol = 0;
@@ -730,7 +730,7 @@ void Buffer::updateCursor()
             int newCCol = m_cursorCol + 1;
             int newCLine = m_cursorLine;
             size_t newCPos = m_cursorCharPos + 1;
-            if ((size_t)newCCol == m_document->getLine(newCLine).length()) // If at the end of line
+            if ((size_t)newCCol == m_document->getLineLen(newCLine)) // If at the end of line
             {
                 ++newCLine;
                 newCCol = 0;
@@ -763,7 +763,7 @@ void Buffer::updateCursor()
                 --newCLine;
                 if (newCLine == -1) // Buffer beginning?
                     break;
-                newCCol = m_document->getLine(newCLine).length()-1; // Go to line end
+                newCCol = m_document->getLineLen(newCLine)-1; // Go to line end
             }
 
             if (!u_isspace(m_document->getChar({newCLine, newCCol})))
@@ -785,7 +785,7 @@ void Buffer::updateCursor()
                 --newCLine;
                 if (newCLine == -1) // Buffer beginning?
                     break;
-                newCCol = m_document->getLine(newCLine).length()-1; // Go to line end
+                newCCol = m_document->getLineLen(newCLine)-1; // Go to line end
             }
 
             if (u_isspace(m_document->getChar({newCLine, newCCol})))
@@ -972,7 +972,7 @@ String Buffer::getCursorWord() const
     ++beginCol;
 
     int endCol = m_cursorCol;
-    while (endCol < (int)m_document->getLine(m_cursorLine).length()
+    while (endCol < (int)m_document->getLineLen(m_cursorLine)
         && !u_isspace(m_document->getChar({m_cursorLine, endCol})))
         ++endCol;
 
@@ -1135,7 +1135,7 @@ bool Buffer::isCharSelected(int lineI, int colI, size_t charI) const
     case Selection::Mode::Block:
     {
         assert(lineI >= 0 && lineI < (int)m_document->getLineCount());
-        assert(colI >= 0 && colI < (int)m_document->getLine(lineI).length());
+        assert(colI >= 0 && colI < (int)m_document->getLineLen(lineI));
 
         // Newlines can't be selected with block selection
         if (m_document->getChar({lineI, colI}) == '\n')
