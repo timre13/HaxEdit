@@ -36,6 +36,17 @@ String Document::_delete_impl(const range_t& range)
         assert(colI >= 0);
         assert(colI < (int)m_content[lineI].size());
 
+        // If this is the last character of the document
+        if (lineI == int(m_content.size())-1 && colI == int(m_content[lineI].size())-1)
+        {
+            // If this was the only character to be deleted, exit
+            if (lineI == (int)range.start.line && colI == (int)range.start.character)
+                break;
+
+            // Skip the last character
+            goto skip_char;
+        }
+
         deletedStr += m_content[lineI][colI];
         // Do the deletion
         m_content[lineI].erase(colI, 1);
@@ -54,7 +65,7 @@ String Document::_delete_impl(const range_t& range)
                 if (!m_content[lineI].ends_with('\n'))
                 {
                     // Append the next line to the end of the current one
-                    assert(lineI+1 < (int)m_content.size()); // TODO: Support deleting from end of document
+                    assert(lineI+1 < (int)m_content.size());
                     const String nextLine = m_content[lineI+1];
                     m_content.erase(m_content.begin()+lineI+1);
                     m_content[lineI].append(nextLine);
@@ -62,6 +73,8 @@ String Document::_delete_impl(const range_t& range)
             }
             break;
         }
+
+skip_char:
 
         // Go to next char
         --colI;
@@ -86,6 +99,8 @@ String Document::_delete_impl(const range_t& range)
 size_t Document::delete_(const range_t& range)
 {
     const String deletedStr = _delete_impl(range);
+    if (deletedStr.empty()) // If there was nothing to delete
+        return 0;
 
     DocumentHistory::Entry::Change change;
     change.type = DocumentHistory::Entry::Change::Type::Deletion;
@@ -125,6 +140,9 @@ lsPosition Document::_insert_impl(const pos_t& pos, const String& text)
 
 lsPosition Document::insert(const pos_t& pos, const String& text)
 {
+    if (text.empty()) // If there is nothing to insert
+        return pos;
+
     const lsPosition endPos = _insert_impl(pos, text);
 
     DocumentHistory::Entry::Change change;
