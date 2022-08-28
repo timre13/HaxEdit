@@ -8,24 +8,21 @@
 #include <vector>
 #include <stack>
 
+namespace
+{
+
 class DocumentHistory final
 {
 public:
     struct Entry
     {
-        struct LineEntry
+        enum class Type : bool
         {
-            String from  = U"\xffffffff";
-            String to    = U"\xffffffff";
-            size_t lineI = -1_st;
-        };
-        std::vector<LineEntry> lines;
-        size_t oldCursPos  = -1_st;
-        int    oldCursLine = -1;
-        int    oldCursCol  = -1;
-        size_t newCursPos  = -1_st;
-        int    newCursLine = -1;
-        int    newCursCol  = -1;
+            Insertion,
+            Deletion,
+        } type{};
+        lsRange range;
+        String text;
     };
 
 private:
@@ -43,23 +40,11 @@ public:
 
     inline void add(const Entry& entry)
     {
-        Logger::dbg << "New history entry added (" << entry.lines.size() << " lines)" << Logger::End;
-        // Check if the entry has uninitialized values
-        assert(!entry.lines.empty());
-        assert(entry.oldCursPos  != -1_st);
-        assert(entry.oldCursLine != -1);
-        assert(entry.oldCursCol  != -1);
-        assert(entry.newCursPos  != -1_st);
-        assert(entry.newCursLine != -1);
-        assert(entry.newCursCol  != -1);
-        for (const auto& line : entry.lines)
-        {
-            assert(line.from != U"\xffffffff");
-            assert(line.to != U"\xffffffff");
-            assert(line.lineI != -1_st);
-            assert(line.from != U"" || line.to != U"");
-        }
-
+        //Logger::dbg << "New history entry added (" << entry.lines.size() << " lines)" << Logger::End;
+        Logger::dbg << "New history entry added ("
+            << "type=" << (entry.type == Entry::Type::Insertion ? "INS": "DEL")
+            << ", range=" << entry.range.ToString()
+            << ", lineCount=" << strCountLines(entry.text) << ')' << Logger::End;
         while (!m_redoStack.empty()) m_redoStack.pop(); // Clear the redo stack
         m_undoStack.push(entry);
     }
@@ -93,11 +78,8 @@ public:
     }
 };
 
-//class Buffer
-//{
-//    void 
-//};
-//
+} // namespace
+
 class Document final
 {
 private:
@@ -111,14 +93,57 @@ public:
     Document() {}
 
 private:
+    // To allow calling `delete()`
     friend size_t Buffer::applyDeletion(const range_t& range);
+    // To allow calling `insert()`
     friend pos_t Buffer::applyInsertion(const pos_t& pos, const String& text);
+    // To allow calling `clearContent()`, `setContent()` and `clearHistory()`
     friend void Buffer::open(const std::string& filePath, bool isReload/*=false*/);
+     // To allow calling `undo()`
+    friend void Buffer::undo();
+    // To allow calling `redo()`
+    friend void Buffer::redo();
+
+    /*
+     * The actual delete implementation.
+     * This does NOT create a history entry.
+     *
+     * @returns The deleted string.
+     * @warning Do not call this (only from `delete_()`, `undo()` and `redo()`.
+     * @see `delete_()` for more info.
+     */
+    String _delete_impl(const range_t& range);
+
+    /*
+     * Delete text from the specified range and create a history entry for the edit.
+     *
+     * @returns The number of characters deleted.
+     */
+    size_t delete_(const range_t& range);
+
+    /*
+     * The actual insert implementation.
+     * This does NOT create a history entry.
+     *
+     * @returns The last insert position.
+     * @warning Do not call this (only from `insert()`, `undo()` and `redo()`.
+     * @see `insert()` for more info.
+     */
+    lsPosition _insert_impl(const pos_t& pos, const String& text);
+
+    /*
+     * Insert text to the specified position and create a history entry for the edit.
+     *
+     * @returns The position AFTER the last inserted character.
+     */
+    lsPosition insert(const pos_t& pos, const String& text);
 
     void setContent(const String& content);
-    size_t delete_(const range_t& range);
-    lsPosition insert(const pos_t& pos, const String& text);
     inline void clearContent() { m_content.clear(); }
+
+    void undo();
+    void redo();
+    void clearHistory();
 
 public:
     const std::vector<String>& getAll() const;
@@ -132,6 +157,8 @@ public:
     inline size_t calcCharCount() const { return countLineListLen(m_content); }
 
     void assertPos(int line, int col, size_t pos) const;
+
+    inline const DocumentHistory& getHistory() const { return m_history; }
 
     // Note: We only allow reading
     inline decltype(m_content)::const_iterator begin() const { return m_content.cbegin(); }

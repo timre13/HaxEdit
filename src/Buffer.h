@@ -282,7 +282,7 @@ public:
      */
     virtual size_t applyDeletion(const lsRange& range);
     /*
-     * @returns The position of the last inserted character.
+     * @returns The position AFTER the last inserted character.
      */
     virtual lsPosition applyInsertion(const lsPosition& pos, const String& text);
 

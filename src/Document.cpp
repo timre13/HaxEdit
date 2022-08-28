@@ -5,11 +5,11 @@ void Document::setContent(const String& content)
     m_content = splitStrToLines(content, true);
 }
 
-size_t Document::delete_(const range_t& range)
+String Document::_delete_impl(const range_t& range)
 {
     Logger::dbg << "Deleting range: " << range.ToString() << Logger::End;
 
-    size_t deletedCount{};
+    String deletedStr;
 
     int lineI = range.end.line;
     int colI = range.end.character;
@@ -35,9 +35,9 @@ size_t Document::delete_(const range_t& range)
         assert(colI >= 0);
         assert(colI < (int)m_content[lineI].size());
 
+        deletedStr += m_content[lineI][colI];
         // Do the deletion
         m_content[lineI].erase(colI, 1);
-        ++deletedCount;
         if (m_content[lineI].empty())
         {
             m_content.erase(m_content.begin()+lineI);
@@ -76,12 +76,26 @@ size_t Document::delete_(const range_t& range)
         }
     }
 
-    // TODO: Add to history
-
-    return deletedCount;
+    String out = deletedStr;
+    // We delete backwards, so we must reverse the deleted string
+    std::reverse(out.begin(), out.end());
+    return out;
 }
 
-lsPosition Document::insert(const pos_t& pos, const String& text)
+size_t Document::delete_(const range_t& range)
+{
+    const String deletedStr = _delete_impl(range);
+
+    DocumentHistory::Entry entry;
+    entry.type = DocumentHistory::Entry::Type::Deletion;
+    entry.range = range;
+    entry.text = deletedStr;
+    m_history.add(std::move(entry));
+
+    return deletedStr.length();
+}
+
+lsPosition Document::_insert_impl(const pos_t& pos, const String& text)
 {
     // TODO: Check position
 
@@ -104,10 +118,21 @@ lsPosition Document::insert(const pos_t& pos, const String& text)
         }
     }
 
-    // TODO: Add to history
-
     // Return the end
     return {lineI, colI};
+}
+
+lsPosition Document::insert(const pos_t& pos, const String& text)
+{
+    const lsPosition endPos = _insert_impl(pos, text);
+
+    DocumentHistory::Entry entry;
+    entry.type = DocumentHistory::Entry::Type::Insertion;
+    entry.range = {pos, endPos};
+    entry.text = text;
+    m_history.add(std::move(entry));
+
+    return endPos;
 }
 
 const std::vector<String>& Document::getAll() const
@@ -141,4 +166,27 @@ void Document::assertPos(int line, int col, size_t pos) const
     assert(m_content.empty() || (size_t)line < m_content.size());
     assert(col >= 0);
     assert(m_content.empty() || pos < countLineListLen(m_content));
+}
+
+void Document::undo()
+{
+    const DocumentHistory::Entry entry = m_history.goBack();
+    if (entry.type == DocumentHistory::Entry::Type::Insertion)
+        _delete_impl(entry.range);
+    else
+        _insert_impl(entry.range.start, entry.text);
+}
+
+void Document::redo()
+{
+    const DocumentHistory::Entry entry = m_history.goForward();
+    if (entry.type == DocumentHistory::Entry::Type::Insertion)
+        _insert_impl(entry.range.start, entry.text);
+    else
+        _delete_impl(entry.range);
+}
+
+void Document::clearHistory()
+{
+    m_history.clear();
 }

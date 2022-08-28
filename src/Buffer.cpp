@@ -74,9 +74,7 @@ void Buffer::open(const std::string& filePath, bool isReload/*=false*/)
     m_filePath = filePath;
     m_language = Langs::LangId::Unknown;
     m_isReadOnly = false;
-#if 0 // TODO
-    m_history.clear();
-#endif
+    m_document->clearHistory();
     m_gitRepo.reset();
     m_signs.clear();
     m_lastFileUpdateTime = 0;
@@ -2026,41 +2024,16 @@ void Buffer::deleteCharForwardOrSelected()
 
 void Buffer::undo()
 {
-#if 0 // TODO
-    if (m_history.canGoBack())
+    if (m_document->getHistory().canGoBack())
     {
-        auto entry = m_history.goBack();
-        //Logger::dbg << "Undoing a history entry with " << entry.lines.size() << " lines" << Logger::End;
-        for (size_t i=entry.lines.size()-1; i != -1_st; --i)
-        {
-            const auto& lineEntry = entry.lines[i];
-
-            // If undoing the creation of a new line
-            if (lineEntry.from.empty())
-            {
-                m_content.erase(m_content.begin()+lineEntry.lineI);
-            }
-            // If undoing the deletion of a line
-            else if (lineEntry.to.empty())
-            {
-                m_content.insert(m_content.begin()+lineEntry.lineI, lineEntry.from);
-            }
-            // Just a regular changed line
-            else
-            {
-                m_content[lineEntry.lineI] = lineEntry.from;
-            }
-        }
-        m_cursorCol     = entry.oldCursCol;
-        m_cursorLine    = entry.oldCursLine;
-        m_cursorCharPos = entry.oldCursPos;
+        m_document->undo();
 
         // TODO: Adjust `m_highlightBuffer`
 
-        scrollViewportToCursor();
         m_isHighlightUpdateNeeded = true;
         m_version++;
-        Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(lineVecConcat(m_content)));
+        Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(m_document->getConcated()));
+        scrollViewportToCursor();
         g_isRedrawNeeded = true;
         Logger::dbg << "Went back in history" << Logger::End;
     }
@@ -2068,44 +2041,19 @@ void Buffer::undo()
     {
         Logger::dbg << "Cannot go back in history" << Logger::End;
     }
-#endif
 }
 
 void Buffer::redo()
 {
-#if 0 // TODO
-    if (m_history.canGoForward())
+    if (m_document->getHistory().canGoForward())
     {
-        auto entry = m_history.goForward();
-        for (size_t i{}; i < entry.lines.size(); ++i)
-        {
-            const auto& lineEntry = entry.lines[i];
-
-            // If redoing the creation of a new line
-            if (lineEntry.from.empty())
-            {
-                m_content.insert(m_content.begin()+lineEntry.lineI, lineEntry.to);
-            }
-            // If redoing the deletion of a line
-            else if (lineEntry.to.empty())
-            {
-                m_content.erase(m_content.begin()+lineEntry.lineI);
-            }
-            // Just a regular changed line
-            else
-            {
-                m_content[lineEntry.lineI] = lineEntry.to;
-            }
-        }
-        m_cursorCol     = entry.newCursCol;
-        m_cursorLine    = entry.newCursLine;
-        m_cursorCharPos = entry.newCursPos;
+        m_document->redo();
 
         // TODO: Adjust `m_highlightBuffer`
 
         m_isHighlightUpdateNeeded = true;
         m_version++;
-        Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(lineVecConcat(m_content)));
+        Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(m_document->getConcated()));
         scrollViewportToCursor();
         g_isRedrawNeeded = true;
         Logger::dbg << "Went forward in history" << Logger::End;
@@ -2114,7 +2062,6 @@ void Buffer::redo()
     {
         Logger::dbg << "Cannot go forward in history" << Logger::End;
     }
-#endif
 }
 
 // Guesses the currently typed path based on the POSIX portable file name character set
@@ -2300,8 +2247,6 @@ size_t Buffer::deleteSelectedChars()
         break;
     }
     }
-
-    assert(delCount);
 
     // Jump the cursor to the right place
     if (m_cursorCharPos > m_selection.fromCharI)
