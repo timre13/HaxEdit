@@ -2022,11 +2022,17 @@ void Buffer::deleteCharForwardOrSelected()
     applyDeletion({{m_cursorLine, m_cursorCol}, {m_cursorLine, m_cursorCol+1}});
 }
 
+static inline time_t getElapsedSince(time_t timePoint)
+{
+    return std::time(nullptr) - timePoint;
+}
+
 void Buffer::undo()
 {
     if (m_document->getHistory().canGoBack())
     {
-        m_document->undo();
+        const auto undoInfo = m_document->undo();
+
 
         // TODO: Adjust `m_highlightBuffer`
 
@@ -2034,11 +2040,14 @@ void Buffer::undo()
         m_version++;
         Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(m_document->getConcated()));
         scrollViewportToCursor();
+        g_statMsg.set("Undid change ("+std::to_string(getElapsedSince(undoInfo.timestamp))+" seconds old)",
+                StatusMsg::Type::Info);
         g_isRedrawNeeded = true;
         Logger::dbg << "Went back in history" << Logger::End;
     }
     else
     {
+        g_statMsg.set("Already at oldest version", StatusMsg::Type::Info);
         Logger::dbg << "Cannot go back in history" << Logger::End;
     }
 }
@@ -2047,19 +2056,22 @@ void Buffer::redo()
 {
     if (m_document->getHistory().canGoForward())
     {
-        m_document->redo();
+        const auto redoInfo = m_document->redo();
 
         // TODO: Adjust `m_highlightBuffer`
 
         m_isHighlightUpdateNeeded = true;
         m_version++;
         Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(m_document->getConcated()));
+        g_statMsg.set("Redid change ("+std::to_string(getElapsedSince(redoInfo.timestamp))+" seconds old)",
+                StatusMsg::Type::Info);
         scrollViewportToCursor();
         g_isRedrawNeeded = true;
         Logger::dbg << "Went forward in history" << Logger::End;
     }
     else
     {
+        g_statMsg.set("Already at newest version", StatusMsg::Type::Info);
         Logger::dbg << "Cannot go forward in history" << Logger::End;
     }
 }

@@ -8,9 +8,6 @@
 #include <vector>
 #include <stack>
 
-namespace
-{
-
 class DocumentHistory final
 {
 public:
@@ -23,6 +20,15 @@ public:
         } type{};
         lsRange range;
         String text;
+        /*
+         * Info that is not essential to undoing/redoing.
+         * This is returned from `Document::undo()` and `Document::redo()`
+         * so it can be displayed in the UI.
+         */
+        struct ExtraInfo
+        {
+            time_t timestamp;
+        } extraInfo;
     };
 
 private:
@@ -40,7 +46,6 @@ public:
 
     inline void add(const Entry& entry)
     {
-        //Logger::dbg << "New history entry added (" << entry.lines.size() << " lines)" << Logger::End;
         Logger::dbg << "New history entry added ("
             << "type=" << (entry.type == Entry::Type::Insertion ? "INS": "DEL")
             << ", range=" << entry.range.ToString()
@@ -77,8 +82,6 @@ public:
         return entry;
     }
 };
-
-} // namespace
 
 class Document final
 {
@@ -141,8 +144,8 @@ private:
     void setContent(const String& content);
     inline void clearContent() { m_content.clear(); }
 
-    void undo();
-    void redo();
+    DocumentHistory::Entry::ExtraInfo undo();
+    DocumentHistory::Entry::ExtraInfo redo();
     void clearHistory();
 
 public:

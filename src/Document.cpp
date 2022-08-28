@@ -1,4 +1,5 @@
 #include "Document.h"
+#include <ctime>
 
 void Document::setContent(const String& content)
 {
@@ -90,6 +91,7 @@ size_t Document::delete_(const range_t& range)
     entry.type = DocumentHistory::Entry::Type::Deletion;
     entry.range = range;
     entry.text = deletedStr;
+    entry.extraInfo.timestamp = std::time(nullptr);
     m_history.add(std::move(entry));
 
     return deletedStr.length();
@@ -130,6 +132,7 @@ lsPosition Document::insert(const pos_t& pos, const String& text)
     entry.type = DocumentHistory::Entry::Type::Insertion;
     entry.range = {pos, endPos};
     entry.text = text;
+    entry.extraInfo.timestamp = std::time(nullptr);
     m_history.add(std::move(entry));
 
     return endPos;
@@ -168,22 +171,24 @@ void Document::assertPos(int line, int col, size_t pos) const
     assert(m_content.empty() || pos < countLineListLen(m_content));
 }
 
-void Document::undo()
+DocumentHistory::Entry::ExtraInfo Document::undo()
 {
     const DocumentHistory::Entry entry = m_history.goBack();
     if (entry.type == DocumentHistory::Entry::Type::Insertion)
         _delete_impl(entry.range);
     else
         _insert_impl(entry.range.start, entry.text);
+    return entry.extraInfo;
 }
 
-void Document::redo()
+DocumentHistory::Entry::ExtraInfo Document::redo()
 {
     const DocumentHistory::Entry entry = m_history.goForward();
     if (entry.type == DocumentHistory::Entry::Type::Insertion)
         _insert_impl(entry.range.start, entry.text);
     else
         _delete_impl(entry.range);
+    return entry.extraInfo;
 }
 
 void Document::clearHistory()
