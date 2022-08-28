@@ -247,30 +247,7 @@ public:
     virtual inline void toggleCursorVisibility() {
         m_isCursorShown = !m_isCursorShown; }
 
-    virtual inline void scrollBy(int val)
-    {
-        TIMER_BEGIN_FUNC();
-
-        const int origScroll = m_scrollY;
-
-        m_scrollY += val;
-        // Don't scroll above the first line
-        if (m_scrollY > 0)
-        {
-            m_scrollY = 0;
-        }
-        // Always show the last line when scrolling down
-        // FIXME: Line wrapping makes the document longer, so this breaks
-        //else if (m_scrollY < -(int)(m_numOfLines-1)*g_fontSizePx)
-        //{
-        //    m_scrollY = -(int)(m_numOfLines-1)*g_fontSizePx;
-        //}
-
-        // Make the hover popup follow the original origin
-        g_hoverPopup->moveYBy(m_scrollY-origScroll);
-
-        TIMER_END_FUNC();
-    }
+    virtual void scrollBy(int val);
 
     /*
      * These are the main editing functions.
