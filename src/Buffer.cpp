@@ -2004,14 +2004,15 @@ void Buffer::deleteCharBackwards()
                 {m_cursorLine, 0}});
         --m_cursorLine;
         m_cursorCol = m_document->getLineLen(m_cursorLine);
+        --m_cursorCharPos;
     }
     // If deleting in the middle/end of the line and we have stuff to delete
     else if (m_cursorCharPos > 0)
     {
         applyDeletion({{m_cursorLine, m_cursorCol-1}, {m_cursorLine, m_cursorCol}});
         --m_cursorCol;
+        --m_cursorCharPos;
     }
-    --m_cursorCharPos;
     endHistoryEntry();
     scrollViewportToCursor();
 
