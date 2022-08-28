@@ -1176,10 +1176,11 @@ void Buffer::pasteFromClipboard()
         const size_t delCount = deleteSelectedChars(); // Overwrite selected chars if a selection is active
         for (char c : aClipbText)
             assert((c & 0b10000000) == 0); // Detect non-ASCII chars
+        beginHistoryEntry();
         // Do the insertion and move the cursor to the insertion end
         // TODO: Maybe a parameter to prevent moving the cursor?
         moveCursorToLineCol(applyInsertion({m_cursorLine, m_cursorCol}, strToUtf32(aClipbText)));
-        m_document->pushHistoryEntry();
+        endHistoryEntry();
         scrollViewportToCursor();
         g_statMsg.set("Pasted text from clipboard ("
                 +std::to_string(aClipbText.size())+" chars)"
@@ -1933,8 +1934,8 @@ void Buffer::insertCharAtCursor(Char character)
     const int oldCol = m_cursorCol;
     const int oldLine = m_cursorLine;
 
+    beginHistoryEntry();
     applyInsertion({m_cursorLine, m_cursorCol}, charToStr(character));
-    m_document->pushHistoryEntry();
     if (character == '\n')
     {
         ++m_cursorLine;
@@ -1954,6 +1955,7 @@ void Buffer::insertCharAtCursor(Char character)
     {
         m_autocompPopup->setVisibility(false);
     }
+    endHistoryEntry();
 
     // If this is the end of a word
     if (u_isspace(character))
@@ -1981,17 +1983,19 @@ void Buffer::replaceCharAtCursor(Char character)
     if (character == '\n' || m_document->getChar({m_cursorLine, m_cursorCol}) == '\n')
         return;
 
+    beginHistoryEntry();
     applyDeletion({{m_cursorLine, m_cursorCol}, {m_cursorLine, m_cursorCol+1}});
     applyInsertion({m_cursorLine, m_cursorCol}, charToStr(character));
-    m_document->pushHistoryEntry();
     ++m_cursorCol;
     ++m_cursorCharPos;
+    endHistoryEntry();
 
     scrollViewportToCursor();
 }
 
 void Buffer::deleteCharBackwards()
 {
+    beginHistoryEntry();
     // If deleting at the beginning of the line and we have stuff to delete
     if (m_cursorCol == 0 && m_cursorCharPos > 0)
     {
@@ -2007,8 +2011,8 @@ void Buffer::deleteCharBackwards()
         applyDeletion({{m_cursorLine, m_cursorCol-1}, {m_cursorLine, m_cursorCol}});
         --m_cursorCol;
     }
-    m_document->pushHistoryEntry();
     --m_cursorCharPos;
+    endHistoryEntry();
     scrollViewportToCursor();
 
     if (m_autocompPopup->isRendered())
@@ -2023,8 +2027,9 @@ void Buffer::deleteCharForwardOrSelected()
         return;
     }
 
+    beginHistoryEntry();
     applyDeletion({{m_cursorLine, m_cursorCol}, {m_cursorLine, m_cursorCol+1}});
-    m_document->pushHistoryEntry();
+    endHistoryEntry();
 }
 
 static inline time_t getElapsedSince(time_t timePoint)
@@ -2037,7 +2042,10 @@ void Buffer::undo()
     if (m_document->getHistory().canGoBack())
     {
         const auto undoInfo = m_document->undo();
-
+        // Restore cursor pos
+        m_cursorLine    = undoInfo.oldCursPos.line;
+        m_cursorCol     = undoInfo.oldCursPos.col;
+        m_cursorCharPos = undoInfo.oldCursPos.index;
 
         // TODO: Adjust `m_highlightBuffer`
 
@@ -2062,6 +2070,10 @@ void Buffer::redo()
     if (m_document->getHistory().canGoForward())
     {
         const auto redoInfo = m_document->redo();
+        // Restore cursor pos
+        m_cursorLine    = redoInfo.newCursPos.line;
+        m_cursorCol     = redoInfo.newCursPos.col;
+        m_cursorCharPos = redoInfo.newCursPos.index;
 
         // TODO: Adjust `m_highlightBuffer`
 
@@ -2137,6 +2149,7 @@ void Buffer::autocompPopupInsert()
 {
     // Hide the popup and insert the current item
 
+    beginHistoryEntry();
     if (m_autocompPopup->isRendered())
     {
         const auto* item = m_autocompPopup->getSelectedItem();
@@ -2160,7 +2173,7 @@ void Buffer::autocompPopupInsert()
             applyEdits(item->additionalTextEdits.get());
         }
     }
-    m_document->pushHistoryEntry();
+    endHistoryEntry();
     m_autocompPopup->setVisibility(false);
 }
 
@@ -2201,6 +2214,8 @@ size_t Buffer::deleteSelectedChars()
 
     if (m_selection.mode == Selection::Mode::None)
         return 0;
+
+    beginHistoryEntry();
 
     int delCount{};
 
@@ -2265,7 +2280,6 @@ size_t Buffer::deleteSelectedChars()
         break;
     }
     }
-    m_document->pushHistoryEntry();
 
     // Jump the cursor to the right place
     if (m_cursorCharPos > m_selection.fromCharI)
@@ -2284,6 +2298,7 @@ size_t Buffer::deleteSelectedChars()
             m_cursorCol = cursMaxCol;
         }
     }
+    endHistoryEntry();
 
     m_selection.mode = Selection::Mode::None; // Cancel the selection
     g_statMsg.set("Deleted "+std::to_string(delCount)+" characters", StatusMsg::Type::Info);
@@ -2406,12 +2421,12 @@ void Buffer::indentSelectedLines()
     const size_t startLine = std::min(m_cursorLine, m_selection.fromLine);
     const size_t endLine = std::max(m_cursorLine, m_selection.fromLine);
 
+    beginHistoryEntry();
     const String toInsert = ((TAB_SPACE_COUNT == 0) ? U"\t" : String(TAB_SPACE_COUNT, ' '));
     for (size_t i{startLine}; i <= endLine; ++i)
     {
         applyInsertion({(int)i, 0}, toInsert);
     }
-    m_document->pushHistoryEntry();
 
     // Place the cursor to the upper (less) position
     if (m_selection.fromCharI < m_cursorCharPos)
@@ -2421,6 +2436,7 @@ void Buffer::indentSelectedLines()
         m_cursorCol = m_selection.fromCol;
     }
 
+    endHistoryEntry();
     m_selection.mode = Selection::Mode::None;
     scrollViewportToCursor();
 }
@@ -2441,6 +2457,7 @@ void Buffer::unindentSelectedLines()
     const int startLine = std::min(m_cursorLine, m_selection.fromLine);
     const int endLine = std::max(m_cursorLine, m_selection.fromLine);
 
+    beginHistoryEntry();
     for (int i{startLine}; i <= endLine; ++i)
     {
 #if TAB_SPACE_COUNT == 0
@@ -2452,7 +2469,6 @@ void Buffer::unindentSelectedLines()
         applyDeletion({{i, 0}, {i, std::min(spaceCount, TAB_SPACE_COUNT)}});
 #endif
     }
-    m_document->pushHistoryEntry();
 
     // Place the cursor to the upper (less) position
     if (m_selection.fromCharI < m_cursorCharPos)
@@ -2462,6 +2478,7 @@ void Buffer::unindentSelectedLines()
         m_cursorCol = m_selection.fromCol;
     }
 
+    endHistoryEntry();
     m_selection.mode = Selection::Mode::None;
     scrollViewportToCursor();
 }
@@ -2841,6 +2858,16 @@ lsPosition Buffer::applyInsertion(const lsPosition& pos, const String& text)
     return endPos;
 }
 
+void Buffer::beginHistoryEntry()
+{
+    m_document->m_history.beginEntry(m_cursorLine, m_cursorCol, m_cursorCharPos);
+}
+
+void Buffer::endHistoryEntry()
+{
+    m_document->m_history.endEntry(m_cursorLine, m_cursorCol, m_cursorCharPos);
+}
+
 void Buffer::applyEdit(const lsAnnotatedTextEdit& edit)
 {
     Logger::dbg << "Buffer: Applying edit (file=" + m_filePath + ": " << edit.ToString() << Logger::End;
@@ -2863,6 +2890,7 @@ void Buffer::applyEdits(const std::vector<lsTextEdit>& edits)
 {
     Logger::log << "Applying " << edits.size() << " edits to " << m_filePath << '(' << this << ')' << Logger::End;
 
+    beginHistoryEntry();
     // Sort the edits backwards, so the inserting/deleting lines won't mess up the line indexing
     auto edits_ = edits;
     std::sort(edits_.begin(), edits_.end(), [](const lsTextEdit& first, const lsTextEdit& second){
@@ -2880,7 +2908,7 @@ void Buffer::applyEdits(const std::vector<lsTextEdit>& edits)
         Logger::dbg << "Edit start: line: " << edit.range.start.line << ", col: " << edit.range.start.character << Logger::End;
         applyEdit(edit);
     }
-    m_document->pushHistoryEntry();
+    endHistoryEntry();
 }
 
 void Buffer::renameSymbolAtCursor()

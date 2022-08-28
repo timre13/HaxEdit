@@ -276,7 +276,10 @@ public:
      * These are the main editing functions.
      * Only these can actually edit the Document.
      * All the other editing functions call these two.
-     * @warning Make sure to call `m_document->pushHistoryEntry()` when you finished editing.
+     * @warning Make sure to call `beginHistoryEntry()` before starting editing
+     *          and when the cursor is still at the original position.
+     * @warning Make sure to call `endHistoryEntry()` when you finished editing
+     *          and adjusted the cursor.
      */
     /*
      * @returns The number of characters deleted.
@@ -286,6 +289,9 @@ public:
      * @returns The position AFTER the last inserted character.
      */
     virtual lsPosition applyInsertion(const lsPosition& pos, const String& text);
+
+    virtual void beginHistoryEntry();
+    virtual void endHistoryEntry();
 
     // Text editing
     virtual void insertCharAtCursor(Char character);

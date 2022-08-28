@@ -33,13 +33,21 @@ public:
         std::vector<Change> changes;
 
         /*
-         * Info that is not essential to undoing/redoing.
-         * This is returned from `Document::undo()` and `Document::redo()`
-         * so it can be displayed in the UI.
+         * Info that is not used by `Document` when undoing/redoing,
+         * but is returned from `Document::undo()` and `Document::redo()`, so `Buffer`
+         * can use it.
          */
         struct ExtraInfo
         {
-            time_t timestamp;
+            time_t  timestamp;
+            struct CursPos
+            {
+                int     line  = -1;
+                int     col   = -1;
+                size_t  index = -1;
+            };
+            CursPos oldCursPos;
+            CursPos newCursPos;
         } extraInfo;
     };
 
@@ -66,14 +74,30 @@ public:
         m_currEntry.changes.push_back(change);
     }
 
-    inline void pushEntry()
+    inline void beginEntry(int cursLine, int cursCol, size_t cursI)
+    {
+        m_currEntry.extraInfo.oldCursPos.line = cursLine;
+        m_currEntry.extraInfo.oldCursPos.col = cursCol;
+        m_currEntry.extraInfo.oldCursPos.index = cursI;
+    }
+
+    inline void endEntry(int cursLine, int cursCol, size_t cursI)
     {
         if (!m_currEntry.changes.empty())
         {
+            // Fail if `beginEntry()` wasn't called
+            assert(m_currEntry.extraInfo.oldCursPos.col != -1
+                && m_currEntry.extraInfo.oldCursPos.line != -1
+                && m_currEntry.extraInfo.oldCursPos.index != -1_st);
+
             Logger::dbg << "Pushed a new history entry (" << m_currEntry.changes.size()
                 << " changes)" << Logger::End;
             while (!m_redoStack.empty()) m_redoStack.pop(); // Clear the redo stack
             m_currEntry.extraInfo.timestamp = std::time(nullptr);
+            m_currEntry.extraInfo.newCursPos.line = cursLine;
+            m_currEntry.extraInfo.newCursPos.col = cursCol;
+            m_currEntry.extraInfo.newCursPos.index = cursI;
+
             m_undoStack.push(std::move(m_currEntry));
             assert(m_currEntry.changes.empty());
         }
@@ -131,6 +155,10 @@ private:
     friend void Buffer::undo();
     // To allow calling `redo()`
     friend void Buffer::redo();
+    // To allow calling `m_history->beginEntry()`
+    friend void Buffer::beginHistoryEntry();
+    // To allow calling `m_history->endEntry()`
+    friend void Buffer::endHistoryEntry();
 
     /*
      * The actual delete implementation.
@@ -187,11 +215,6 @@ public:
     void assertPos(int line, int col, size_t pos) const;
 
     inline const DocumentHistory& getHistory() const { return m_history; }
-
-    inline void pushHistoryEntry()
-    {
-        m_history.pushEntry();
-    }
 
     // Note: We only allow reading
     inline decltype(m_content)::const_iterator begin() const { return m_content.cbegin(); }
