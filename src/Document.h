@@ -11,15 +11,27 @@
 class DocumentHistory final
 {
 public:
+    /*
+     * An entry is a group of changes.
+     *
+     * The changes are collected in `m_currEntry` and are pushed to the undo stack
+     * by calling `pushEntry()`. Grouping can be useful when one operation is made up
+     * of multiple changes. (Example: the block deletion has a change for each affected line.)
+     */
     struct Entry
     {
-        enum class Type : bool
+        struct Change
         {
-            Insertion,
-            Deletion,
-        } type{};
-        lsRange range;
-        String text;
+            enum class Type : bool
+            {
+                Insertion,
+                Deletion,
+            } type{};
+            lsRange range;
+            String text;
+        };
+        std::vector<Change> changes;
+
         /*
          * Info that is not essential to undoing/redoing.
          * This is returned from `Document::undo()` and `Document::redo()`
@@ -34,6 +46,7 @@ public:
 private:
     std::stack<Entry> m_undoStack;
     std::stack<Entry> m_redoStack;
+    DocumentHistory::Entry m_currEntry;
 
 public:
     DocumentHistory() {}
@@ -44,14 +57,26 @@ public:
         while (!m_redoStack.empty()) m_redoStack.pop();
     }
 
-    inline void add(const Entry& entry)
+    inline void add(const DocumentHistory::Entry::Change& change)
     {
-        Logger::dbg << "New history entry added ("
-            << "type=" << (entry.type == Entry::Type::Insertion ? "INS": "DEL")
-            << ", range=" << entry.range.ToString()
-            << ", lineCount=" << strCountLines(entry.text) << ')' << Logger::End;
-        while (!m_redoStack.empty()) m_redoStack.pop(); // Clear the redo stack
-        m_undoStack.push(entry);
+        Logger::dbg << "New change added ("
+            << "type=" << (change.type == Entry::Change::Type::Insertion ? "INS": "DEL")
+            << ", range=" << change.range.ToString()
+            << ", lineCount=" << strCountLines(change.text) << ')' << Logger::End;
+        m_currEntry.changes.push_back(change);
+    }
+
+    inline void pushEntry()
+    {
+        if (!m_currEntry.changes.empty())
+        {
+            Logger::dbg << "Pushed a new history entry (" << m_currEntry.changes.size()
+                << " changes)" << Logger::End;
+            while (!m_redoStack.empty()) m_redoStack.pop(); // Clear the redo stack
+            m_currEntry.extraInfo.timestamp = std::time(nullptr);
+            m_undoStack.push(std::move(m_currEntry));
+            assert(m_currEntry.changes.empty());
+        }
     }
 
     inline bool canGoBack() const
@@ -162,6 +187,11 @@ public:
     void assertPos(int line, int col, size_t pos) const;
 
     inline const DocumentHistory& getHistory() const { return m_history; }
+
+    inline void pushHistoryEntry()
+    {
+        m_history.pushEntry();
+    }
 
     // Note: We only allow reading
     inline decltype(m_content)::const_iterator begin() const { return m_content.cbegin(); }

@@ -276,6 +276,7 @@ public:
      * These are the main editing functions.
      * Only these can actually edit the Document.
      * All the other editing functions call these two.
+     * @warning Make sure to call `m_document->pushHistoryEntry()` when you finished editing.
      */
     /*
      * @returns The number of characters deleted.

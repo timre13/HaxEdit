@@ -29,7 +29,7 @@ String Document::_delete_impl(const range_t& range)
 
     while (true)
     {
-        Logger::dbg << lineI << ':' << colI << Logger::End;
+        //Logger::dbg << lineI << ':' << colI << Logger::End;
 
         assert(lineI >= 0);
         assert(lineI < (int)m_content.size());
@@ -87,12 +87,11 @@ size_t Document::delete_(const range_t& range)
 {
     const String deletedStr = _delete_impl(range);
 
-    DocumentHistory::Entry entry;
-    entry.type = DocumentHistory::Entry::Type::Deletion;
-    entry.range = range;
-    entry.text = deletedStr;
-    entry.extraInfo.timestamp = std::time(nullptr);
-    m_history.add(std::move(entry));
+    DocumentHistory::Entry::Change change;
+    change.type = DocumentHistory::Entry::Change::Type::Deletion;
+    change.range = range;
+    change.text = deletedStr;
+    m_history.add(std::move(change));
 
     return deletedStr.length();
 }
@@ -128,12 +127,11 @@ lsPosition Document::insert(const pos_t& pos, const String& text)
 {
     const lsPosition endPos = _insert_impl(pos, text);
 
-    DocumentHistory::Entry entry;
-    entry.type = DocumentHistory::Entry::Type::Insertion;
-    entry.range = {pos, endPos};
-    entry.text = text;
-    entry.extraInfo.timestamp = std::time(nullptr);
-    m_history.add(std::move(entry));
+    DocumentHistory::Entry::Change change;
+    change.type = DocumentHistory::Entry::Change::Type::Insertion;
+    change.range = {pos, endPos};
+    change.text = text;
+    m_history.add(std::move(change));
 
     return endPos;
 }
@@ -174,20 +172,26 @@ void Document::assertPos(int line, int col, size_t pos) const
 DocumentHistory::Entry::ExtraInfo Document::undo()
 {
     const DocumentHistory::Entry entry = m_history.goBack();
-    if (entry.type == DocumentHistory::Entry::Type::Insertion)
-        _delete_impl(entry.range);
-    else
-        _insert_impl(entry.range.start, entry.text);
+    for (const auto& change : entry.changes)
+    {
+        if (change.type == DocumentHistory::Entry::Change::Type::Insertion)
+            _delete_impl(change.range);
+        else
+            _insert_impl(change.range.start, change.text);
+    }
     return entry.extraInfo;
 }
 
 DocumentHistory::Entry::ExtraInfo Document::redo()
 {
     const DocumentHistory::Entry entry = m_history.goForward();
-    if (entry.type == DocumentHistory::Entry::Type::Insertion)
-        _insert_impl(entry.range.start, entry.text);
-    else
-        _delete_impl(entry.range);
+    for (const auto& change : entry.changes)
+    {
+        if (change.type == DocumentHistory::Entry::Change::Type::Insertion)
+            _insert_impl(change.range.start, change.text);
+        else
+            _delete_impl(change.range);
+    }
     return entry.extraInfo;
 }
 

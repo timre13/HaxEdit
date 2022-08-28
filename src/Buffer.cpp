@@ -1179,6 +1179,7 @@ void Buffer::pasteFromClipboard()
         // Do the insertion and move the cursor to the insertion end
         // TODO: Maybe a parameter to prevent moving the cursor?
         moveCursorToLineCol(applyInsertion({m_cursorLine, m_cursorCol}, strToUtf32(aClipbText)));
+        m_document->pushHistoryEntry();
         scrollViewportToCursor();
         g_statMsg.set("Pasted text from clipboard ("
                 +std::to_string(aClipbText.size())+" chars)"
@@ -1933,6 +1934,7 @@ void Buffer::insertCharAtCursor(Char character)
     const int oldLine = m_cursorLine;
 
     applyInsertion({m_cursorLine, m_cursorCol}, charToStr(character));
+    m_document->pushHistoryEntry();
     if (character == '\n')
     {
         ++m_cursorLine;
@@ -1981,6 +1983,7 @@ void Buffer::replaceCharAtCursor(Char character)
 
     applyDeletion({{m_cursorLine, m_cursorCol}, {m_cursorLine, m_cursorCol+1}});
     applyInsertion({m_cursorLine, m_cursorCol}, charToStr(character));
+    m_document->pushHistoryEntry();
     ++m_cursorCol;
     ++m_cursorCharPos;
 
@@ -2004,6 +2007,7 @@ void Buffer::deleteCharBackwards()
         applyDeletion({{m_cursorLine, m_cursorCol-1}, {m_cursorLine, m_cursorCol}});
         --m_cursorCol;
     }
+    m_document->pushHistoryEntry();
     --m_cursorCharPos;
     scrollViewportToCursor();
 
@@ -2020,6 +2024,7 @@ void Buffer::deleteCharForwardOrSelected()
     }
 
     applyDeletion({{m_cursorLine, m_cursorCol}, {m_cursorLine, m_cursorCol+1}});
+    m_document->pushHistoryEntry();
 }
 
 static inline time_t getElapsedSince(time_t timePoint)
@@ -2155,6 +2160,7 @@ void Buffer::autocompPopupInsert()
             applyEdits(item->additionalTextEdits.get());
         }
     }
+    m_document->pushHistoryEntry();
     m_autocompPopup->setVisibility(false);
 }
 
@@ -2259,6 +2265,7 @@ size_t Buffer::deleteSelectedChars()
         break;
     }
     }
+    m_document->pushHistoryEntry();
 
     // Jump the cursor to the right place
     if (m_cursorCharPos > m_selection.fromCharI)
@@ -2404,6 +2411,7 @@ void Buffer::indentSelectedLines()
     {
         applyInsertion({(int)i, 0}, toInsert);
     }
+    m_document->pushHistoryEntry();
 
     // Place the cursor to the upper (less) position
     if (m_selection.fromCharI < m_cursorCharPos)
@@ -2444,6 +2452,7 @@ void Buffer::unindentSelectedLines()
         applyDeletion({{i, 0}, {i, std::min(spaceCount, TAB_SPACE_COUNT)}});
 #endif
     }
+    m_document->pushHistoryEntry();
 
     // Place the cursor to the upper (less) position
     if (m_selection.fromCharI < m_cursorCharPos)
@@ -2871,6 +2880,7 @@ void Buffer::applyEdits(const std::vector<lsTextEdit>& edits)
         Logger::dbg << "Edit start: line: " << edit.range.start.line << ", col: " << edit.range.start.character << Logger::End;
         applyEdit(edit);
     }
+    m_document->pushHistoryEntry();
 }
 
 void Buffer::renameSymbolAtCursor()
