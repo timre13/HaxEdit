@@ -29,6 +29,7 @@ using namespace std::chrono_literals;
 #include "LibLsp/lsp/lsp_diagnostic.h"
 #include "LibLsp/lsp/textDocument/signature_help.h"
 #include "LibLsp/lsp/textDocument/code_action.h"
+#include "LibLsp/lsp/textDocument/document_symbol.h"
 #ifdef __clang__
 
 #pragma clang diagnostic pop
@@ -282,6 +283,9 @@ public:
     void _replyToWsApplyEdit(const std::string& msgIfErr);
 
     void renameSymbol(const std::string& filePath, const lsPosition& pos, const std::string& newName);
+
+    using docSymbolResult_t = decltype(td_symbol::response::result);
+    docSymbolResult_t getDocSymbols(const std::string& filePath);
 
     std::shared_ptr<Image> getStatusIcon();
 

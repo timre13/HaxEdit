@@ -99,6 +99,7 @@
 #define HIDE_MOUSE_WHILE_TYPING         true
 
 #define CURSOR_HOLD_TIME_CODE_ACTION    1000
+#define CURSOR_HOLD_TIME_LOCATION_UPD   100
 
 //-------------------- Dialogs --------------------
 

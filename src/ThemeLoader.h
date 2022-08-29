@@ -6,6 +6,8 @@
 #include "Syntax.h"
 #include "config.h"
 
+RGBColor calcStatLineColor(RGBColor col);
+
 inline std::array<std::string, Syntax::_SYNTAX_MARK_COUNT> themeKeys = {
     "c_default",                // None, default
     "c_keyword",                // Keyword
@@ -38,6 +40,8 @@ struct Theme
     RGBColor findResultBg{DEF_FIND_MARK_COLOR};
     RGBColor lineNColor{DEF_LINEN_FG};
 };
+
+RGBColor calcStatLineColor(RGBColor col);
 
 /*
  * Color themes:

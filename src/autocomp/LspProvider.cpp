@@ -328,6 +328,12 @@ LspProvider::LspProvider()
         initreq.params.clientInfo->name = "HaxEdit";
         initreq.params.clientInfo->version = "0.1";
     }
+    initreq.params.capabilities.textDocument->documentSymbol.emplace();
+    initreq.params.capabilities.textDocument->documentSymbol->hierarchicalDocumentSymbolSupport.emplace(true);
+    initreq.params.capabilities.textDocument->documentSymbol->symbolKind.emplace();
+    initreq.params.capabilities.textDocument->documentSymbol->symbolKind->valueSet.emplace();
+    for (int skind{1}; skind <= (int)lsSymbolKind::TypeParameter; ++skind)
+        initreq.params.capabilities.textDocument->documentSymbol->symbolKind->valueSet->push_back((lsSymbolKind)skind);
 
     Logger::dbg << "LSP: Sending initialize request: " << initreq.ToJson() << Logger::End;
 
@@ -820,6 +826,7 @@ void LspProvider::renameSymbol(const std::string& filePath, const lsPosition& po
     req.params.position = pos;
     req.params.newName = newName;
 
+    Logger::dbg << "LSP: Sending workspace/rename request: " << req.ToJson() << Logger::End;
     auto resp = m_client->getEndpoint()->waitResponse(req, LSP_TIMEOUT_MILLI);
     assert(resp);
     if (resp->IsError())
@@ -835,6 +842,29 @@ void LspProvider::renameSymbol(const std::string& filePath, const lsPosition& po
     applyWorkspaceEdit(edit);
 
     busyEnd();
+}
+
+LspProvider::docSymbolResult_t LspProvider::getDocSymbols(const std::string& filePath)
+{
+    if (didServerCrash) return {};
+    busyBegin();
+
+    td_symbol::request req;
+    req.params.textDocument.uri.SetPath(filePath);
+    Logger::dbg << "LSP: Sending textDocument/documentSymbol request: " << req.ToJson() << Logger::End;
+
+    auto resp = m_client->getEndpoint()->waitResponse(req, LSP_TIMEOUT_MILLI);
+    assert(resp);
+    if (resp->IsError())
+    {
+        Logger::err << "LSP: Server responded with error: " << respGetErrMsg(resp) << Logger::End;
+        busyEnd();
+        return {};
+    }
+    Logger::dbg << "LSP server response: " << resp->ToJson() << Logger::End;
+
+    busyEnd();
+    return resp->response.result;
 }
 
 std::shared_ptr<Image> LspProvider::getStatusIcon()

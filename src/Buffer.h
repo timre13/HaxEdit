@@ -109,6 +109,8 @@ protected:
         size_t maxLen{};
     } m_statusLineStr{};
 
+    std::string m_breadcBarVal;
+
     std::unique_ptr<Autocomp::Popup> m_autocompPopup;
 
     Selection m_selection{};
@@ -164,6 +166,7 @@ protected:
         const glm::ivec2& textPos, int initTextY
     ) const;
     void _renderDrawCursorLineCodeAct(int yPos, int initTextY);
+    void _renderDrawBreadcrumbBar();
 
     void _goToCurrFindResult(bool showStatMsg);
 

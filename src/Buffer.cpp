@@ -1596,6 +1596,19 @@ void Buffer::_renderDrawCursorLineCodeAct(int yPos, int initTextY)
     }
 }
 
+void Buffer::_renderDrawBreadcrumbBar()
+{
+    if (m_breadcBarVal.empty())
+        return;
+
+    g_uiRenderer->renderFilledRectangle(m_position, {m_position.x+m_size.x, m_position.y+g_fontSizePx+6},
+            RGB_COLOR_TO_RGBA(calcStatLineColor(g_theme->bgColor)));
+    g_uiRenderer->renderRectangleOutline(m_position, {m_position.x+m_size.x, m_position.y+g_fontSizePx+6},
+            {0.5f, 0.5f, 0.5f, 1.0f}, 1);
+
+    g_textRenderer->renderString(m_breadcBarVal, m_position+glm::ivec2{4, 2});
+}
+
 void Buffer::render()
 {
     TIMER_BEGIN_FUNC();
@@ -1951,6 +1964,8 @@ void Buffer::render()
     {
         renderAutocompPopup();
     }
+
+    _renderDrawBreadcrumbBar();
 
     TIMER_END_FUNC();
 }
@@ -2534,6 +2549,11 @@ void Buffer::goToMousePos()
     g_isRedrawNeeded = true;
 }
 
+static bool isPosInRange(const lsRange& range, const lsPosition& pos)
+{
+    return !(pos < range.start) && pos < range.end;
+}
+
 void Buffer::tickCursorHold(float frameTimeMs)
 {
     auto isTriggered{[this, frameTimeMs](int triggerAfter){
@@ -2552,6 +2572,42 @@ void Buffer::tickCursorHold(float frameTimeMs)
         m_lineCodeAction.forLine = m_cursorLine;
         m_lineCodeAction.actions = std::move(codeAct);
         // Draw the code action mark
+        g_isRedrawNeeded = true;
+    }
+    if (isTriggered(CURSOR_HOLD_TIME_LOCATION_UPD))
+    {
+        // TODO: Don't get symbols every time, only if the file was modified.
+        //       And then we probably won't even need delay (or only a small amount)
+        const auto symbols = Autocomp::lspProvider->getDocSymbols(m_filePath);
+
+        std::function<std::string(const decltype(symbols)&, bool)> _genLocPath
+            = [this, &_genLocPath](const decltype(symbols)& syms, bool firstCall){ // -> std::string
+            std::string out;
+            for (const auto& sym : syms)
+            {
+                if (isPosInRange(sym.range, {m_cursorLine, m_cursorCol}))
+                {
+                    if (!firstCall)
+                        out += " \033[90m>\033[0m ";
+                    out += sym.name;
+                    if (sym.children.has_value())
+                    {
+                        out += _genLocPath(sym.children.get(), false);
+                    }
+                    break;
+                }
+            }
+            return out;
+        };
+        auto genLocPath = [&_genLocPath](const decltype(symbols)& symbols){ // -> std::string
+            return _genLocPath(symbols, true);
+        };
+
+        // Generate the string for the breadcrumb bar.
+        // TODO: Use something more sophisticated.
+        m_breadcBarVal = genLocPath(symbols);;
+        Logger::log << "Location path: " << m_breadcBarVal << Logger::End;
+
         g_isRedrawNeeded = true;
     }
 
