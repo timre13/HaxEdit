@@ -115,7 +115,7 @@ std::string doxygenToAnsiEscaped(const std::string& raw)
                 ++commandEnd;
             const std::string command = line.substr(1, commandEnd-1);
             const CommandId id = commandStrToId(command);
-            const std::string params = line.substr(commandEnd+1);
+            const std::string params = (commandEnd < line.size() ? line.substr(commandEnd+1) : "");
             /*
              * If a command is in the conversion table, it needs special formatting.
              * Otherwise it just needs to be capitalized.
