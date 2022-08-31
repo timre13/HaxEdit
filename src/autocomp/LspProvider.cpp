@@ -286,10 +286,18 @@ LspProvider::LspProvider()
 
     busyBegin();
 
-    static const std::string exe = "/home/mike/.local/share/nvim/plugged/lua-language-server/bin/lua-language-server";
+    //const std::string root = "/home/mike/programming/cpp/opengl_text_editor/build";
+    const std::string root = g_exeDirPath;
+    //static const std::string exe = "/home/mike/.local/share/nvim/plugged/lua-language-server/bin/lua-language-server";
     //static const std::string exe = "ccls";
-    //static const std::string exe = "clangd";
+    static const std::string exe = "/usr/bin/clangd";
+    //static const std::string exe = "/home/mike/.local/bin/pyright-langserver";
+    //static const std::string exe = "gopls";
+    //static const std::string exe = "/usr/local/bin/vscode-html-language-server";
+    //static const std::string exe = "invalid";
     static const std::vector<std::string> args = {
+       //exe,
+       // "--stdio"
     };
 
     try
@@ -324,16 +332,90 @@ LspProvider::LspProvider()
     td_initialize::request initreq;
     initreq.params.processId = boost::interprocess::ipcdetail::get_current_process_id();
     initreq.params.clientInfo.emplace();
-    {
-        initreq.params.clientInfo->name = "HaxEdit";
-        initreq.params.clientInfo->version = "0.1";
-    }
-    initreq.params.capabilities.textDocument->documentSymbol.emplace();
-    initreq.params.capabilities.textDocument->documentSymbol->hierarchicalDocumentSymbolSupport.emplace(true);
-    initreq.params.capabilities.textDocument->documentSymbol->symbolKind.emplace();
-    initreq.params.capabilities.textDocument->documentSymbol->symbolKind->valueSet.emplace();
+    initreq.params.clientInfo->name = "HaxEdit";
+    initreq.params.clientInfo->version = "0.1";
+    initreq.params.rootPath.emplace();
+    initreq.params.rootPath = root;
+    initreq.params.rootUri.emplace();
+    initreq.params.rootUri->SetPath({root});
+    initreq.params.workspaceFolders.emplace();
+    initreq.params.workspaceFolders->emplace_back();
+    initreq.params.workspaceFolders->back().uri.SetPath({root});
+    initreq.params.workspaceFolders->back().name = "root";
+    auto& caps = initreq.params.capabilities;
+    caps.workspace.emplace();
+    caps.workspace->applyEdit.emplace(true);
+    caps.workspace->workspaceEdit.emplace();
+    caps.workspace->workspaceEdit->documentChanges.emplace(true);
+    //caps.workspace->workspaceEdit->resourceOperations -- Not supported yet
+    caps.workspace->workspaceEdit->failureHandling.emplace("abort"); // Probably
+    caps.workspace->workspaceEdit->normalizesLineEndings.emplace(false); // TODO: We should support it
+    //caps.workspace->symbol -- TODO: Support searching workspace symbols
+    caps.workspace->executeCommand.emplace();
+    caps.workspace->workspaceFolders.emplace(true); // TODO: Actually support workspace folders
+    //caps.workspace->fileOperations -- TODO: Support file operations
+    caps.textDocument.emplace();
+    //caps.textDocument->synchronization -- TODO
+    caps.textDocument->completion.emplace();
+    caps.textDocument->completion->completionItem.emplace();
+    //caps.textDocument->completion->completionItem->snippetSupport -- TODO
+    caps.textDocument->completion->completionItem->commitCharactersSupport.emplace(false);
+    caps.textDocument->completion->completionItem->commitCharactersSupport.emplace(false);
+    //caps.textDocument->completion->completionItem->documentationFormat -- TODO: We don't even support CompletionItem docs
+    //caps.textDocument->completion->completionItem->deprecatedSupport -- TODO
+    //caps.textDocument->completion->completionItem->preselectSupport -- TODO
+    //caps.textDocument->completion->completionItem->tagSupport -- TODO (also implement in LspCpp)
+    //caps.textDocument->completion->completionItem->insertReplaceSupport -- TODO (also implement in LspCpp)
+    caps.textDocument->completion->completionItemKind.emplace();
+    caps.textDocument->completion->completionItemKind->valueSet.emplace();
+    for (int kind{1}; kind <= (int)lsCompletionItemKind::TypeParameter; ++kind)
+        caps.textDocument->completion->completionItemKind->valueSet->push_back((lsCompletionItemKind)kind);
+    caps.textDocument->hover.emplace();
+    caps.textDocument->hover->contentFormat.emplace();
+    caps.textDocument->hover->contentFormat->emplace_back("plaintext"); // TODO: Support markdown
+    caps.textDocument->signatureHelp.emplace();
+    caps.textDocument->signatureHelp->signatureInformation.emplace();
+    caps.textDocument->signatureHelp->signatureInformation->documentationFormat.push_back("plaintext"); // TODO: Support markdown
+    caps.textDocument->signatureHelp->signatureInformation->documentationFormat.push_back("plaintext"); // TODO: Support markdown
+    caps.textDocument->signatureHelp->signatureInformation->parameterInformation.labelOffsetSupport.emplace(false); // I don't know if LspCpp supports it
+    caps.textDocument->declaration.emplace();
+    caps.textDocument->declaration->linkSupport.emplace(false); // TODO: Support `LocationLink`s
+    caps.textDocument->definition.emplace();
+    caps.textDocument->definition->linkSupport.emplace(false); // TODO: Support `LocationLink`s
+    caps.textDocument->implementation.emplace();
+    caps.textDocument->implementation->linkSupport.emplace(false); // TODO: Support `LocationLink`s
+    //caps.textDocument->documentHighlight // TODO: Support documentHighlight
+    //caps.textDocument->documentHighlight // TODO: Support documentHighlight
+    caps.textDocument->documentSymbol.emplace(); // Note: Only used for the breadcrumb bar
+    caps.textDocument->documentSymbol->hierarchicalDocumentSymbolSupport.emplace(true);
+    caps.textDocument->documentSymbol->symbolKind.emplace();
+    caps.textDocument->documentSymbol->symbolKind->valueSet.emplace();
     for (int skind{1}; skind <= (int)lsSymbolKind::TypeParameter; ++skind)
         initreq.params.capabilities.textDocument->documentSymbol->symbolKind->valueSet->push_back((lsSymbolKind)skind);
+    caps.textDocument->codeAction.emplace();
+    //caps.textDocument->codeLens -- TODO: Support code lens
+    //caps.textDocument->documentLink -- TODO
+    //caps.textDocument->colorProvider -- TODO
+    //caps.textDocument->formatting -- TODO
+    //caps.textDocument->rangeFormatting -- TODO
+    //caps.textDocument->onTypeFormatting -- TODO
+    caps.textDocument->rename.emplace();
+    //caps.textDocument->rename->prepareSupport -- TODO
+    caps.textDocument->publishDiagnostics.emplace();
+    //caps.textDocument->publishDiagnostics->relatedInformation -- TODO
+    //caps.textDocument->publishDiagnostics->dataSupport -- TODO
+    //caps.textDocument->foldingRange -- TODO
+    //caps.textDocument->callHierarchy -- TODO: Incoming/outgoing calls
+    //caps.textDocument->typeHierarchyCapabilities -- TODO
+    //caps.textDocument->inlineValue -- TODO (also support in LspCpp)
+    //caps.textDocument->inlayHint -- TODO: Maybe? (too much work) (also support in LspCpp)
+    caps.window.emplace();
+    caps.window->SetJsonString("{"
+                "\"workDoneProgress\": true"
+                // TODO: ShowMessage
+                // TODO: ShowDocument
+            "}",
+            lsp::Any::Type::kObjectType);
 
     Logger::dbg << "LSP: Sending initialize request: " << initreq.ToJson() << Logger::End;
 
@@ -826,7 +908,7 @@ void LspProvider::renameSymbol(const std::string& filePath, const lsPosition& po
     req.params.position = pos;
     req.params.newName = newName;
 
-    Logger::dbg << "LSP: Sending workspace/rename request: " << req.ToJson() << Logger::End;
+    Logger::dbg << "LSP: Sending textDocument/rename request: " << req.ToJson() << Logger::End;
     auto resp = m_client->getEndpoint()->waitResponse(req, LSP_TIMEOUT_MILLI);
     assert(resp);
     if (resp->IsError())
