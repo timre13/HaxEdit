@@ -21,13 +21,14 @@ Modern code editor for 1337 H4X0Rs.
   - File modification detection
   - Indent rainbow
   - Indent guide
+  - Undo/Redo
 - Modal editing
 - Image viewing
 - Eclipse IDE theme support
 - Custom message dialogs, file dialogs and floating windows
 - Recent file list
 - LSP support:
-  - File open/close/modification notifications
+  - File open/close/change/willSave notifications
   - Autocomplete
   - Inline diagnostics
   - Symbol hover
@@ -35,6 +36,7 @@ Modern code editor for 1337 H4X0Rs.
   - Go to definition/declaration/implementation
   - Cross-file rename symbol
   - Code actions
+  - Breadcrumb bar (using `textDocument/documentSymbol`)
   - Progress support
   - Execute command request support
 - Basic Doxygen highlighting
