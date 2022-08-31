@@ -160,6 +160,8 @@ private:
     // To allow calling `m_history->endEntry()`
     friend void Buffer::endHistoryEntry();
 
+    lsRange _makeRangeInclusive(lsRange range) const;
+
     /*
      * The actual delete implementation.
      * This does NOT create a history entry.
@@ -168,7 +170,7 @@ private:
      * @warning Do not call this (only from `delete_()`, `undo()` and `redo()`.
      * @see `delete_()` for more info.
      */
-    String _delete_impl(const range_t& range);
+    String _delete_impl(range_t range);
 
     /*
      * Delete text from the specified range and create a history entry for the edit.
@@ -202,6 +204,7 @@ private:
     void clearHistory();
 
 public:
+    String get(lsRange range) const;
     const std::vector<String>& getAll() const;
     Char getChar(const pos_t& pos);
     String getLine(size_t i) const;

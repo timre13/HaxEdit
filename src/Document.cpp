@@ -6,26 +6,74 @@ void Document::setContent(const String& content)
     m_content = splitStrToLines(content, true);
 }
 
-String Document::_delete_impl(const range_t& range)
+lsRange Document::_makeRangeInclusive(lsRange range) const
+{
+    if (range.end.character == 0)
+    {
+        --range.end.line;
+        assert(range.end.line < m_content.size());
+        range.end.character = m_content[range.end.line].size()-1;
+    }
+    else
+    {
+        --range.end.character;
+    }
+    return range;
+}
+
+String Document::get(lsRange range) const
+{
+    Logger::dbg << "Getting from range: " << range.ToString() << Logger::End;
+
+    String output;
+
+    range = _makeRangeInclusive(range);
+    int lineI = range.end.line;
+    int colI = range.end.character;
+    while (true)
+    {
+        //Logger::dbg << lineI << ':' << colI << Logger::End;
+
+        assert(lineI >= 0);
+        assert(lineI < (int)m_content.size());
+        assert(colI >= 0);
+        assert(colI < (int)m_content[lineI].size());
+
+        output += m_content[lineI][colI];
+
+        // Exit if this was the last char
+        if (lineI == (int)range.start.line && colI == (int)range.start.character)
+        {
+            break;
+        }
+
+        // Go to next char
+        --colI;
+        if (colI == -1)
+        {
+            --lineI;
+            assert(lineI >= 0);
+            assert(lineI < (int)m_content.size());
+            colI = m_content[lineI].size()-1;
+            assert(colI >= 0);
+        }
+    }
+
+    String out = output;
+    // We delete backwards, so we must reverse the string
+    std::reverse(out.begin(), out.end());
+    return out;
+}
+
+String Document::_delete_impl(range_t range)
 {
     Logger::dbg << "Deleting range: " << range.ToString() << Logger::End;
 
     String deletedStr;
 
+    range = _makeRangeInclusive(range);
     int lineI = range.end.line;
     int colI = range.end.character;
-    // The range is exclusive
-    if (colI == 0)
-    {
-        --lineI;
-        assert(lineI >= 0);
-        assert(lineI < (int)m_content.size());
-        colI = m_content[lineI].size()-1;
-    }
-    else
-    {
-        --colI;
-    }
 
     while (true)
     {

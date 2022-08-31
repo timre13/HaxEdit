@@ -1544,6 +1544,8 @@ void Buffer::_renderDrawDiagnosticMsg(
             const int sevIndex = (int)sev-1;
             const RGBColor textColor = severityColors[sevIndex];
 
+            // If the diagnostic is in the current line, show the whole message.
+            // Otherwise only show the first line.
             std::string msgToDisplay;
             if (isCurrent)
             {
@@ -1565,13 +1567,14 @@ void Buffer::_renderDrawDiagnosticMsg(
                     !render);
             }};
 
-            // Calculate and fill the background of the diagnositc message
+            // Calculate and fill the background of the diagnostic message
             const auto diagnArea = rendOrMeasure(false);
             g_uiRenderer->renderFilledRectangle(
                     diagnArea.first,
                     {diagnArea.second.x, diagnArea.second.y+g_fontSizePx*0.2f},
                     {UNPACK_RGB_COLOR(textColor), 0.1f});
 
+            // Render the message
             rendOrMeasure(true);
             break;
         }
@@ -2996,6 +2999,14 @@ void Buffer::applyEdits(const std::vector<lsTextEdit>& edits)
 
 void Buffer::renameSymbolAtCursor()
 {
+    const auto canRename = Autocomp::lspProvider->canRenameSymbolAt(m_filePath, {m_cursorLine, m_cursorCol});
+    if (canRename.isError)
+    {
+        Logger::err << "Can't rename symbol: " << canRename.errorOrSymName << Logger::End;
+        g_statMsg.set(canRename.errorOrSymName, StatusMsg::Type::Error);
+        return;
+    }
+
     auto cb = [this](int, Dialog* dlg, void*){
         const lsPosition pos{m_cursorLine, m_cursorCol};
         auto dlg_ = dynamic_cast<AskerDialog*>(dlg);
@@ -3003,7 +3014,11 @@ void Buffer::renameSymbolAtCursor()
         Autocomp::lspProvider->renameSymbol(m_filePath, pos, dlg_->getValue());
     };
 
-    AskerDialog::create(cb, nullptr, "New name:");
+    const std::string symName = (!canRename.errorOrSymName.empty()
+            ? canRename.errorOrSymName
+            : strToAscii(m_document->get(canRename.rangeIfNoName)));
+    Logger::dbg << "Will rename symbol: " << symName << Logger::End;
+    AskerDialog::create(cb, nullptr, "New name for \033[3m"+symName+"\033[0m:");
 }
 
 Buffer::~Buffer()

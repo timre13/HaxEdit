@@ -24,6 +24,7 @@
 #include "LibLsp/lsp/textDocument/publishDiagnostics.h"
 #include "LibLsp/lsp/textDocument/declaration_definition.h"
 #include "LibLsp/lsp/textDocument/implementation.h"
+#include "LibLsp/lsp/textDocument/prepareRename.h"
 #include "LibLsp/lsp/textDocument/rename.h"
 #include "LibLsp/lsp/textDocument/completion.h"
 #include "LibLsp/lsp/workspace/execute_command.h"
@@ -385,7 +386,6 @@ LspProvider::LspProvider()
     caps.textDocument->implementation.emplace();
     caps.textDocument->implementation->linkSupport.emplace(false); // TODO: Support `LocationLink`s
     //caps.textDocument->documentHighlight // TODO: Support documentHighlight
-    //caps.textDocument->documentHighlight // TODO: Support documentHighlight
     caps.textDocument->documentSymbol.emplace(); // Note: Only used for the breadcrumb bar
     caps.textDocument->documentSymbol->hierarchicalDocumentSymbolSupport.emplace(true);
     caps.textDocument->documentSymbol->symbolKind.emplace();
@@ -400,7 +400,7 @@ LspProvider::LspProvider()
     //caps.textDocument->rangeFormatting -- TODO
     //caps.textDocument->onTypeFormatting -- TODO
     caps.textDocument->rename.emplace();
-    //caps.textDocument->rename->prepareSupport -- TODO
+    caps.textDocument->rename->prepareSupport.emplace(true);
     caps.textDocument->publishDiagnostics.emplace();
     //caps.textDocument->publishDiagnostics->relatedInformation -- TODO
     //caps.textDocument->publishDiagnostics->dataSupport -- TODO
@@ -896,6 +896,50 @@ void LspProvider::executeCommand(const std::string& cmd, const boost::optional<s
 #endif
 
     busyEnd();
+}
+
+LspProvider::CanRenameSymbolResult LspProvider::canRenameSymbolAt(const std::string& filePath, const lsPosition& pos)
+{
+    if (didServerCrash) return {.isError=true};
+    busyBegin();
+
+    td_prepareRename::request req;
+    req.params.textDocument.uri.SetPath(filePath);
+    req.params.uri.emplace();
+    req.params.uri->SetPath(filePath);
+    req.params.position = pos;
+
+    Logger::dbg << "LSP: Sending textDocument/prepareRename request: " << req.ToJson() << Logger::End;
+    auto resp = m_client->getEndpoint()->waitResponse(req, LSP_TIMEOUT_MILLI);
+    assert(resp);
+    if (resp->IsError())
+    {
+        Logger::err << "LSP: Server responded with error: " << respGetErrMsg(resp) << Logger::End;
+        busyEnd();
+        return {.isError=true, .errorOrSymName=resp->error.error.message};
+    }
+
+    Logger::dbg << "LSP server response: " << resp->ToJson() << Logger::End;
+
+    std::string symName;
+    lsRange range;
+    if (resp->response.result.first)
+    {
+        range = resp->response.result.first.get();
+    }
+    else if (resp->response.result.second)
+    {
+        const auto result = resp->response.result.second.get();
+        assert(!result.placeholder.empty());
+        symName = result.placeholder;
+    }
+    else
+    {
+        assert(false);
+    }
+
+    busyEnd();
+    return {.isError=false, .errorOrSymName=symName, .rangeIfNoName=range};
 }
 
 void LspProvider::renameSymbol(const std::string& filePath, const lsPosition& pos, const std::string& newName)

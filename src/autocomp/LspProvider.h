@@ -282,6 +282,17 @@ public:
     // Used by the workspace/applyEdit callback
     void _replyToWsApplyEdit(const std::string& msgIfErr);
 
+    struct CanRenameSymbolResult
+    {
+        bool isError{};
+        // If isError is true, this contains an eror message.
+        // Otherwise this is the name of the symbol to rename.
+        std::string errorOrSymName;
+        // `isError` is false and `errorOrSymName` is empty,
+        // this contains the range of the name.
+        lsRange rangeIfNoName;
+    };
+    CanRenameSymbolResult canRenameSymbolAt(const std::string& filePath, const lsPosition& pos);
     void renameSymbol(const std::string& filePath, const lsPosition& pos, const std::string& newName);
 
     using docSymbolResult_t = decltype(td_symbol::response::result);
