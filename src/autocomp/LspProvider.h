@@ -30,6 +30,7 @@ using namespace std::chrono_literals;
 #include "LibLsp/lsp/textDocument/signature_help.h"
 #include "LibLsp/lsp/textDocument/code_action.h"
 #include "LibLsp/lsp/textDocument/document_symbol.h"
+#include "LibLsp/lsp/textDocument/willSave.h"
 #ifdef __clang__
 
 #pragma clang diagnostic pop
@@ -245,6 +246,8 @@ public:
     void onFileOpen(const std::string& path, Langs::LangId language, const std::string& fileContent);
     void onFileChange(const std::string& path, int version, const std::string& newContent);
     void onFileClose(const std::string& path);
+    using saveReason_t = WillSaveTextDocumentParams::TextDocumentSaveReason;
+    void beforeFileSave(const std::string& path, saveReason_t reason);
 
     struct HoverInfo
     {

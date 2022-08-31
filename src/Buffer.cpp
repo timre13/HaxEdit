@@ -205,6 +205,8 @@ int Buffer::saveToFile()
     TIMER_BEGIN_FUNC();
 
     Logger::dbg << "Writing buffer to file: " << m_filePath << Logger::End;
+    Autocomp::lspProvider->beforeFileSave(m_filePath, Autocomp::LspProvider::saveReason_t::Manual);
+
     size_t contentLen{};
     try
     {

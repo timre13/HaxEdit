@@ -616,10 +616,32 @@ void LspProvider::onFileClose(const std::string& path)
     }
 }
 
+void LspProvider::beforeFileSave(const std::string& path, LspProvider::saveReason_t reason)
+{
+    if (didServerCrash) return;
+    busyBegin();
+
+    if (m_servCaps.textDocumentSync
+     && m_servCaps.textDocumentSync->second
+     && m_servCaps.textDocumentSync->second->willSave.get_value_or(false))
+    {
+        td_willSave::notify notif;
+        notif.params.textDocument.uri.SetPath(path);
+        notif.params.reason.emplace(reason);
+        Logger::dbg << "LSP: Sending textDocument/willSave notification: " << notif.ToJson() << Logger::End;
+        m_client->getEndpoint()->send(notif);
+    }
+    else
+    {
+        Logger::dbg << "LSP: textDocument/willSave is not supported" << Logger::End;
+    }
+
+    busyEnd();
+}
+
 LspProvider::HoverInfo LspProvider::getHover(const std::string& path, uint line, uint col)
 {
     if (didServerCrash) return {};
-
     busyBegin();
 
     if (m_servCaps.hoverProvider.get_value_or(false))
