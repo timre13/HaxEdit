@@ -46,11 +46,11 @@ private:
 
 public:
     static inline void create(
-        Dialog::callback_t cb,
+        callback_t cb,
         void* cbUserData,
         const std::string& msg,
         MessageDialog::Type type,
-        const std::vector<MessageDialog::BtnInfo>& btns={{"OK", GLFW_KEY_ENTER}}
+        const std::vector<BtnInfo>& btns={{"OK", GLFW_KEY_ENTER}}
         )
     {
         g_dialogs.push_back(std::unique_ptr<MessageDialog>(
