@@ -248,6 +248,8 @@ public:
     void onFileClose(const std::string& path);
     using saveReason_t = WillSaveTextDocumentParams::TextDocumentSaveReason;
     void beforeFileSave(const std::string& path, saveReason_t reason);
+    bool onFileSaveNeedsContent() const; // Returns true if `onFileSave()` needs the file contents
+    void onFileSave(const std::string& path, const std::string& contentIfNeeded);
 
     struct HoverInfo
     {

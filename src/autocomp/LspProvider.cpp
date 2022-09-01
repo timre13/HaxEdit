@@ -20,6 +20,7 @@
 #include "LibLsp/lsp/textDocument/did_open.h"
 #include "LibLsp/lsp/textDocument/did_close.h"
 #include "LibLsp/lsp/textDocument/did_change.h"
+#include "LibLsp/lsp/textDocument/did_save.h"
 #include "LibLsp/lsp/textDocument/hover.h"
 #include "LibLsp/lsp/textDocument/publishDiagnostics.h"
 #include "LibLsp/lsp/textDocument/declaration_definition.h"
@@ -357,6 +358,7 @@ LspProvider::LspProvider()
     //caps.workspace->fileOperations -- TODO: Support file operations
     caps.textDocument.emplace();
     caps.textDocument->synchronization.willSave.emplace(true);
+    caps.textDocument->synchronization.didSave.emplace(true);
     caps.textDocument->completion.emplace();
     caps.textDocument->completion->completionItem.emplace();
     //caps.textDocument->completion->completionItem->snippetSupport -- TODO
@@ -634,6 +636,40 @@ void LspProvider::beforeFileSave(const std::string& path, LspProvider::saveReaso
     else
     {
         Logger::dbg << "LSP: textDocument/willSave is not supported" << Logger::End;
+    }
+
+    busyEnd();
+}
+
+bool LspProvider::onFileSaveNeedsContent() const
+{
+    return (
+            m_servCaps.textDocumentSync
+            && m_servCaps.textDocumentSync->second
+            && m_servCaps.textDocumentSync->second->save
+            && m_servCaps.textDocumentSync->second->save->includeText);
+}
+
+void LspProvider::onFileSave(const std::string& path, const std::string& contentIfNeeded)
+{
+    if (didServerCrash) return;
+    busyBegin();
+
+    if (m_servCaps.textDocumentSync
+     && m_servCaps.textDocumentSync->second
+     && m_servCaps.textDocumentSync->second->save)
+    {
+        Notify_TextDocumentDidSave::notify notif;
+        notif.params.textDocument.uri.SetPath(path);
+        if (!contentIfNeeded.empty())
+            notif.params.text.emplace(contentIfNeeded);
+
+        Logger::dbg << "LSP: Sending textDocument/didSave notification: " << notif.ToJson() << Logger::End;
+        m_client->getEndpoint()->send(notif);
+    }
+    else
+    {
+        Logger::dbg << "LSP: textDocument/didSave is not supported" << Logger::End;
     }
 
     busyEnd();

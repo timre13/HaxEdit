@@ -239,6 +239,11 @@ int Buffer::saveToFile()
         << m_document->getLineCount() << " lines)" << Logger::End;
     g_statMsg.set("Wrote buffer to file: \""+m_filePath+"\"", StatusMsg::Type::Info);
 
+    if (Autocomp::lspProvider->onFileSaveNeedsContent())
+        Autocomp::lspProvider->onFileSave(m_filePath, strToAscii(m_document->getConcated()));
+    else
+        Autocomp::lspProvider->onFileSave(m_filePath, "");
+
     m_isModified = false;
     m_isReadOnly = false;
     m_gitRepo = std::make_unique<Git::Repo>(m_filePath);
