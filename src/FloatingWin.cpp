@@ -66,7 +66,7 @@ void FloatingWindow::render() const
     {
         g_textRenderer->renderString(
                 m_content,
-                pos + glm::ivec2{2, 2+(m_title.empty() ? 0 : g_fontSizePx)+4}
+                pos + glm::ivec2{2, 2+(m_title.empty() ? 0 : g_fontSizePx+4)}
         );
     }
 }

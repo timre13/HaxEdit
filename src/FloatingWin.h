@@ -42,7 +42,7 @@ public:
 
     virtual inline uint calcHeight() const
     {
-        return 2 + ((m_title.empty() ? 0 : 1) + strCountLines(m_content)+1)*g_fontSizePx + 4 + 5;
+        return 2 + ((m_title.empty() ? 0 : 1) + strCountLines(m_content)+1)*g_fontSizePx + (m_title.empty() ? 0 : 4) + 6;
     }
 
     virtual inline void moveYBy(int amount) { m_pos.y += amount; }
