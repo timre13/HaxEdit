@@ -2,6 +2,7 @@
 
 #include "../types.h"
 #include "../globals.h"
+#include "../FloatingWin.h"
 #include <vector>
 #include <memory>
 #include <algorithm>
@@ -32,9 +33,12 @@ private:
     std::vector<Item*> m_filteredItems;
     bool m_isFilteringNeeded{};
 
+    FloatingWindow m_docWin;
+
     void recalcSize();
     void sortItems();
     void filterItems();
+    void updateDocWin();
 
 public:
     void render();
@@ -88,6 +92,8 @@ public:
         {
             m_scrollByItems = -int(m_filteredItems.size()-m_size.y/g_fontSizePx);
         }
+
+        updateDocWin();
     }
 
     inline void selectPrevItem()
@@ -114,6 +120,8 @@ public:
         {
             m_scrollByItems = 0;
         }
+
+        updateDocWin();
     }
 
     inline int getSelectedItemI() const { return m_selectedItemI; }

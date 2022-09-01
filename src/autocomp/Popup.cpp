@@ -96,10 +96,12 @@ void Popup::render()
 
         if (i == m_selectedItemI)
         {
+            const int y1 = m_position.y+m_scrollByItems*g_fontSizePx+i*g_fontSizePx;
             g_uiRenderer->renderFilledRectangle(
-                    {m_position.x,          m_position.y+m_scrollByItems*g_fontSizePx+i*g_fontSizePx},
+                    {m_position.x,          y1},
                     {m_position.x+m_size.x, m_position.y+m_scrollByItems*g_fontSizePx+(i+1)*g_fontSizePx},
                     {0.2f, 0.2f, 0.2f});
+            m_docWin.setPos({m_position.x+m_size.x, y1-2});
         }
 
         g_textRenderer->renderString(
@@ -109,7 +111,53 @@ void Popup::render()
                 {0.400f, 0.851f, 0.937f});
     }
 
+    m_docWin.render();
+
     TIMER_END_FUNC();
+}
+
+void Popup::updateDocWin()
+{
+    std::string itemDoc;
+    // Show detail in the first line
+    if (m_filteredItems[m_selectedItemI]->detail)
+    {
+        itemDoc = m_filteredItems[m_selectedItemI]->detail.get();
+    }
+
+    // Show documentation in the other lines
+    if (m_filteredItems[m_selectedItemI]->documentation)
+    {
+        const auto doc = m_filteredItems[m_selectedItemI]->documentation;
+        if (doc->first)
+        {
+            itemDoc += "\n"+doc->first.get();
+        }
+        else if (doc->second)
+        {
+            if (doc->second->kind != "plaintext")
+            {
+                // TODO: Support markdown
+                Logger::warn << "MarkupContent with kind " << doc->second->kind
+                    << " is not supported" << Logger::End;
+            }
+            itemDoc += "\n"+doc->second->value;
+        }
+        else
+        {
+            assert(false);
+        }
+    }
+
+    if (!itemDoc.empty())
+    {
+        m_docWin.setContent(itemDoc);
+        m_docWin.show();
+    }
+    else
+    {
+        m_docWin.hideAndClear();
+    }
 }
 
 void Popup::clear()

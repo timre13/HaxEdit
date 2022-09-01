@@ -363,8 +363,8 @@ LspProvider::LspProvider()
     caps.textDocument->completion->completionItem.emplace();
     //caps.textDocument->completion->completionItem->snippetSupport -- TODO
     caps.textDocument->completion->completionItem->commitCharactersSupport.emplace(false);
-    caps.textDocument->completion->completionItem->commitCharactersSupport.emplace(false);
-    //caps.textDocument->completion->completionItem->documentationFormat -- TODO: We don't even support CompletionItem docs
+    caps.textDocument->completion->completionItem->documentationFormat.emplace();
+    caps.textDocument->completion->completionItem->documentationFormat->push_back("plaintext"); // TODO: Support markdown
     //caps.textDocument->completion->completionItem->deprecatedSupport -- TODO
     //caps.textDocument->completion->completionItem->preselectSupport -- TODO
     //caps.textDocument->completion->completionItem->tagSupport -- TODO (also implement in LspCpp)
