@@ -356,7 +356,7 @@ LspProvider::LspProvider()
     caps.workspace->workspaceFolders.emplace(true); // TODO: Actually support workspace folders
     //caps.workspace->fileOperations -- TODO: Support file operations
     caps.textDocument.emplace();
-    //caps.textDocument->synchronization -- TODO
+    caps.textDocument->synchronization.willSave.emplace(true);
     caps.textDocument->completion.emplace();
     caps.textDocument->completion->completionItem.emplace();
     //caps.textDocument->completion->completionItem->snippetSupport -- TODO
