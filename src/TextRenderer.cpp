@@ -233,10 +233,14 @@ TextRenderer::GlyphDimensions TextRenderer::renderChar(
 #define ANSI_ESC_CHAR_0                 '\033'
 #define ANSI_ESC_CHAR_1                 '['
 #define ANSI_ESC_END_CHAR               'm'
-#define ANSI_ESC_FG_OR_ITALIC_CHAR      '3'
-#define ANSI_ESC_BRFG_CHAR              '9'
 #define ANSI_ESC_RESET_CHAR             '0'
 #define ANSI_ESC_BOLD_CHAR              '1'
+#define ANSI_ESC_FG_OR_ITALIC_CHAR      '3'
+#define ANSI_ESC_BRFG_CHAR              '9'
+#define ANSI_ESC_NOT_CHAR_0             '2'
+#define ANSI_ESC_NOT_BOLD_CHAR_1_VAR1   '1'
+#define ANSI_ESC_NOT_BOLD_CHAR_1_VAR2   '2'
+#define ANSI_ESC_NOT_ITALIC_CHAR_1      '3'
 
 namespace AnsiColors
 {
@@ -379,6 +383,24 @@ std::pair<glm::ivec2, glm::ivec2> TextRenderer::renderString(
                     if (!onlyMeasure)
                         setDrawingColor(initColor); // Reset color
                     setStyle(initStyle); // Reset style
+                    break;
+
+                case ANSI_ESC_NOT_CHAR_0: // Not X (disables an attribute)
+                    assert(ansiSeq.size() == 4);
+                    switch (ansiSeq[3])
+                    {
+                    case ANSI_ESC_NOT_BOLD_CHAR_1_VAR1: // Not bold
+                    case ANSI_ESC_NOT_BOLD_CHAR_1_VAR2:
+                        setStyle(currStyle & (~FONT_STYLE_BOLD));
+                        break;
+
+                    case ANSI_ESC_NOT_ITALIC_CHAR_1: // Not italic
+                        setStyle(currStyle & (~FONT_STYLE_ITALIC));
+                        break;
+
+                    default: // Invalid 2X code
+                        assert(false);
+                    }
                     break;
 
                 default: // Invalid escape sequence

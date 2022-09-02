@@ -96,6 +96,11 @@ public:
      * If a wrong sequence is received, the behaviour is undefined.
      * Supported ANSI escape sequences:
      *  + 4-bit foreground color modifiers (3?, 9?)
+     *  + Reset (0)
+     *  + Bold (1)
+     *  + Italic (3)
+     *  + Not bold (21/22)
+     *  + Not italic (23)
      *
      * Args:
      *  + str: The string to render. It can contain ANSI escape sequences.
