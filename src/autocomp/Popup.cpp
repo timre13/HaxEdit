@@ -5,6 +5,7 @@
 #include "../Timer.h"
 #include "../Logger.h"
 #include "../common/string.h"
+#include "../markdown.h"
 #include <algorithm>
 
 namespace Autocomp
@@ -135,13 +136,17 @@ void Popup::updateDocWin()
         }
         else if (doc->second)
         {
-            if (doc->second->kind != "plaintext")
+            if (doc->second->kind == "markdown")
             {
-                // TODO: Support markdown
-                Logger::warn << "MarkupContent with kind " << doc->second->kind
-                    << " is not supported" << Logger::End;
+                itemDoc += "\n"+Markdown::markdownToAnsiEscaped(doc->second->value);
             }
-            itemDoc += "\n"+doc->second->value;
+            else
+            {
+                if (doc->second->kind != "plaintext")
+                    Logger::warn << "MarkupContent with kind " << doc->second->kind
+                        << " is not supported" << Logger::End;
+                itemDoc += "\n"+doc->second->value;
+            }
         }
         else
         {

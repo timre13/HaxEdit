@@ -83,5 +83,7 @@ add_executable(haxed
     src/languages.cpp
     src/Git.cpp
     src/doxygen.cpp
+    src/markdown.cpp
     external/cJSON/cJSON.c
+    external/md4c/src/md4c.c
 )

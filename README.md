@@ -85,6 +85,7 @@ apt install cmake libglew-dev libglfw3-dev libglm-dev libfreetype-dev \
 * [stb](https://github.com/nothings/stb) for image loading
 * [cJSON](https://github.com/DaveGamble/cJSON) for JSON parsing
 * [LspCpp](https://github.com/timre13/LspCpp_custom) (fork of [this](https://github.com/kuafuwang/LspCpp)) for LSP support
+* [MD4C](https://github.com/mity/md4c) for supporting Markdown in LSP responses
 
 ### Compiling
 ```

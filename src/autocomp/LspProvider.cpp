@@ -5,6 +5,7 @@
 #include "../glstuff.h"
 #include "../globals.h"
 #include "../doxygen.h"
+#include "../markdown.h"
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Weverything"
@@ -364,7 +365,8 @@ LspProvider::LspProvider()
     //caps.textDocument->completion->completionItem->snippetSupport -- TODO
     caps.textDocument->completion->completionItem->commitCharactersSupport.emplace(false);
     caps.textDocument->completion->completionItem->documentationFormat.emplace();
-    caps.textDocument->completion->completionItem->documentationFormat->push_back("plaintext"); // TODO: Support markdown
+    caps.textDocument->completion->completionItem->documentationFormat->push_back("plaintext");
+    caps.textDocument->completion->completionItem->documentationFormat->push_back("markdown");
     //caps.textDocument->completion->completionItem->deprecatedSupport -- TODO
     //caps.textDocument->completion->completionItem->preselectSupport -- TODO
     //caps.textDocument->completion->completionItem->tagSupport -- TODO (also implement in LspCpp)
@@ -375,11 +377,12 @@ LspProvider::LspProvider()
         caps.textDocument->completion->completionItemKind->valueSet->push_back((lsCompletionItemKind)kind);
     caps.textDocument->hover.emplace();
     caps.textDocument->hover->contentFormat.emplace();
-    caps.textDocument->hover->contentFormat->emplace_back("plaintext"); // TODO: Support markdown
+    caps.textDocument->hover->contentFormat->emplace_back("plaintext");
+    caps.textDocument->hover->contentFormat->emplace_back("markdown");
     caps.textDocument->signatureHelp.emplace();
     caps.textDocument->signatureHelp->signatureInformation.emplace();
-    caps.textDocument->signatureHelp->signatureInformation->documentationFormat.push_back("plaintext"); // TODO: Support markdown
-    caps.textDocument->signatureHelp->signatureInformation->documentationFormat.push_back("plaintext"); // TODO: Support markdown
+    caps.textDocument->signatureHelp->signatureInformation->documentationFormat.push_back("plaintext");
+    //caps.textDocument->signatureHelp->signatureInformation->documentationFormat.push_back("markdown"); -- TODO
     caps.textDocument->signatureHelp->signatureInformation->parameterInformation.labelOffsetSupport.emplace(false); // I don't know if LspCpp supports it
     caps.textDocument->declaration.emplace();
     caps.textDocument->declaration->linkSupport.emplace(false); // TODO: Support `LocationLink`s
@@ -704,18 +707,16 @@ LspProvider::HoverInfo LspProvider::getHover(const std::string& path, uint line,
             const auto& markupContent = resp->response.result.contents.second.get();
             if (markupContent.kind == "markdown") // Kind can be plaintext or markdown
             {
-                // TODO: Support markdown
                 // Note: Can contain code blocks (MarkupContent is preferred over MarkedString
                 //       because they can contain markdown with code inside, but MarkedString
                 //       can only contain code without markdown)
-                info.text = Doxygen::doxygenToAnsiEscaped(markupContent.value);
-                Logger::warn << "Markdown in MarkupContent is not supported yet" << Logger::End;
+                info.text = Doxygen::doxygenToAnsiEscaped(Markdown::markdownToAnsiEscaped(markupContent.value));
             }
             else
             {
-                info.text = Doxygen::doxygenToAnsiEscaped(markupContent.value);
                 if (markupContent.kind != "plaintext")
                     Logger::warn << "Unknown MarkupContent kind: " << markupContent.kind << Logger::End;
+                info.text = Doxygen::doxygenToAnsiEscaped(markupContent.value);
             }
         }
         else if (resp->response.result.contents.first)
