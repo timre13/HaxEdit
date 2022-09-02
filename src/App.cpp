@@ -349,9 +349,20 @@ void App::renderStatusLine()
                  FONT_STYLE_REGULAR,
                  g_activeBuff->isSelectionInProgress() ? RGBColor{0.3f, 0.9f, 0.6f} : RGBColor{1.f, 1.f, 1.f});
 
-        Autocomp::lspProvider->getStatusIcon()->render(
-                {g_windowWidth-g_fontSizePx*2-3, g_windowHeight-g_fontSizePx*1.2f-6},
-                {g_fontSizePx*1.2f+12, g_fontSizePx*1.2f+12});
+        const glm::ivec2 lspIconPos = {g_windowWidth-g_fontSizePx*2-3, g_windowHeight-g_fontSizePx*1.2f-6};
+        const glm::ivec2 lspIconSize = {g_fontSizePx*1.2f+12, g_fontSizePx*1.2f+12};
+        Autocomp::lspProvider->getStatusIcon()->render(lspIconPos, lspIconSize);
+        if (g_cursorX >= lspIconPos.x && g_cursorX < lspIconPos.x+lspIconSize.x
+         && g_cursorY >= lspIconPos.y && g_cursorY < lspIconPos.y+lspIconSize.y)
+        {
+            g_lspInfoPopup->show();
+            g_lspInfoPopup->setPos({g_cursorX, g_cursorY});
+        }
+        else
+        {
+            g_lspInfoPopup->hide();
+        }
+        g_lspInfoPopup->render();
     }
 }
 
@@ -426,6 +437,7 @@ void App::renderPopups()
     if (g_activeBuff)
         g_hoverPopup->render();
     g_progressPopup->render();
+    g_lspInfoPopup->render();
 }
 
 static const std::string genWelcomeMsg(std::string templ)

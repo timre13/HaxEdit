@@ -61,6 +61,7 @@ float g_fontWidthPx = 0;
 
 std::unique_ptr<FloatingWindow> g_hoverPopup;
 std::unique_ptr<ProgressFloatingWin> g_progressPopup;
+std::unique_ptr<FloatingWindow> g_lspInfoPopup;
 
 // Loaded by App::loadCursors()
 namespace Cursors
@@ -116,6 +117,7 @@ extern float g_fontWidthPx;
 
 extern std::unique_ptr<FloatingWindow> g_hoverPopup;
 extern std::unique_ptr<ProgressFloatingWin> g_progressPopup;
+extern std::unique_ptr<FloatingWindow> g_lspInfoPopup;
 
 namespace Cursors
 {

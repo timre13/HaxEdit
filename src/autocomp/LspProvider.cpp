@@ -443,6 +443,16 @@ LspProvider::LspProvider()
         g_isRedrawNeeded = true;
         return;
     }
+    if (initRes->response.result.serverInfo)
+    {
+        Logger::dbg << "Server name: " << initRes->response.result.serverInfo->name << Logger::End;
+        Logger::dbg << "Server version: " << initRes->response.result.serverInfo->version.get_value_or("???") << Logger::End;
+        g_lspInfoPopup->setTitle("LSP Server");
+        g_lspInfoPopup->setContent(
+                "Name: "+initRes->response.result.serverInfo->name+"\n"
+                "Version: "+initRes->response.result.serverInfo->version.get_value_or("???"));
+        g_lspInfoPopup->show();
+    }
     const auto& cap = initRes->response.result.capabilities;
     Logger::dbg << "\tCompletion supported?: " << (cap.completionProvider ? "YES" : "NO") << Logger::End;
     assert(cap.completionProvider);
