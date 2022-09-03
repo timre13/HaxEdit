@@ -63,7 +63,6 @@ static std::string commandToStr(CommandId input)
     {
     case CommandId::Brief:
         output = "\n\033[3m\033[97m";
-        resetAfter = false;
         break;
 
     case CommandId::Param:
