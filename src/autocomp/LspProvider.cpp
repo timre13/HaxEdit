@@ -365,8 +365,8 @@ LspProvider::LspProvider()
     //caps.textDocument->completion->completionItem->snippetSupport -- TODO
     caps.textDocument->completion->completionItem->commitCharactersSupport.emplace(false);
     caps.textDocument->completion->completionItem->documentationFormat.emplace();
-    caps.textDocument->completion->completionItem->documentationFormat->push_back("plaintext");
     caps.textDocument->completion->completionItem->documentationFormat->push_back("markdown");
+    caps.textDocument->completion->completionItem->documentationFormat->push_back("plaintext");
     //caps.textDocument->completion->completionItem->deprecatedSupport -- TODO
     //caps.textDocument->completion->completionItem->preselectSupport -- TODO
     //caps.textDocument->completion->completionItem->tagSupport -- TODO (also implement in LspCpp)
@@ -377,12 +377,12 @@ LspProvider::LspProvider()
         caps.textDocument->completion->completionItemKind->valueSet->push_back((lsCompletionItemKind)kind);
     caps.textDocument->hover.emplace();
     caps.textDocument->hover->contentFormat.emplace();
-    caps.textDocument->hover->contentFormat->emplace_back("plaintext");
     caps.textDocument->hover->contentFormat->emplace_back("markdown");
+    caps.textDocument->hover->contentFormat->emplace_back("plaintext");
     caps.textDocument->signatureHelp.emplace();
     caps.textDocument->signatureHelp->signatureInformation.emplace();
-    caps.textDocument->signatureHelp->signatureInformation->documentationFormat.push_back("plaintext");
     //caps.textDocument->signatureHelp->signatureInformation->documentationFormat.push_back("markdown"); -- TODO
+    caps.textDocument->signatureHelp->signatureInformation->documentationFormat.push_back("plaintext");
     caps.textDocument->signatureHelp->signatureInformation->parameterInformation.labelOffsetSupport.emplace(false); // I don't know if LspCpp supports it
     caps.textDocument->declaration.emplace();
     caps.textDocument->declaration->linkSupport.emplace(false); // TODO: Support `LocationLink`s
