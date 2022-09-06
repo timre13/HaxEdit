@@ -44,7 +44,7 @@ void DictionaryProvider::get(bufid_t, Popup* popupP)
     for (const auto& word : m_words)
     {
         Popup::Item item;
-        item.label = strToAscii(word);
+        item.label = utf32To8(word);
         item.kind.emplace(lsCompletionItemKind::Text);
         popupP->addItem(std::move(item));
     }

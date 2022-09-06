@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../types.h"
-#include "unicode/unistr.h"
+#include <unicode/unistr.h>
 #include <iomanip>
 #include <sstream>
 #include <string.h>
@@ -14,9 +14,9 @@
 #include "../Logger.h"
 using namespace std::string_literals;
 
-String strToUtf32(const icu::UnicodeString& input);
-String strToUtf32(const std::string& input);
-std::string strToAscii(const String& str);
+String icuStrToUtf32(const icu::UnicodeString& input);
+String utf8To32(const std::string& input);
+std::string utf32To8(const String& input);
 
 #define _CHECK_T_STR_TYPE \
     static_assert(\

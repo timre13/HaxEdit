@@ -190,7 +190,7 @@ void Buffer::open(const std::string& filePath, bool isReload/*=false*/)
     }
 
     // TODO: This is bad
-    const std::string content = strToAscii(m_document->getConcated());
+    const std::string content = utf32To8(m_document->getConcated());
     // TODO: Properly tell reloading to LSP server (close first)
     Autocomp::lspProvider->onFileOpen(m_filePath, m_language, content);
 
@@ -240,7 +240,7 @@ int Buffer::saveToFile()
     g_statMsg.set("Wrote buffer to file: \""+m_filePath+"\"", StatusMsg::Type::Info);
 
     if (Autocomp::lspProvider->onFileSaveNeedsContent())
-        Autocomp::lspProvider->onFileSave(m_filePath, strToAscii(m_document->getConcated()));
+        Autocomp::lspProvider->onFileSave(m_filePath, utf32To8(m_document->getConcated()));
     else
         Autocomp::lspProvider->onFileSave(m_filePath, "");
 
@@ -1201,22 +1201,19 @@ bool Buffer::isCharSelected(int lineI, int colI, size_t charI) const
 
 void Buffer::pasteFromClipboard()
 {
-    // TODO: Unicode support
-    const std::string aClipbText = Clipboard::get();
-    if (!aClipbText.empty())
+    const String clipbText = utf8To32(Clipboard::get());
+    if (!clipbText.empty())
     {
-        Logger::dbg << "Pasting: " << quoteStr(aClipbText) << Logger::End;
+        Logger::dbg << "Pasting: " << quoteStr(clipbText) << Logger::End;
         const size_t delCount = deleteSelectedChars(); // Overwrite selected chars if a selection is active
-        for (char c : aClipbText)
-            assert((c & 0b10000000) == 0); // Detect non-ASCII chars
         beginHistoryEntry();
         // Do the insertion and move the cursor to the insertion end
         // TODO: Maybe a parameter to prevent moving the cursor?
-        moveCursorToLineCol(applyInsertion({m_cursorLine, m_cursorCol}, strToUtf32(aClipbText)));
+        moveCursorToLineCol(applyInsertion({m_cursorLine, m_cursorCol}, clipbText));
         endHistoryEntry();
         scrollViewportToCursor();
         g_statMsg.set("Pasted text from clipboard ("
-                +std::to_string(aClipbText.size())+" chars)"
+                +std::to_string(clipbText.size())+" chars)"
                 +(delCount ? " (overwrote "+std::to_string(delCount)+" chars)" : ""),
                 StatusMsg::Type::Info);
     }
@@ -1270,21 +1267,13 @@ size_t Buffer::copySelectionToClipboard(bool shouldUnselect/*=true*/)
 
     assert(!toCopy.empty());
 
-    // TODO: Unicode support
-    std::string _toCopy;
-    for (Char c : toCopy)
-    {
-        assert((c & 0b10000000) == 0); // Detect non-ASCII chars
-        _toCopy += c;
-    }
-    Logger::dbg << "Copying: " << quoteStr(_toCopy) << Logger::End;
-
-    Clipboard::set(_toCopy);
+    Logger::dbg << "Copying: " << quoteStr(toCopy) << Logger::End;
+    Clipboard::set(utf32To8(toCopy));
 
     if (shouldUnselect)
         m_selection.mode = Selection::Mode::None; // Cancel the selection
 
-    g_statMsg.set("Copied text to clipboard ("+std::to_string(_toCopy.size())+" chars)",
+    g_statMsg.set("Copied text to clipboard ("+std::to_string(toCopy.size())+" chars)",
             StatusMsg::Type::Info);
 
     scrollViewportToCursor();
@@ -2103,7 +2092,7 @@ void Buffer::undo()
 
         m_isHighlightUpdateNeeded = true;
         m_version++;
-        Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(m_document->getConcated()));
+        Autocomp::lspProvider->onFileChange(m_filePath, m_version, utf32To8(m_document->getConcated()));
         scrollViewportToCursor();
         g_statMsg.set("Undid change ("+std::to_string(getElapsedSince(undoInfo.timestamp))+" seconds old)",
                 StatusMsg::Type::Info);
@@ -2131,7 +2120,7 @@ void Buffer::redo()
 
         m_isHighlightUpdateNeeded = true;
         m_version++;
-        Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(m_document->getConcated()));
+        Autocomp::lspProvider->onFileChange(m_filePath, m_version, utf32To8(m_document->getConcated()));
         g_statMsg.set("Redid change ("+std::to_string(getElapsedSince(redoInfo.timestamp))+" seconds old)",
                 StatusMsg::Type::Info);
         scrollViewportToCursor();
@@ -2216,7 +2205,7 @@ void Buffer::autocompPopupInsert()
             // If there is `insertText`, use it. Otherwise use `label`.
             const std::string toInsert = item->insertText.get_value_or(item->label);
             //    .substr(m_autocompPopup->getFilterLen());
-            const lsPosition moveTo = applyInsertion({m_cursorLine, m_cursorCol}, strToUtf32(toInsert));
+            const lsPosition moveTo = applyInsertion({m_cursorLine, m_cursorCol}, utf8To32(toInsert));
             moveCursorToLineCol(moveTo);
         }
 
@@ -2422,12 +2411,12 @@ void Buffer::find(const String& str)
 
     if (m_findResultIs.empty())
     {
-        g_statMsg.set("Not found: "+quoteStr(strToAscii(str)), StatusMsg::Type::Error);
+        g_statMsg.set("Not found: "+quoteStr(utf32To8(str)), StatusMsg::Type::Error);
         return;
     }
 
     g_statMsg.set(
-            "Found "+std::to_string(m_findResultIs.size())+" occurences of "+quoteStr(strToAscii(m_toFind)),
+            "Found "+std::to_string(m_findResultIs.size())+" occurences of "+quoteStr(utf32To8(m_toFind)),
             StatusMsg::Type::Info);
 
     _goToCurrFindResult(false);
@@ -2928,7 +2917,7 @@ size_t Buffer::applyDeletion(const lsRange& range)
     m_version++;
     g_isRedrawNeeded = true;
     // TODO: Only send change
-    Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(m_document->getConcated()));
+    Autocomp::lspProvider->onFileChange(m_filePath, m_version, utf32To8(m_document->getConcated()));
     return deleted;
 }
 
@@ -2947,7 +2936,7 @@ lsPosition Buffer::applyInsertion(const lsPosition& pos, const String& text)
     m_version++;
     g_isRedrawNeeded = true;
     // TODO: Only send change
-    Autocomp::lspProvider->onFileChange(m_filePath, m_version, strToAscii(m_document->getConcated()));
+    Autocomp::lspProvider->onFileChange(m_filePath, m_version, utf32To8(m_document->getConcated()));
     return endPos;
 }
 
@@ -2971,7 +2960,7 @@ void Buffer::applyEdit(const lsAnnotatedTextEdit& edit)
 
     // Do the insertion
     if (!edit.newText.empty())
-        applyInsertion(edit.range.start, strToUtf32(edit.newText));
+        applyInsertion(edit.range.start, utf8To32(edit.newText));
 
     if (g_activeBuff == this)
         scrollViewportToCursor();
@@ -3023,7 +3012,7 @@ void Buffer::renameSymbolAtCursor()
 
     const std::string symName = (!canRename.errorOrSymName.empty()
             ? canRename.errorOrSymName
-            : strToAscii(m_document->get(canRename.rangeIfNoName)));
+            : utf32To8(m_document->get(canRename.rangeIfNoName)));
     Logger::dbg << "Will rename symbol: " << symName << Logger::End;
     AskerDialog::create(cb, nullptr, "New name for \033[3m"+symName+"\033[0m:");
 }

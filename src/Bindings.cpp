@@ -477,7 +477,7 @@ void openPathOrUrlAtCursor()
         return;
 
     const String word = g_activeBuff->getCursorWord();
-    std::string aword = strToAscii(word);
+    std::string aword = utf32To8(word);
     if (aword.empty())
     {
         g_statMsg.set("No word at cursor", StatusMsg::Type::Error);
@@ -522,7 +522,7 @@ void openPathOrUrlAtCursor()
         }
     }
 
-    g_statMsg.set("Not a valid file path or URL: "+quoteStr(strToAscii(word)), StatusMsg::Type::Error);
+    g_statMsg.set("Not a valid file path or URL: "+quoteStr(utf32To8(word)), StatusMsg::Type::Error);
 }
 
 void goToNextTab()

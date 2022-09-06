@@ -16,7 +16,7 @@ void BufferWordProvider::get(bufid_t bufid, Popup* popupP)
     for (const auto& word : words)
     {
         Popup::Item item;
-        item.label = strToAscii(word);
+        item.label = utf32To8(word);
         item.kind.emplace(lsCompletionItemKind::Text);
         popupP->addItem(std::move(item));
     }

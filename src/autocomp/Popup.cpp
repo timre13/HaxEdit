@@ -49,7 +49,7 @@ void Popup::filterItems()
     m_filteredItems.clear();
     for (size_t i{}; i < m_items.size(); ++i)
     {
-        if (m_items[i]->label.rfind(strToAscii(m_filterBuffer), 0) == 0)
+        if (m_items[i]->label.rfind(utf32To8(m_filterBuffer), 0) == 0)
         {
             m_filteredItems.push_back(m_items[i].get());
         }
