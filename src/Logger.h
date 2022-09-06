@@ -1,6 +1,10 @@
 #pragma once
 
 #include <iostream>
+#include "types.h"
+
+std::string utf32To8(const String& input);
+String charToStr(Char c);
 
 #define LOGGER_COLOR_DEF   "\033[0m"
 #define LOGGER_COLOR_DBG   "\033[96m"
@@ -61,7 +65,7 @@ public:
     }
 
     template <typename T>
-    inline Logger& operator<<(const T &value)
+    Logger& operator<<(const T &value)
     {
         if (!m_isEnabled)
             return *this;
@@ -91,6 +95,16 @@ public:
 
         // Make the operator chainable
         return *this;
+    }
+
+    Logger& operator<<(const String& value)
+    {
+        return this->operator<<(utf32To8(value));
+    }
+
+    Logger& operator<<(Char value)
+    {
+        return this->operator<<(utf32To8(charToStr(value)));
     }
 
     inline Logger& operator<<(Control ctrl)
