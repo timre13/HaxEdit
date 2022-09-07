@@ -7,6 +7,8 @@
 #include <string>
 #include <map>
 #include <glm/glm.hpp>
+#include <ft2build.h>
+#include FT_FREETYPE_H
 
 using FontStyle = int;
 #define FONT_STYLE_REGULAR  (FontStyle)(0b00)
@@ -27,7 +29,7 @@ inline std::string fontStyleToStr(FontStyle style)
     return ""; // Never reached
 }
 
-class TextRenderer
+class Face
 {
 public:
     struct Glyph
@@ -44,15 +46,37 @@ public:
     };
 
 private:
+    FT_Face m_face{};
+    std::vector<Glyph> m_glyphs;
+
+public:
+    Face() {}
+
+    void load(FT_Library library, const std::string& path, int size);
+
+    void cleanUp();
+
+    Glyph* getGlyph(FT_ULong charcode);
+
+    ~Face()
+    {
+        cleanUp();
+    }
+};
+
+class TextRenderer
+{
+private:
     std::string m_regularFontPath;
     std::string m_boldFontPath;
     std::string m_italicFontPath;
     std::string m_boldItalicFontPath;
 
-    std::map<Char, Glyph> m_regularGlyphs;
-    std::map<Char, Glyph> m_boldGlyphs;
-    std::map<Char, Glyph> m_italicGlyphs;
-    std::map<Char, Glyph> m_boldItalicGlyphs;
+    FT_Library m_library{};
+    std::unique_ptr<Face> m_regularFace = std::make_unique<Face>();
+    std::unique_ptr<Face> m_boldFace = std::make_unique<Face>();
+    std::unique_ptr<Face> m_italicFace = std::make_unique<Face>();
+    std::unique_ptr<Face> m_boldItalicFace = std::make_unique<Face>();
     uint m_fontVao;
     uint m_fontVbo;
 
@@ -68,16 +92,14 @@ private:
     // Step 2
     void setDrawingColor(const RGBColor& color);
     // Step 3
-    GlyphDimensions renderChar(
+    Face::GlyphDimensions renderChar(
             Char c,
             const glm::ivec2& position,
             FontStyle style=FONT_STYLE_REGULAR
     );
     // ---------------------------------------------
 
-    std::map<Char, Glyph>* getGlyphListFromStyle(FontStyle style);
-
-    void cleanUpGlyphs();
+    Face* getFaceFromStyle(FontStyle style);
 
 public:
     TextRenderer(
@@ -115,7 +137,7 @@ public:
      *  + the enclosing area as {{x1, y1}, {x2, y2}}.
      */
     std::pair<glm::ivec2, glm::ivec2> renderString(
-            const std::string& str,
+            const String& str,
             const glm::ivec2& position,
             FontStyle initStyle=FONT_STYLE_REGULAR,
             const RGBColor& initColor={1.0f, 1.0f, 1.0f},

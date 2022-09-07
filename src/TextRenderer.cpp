@@ -4,54 +4,38 @@
 #include "config.h"
 #include "glstuff.h"
 #include "globals.h"
-#include <ft2build.h>
-#include FT_FREETYPE_H
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-void TextRenderer::cleanUpGlyphs()
+void Face::load(
+        FT_Library library,
+        const std::string& path,
+        int size)
 {
-    for (auto& glyph : m_regularGlyphs) { glDeleteTextures(1, &glyph.second.textureId); }
-    m_regularGlyphs.clear();
-    for (auto& glyph : m_boldGlyphs) { glDeleteTextures(1, &glyph.second.textureId); }
-    m_boldGlyphs.clear();
-    for (auto& glyph : m_italicGlyphs) { glDeleteTextures(1, &glyph.second.textureId); }
-    m_italicGlyphs.clear();
-    for (auto& glyph : m_boldItalicGlyphs) { glDeleteTextures(1, &glyph.second.textureId); }
-    m_boldItalicGlyphs.clear();
+    cleanUp();
 
-    Logger::dbg << "Cleaned up glyphs" << Logger::End;
-}
-
-static void loadGlyphs(
-        FT_Library* library,
-        std::map<Char, TextRenderer::Glyph>* glyphs,
-        const std::string& fontPath,
-        int fontSize)
-{
-    Logger::dbg << "Loading font: " << fontPath << Logger::End;
-    FT_Face face;
-    if (FT_Error error = FT_New_Face(*library, fontPath.c_str(), 0, &face))
+    Logger::dbg << "Loading font: " << path << Logger::End;
+    if (FT_Error error = FT_New_Face(library, path.c_str(), 0, &m_face))
     {
-        Logger::fatal << "Failed to load font: " << fontPath << ": " << FT_Error_String(error)
+        Logger::fatal << "Failed to load font: " << path << ": " << FT_Error_String(error)
             << Logger::End;
     }
 
-    if (FT_Error error = FT_Set_Pixel_Sizes(face, fontSize, 0))
+    if (FT_Error error = FT_Set_Pixel_Sizes(m_face, size, 0))
     {
         Logger::fatal << "Failed to set font size: " << FT_Error_String(error) << Logger::End;
     }
 
-    Logger::dbg << "Caching glyphs" << Logger::End;
+    Logger::dbg << "Caching glyphs..." << Logger::End;
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    for (FT_ULong c{}; c < (FT_ULong)face->num_glyphs; ++c)
+    for (FT_Long i{}; i < m_face->num_glyphs; ++i)
     {
-        //Logger::dbg << "Caching: " << c << Logger::End;
-
-        if (FT_Error error = FT_Load_Char(face, c, FT_LOAD_RENDER))
+        // Note: FT_Load_Glyph needs the gylph index, not the character code
+        // Use FT_Get_Char_Index to get the glyph index for the char code
+        if (FT_Error error = FT_Load_Glyph(m_face, i, FT_LOAD_RENDER))
         {
-            Logger::fatal << "Failed to load character: " << c << ": " << FT_Error_String(error)
+            Logger::fatal << "Failed to load glyph " << +i << ": " << FT_Error_String(error)
                 << Logger::End;
         }
 
@@ -60,32 +44,50 @@ static void loadGlyphs(
         glBindTexture(GL_TEXTURE_2D, texId);
         glTexImage2D(GL_TEXTURE_2D,
                 0, GL_RED,
-                face->glyph->bitmap.width, face->glyph->bitmap.rows,
-                0, GL_RED, GL_UNSIGNED_BYTE, face->glyph->bitmap.buffer);
+                m_face->glyph->bitmap.width, m_face->glyph->bitmap.rows,
+                0, GL_RED, GL_UNSIGNED_BYTE, m_face->glyph->bitmap.buffer);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        glyphs->insert({c,
-                {
-                    texId,
-                    {face->glyph->bitmap.width, face->glyph->bitmap.rows}, // Size
-                    {face->glyph->bitmap_left, face->glyph->bitmap_top}, // Bearing
-                    (uint)face->glyph->advance.x // Advance
-                }
+        m_glyphs.push_back(Face::Glyph{
+                texId,
+                {m_face->glyph->bitmap.width, m_face->glyph->bitmap.rows}, // Size
+                {m_face->glyph->bitmap_left, m_face->glyph->bitmap_top}, // Bearing
+                (uint)m_face->glyph->advance.x // Advance
         });
     }
 
-    const float width = glyphs->find('A')->second.advance/64.0f;
-    Logger::dbg << "Loaded font: " << fontPath
-        << "\n\tFamily: " << face->family_name
-        << "\n\tStyle: " << face->style_name
-        << "\n\tGlyphs: " << face->num_glyphs
+    const float width = m_glyphs[FT_Get_Char_Index(m_face, 'A')].advance/64.0f;
+    Logger::dbg << "Loaded font: " << path
+        << "\n\tFamily: " << m_face->family_name
+        << "\n\tStyle: " << m_face->style_name
+        << "\n\tGlyphs: " << m_face->num_glyphs
         << "\n\tSize: " << g_fontSizePx
         << "\n\tWidth: " << width
         << Logger::End;
-    FT_Done_Face(face);
+}
+
+void Face::cleanUp()
+{
+    if (!m_face)
+        return;
+
+    Logger::dbg << "Freeing glyphs.." << Logger::End;
+
+    const size_t count = m_glyphs.size();
+    for (auto& glyph : m_glyphs)
+    {
+        glDeleteTextures(1, &glyph.textureId);
+    }
+    FT_Done_Face(m_face);
+    Logger::dbg << "Freed " << count << " glyphs" << Logger::End;
+}
+
+Face::Glyph* Face::getGlyph(FT_ULong charcode)
+{
+    return &(m_glyphs[FT_Get_Char_Index(m_face, charcode)]);
 }
 
 TextRenderer::TextRenderer(
@@ -100,6 +102,12 @@ TextRenderer::TextRenderer(
     m_boldItalicFontPath{boldItalicFontPath},
     m_glyphShader{App::getResPath("../shaders/glyph.vert.glsl"), App::getResPath("../shaders/glyph.frag.glsl")}
 {
+    Logger::dbg << "Initializing FreeType" << Logger::End;
+    if (FT_Error error = FT_Init_FreeType(&m_library))
+    {
+        Logger::fatal << "Failed to initialize FreeType: " << FT_Error_String(error) << Logger::End;
+    }
+
     setFontSize(DEF_FONT_SIZE_PX);
 
     glGenVertexArrays(1, &m_fontVao);
@@ -122,23 +130,12 @@ TextRenderer::TextRenderer(
 
 void TextRenderer::setFontSize(int size)
 {
-    cleanUpGlyphs();
-
-    Logger::dbg << "Initializing FreeType" << Logger::End;
-    FT_Library library;
-    if (FT_Error error = FT_Init_FreeType(&library))
-    {
-        Logger::fatal << "Failed to initialize FreeType: " << FT_Error_String(error) << Logger::End;
-    }
-
-    loadGlyphs(&library, &m_regularGlyphs,    m_regularFontPath, size);
-    loadGlyphs(&library, &m_boldGlyphs,       m_boldFontPath, size);
-    loadGlyphs(&library, &m_italicGlyphs,     m_italicFontPath, size);
-    loadGlyphs(&library, &m_boldItalicGlyphs, m_boldItalicFontPath, size);
-
-    FT_Done_FreeType(library);
+    m_regularFace->load(m_library, m_regularFontPath, size);
+    m_boldFace->load(m_library, m_boldFontPath, size);
+    m_italicFace->load(m_library, m_italicFontPath, size);
+    m_boldItalicFace->load(m_library, m_boldItalicFontPath, size);
     g_fontSizePx = size;
-    g_fontWidthPx = m_regularGlyphs.find('A')->second.advance/64.0f;
+    g_fontWidthPx = m_regularFace->getGlyph('A')->advance/64.0f;
 }
 
 void TextRenderer::prepareForDrawing()
@@ -171,8 +168,8 @@ void TextRenderer::setDrawingColor(const RGBColor& color)
     glUniform3f(glGetUniformLocation(m_glyphShader.getId(), "textColor"), UNPACK_RGB_COLOR(color));
 }
 
-static inline TextRenderer::GlyphDimensions renderGlyph(
-        const TextRenderer::Glyph& glyph,
+static inline Face::GlyphDimensions renderGlyph(
+        const Face::Glyph& glyph,
         int textX, int textY, float scale,
         uint fontVbo)
 {
@@ -204,29 +201,28 @@ static inline TextRenderer::GlyphDimensions renderGlyph(
 }
 
 
-std::map<Char, TextRenderer::Glyph>* TextRenderer::getGlyphListFromStyle(FontStyle style)
+Face* TextRenderer::getFaceFromStyle(FontStyle style)
 {
     switch (style)
     {
-    case FONT_STYLE_REGULAR:                return &m_regularGlyphs;
-    case FONT_STYLE_BOLD:                   return &m_boldGlyphs;
-    case FONT_STYLE_ITALIC:                 return &m_italicGlyphs;
-    case FONT_STYLE_BOLD|FONT_STYLE_ITALIC: return &m_boldItalicGlyphs;
+    case FONT_STYLE_REGULAR:                return m_regularFace.get();
+    case FONT_STYLE_BOLD:                   return m_boldFace.get();
+    case FONT_STYLE_ITALIC:                 return m_italicFace.get();
+    case FONT_STYLE_BOLD|FONT_STYLE_ITALIC: return m_boldItalicFace.get();
     default: assert(false);
     }
     return {}; // Never reached
 }
 
-TextRenderer::GlyphDimensions TextRenderer::renderChar(
+Face::GlyphDimensions TextRenderer::renderChar(
         Char c,
         const glm::ivec2& position,
         FontStyle style/*=FONT_STYLE_REGULAR*/
     )
 {
-    auto glyphs = getGlyphListFromStyle(style);
-    const auto& glyphIt = glyphs->find(c);
+    auto face = getFaceFromStyle(style);
     return renderGlyph(
-            glyphIt == glyphs->end() ? glyphs->find(0)->second : glyphIt->second,
+            *face->getGlyph(c),
             position.x, position.y, 1.0f, m_fontVbo);
 }
 
@@ -272,7 +268,7 @@ static constexpr RGBColor brightFgColors[8]{
 }
 
 std::pair<glm::ivec2, glm::ivec2> TextRenderer::renderString(
-        const std::string& str,
+        const String& str,
         const glm::ivec2& position,
         FontStyle initStyle/*=FONT_STYLE_REGULAR*/,
         const RGBColor& initColor/*={1.0f, 1.0f, 1.0f}*/,
@@ -282,14 +278,11 @@ std::pair<glm::ivec2, glm::ivec2> TextRenderer::renderString(
 {
     static constexpr float scale = 1.0f;
     FontStyle currStyle = initStyle;
-    std::map<Char, Glyph>* glyphs;
-    std::map<Char, Glyph>::iterator glyphUnkIt;
+    Face* face;
 
-    auto setStyle{[&currStyle, &glyphs, &glyphUnkIt, this](FontStyle style){
+    auto setStyle{[&currStyle, &face, this](FontStyle style){
         currStyle = style;
-        glyphs = getGlyphListFromStyle(currStyle);
-        glyphUnkIt = glyphs->find(0);
-        assert(glyphUnkIt != glyphs->end());
+        face = getFaceFromStyle(currStyle);
     }};
 
     std::pair<glm::ivec2, glm::ivec2> area;
@@ -309,7 +302,7 @@ std::pair<glm::ivec2, glm::ivec2> TextRenderer::renderString(
     setStyle(initStyle);
 
     std::string ansiSeq;
-    for (char c : str)
+    for (Char c : str)
     {
         switch (c)
         {
@@ -341,7 +334,7 @@ std::pair<glm::ivec2, glm::ivec2> TextRenderer::renderString(
             {
 #if 0
                 Logger::dbg << "ANSI sequence: ";
-                for (char k : ansiSeq)
+                for (Char k : ansiSeq)
                     Logger::dbg << +k << '/' << k << " | ";
                 Logger::dbg << +c << '/' << c << Logger::End;
 #endif
@@ -431,12 +424,9 @@ std::pair<glm::ivec2, glm::ivec2> TextRenderer::renderString(
             return area;
         }
 
-        auto glyphIt = glyphs->find(c);
-        if (glyphIt == glyphs->end()) // Glyph not found
-            glyphIt = glyphUnkIt; // Use the unknown glyph glyph
         if (!onlyMeasure)
-            renderGlyph(glyphIt->second, textX, textY, scale, m_fontVbo);
-        textX += (glyphIt->second.advance/64.0f) * scale;
+            renderGlyph(*face->getGlyph(c), textX, textY, scale, m_fontVbo);
+        textX += (face->getGlyph(c)->advance/64.0f) * scale;
         area.second.x = std::max(area.second.x, (int)std::ceil(textX));
     }
 
@@ -446,8 +436,12 @@ std::pair<glm::ivec2, glm::ivec2> TextRenderer::renderString(
 
 TextRenderer::~TextRenderer()
 {
-    cleanUpGlyphs();
     glDeleteBuffers(1, &m_fontVbo);
     glDeleteVertexArrays(1, &m_fontVao);
-    Logger::dbg << "Cleaned up font vertex data" << Logger::End;
+    m_regularFace.reset();
+    m_boldFace.reset();
+    m_italicFace.reset();
+    m_boldItalicFace.reset();
+    FT_Done_FreeType(m_library);
+    Logger::dbg << "Cleaned up TextRenderer data" << Logger::End;
 }
