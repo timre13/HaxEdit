@@ -7,11 +7,6 @@
 #include <fstream>
 #include <vector>
 
-InvalidUnicodeError::InvalidUnicodeError()
-    : std::runtime_error("Invalid Unicode value")
-{
-}
-
 String loadUnicodeFile(const std::string& filePath)
 {
     std::ifstream file;
@@ -21,30 +16,27 @@ String loadUnicodeFile(const std::string& filePath)
         throw std::runtime_error{std::strerror(errno)};
     }
 
+    file.seekg(0, std::ios_base::end);
     auto fileSize = file.tellg();
-    Logger::dbg << "Loading a Unicode file (\"" << filePath << "\") of " << fileSize
-        << '/' << std::hex << fileSize << std::dec << " bytes" << Logger::End;
+    file.seekg(0);
+    Logger::dbg << "Loading a Unicode file (\"" << filePath << "\") of "
+        << fileSize << " bytes" << Logger::End;
     if (fileSize > MAX_FILE_SIZE)
     {
         Logger::err << "File is too large, not opening it" << Logger::End;
         return {};
     }
 
-    std::vector<uint8_t> input;
-    file.seekg(0, std::ios::end);
-    input.reserve(fileSize);
-    file.seekg(0, std::ios::beg);
-    input.assign(std::istreambuf_iterator<char>(file),
-                 std::istreambuf_iterator<char>());
-
-    file.close();
-
-    const auto icuString = icu::UnicodeString{(const char*)input.data(), (int32_t)input.size()};
-    if (icuString.isBogus())
+    std::string read;
     {
-        throw InvalidUnicodeError{};
+        std::stringstream ss;
+        ss << file.rdbuf();
+        read = ss.str();
     }
-    return strToUtf32(icuString);
+    Logger::dbg << "Read: " << read.length() << ", expected: " << fileSize << Logger::End;
+    assert(read.length() == (size_t)fileSize);
+
+    return utf8To32(read);
 }
 
 std::string loadAsciiFile(const std::string& filePath)
@@ -56,9 +48,11 @@ std::string loadAsciiFile(const std::string& filePath)
         throw std::runtime_error{std::strerror(errno)};
     }
 
+    file.seekg(0, std::ios_base::end);
     auto fileSize = file.tellg();
-    Logger::dbg << "Loading an ASCII file (\"" << filePath << "\") of " << fileSize
-        << '/' << std::hex << fileSize << std::dec << " bytes" << Logger::End;
+    file.seekg(0);
+    Logger::dbg << "Loading an ASCII file (\"" << filePath << "\") of "
+        << fileSize << " bytes" << Logger::End;
     if (fileSize > MAX_FILE_SIZE)
     {
         Logger::err << "File is too large, not opening it" << Logger::End;
@@ -66,9 +60,7 @@ std::string loadAsciiFile(const std::string& filePath)
     }
 
     std::vector<char> input;
-    file.seekg(0, std::ios::end);
     input.reserve(fileSize);
-    file.seekg(0, std::ios::beg);
     input.assign(std::istreambuf_iterator<char>(file),
                  std::istreambuf_iterator<char>());
 
