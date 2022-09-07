@@ -10,22 +10,22 @@ class FloatingWindow
 protected:
     glm::ivec2 m_pos{};
 
-    std::string m_title;
-    std::string m_content;
+    String m_title;
+    String m_content;
 
     bool m_isShown = false;
 
     glm::ivec2 calcPos() const;
 
 public:
-    FloatingWindow(const glm::ivec2& pos, const std::string& title);
-    FloatingWindow(const std::string& title);
+    FloatingWindow(const glm::ivec2& pos, const String& title);
+    FloatingWindow(const String& title);
     FloatingWindow(const glm::ivec2 pos);
     FloatingWindow();
 
     virtual inline void setPos(const glm::ivec2& pos) { m_pos = pos; }
-    virtual inline void setTitle(const std::string& title) { m_title = title; }
-    virtual inline void setContent(const std::string& content) { m_content = content; }
+    virtual inline void setTitle(const String& title) { m_title = title; }
+    virtual inline void setContent(const String& content) { m_content = content; }
     virtual inline void show() { m_isShown = true; }
     virtual inline void hide() { m_isShown = false; }
     virtual inline void hideAndClear()

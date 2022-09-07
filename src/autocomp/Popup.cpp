@@ -106,7 +106,7 @@ void Popup::render()
         }
 
         g_textRenderer->renderString(
-                m_filteredItems[i]->label,
+                utf8To32(m_filteredItems[i]->label),
                 {m_position.x, m_position.y+m_scrollByItems*g_fontSizePx+i*g_fontSizePx},
                 FONT_STYLE_REGULAR,
                 {0.400f, 0.851f, 0.937f});
@@ -119,11 +119,11 @@ void Popup::render()
 
 void Popup::updateDocWin()
 {
-    std::string itemDoc;
+    String itemDoc;
     // Show detail in the first line
     if (m_filteredItems[m_selectedItemI]->detail)
     {
-        itemDoc = m_filteredItems[m_selectedItemI]->detail.get();
+        itemDoc = utf8To32(m_filteredItems[m_selectedItemI]->detail.get());
     }
 
     // Show documentation in the other lines
@@ -132,20 +132,20 @@ void Popup::updateDocWin()
         const auto doc = m_filteredItems[m_selectedItemI]->documentation;
         if (doc->first)
         {
-            itemDoc += "\n"+doc->first.get();
+            itemDoc += U'\n'+utf8To32(doc->first.get());
         }
         else if (doc->second)
         {
             if (doc->second->kind == "markdown")
             {
-                itemDoc += "\n"+Markdown::markdownToAnsiEscaped(doc->second->value);
+                itemDoc += U'\n'+Markdown::markdownToAnsiEscaped(doc->second->value);
             }
             else
             {
                 if (doc->second->kind != "plaintext")
                     Logger::warn << "MarkupContent with kind " << doc->second->kind
                         << " is not supported" << Logger::End;
-                itemDoc += "\n"+doc->second->value;
+                itemDoc += U'\n'+utf8To32(doc->second->value);
             }
         }
         else

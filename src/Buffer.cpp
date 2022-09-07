@@ -1524,7 +1524,7 @@ void Buffer::_renderDrawDiagnosticMsg(
         {0.3f, 0.3f, 0.3f}, // Hint
     };
 
-    static constexpr char severityMarks[4] = {
+    static constexpr Char severityMarks[4] = {
         'E', // Error
         'W', // Warning
         'I', // Information
@@ -1555,7 +1555,7 @@ void Buffer::_renderDrawDiagnosticMsg(
 
             auto rendOrMeasure{[&](bool render){
                 return g_textRenderer->renderString(
-                    charToStr(severityMarks[sevIndex])+": "+msgToDisplay,
+                    charToStr(severityMarks[sevIndex])+U": "+utf8To32(msgToDisplay),
                     {textPos.x+g_fontWidthPx*4, initTextY+textPos.y-m_scrollY-m_position.y},
                     FONT_STYLE_ITALIC|(isCurrent ? FONT_STYLE_BOLD : 0),
                     textColor,
@@ -1605,7 +1605,7 @@ void Buffer::_renderDrawBreadcrumbBar()
     g_uiRenderer->renderRectangleOutline(m_position, {m_position.x+m_size.x, m_position.y+g_fontSizePx+6},
             {0.5f, 0.5f, 0.5f, 1.0f}, 1);
 
-    g_textRenderer->renderString(m_breadcBarVal, m_position+glm::ivec2{4, 2});
+    g_textRenderer->renderString(utf8To32(m_breadcBarVal), m_position+glm::ivec2{4, 2});
 }
 
 void Buffer::render()
@@ -2728,14 +2728,13 @@ void Buffer::showSymbolHover(bool atMouse/*=false*/)
             assert(hoverInfo.startLine >= 0 && hoverInfo.startLine < (int)m_document->getLineCount());
             assert(hoverInfo.startCol >= 0 && hoverInfo.startCol < (int)m_document->getLineLen(hoverInfo.startLine));
             assert(hoverInfo.endCol >= 0 && hoverInfo.endCol < (int)m_document->getLineLen(hoverInfo.startLine));
-            const std::string hoveredSymbol = strToAscii(
-                    m_document->getLine(hoverInfo.startLine).substr(
-                        hoverInfo.startCol, hoverInfo.endCol-hoverInfo.startCol));
+            const String hoveredSymbol = m_document->getLine(hoverInfo.startLine).substr(
+                    hoverInfo.startCol, hoverInfo.endCol-hoverInfo.startCol);
             g_hoverPopup->setTitle(hoveredSymbol);
         }
         else
         {
-            g_hoverPopup->setTitle("Symbol hover");
+            g_hoverPopup->setTitle(U"Symbol hover");
         }
         g_hoverPopup->setContent(hoverInfo.text);
         if (atMouse)
@@ -2760,7 +2759,7 @@ void Buffer::showSignatureHelp()
 
     // TODO: Show signature documentation
     // TODO: Show parameter documentation
-    g_hoverPopup->setTitle("");
+    g_hoverPopup->setTitle(U"");
 
     size_t actSign = signHelp.activeSignature.get_value_or(0);
     if (actSign >= signHelp.signatures.size()) // Default to 0 when out of range
@@ -2802,7 +2801,7 @@ void Buffer::showSignatureHelp()
         if (signI != signHelp.signatures.size()-1)
             content += '\n';
     }
-    g_hoverPopup->setContent(content);
+    g_hoverPopup->setContent(utf8To32(content));
     g_hoverPopup->setPos({m_cursorXPx+g_fontWidthPx, m_cursorYPx-g_hoverPopup->calcHeight()});
     g_hoverPopup->show();
 }
@@ -3007,7 +3006,7 @@ void Buffer::renameSymbolAtCursor()
         const lsPosition pos{m_cursorLine, m_cursorCol};
         auto dlg_ = dynamic_cast<AskerDialog*>(dlg);
         assert(dlg_);
-        Autocomp::lspProvider->renameSymbol(m_filePath, pos, dlg_->getValue());
+        Autocomp::lspProvider->renameSymbol(m_filePath, pos, utf32To8(dlg_->getValue()));
     };
 
     const std::string symName = (!canRename.errorOrSymName.empty()

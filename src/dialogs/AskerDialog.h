@@ -11,7 +11,7 @@ protected:
     Dimensions m_entryRect{};
     Dimensions m_titleDims{};
 
-    std::string m_buffer;
+    String m_buffer;
 
     virtual void recalculateDimensions() override;
 
@@ -36,5 +36,5 @@ public:
     virtual void render() override;
     virtual void handleKey(int key, int mods) override;
     virtual void handleChar(uint c) override;
-    inline const std::string& getValue() const { return m_buffer; }
+    inline const String& getValue() const { return m_buffer; }
 };

@@ -333,7 +333,7 @@ void App::renderStatusLine()
     }
 
     g_textRenderer->renderString(
-            g_statMsg.isEmpty() ? leftStr : g_statMsg.get(),
+            utf8To32(g_statMsg.isEmpty() ? leftStr : g_statMsg.get()),
             {g_statMsg.isEmpty() ? 0 : g_fontSizePx*4, g_windowHeight-g_fontSizePx-4},
             g_statMsg.isEmpty() ? FONT_STYLE_REGULAR : FONT_STYLE_BOLD|FONT_STYLE_ITALIC,
             g_statMsg.isEmpty() ? RGBColor{1.0f, 1.0f, 1.0f} : g_statMsg.getTypeColor());
@@ -343,7 +343,7 @@ void App::renderStatusLine()
         g_activeBuff->updateRStatusLineStr();
         assert(g_activeBuff->m_statusLineStr.maxLen > 0);
         g_textRenderer->renderString(
-                g_activeBuff->m_statusLineStr.str,
+                utf8To32(g_activeBuff->m_statusLineStr.str),
                 {g_windowWidth-g_fontWidthPx*(g_activeBuff->m_statusLineStr.maxLen+4),
                  g_windowHeight-g_fontSizePx-4},
                  FONT_STYLE_REGULAR,
@@ -408,7 +408,7 @@ void App::renderTabLine()
                         TABLINE_TAB_COLOR)));
 
         // Render the filename, use orange color when the buffer is modified since the last save
-        g_textRenderer->renderString(buffer->getFileName().substr(0, TABLINE_TAB_MAX_TEXT_LEN),
+        g_textRenderer->renderString(utf8To32(buffer->getFileName().substr(0, TABLINE_TAB_MAX_TEXT_LEN)),
                 {tabX+20, -2},
                 i == g_currTabI ? FONT_STYLE_BOLD|FONT_STYLE_ITALIC : FONT_STYLE_REGULAR,
                 (buffer->isModified() ? RGBColor{1.0f, 0.5f, 0.0f} : RGBColor{1.0f, 1.0, 1.0f}));
@@ -490,7 +490,7 @@ void App::renderStartupScreen()
 {
     static const auto icon = loadProgramIcon();
     static const auto welcomeMsg = genWelcomeMsg(WELCOME_MSG);
-    g_textRenderer->renderString(welcomeMsg, {START_SCRN_INDENT_PX, 30},
+    g_textRenderer->renderString(utf8To32(welcomeMsg), {START_SCRN_INDENT_PX, 30},
             FONT_STYLE_REGULAR, g_theme->values[Syntax::MARK_NONE].color, true);
 
     const int origIconW = icon->getPhysicalSize().x;
@@ -507,15 +507,15 @@ void App::renderStartupScreen()
     if (!g_recentFilePaths->isEmpty())
     {
         g_textRenderer->renderString(
-                "\033[90mRecent files:",
+                U"\033[90mRecent files:",
                 {START_SCRN_INDENT_PX, (strCountLines(welcomeMsg)+4)*g_fontSizePx},
                 FONT_STYLE_BOLD);
 
         for (size_t i{}; i < g_recentFilePaths->getItemCount(); ++i)
         {
             g_textRenderer->renderString(
-                    "\033[90m["+std::string(i == g_recentFilePaths->getSelectedItemI() ? "\033[97m" : "")
-                    +std::to_string(i+1)+"\033[0m\033[90m]: \033[3m"+g_recentFilePaths->getItem(i),
+                    utf8To32("\033[90m["+std::string(i == g_recentFilePaths->getSelectedItemI() ? "\033[97m" : "")
+                    +std::to_string(i+1)+"\033[0m\033[90m]: \033[3m"+g_recentFilePaths->getItem(i)),
                     {START_SCRN_INDENT_PX, (strCountLines(welcomeMsg)+5+i)*g_fontSizePx});
         }
     }

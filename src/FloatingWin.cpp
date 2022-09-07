@@ -2,12 +2,12 @@
 #include "TextRenderer.h"
 #include "UiRenderer.h"
 
-FloatingWindow::FloatingWindow(const glm::ivec2& pos, const std::string& title)
+FloatingWindow::FloatingWindow(const glm::ivec2& pos, const String& title)
     : m_pos{pos}, m_title{title}
 {
 }
 
-FloatingWindow::FloatingWindow(const std::string& title)
+FloatingWindow::FloatingWindow(const String& title)
     : m_title{title}
 {
 }

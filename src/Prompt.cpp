@@ -34,7 +34,7 @@ void Prompt::runCommand()
         }
         else
         {
-            auto buffer = App::openFileInNewBuffer(strToAscii(args));
+            auto buffer = App::openFileInNewBuffer(utf32To8(args));
             if (g_tabs.empty())
             {
                 g_tabs.push_back(std::make_unique<Split>(buffer));
@@ -118,10 +118,10 @@ void Prompt::render() const
     );
 
     g_textRenderer->renderString(
-            ">", {pos1.x, (pos1.y+pos2.y)/2-g_fontSizePx/2}, FONT_STYLE_BOLD);
+            U">", {pos1.x, (pos1.y+pos2.y)/2-g_fontSizePx/2}, FONT_STYLE_BOLD);
 
     g_textRenderer->renderString(
-            strToAscii(m_buffer), {pos1.x+g_fontWidthPx*1.5f, (pos1.y+pos2.y)/2-g_fontSizePx/2});
+            m_buffer, {pos1.x+g_fontWidthPx*1.5f, (pos1.y+pos2.y)/2-g_fontSizePx/2});
 
 }
 

@@ -105,7 +105,7 @@ void MessageDialog::render()
 
     renderBase(dialogColor);
     // Render dialog text
-    g_textRenderer->renderString(m_message, {m_msgTextDims.xPos, m_msgTextDims.yPos});
+    g_textRenderer->renderString(utf8To32(m_message), {m_msgTextDims.xPos, m_msgTextDims.yPos});
 
 
     for (size_t i{}; i < m_btnDims.size(); ++i)
@@ -123,7 +123,7 @@ void MessageDialog::render()
                 {dims.xPos+dims.width, dims.yPos+dims.height},
                 buttonColor);
         // Render button text
-        g_textRenderer->renderString(getBtnText(m_btnInfo[i]), {m_btnTxtDims[i].xPos, m_btnTxtDims[i].yPos});
+        g_textRenderer->renderString(utf8To32(getBtnText(m_btnInfo[i])), {m_btnTxtDims[i].xPos, m_btnTxtDims[i].yPos});
     }
 
     TIMER_END_FUNC();

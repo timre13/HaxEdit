@@ -87,7 +87,7 @@ void FileDialog::render()
             {0.0f, 0.1f, 0.3f, 0.8f});
     // Render current path
     g_textRenderer->renderString(
-            m_dirPath/std_fs::path{!m_fileList.empty() ? m_fileList[m_selectedFileI]->name : ""},
+            utf8To32(m_dirPath/std_fs::path{!m_fileList.empty() ? m_fileList[m_selectedFileI]->name : ""}),
             {m_titleRect.xPos, m_titleRect.yPos});
 
     if (m_fileList.empty())
@@ -121,14 +121,14 @@ void FileDialog::render()
                 i == (size_t)m_selectedFileI ?
                     RGBAColor{0.2f, 0.3f, 0.5f, 0.7f} : RGBAColor{0.1f, 0.2f, 0.4f, 0.7f});
         // Render filename
-        g_textRenderer->renderString(file->name,
+        g_textRenderer->renderString(utf8To32(file->name),
                 {rect.xPos+FILE_DIALOG_ICON_SIZE_PX+10, rect.yPos+rect.height/2-g_fontSizePx/2-2},
                 file->isDirectory ? FONT_STYLE_ITALIC : FONT_STYLE_REGULAR);
         // Render permissions
-        g_textRenderer->renderString(file->permissionStr,
+        g_textRenderer->renderString(utf8To32(file->permissionStr),
                 {m_dialogDims.xPos+m_dialogDims.width-g_fontWidthPx*9-20, rect.yPos-2});
         // Render last mod time
-        g_textRenderer->renderString(file->lastModTimeStr,
+        g_textRenderer->renderString(utf8To32(file->lastModTimeStr),
                 {m_dialogDims.xPos+m_dialogDims.width-g_fontWidthPx*(9+DATE_TIME_STR_LEN+4)-20, rect.yPos-2});
         // Render file icon
         g_fileTypeHandler->getIconFromFilename(

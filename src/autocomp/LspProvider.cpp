@@ -251,8 +251,8 @@ bool LspProvider::progressCallback(std::unique_ptr<LspMessage> msg)
     {
         // TODO: Render all of the progresses (FloatingWindows in a vector?)
         const auto& prog = Autocomp::lspProvider->m_progresses.begin()->second;
-        g_progressPopup->setTitle(strCapitalize(prog.title));
-        g_progressPopup->setContent(strCapitalize(prog.message));
+        g_progressPopup->setTitle(utf8To32(strCapitalize(prog.title)));
+        g_progressPopup->setContent(utf8To32(strCapitalize(prog.message)));
         g_progressPopup->setPercentage(prog.percentage);
         g_progressPopup->setPos({
                 std::max(g_windowWidth-(int)g_progressPopup->calcWidth()-10, 0),
@@ -447,10 +447,10 @@ LspProvider::LspProvider()
     {
         Logger::dbg << "Server name: " << initRes->response.result.serverInfo->name << Logger::End;
         Logger::dbg << "Server version: " << initRes->response.result.serverInfo->version.get_value_or("???") << Logger::End;
-        g_lspInfoPopup->setTitle("LSP Server");
+        g_lspInfoPopup->setTitle(U"LSP Server");
         g_lspInfoPopup->setContent(
-                "Name: "+initRes->response.result.serverInfo->name+"\n"
-                "Version: "+initRes->response.result.serverInfo->version.get_value_or("???"));
+                U"Name: "+utf8To32(initRes->response.result.serverInfo->name)+U"\n"
+                U"Version: "+utf8To32(initRes->response.result.serverInfo->version.get_value_or("???")));
         g_lspInfoPopup->show();
     }
     const auto& cap = initRes->response.result.capabilities;
@@ -720,37 +720,37 @@ LspProvider::HoverInfo LspProvider::getHover(const std::string& path, uint line,
                 // Note: Can contain code blocks (MarkupContent is preferred over MarkedString
                 //       because they can contain markdown with code inside, but MarkedString
                 //       can only contain code without markdown)
-                info.text = Doxygen::doxygenToAnsiEscaped(Markdown::markdownToAnsiEscaped(markupContent.value));
+                info.text = Markdown::markdownToAnsiEscaped(Doxygen::doxygenToAnsiEscaped(markupContent.value));
             }
             else
             {
                 if (markupContent.kind != "plaintext")
                     Logger::warn << "Unknown MarkupContent kind: " << markupContent.kind << Logger::End;
-                info.text = Doxygen::doxygenToAnsiEscaped(markupContent.value);
+                info.text = utf8To32(Doxygen::doxygenToAnsiEscaped(markupContent.value));
             }
         }
         else if (resp->response.result.contents.first)
         {
             const auto& markedStrings = resp->response.result.contents.first.get();
-            info.text = "";
+            info.text = U"";
             for (const auto& mstr : markedStrings)
             {
                 // If the values are plain text objects
                 if (mstr.first.has_value())
                 {
-                    info.text += mstr.first.get() + '\n';
+                    info.text += utf8To32(mstr.first.get()) + U'\n';
                 }
                 // If the values are MarkedStrings
                 else if (mstr.second.has_value())
                 {
                     if (mstr.second->language.get_value_or("").empty())
                     {
-                        info.text += mstr.second->value + '\n';
+                        info.text += utf8To32(mstr.second->value) + U'\n';
                     }
                     else
                     {
                         // TODO: Highlight based on the specified language
-                        info.text += mstr.second->value + '\n';
+                        info.text += utf8To32(mstr.second->value) + U'\n';
                         Logger::warn << "Unimplemented syntax highligthing for MarkedString language: "
                             << mstr.second->language.get() << Logger::End;
                     }

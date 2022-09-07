@@ -48,7 +48,7 @@ void AskerDialog::render()
     renderBase();
     // Render title path
     g_textRenderer->renderString(
-            m_msg,
+            utf8To32(m_msg),
             {m_titleDims.xPos, m_titleDims.yPos});
 
     // Render entry rectangle
