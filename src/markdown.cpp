@@ -67,7 +67,7 @@ static std::string blockTypeToStr(MD_BLOCKTYPE type)
 
 static int enterBlockCb(MD_BLOCKTYPE block, void* detail, void* output_)
 {
-    std::string& output = *(std::string*)output_;
+    String* output = (String*)output_;
 
     Logger::dbg << "Markdown: Entered block: " << blockTypeToStr(block) << Logger::End;
 
@@ -86,7 +86,7 @@ static int enterBlockCb(MD_BLOCKTYPE block, void* detail, void* output_)
         break;
 
     case MD_BLOCK_LI:
-        output += "- "; // TODO: Use a Unicode character when we support them
+        *output += U"\u2022 ";
         break;
 
     case MD_BLOCK_HR:
@@ -102,7 +102,7 @@ static int enterBlockCb(MD_BLOCKTYPE block, void* detail, void* output_)
         break;
 
     case MD_BLOCK_P:
-        output += "\n";
+        *output += U"\n";
         break;
 
     case MD_BLOCK_TABLE:
@@ -129,7 +129,7 @@ static int enterBlockCb(MD_BLOCKTYPE block, void* detail, void* output_)
 
 static int leaveBlockCb(MD_BLOCKTYPE block, void* detail, void* output_)
 {
-    std::string& output = *(std::string*)output_;
+    String* output = (String*)output_;
 
     Logger::dbg << "Markdown: Left block: " << blockTypeToStr(block) << Logger::End;
 
@@ -152,11 +152,11 @@ static int leaveBlockCb(MD_BLOCKTYPE block, void* detail, void* output_)
         break;
 
     case MD_BLOCK_HR:
-        output += "\n"+std::string(40, '-')+"\n";
+        *output += U'\n'+String(40, U'\u2015')+U'\n';
         break;
 
     case MD_BLOCK_H:
-        output += "\n";
+        *output += U'\n';
         break;
 
     case MD_BLOCK_CODE:
@@ -166,7 +166,7 @@ static int leaveBlockCb(MD_BLOCKTYPE block, void* detail, void* output_)
         break;
 
     case MD_BLOCK_P:
-        output += "\n";
+        *output += U'\n';
         break;
 
     case MD_BLOCK_TABLE:
@@ -193,18 +193,18 @@ static int leaveBlockCb(MD_BLOCKTYPE block, void* detail, void* output_)
 
 static int enterSpanCb(MD_SPANTYPE span, void* detail, void* output_)
 {
-    std::string& output = *(std::string*)output_;
+    String* output = (String*)output_;
 
     Logger::dbg << "Markdown: Entered span: " << spanTypeToStr(span) << Logger::End;
 
     switch (span)
     {
     case MD_SPAN_EM: // Italic
-        output += "\033[3m";
+        *output += U"\033[3m";
         break;
 
     case MD_SPAN_STRONG: // Bold
-        output += "\033[1m";
+        *output += U"\033[1m";
         break;
 
     case MD_SPAN_A:
@@ -237,18 +237,18 @@ static int enterSpanCb(MD_SPANTYPE span, void* detail, void* output_)
 
 static int leaveSpanCb(MD_SPANTYPE span, void* detail, void* output_)
 {
-    std::string& output = *(std::string*)output_;
+    String* output = (String*)output_;
 
     Logger::dbg << "Markdown: Left span: " << spanTypeToStr(span) << Logger::End;
 
     switch (span)
     {
     case MD_SPAN_EM: // Not italic
-        output += "\033[23m";
+        *output += U"\033[23m";
         break;
 
     case MD_SPAN_STRONG: // Not bold
-        output += "\033[21m";
+        *output += U"\033[21m";
         break;
 
     case MD_SPAN_A:
@@ -281,9 +281,9 @@ static int leaveSpanCb(MD_SPANTYPE span, void* detail, void* output_)
 
 static int textCb(MD_TEXTTYPE textType, const MD_CHAR* text, MD_SIZE len, void* output_)
 {
-    std::string& output = *(std::string*)output_;
-    std::string text_ = std::string(text, len);
-    output += text_;
+    String* output = (String*)output_;
+    String text_ = utf8To32(std::string(text, len));
+    *output += text_;
 
     const std::string ttypeStr = textTypeToStr(textType);
     Logger::dbg << "Markdown: Text. Type: " << ttypeStr << ", content: \'" << text_ << '\'' << Logger::End;
@@ -326,9 +326,9 @@ static int textCb(MD_TEXTTYPE textType, const MD_CHAR* text, MD_SIZE len, void* 
     return 0; // OK
 }
 
-std::string markdownToAnsiEscaped(const std::string& input)
+String markdownToAnsiEscaped(const std::string& input)
 {
-    std::string output;
+    String output;
 
     MD_PARSER parser;
     parser.abi_version  = 0; // Reserved
