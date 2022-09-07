@@ -24,6 +24,33 @@ std::string utf32To8(const String& input);
             "T must be a string type");
 
 template <typename T>
+class LineIterator
+{
+private:
+    const T& m_strR;
+    size_t m_charI{};
+
+public:
+    LineIterator(const T& str)
+        : m_strR{str}
+    {
+        _CHECK_T_STR_TYPE;
+    }
+
+    [[nodiscard]] bool next(T& output)
+    {
+        output.clear();
+        if (m_charI >= m_strR.size())
+            return false;
+
+        while (m_charI < m_strR.size() && m_strR[m_charI] != '\n')
+            output += m_strR[m_charI++];
+        ++m_charI;
+        return true;
+    }
+};
+
+template <typename T>
 inline int strCountLines(const T& str)
 {
     _CHECK_T_STR_TYPE;
@@ -37,7 +64,19 @@ inline int strCountLines(const T& str)
     return lines;
 }
 
-size_t getLongestLineLen(const std::string& str);
+template <typename T>
+size_t getLongestLineLen(const T& str)
+{
+    size_t maxLen{};
+    T line;
+    LineIterator it{str};
+    while (it.next(line))
+    {
+        if (line.length() > maxLen)
+            maxLen = line.length();
+    }
+    return maxLen;
+}
 
 std::string strToLower(std::string str);
 String strToLower(String str);
@@ -72,33 +111,6 @@ inline String quoteStr(const String& str) { return U'"'+str+U'"'; }
 
 inline String charToStr(Char c) { return String(1, c); }
 inline std::string charToStr(char c) { return std::string(1, c); }
-
-template <typename T>
-class LineIterator
-{
-private:
-    const T& m_strR;
-    size_t m_charI{};
-
-public:
-    LineIterator(const T& str)
-        : m_strR{str}
-    {
-        _CHECK_T_STR_TYPE;
-    }
-
-    [[nodiscard]] bool next(T& output)
-    {
-        output.clear();
-        if (m_charI >= m_strR.size())
-            return false;
-
-        while (m_charI < m_strR.size() && m_strR[m_charI] != '\n')
-            output += m_strR[m_charI++];
-        ++m_charI;
-        return true;
-    }
-};
 
 template <typename T>
 inline std::string intToHexStr(T x)

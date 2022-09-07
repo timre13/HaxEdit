@@ -34,13 +34,6 @@ std::string utf32To8(const String& input)
 {
     std::string output;
 
-size_t getLongestLineLen(const std::string& str)
-{
-    size_t maxLen{};
-    std::stringstream ss;
-    ss << str;
-    std::string line;
-    while (std::getline(ss, line))
     static_assert(sizeof(char32_t) == sizeof(UChar32));
     icu::UnicodeString ustring = icu::UnicodeString::fromUTF32(
             reinterpret_cast<const UChar32*>(input.c_str()), -1);
@@ -49,13 +42,10 @@ size_t getLongestLineLen(const std::string& str)
     ustring.toUTF8String(output);
     if (U_FAILURE(errCode))
     {
-        if (line.length() > maxLen)
-            maxLen = line.length();
         Logger::fatal << "Failed to convert a UTF-32 string to UTF-8: "
             << errCode.errorName() << Logger::End;
         return "";
     }
-    return maxLen;
     return output;
 }
 
