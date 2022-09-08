@@ -56,7 +56,8 @@ public:
 
     void cleanUp();
 
-    Glyph* getGlyph(FT_ULong charcode);
+    FT_UInt getGlyphIndex(FT_ULong charcode);
+    Glyph* getGlyphByIndex(FT_UInt index);
 
     ~Face()
     {
@@ -71,18 +72,23 @@ private:
     std::string m_boldFontPath;
     std::string m_italicFontPath;
     std::string m_boldItalicFontPath;
+    // Fallback font
+    std::string m_fbFontPath;
 
     FT_Library m_library{};
     std::unique_ptr<Face> m_regularFace = std::make_unique<Face>();
     std::unique_ptr<Face> m_boldFace = std::make_unique<Face>();
     std::unique_ptr<Face> m_italicFace = std::make_unique<Face>();
     std::unique_ptr<Face> m_boldItalicFace = std::make_unique<Face>();
+    std::unique_ptr<Face> m_fallbackFace = std::make_unique<Face>();
     uint m_fontVao;
     uint m_fontVbo;
 
     Shader m_glyphShader;
 
     RGBColor m_currentTextColor{1, 1, 1};
+
+    Face::Glyph* getGlyph(Face* face, FT_ULong charcode);
 
     // ---------------------------------------------
     friend class Buffer;
@@ -106,7 +112,8 @@ public:
             const std::string& regularFontPath,
             const std::string& boldFontPath,
             const std::string& italicFontPath,
-            const std::string& boldItalicFontPath);
+            const std::string& boldItalicFontPath,
+            const std::string& fallbackFontPath);
 
     void setFontSize(int size);
 

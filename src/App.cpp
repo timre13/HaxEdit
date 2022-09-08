@@ -100,21 +100,25 @@ TextRenderer* App::createTextRenderer()
     auto boldFontPath       = OS::getFontFilePath(FONT_FAMILY_BOLD, FONT_STYLE_BOLD);
     auto italicFontPath     = OS::getFontFilePath(FONT_FAMILY_ITALIC, FONT_STYLE_ITALIC);
     auto boldItalicFontPath = OS::getFontFilePath(FONT_FAMILY_BOLDITALIC, FONT_STYLE_BOLD|FONT_STYLE_ITALIC);
+    auto fallbackFontPath   = OS::getFontFilePath(FALLBACK_FONT_FAMILY, 0);
     Logger::dbg
         << "Regular font: " << regularFontPath
         << "\n       Bold font: " << boldFontPath
         << "\n       Italic font: " << italicFontPath
         << "\n       Bold italic font: " << boldItalicFontPath
+        << "\n       Fallback font: " << fallbackFontPath
         << Logger::End;
     assert(regularFontPath.length()
         && boldFontPath.length()
         && italicFontPath.length()
-        && boldItalicFontPath.length());
+        && boldItalicFontPath.length()
+        && fallbackFontPath.length());
     return new TextRenderer{
         regularFontPath,
         boldFontPath,
         italicFontPath,
-        boldItalicFontPath};
+        boldItalicFontPath,
+        fallbackFontPath};
 }
 
 UiRenderer* App::createUiRenderer()

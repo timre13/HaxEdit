@@ -85,21 +85,38 @@ void Face::cleanUp()
     Logger::dbg << "Freed " << count << " glyphs" << Logger::End;
 }
 
-Face::Glyph* Face::getGlyph(FT_ULong charcode)
+FT_UInt Face::getGlyphIndex(FT_ULong charcode)
 {
-    return &(m_glyphs[FT_Get_Char_Index(m_face, charcode)]);
+    return FT_Get_Char_Index(m_face, charcode);
+}
+
+Face::Glyph* Face::getGlyphByIndex(FT_UInt index)
+{
+    return &m_glyphs[index];
+}
+
+Face::Glyph* TextRenderer::getGlyph(Face* face, FT_ULong charcode)
+{
+    const FT_UInt index = face->getGlyphIndex(charcode);
+    if (index == 0) // If not found, use the fallback font
+    {
+        return m_fallbackFace->getGlyphByIndex(m_fallbackFace->getGlyphIndex(charcode));
+    }
+    return face->getGlyphByIndex(index);
 }
 
 TextRenderer::TextRenderer(
         const std::string& regularFontPath,
         const std::string& boldFontPath,
         const std::string& italicFontPath,
-        const std::string& boldItalicFontPath)
+        const std::string& boldItalicFontPath,
+        const std::string& fallbackFontPath)
     :
     m_regularFontPath{regularFontPath},
     m_boldFontPath{boldFontPath},
     m_italicFontPath{italicFontPath},
     m_boldItalicFontPath{boldItalicFontPath},
+    m_fbFontPath{fallbackFontPath},
     m_glyphShader{App::getResPath("../shaders/glyph.vert.glsl"), App::getResPath("../shaders/glyph.frag.glsl")}
 {
     Logger::dbg << "Initializing FreeType" << Logger::End;
@@ -134,8 +151,9 @@ void TextRenderer::setFontSize(int size)
     m_boldFace->load(m_library, m_boldFontPath, size);
     m_italicFace->load(m_library, m_italicFontPath, size);
     m_boldItalicFace->load(m_library, m_boldItalicFontPath, size);
+    m_fallbackFace->load(m_library, m_fbFontPath, size);
     g_fontSizePx = size;
-    g_fontWidthPx = m_regularFace->getGlyph('A')->advance/64.0f;
+    g_fontWidthPx = getGlyph(m_regularFace.get(), 'A')->advance/64.0f;
 }
 
 void TextRenderer::prepareForDrawing()
@@ -222,7 +240,7 @@ Face::GlyphDimensions TextRenderer::renderChar(
 {
     auto face = getFaceFromStyle(style);
     return renderGlyph(
-            *face->getGlyph(c),
+            *getGlyph(face, c),
             position.x, position.y, 1.0f, m_fontVbo);
 }
 
@@ -425,8 +443,8 @@ std::pair<glm::ivec2, glm::ivec2> TextRenderer::renderString(
         }
 
         if (!onlyMeasure)
-            renderGlyph(*face->getGlyph(c), textX, textY, scale, m_fontVbo);
-        textX += (face->getGlyph(c)->advance/64.0f) * scale;
+            renderGlyph(*getGlyph(face, c), textX, textY, scale, m_fontVbo);
+        textX += (getGlyph(face, c)->advance/64.0f) * scale;
         area.second.x = std::max(area.second.x, (int)std::ceil(textX));
     }
 
@@ -442,6 +460,7 @@ TextRenderer::~TextRenderer()
     m_boldFace.reset();
     m_italicFace.reset();
     m_boldItalicFace.reset();
+    m_fallbackFace.reset();
     FT_Done_FreeType(m_library);
     Logger::dbg << "Cleaned up TextRenderer data" << Logger::End;
 }

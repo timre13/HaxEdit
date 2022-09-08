@@ -13,6 +13,7 @@
 #define FONT_FAMILY_BOLD                "DejaVu Sans Mono"
 #define FONT_FAMILY_ITALIC              "DejaVu Sans Mono"
 #define FONT_FAMILY_BOLDITALIC          "DejaVu Sans Mono"
+#define FALLBACK_FONT_FAMILY            "unifont"
 #define DEF_FONT_SIZE_PX                18
 
 //-------------------- Default theme colors --------------------
