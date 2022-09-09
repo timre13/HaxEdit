@@ -81,6 +81,7 @@ void Face::cleanUp()
     {
         glDeleteTextures(1, &glyph.textureId);
     }
+    m_glyphs.clear();
     FT_Done_Face(m_face);
     Logger::dbg << "Freed " << count << " glyphs" << Logger::End;
 }
