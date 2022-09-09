@@ -1512,18 +1512,32 @@ void Buffer::_renderDrawFoundMark(const glm::ivec2& textPos, int initTextY) cons
     g_textRenderer->prepareForDrawing();
 }
 
+namespace
+{
+
+constexpr RGBColor diagnSeverityColors[4] = {
+    {1.0f, 0.2f, 0.1f}, // Error
+    {0.9f, 0.6f, 0.2f}, // Warning
+    {0.5f, 0.5f, 0.8f}, // Information
+    {0.3f, 0.3f, 0.3f}, // Hint
+};
+
+}
+
+static int getDiagnSevIndex(const lsDiagnostic& diagn)
+{
+    // Note: We default to Information, maybe this needs to be changed later
+    const lsDiagnosticSeverity sev = diagn.severity.get_value_or(lsDiagnosticSeverity::Information);
+    const int sevIndex = (int)sev-1;
+    return sevIndex;
+}
+
+
 void Buffer::_renderDrawDiagnosticMsg(
         const Autocomp::LspProvider::diagList_t& diags, int lineI, bool isCurrent,
         const glm::ivec2& textPos, int initTextY
         ) const
 {
-    static constexpr RGBColor severityColors[4] = {
-        {1.0f, 0.2f, 0.1f}, // Error
-        {0.9f, 0.6f, 0.2f}, // Warning
-        {0.5f, 0.5f, 0.8f}, // Information
-        {0.3f, 0.3f, 0.3f}, // Hint
-    };
-
     static constexpr Char severityMarks[4] = {
         'E', // Error
         'W', // Warning
@@ -1535,10 +1549,8 @@ void Buffer::_renderDrawDiagnosticMsg(
     {
         if ((int)diagn.range.start.line == lineI)
         {
-            // Note: We default to Information, maybe this needs to be changed later
-            const lsDiagnosticSeverity sev = diagn.severity.get_value_or(lsDiagnosticSeverity::Information);
-            const int sevIndex = (int)sev-1;
-            const RGBColor textColor = severityColors[sevIndex];
+            const int sevIndex = getDiagnSevIndex(diagn);
+            const RGBColor textColor = diagnSeverityColors[sevIndex];
 
             // If the diagnostic is in the current line, show the whole message.
             // Otherwise only show the first line.
@@ -1577,6 +1589,49 @@ void Buffer::_renderDrawDiagnosticMsg(
     }
 
     // Bind the text renderer shader again
+    g_textRenderer->prepareForDrawing();
+}
+
+static bool isPosInRange(const lsRange& range, const lsPosition& pos)
+{
+    return !(pos < range.start) && pos < range.end;
+}
+
+void Buffer::_renderDrawDiagnosticUnderline(
+        const Autocomp::LspProvider::diagList_t& diags, int lineI, int colI,
+        const glm::ivec2& textPos, int initTextY
+        ) const
+{
+    static lsDiagnostic foundDiagn{};
+
+    // If `foundDiagn` is outdated
+    if (!isPosInRange(foundDiagn.range, {lineI, colI}))
+    {
+        // Find a new containing diagnostic
+        auto found = std::find_if(diags.begin(), diags.end(), [&](const lsDiagnostic& diagn){
+                return isPosInRange(diagn.range, {lineI, colI});
+        });
+        // If there is no containing diagnostic, exit
+        if (found == diags.end())
+            return;
+        foundDiagn = *found;
+    }
+
+    const glm::ivec2 pos1 = {textPos.x, initTextY+textPos.y-m_scrollY-m_position.y};
+    auto drawSegment = [&](int index){
+        static constexpr int segmentW = 1;
+        static constexpr int segmentH = 2;
+        static constexpr float maxOffs = 2;
+
+        // Draw a wavy line
+        const int yoffs1 = g_fontSizePx+std::round(sin(index/g_fontWidthPx*M_PI*2)*maxOffs);
+        g_uiRenderer->renderFilledRectangle(
+                pos1+glm::ivec2{segmentW*index,     yoffs1},
+                pos1+glm::ivec2{segmentW*(index+1), yoffs1+segmentH},
+                RGB_COLOR_TO_RGBA(diagnSeverityColors[getDiagnSevIndex(foundDiagn)]));
+    };
+    for (int i{}; i < g_fontWidthPx; ++i)
+        drawSegment(i);
     g_textRenderer->prepareForDrawing();
 }
 
@@ -1795,6 +1850,11 @@ void Buffer::render()
                     g_textRenderer->prepareForDrawing();
                 }
             }};
+
+            if (fileDiagsIt != Autocomp::LspProvider::s_diags.end())
+                _renderDrawDiagnosticUnderline(
+                        fileDiagsIt->second, lineI, colI,
+                        {textX, textY}, initTextY);
 
             //----------------------------------------------------------------------------------------------------
 
@@ -2546,11 +2606,6 @@ void Buffer::goToMousePos()
     m_cursorHoldTime = 0;
     g_hoverPopup->hideAndClear();
     g_isRedrawNeeded = true;
-}
-
-static bool isPosInRange(const lsRange& range, const lsPosition& pos)
-{
-    return !(pos < range.start) && pos < range.end;
 }
 
 void Buffer::tickCursorHold(float frameTimeMs)

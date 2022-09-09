@@ -165,6 +165,10 @@ protected:
         const Autocomp::LspProvider::diagList_t& diags, int lineI, bool isCurrent,
         const glm::ivec2& textPos, int initTextY
     ) const;
+    void _renderDrawDiagnosticUnderline(
+        const Autocomp::LspProvider::diagList_t& diags, int lineI, int colI,
+        const glm::ivec2& textPos, int initTextY
+    ) const;
     void _renderDrawCursorLineCodeAct(int yPos, int initTextY);
     void _renderDrawBreadcrumbBar();
 
