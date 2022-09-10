@@ -385,11 +385,11 @@ LspProvider::LspProvider()
     caps.textDocument->signatureHelp->signatureInformation->documentationFormat.push_back("plaintext");
     caps.textDocument->signatureHelp->signatureInformation->parameterInformation.labelOffsetSupport.emplace(false); // I don't know if LspCpp supports it
     caps.textDocument->declaration.emplace();
-    caps.textDocument->declaration->linkSupport.emplace(false); // TODO: Support `LocationLink`s
+    caps.textDocument->declaration->linkSupport.emplace(true);
     caps.textDocument->definition.emplace();
-    caps.textDocument->definition->linkSupport.emplace(false); // TODO: Support `LocationLink`s
+    caps.textDocument->definition->linkSupport.emplace(true);
     caps.textDocument->implementation.emplace();
-    caps.textDocument->implementation->linkSupport.emplace(false); // TODO: Support `LocationLink`s
+    caps.textDocument->implementation->linkSupport.emplace(true);
     //caps.textDocument->documentHighlight // TODO: Support documentHighlight
     caps.textDocument->documentSymbol.emplace(); // Note: Only used for the breadcrumb bar
     caps.textDocument->documentSymbol->hierarchicalDocumentSymbolSupport.emplace(true);
