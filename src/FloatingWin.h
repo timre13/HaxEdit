@@ -24,8 +24,8 @@ public:
     FloatingWindow();
 
     virtual inline void setPos(const glm::ivec2& pos) { m_pos = pos; }
-    virtual inline void setTitle(const String& title) { m_title = title; }
-    virtual inline void setContent(const String& content) { m_content = content; }
+    virtual inline void setTitle(const String& title) { m_title = strTrimTrailingLineBreak(title); }
+    virtual inline void setContent(const String& content) { m_content = strTrimTrailingLineBreak(content); }
     virtual inline void show() { m_isShown = true; }
     virtual inline void hide() { m_isShown = false; }
     virtual inline void hideAndClear()
