@@ -6,6 +6,7 @@
 #include "../Logger.h"
 #include "../common/string.h"
 #include "../markdown.h"
+#include "../ThemeLoader.h"
 #include <algorithm>
 
 namespace Autocomp
@@ -57,6 +58,91 @@ void Popup::filterItems()
     m_isFilteringNeeded = false;
 }
 
+static RGBColor getItemColorFromKind(lsCompletionItemKind kind)
+{
+    Syntax::SyntaxMarks mark{};
+    switch (kind)
+    {
+    case lsCompletionItemKind::Text:
+        mark = Syntax::SyntaxMarks::MARK_NONE;
+        break;
+    case lsCompletionItemKind::Method:
+        mark = Syntax::SyntaxMarks::MARK_OPERATOR;
+        break;
+    case lsCompletionItemKind::Function:
+        mark = Syntax::SyntaxMarks::MARK_OPERATOR;
+        break;
+    case lsCompletionItemKind::Constructor:
+        mark = Syntax::SyntaxMarks::MARK_NONE;
+        break;
+    case lsCompletionItemKind::Field:
+        mark = Syntax::SyntaxMarks::MARK_NONE;
+        break;
+    case lsCompletionItemKind::Variable:
+        mark = Syntax::SyntaxMarks::MARK_NONE;
+        break;
+    case lsCompletionItemKind::Class:
+        mark = Syntax::SyntaxMarks::MARK_TYPE;
+        break;
+    case lsCompletionItemKind::Interface:
+        mark = Syntax::SyntaxMarks::MARK_NONE;
+        break;
+    case lsCompletionItemKind::Module:
+        mark = Syntax::SyntaxMarks::MARK_TYPE;
+        break;
+    case lsCompletionItemKind::Property:
+        mark = Syntax::SyntaxMarks::MARK_NONE;
+        break;
+    case lsCompletionItemKind::Unit:
+        mark = Syntax::SyntaxMarks::MARK_TYPE;
+        break;
+    case lsCompletionItemKind::Value:
+        mark = Syntax::SyntaxMarks::MARK_NUMBER;
+        break;
+    case lsCompletionItemKind::Enum:
+        mark = Syntax::SyntaxMarks::MARK_TYPE;
+        break;
+    case lsCompletionItemKind::Keyword:
+        mark = Syntax::SyntaxMarks::MARK_KEYWORD;
+        break;
+    case lsCompletionItemKind::Snippet:
+        mark = Syntax::SyntaxMarks::MARK_STRING;
+        break;
+    case lsCompletionItemKind::Color:
+        mark = Syntax::SyntaxMarks::MARK_NONE;
+        break;
+    case lsCompletionItemKind::File:
+        mark = Syntax::SyntaxMarks::MARK_FILEPATH;
+        break;
+    case lsCompletionItemKind::Reference:
+        mark = Syntax::SyntaxMarks::MARK_NONE;
+        break;
+    case lsCompletionItemKind::Folder:
+        mark = Syntax::SyntaxMarks::MARK_FILEPATH;
+        break;
+    case lsCompletionItemKind::EnumMember:
+        mark = Syntax::SyntaxMarks::MARK_NUMBER;
+        break;
+    case lsCompletionItemKind::Constant:
+        mark = Syntax::SyntaxMarks::MARK_PREPRO;
+        break;
+    case lsCompletionItemKind::Struct:
+        mark = Syntax::SyntaxMarks::MARK_TYPE;
+        break;
+    case lsCompletionItemKind::Event:
+        mark = Syntax::SyntaxMarks::MARK_NONE;
+        break;
+    case lsCompletionItemKind::Operator:
+        mark = Syntax::SyntaxMarks::MARK_OPERATOR;
+        break;
+    case lsCompletionItemKind::TypeParameter:
+        mark = Syntax::SyntaxMarks::MARK_TYPE;
+        break;
+    }
+
+    return g_theme->values[mark].color;
+}
+
 void Popup::render()
 {
     if (!m_isEnabled)
@@ -105,11 +191,14 @@ void Popup::render()
             m_docWin.setPos({m_position.x+m_size.x, y1-2});
         }
 
+        const bool isSnippet = m_filteredItems[i]->kind.get_value_or(
+                lsCompletionItemKind::Text) == lsCompletionItemKind::Snippet;
         g_textRenderer->renderString(
                 utf8To32(m_filteredItems[i]->label),
                 {m_position.x, m_position.y+m_scrollByItems*g_fontSizePx+i*g_fontSizePx},
-                FONT_STYLE_REGULAR,
-                {0.400f, 0.851f, 0.937f});
+                (isSnippet ? FONT_STYLE_ITALIC : FONT_STYLE_REGULAR),
+                getItemColorFromKind(m_filteredItems[i]->kind.get_value_or(
+                            lsCompletionItemKind::Text)));
     }
 
     m_docWin.render();
