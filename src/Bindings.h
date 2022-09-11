@@ -126,6 +126,8 @@ void bufferStartNormalSelection();
 void bufferStartLineSelection();
 void bufferStartBlockSelection();
 
+void bufferDelInsertSelection();
+
 void bufferPasteClipboard();
 void bufferCopySelectionToClipboard();
 void bufferCutSelectionToClipboard();

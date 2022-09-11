@@ -199,6 +199,7 @@ void App::setupKeyBindings()
         bindPrimKey("p",                    0, Callbacks::bufferPasteClipboard);
         bindPrimKey("y",                    0, Callbacks::bufferCopySelectionToClipboard);
         bindPrimKey("n",                    0, Callbacks::bufferFindGotoNext);
+        bindPrimKey("c",                    0, Callbacks::bufferDelInsertSelection);
         bindPrimKey("-",                    0, Callbacks::zoomOutBufferIfImage);
         bindPrimKey("+",                    0, Callbacks::zoomInBufferIfImage);
         bindNonprimChar(U'$',                  Callbacks::moveCursorToLineEnd);

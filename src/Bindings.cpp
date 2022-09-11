@@ -948,6 +948,19 @@ void bufferStartBlockSelection()
     g_isRedrawNeeded = true;
 }
 
+void bufferDelInsertSelection()
+{
+    if (!g_activeBuff)
+        return;
+
+    if (g_activeBuff->isSelectionInProgress())
+    {
+        g_activeBuff->deleteCharForwardOrSelected();
+        g_editorMode.set(EditorMode::_EditorMode::Insert);
+        g_isRedrawNeeded = true;
+    }
+}
+
 void bufferPasteClipboard()
 {
     if (!g_activeBuff)
