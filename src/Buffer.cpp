@@ -2301,6 +2301,7 @@ void Buffer::startSelection(Selection::Mode mode)
         m_selection.fromCharI = m_cursorCharPos;
     }
     m_selection.mode = mode;
+    g_editorMode.set(EditorMode::_EditorMode::Normal);
 }
 
 void Buffer::closeSelection()
