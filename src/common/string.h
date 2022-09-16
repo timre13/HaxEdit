@@ -18,10 +18,19 @@ String icuStrToUtf32(const icu::UnicodeString& input);
 String utf8To32(const std::string& input);
 std::string utf32To8(const String& input);
 
-#define _CHECK_T_STR_TYPE \
-    static_assert(\
-            std::is_base_of<String, T>::value | std::is_base_of<std::string, T>::value,\
+template <typename T>
+static constexpr bool _isStringType = false;
+template <typename T>
+static constexpr bool _isStringType<std::basic_string<T>> = true;
+
+template <typename T>
+static void checkIfStringObject(const T& _={})
+{
+    (void)_;
+    static_assert(
+            _isStringType<T>,
             "T must be a string type");
+}
 
 template <typename T>
 class LineIterator
@@ -34,7 +43,7 @@ public:
     LineIterator(const T& str)
         : m_strR{str}
     {
-        _CHECK_T_STR_TYPE;
+        checkIfStringObject(str);
     }
 
     [[nodiscard]] bool next(T& output)
@@ -53,7 +62,7 @@ public:
 template <typename T>
 inline int strCountLines(const T& str)
 {
-    _CHECK_T_STR_TYPE;
+    checkIfStringObject(str);
 
     int lines{};
     for (auto it=str.begin(); it != str.end(); ++it)
@@ -67,6 +76,8 @@ inline int strCountLines(const T& str)
 template <typename T>
 size_t getLongestLineLen(const T& str)
 {
+    checkIfStringObject(str);
+
     size_t maxLen{};
     T line;
     LineIterator it{str};
@@ -84,7 +95,7 @@ String strToLower(String str);
 template <typename T>
 inline T strCapitalize(T str)
 {
-    _CHECK_T_STR_TYPE;
+    checkIfStringObject(str);
 
     if (str.empty())
         return str;
@@ -95,7 +106,7 @@ inline T strCapitalize(T str)
 template <typename T>
 inline T strTrimTrailingLineBreak(const T& str)
 {
-    _CHECK_T_STR_TYPE;
+    checkIfStringObject(str);
 
     if (str.ends_with('\n'))
     {
@@ -128,7 +139,7 @@ inline std::string intToHexStr(T x)
 template <typename T>
 inline size_t strPLen(const T& str)
 {
-    _CHECK_T_STR_TYPE;
+    checkIfStringObject(str);
 
     size_t len{};
     bool isInsideEsc = false;
@@ -158,7 +169,7 @@ std::string getParentPath(const std::string& path);
 template <typename T>
 inline bool isValidFilePath(const T& str)
 {
-    _CHECK_T_STR_TYPE;
+    checkIfStringObject(str);
 
     const auto path = std::filesystem::path{str};
     return std::filesystem::exists(path)
@@ -172,7 +183,7 @@ inline bool isValidFilePath(const T& str)
 template <typename T>
 inline bool isFormallyValidUrl(const T& str)
 {
-    _CHECK_T_STR_TYPE;
+    checkIfStringObject(str);
 
     // Check if it has a valid prefix
     bool prefValid = false;
@@ -245,7 +256,7 @@ inline bool isFormallyValidUrl(const T& str)
 template <typename T>
 std::vector<T> splitStrToLines(const T& str, bool keepBreaks=false)
 {
-    _CHECK_T_STR_TYPE;
+    checkIfStringObject(str);
 
     std::vector<T> output;
     auto it = LineIterator<T>(str);
@@ -262,7 +273,7 @@ std::vector<T> splitStrToLines(const T& str, bool keepBreaks=false)
 template <typename T>
 inline T repeatChar(typename T::value_type character, size_t count)
 {
-    _CHECK_T_STR_TYPE;
+    checkIfStringObject<T>();
 
     return T(count, character);
 }
