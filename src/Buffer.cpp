@@ -2278,6 +2278,138 @@ void Buffer::autocompPopupInsert()
     m_autocompPopup->setVisibility(false);
 }
 
+void Buffer::insertSnippet(const std::string& snippet)
+{
+    Logger::log << "Inserting snippet: " << snippet << Logger::End;
+
+    std::string toinsert = snippet;
+
+    auto replaceVarWith = [&](const std::string& var, const std::string& val){
+        size_t pos{};
+        // Replace instances that follow the normal syntax
+        // Example: $FOO_VAR
+        while (true)
+        {
+            pos = toinsert.find("$"+var, pos);
+            if (pos == toinsert.npos)
+                break;
+            Logger::dbg << "Replacing variable " << var << " with value '" << val
+                << "' at " << pos << Logger::End;
+            toinsert = toinsert.replace(pos, var.length()+1, val);
+        }
+
+        // Replace instances that follow the default value syntax
+        // Example: ${FOO_VAR:default value}
+        pos = 0;
+        while (true)
+        {
+            pos = toinsert.find("${"+var, pos);
+            if (pos == toinsert.npos)
+                break;
+            std::string newVarValue;
+            const size_t defValStart = pos+2+var.length()+1;
+            const size_t defValEnd = toinsert.find('}', defValStart);
+            assert(defValEnd != toinsert.npos);
+            if (val.empty()) // If the value is empty, use the default value
+            {
+                const std::string defVal = toinsert.substr(defValStart, defValEnd-defValStart);
+                //toinsert = toinsert.replace(pos, var.length()+1, val)
+                Logger::dbg << "Replacing variable " << var << " with default value '" << defVal
+                    << "' at " << pos << Logger::End;
+                newVarValue = defVal;
+            }
+            else // Use the specified value
+            {
+                newVarValue = val;
+                Logger::dbg << "Replacing variable " << var << " with value '" << val
+                    << "' (chosen over default) at " << pos << Logger::End;
+            }
+
+            toinsert = toinsert.replace(pos, defValEnd-pos+1, newVarValue);
+        }
+    };
+
+    auto intToStrTwoDigPad = [&](int input){
+        return (input < 10 ? "0" : "") + std::to_string(input);
+    };
+
+    // Note if there is a variable that starts with an another one, (like
+    // $CURRENT_YEAR and $CURRENT_YEAR_SHORT,) place the longer one before the another one
+
+    replaceVarWith("TM_SELECTED_TEXT", ""); // TODO
+    replaceVarWith("TM_CURRENT_LINE", utf32To8(m_document->getLine(m_cursorLine)));
+    replaceVarWith("TM_CURRENT_WORD", ""); // TODO
+    replaceVarWith("TM_LINE_INDEX", std::to_string(m_cursorLine));
+    replaceVarWith("TM_LINE_NUMBER", std::to_string(m_cursorLine+1));
+    replaceVarWith("TM_FILENAME_BASE", std_fs::path{m_filePath}.stem());
+    replaceVarWith("TM_FILENAME", getFileName());
+    replaceVarWith("TM_DIRECTORY", std_fs::path{m_filePath}.parent_path());
+    replaceVarWith("TM_FILEPATH", m_filePath);
+    replaceVarWith("RELATIVE_FILEPATH", ""); // TODO
+    replaceVarWith("CLIPBOARD", Clipboard::get());
+    replaceVarWith("WORKSPACE_NAME", "root"); // TODO
+    replaceVarWith("WORKSPACE_FOLDER", "root"); // TODO
+    replaceVarWith("CURSOR_INDEX", std::to_string(m_cursorCharPos));
+    replaceVarWith("CURSOR_NUMBER", std::to_string(m_cursorCharPos+1));
+    // Date and time
+    static constexpr const char* const monthNames[] = {
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    };
+    static constexpr const char* const monthNamesAbbr[] = {
+        "Jan.", "Feb.", "Mar.", "Apr.", "May", "June",
+        "July", "Aug.", "Sept.", "Oct.", "Nov.", "Dec."
+    };
+    static constexpr const char* const dayNames[] = {
+        "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
+    };
+    static constexpr const char* const dayNamesAbbr[] = {
+        "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"
+    };
+    const time_t time = std::time(nullptr);
+    const tm* const tm = localtime(&time);
+    replaceVarWith("CURRENT_YEAR_SHORT", std::to_string(tm->tm_year%100));
+    replaceVarWith("CURRENT_YEAR", std::to_string(1900+tm->tm_year));
+    replaceVarWith("CURRENT_MONTH_NAME_SHORT", monthNamesAbbr[tm->tm_mon]);
+    replaceVarWith("CURRENT_MONTH_NAME", monthNames[tm->tm_mon]);
+    replaceVarWith("CURRENT_MONTH", intToStrTwoDigPad(1+tm->tm_mon));
+    replaceVarWith("CURRENT_DATE", intToStrTwoDigPad(tm->tm_mday));
+    replaceVarWith("CURRENT_DAY_NAME_SHORT", dayNamesAbbr[tm->tm_wday]);
+    replaceVarWith("CURRENT_DAY_NAME", dayNames[tm->tm_wday]);
+    replaceVarWith("CURRENT_HOUR", intToStrTwoDigPad(tm->tm_hour));
+    replaceVarWith("CURRENT_MINUTE", intToStrTwoDigPad(tm->tm_min));
+    replaceVarWith("CURRENT_SECONDS_UNIX", std::to_string(time));
+    replaceVarWith("CURRENT_SECOND", intToStrTwoDigPad(tm->tm_sec));
+    // Random values
+    // TODO
+    // Comments
+    // TODO: Use `m_language` to decide
+    replaceVarWith("BLOCK_COMMENT_START", "/*");
+    replaceVarWith("BLOCK_COMMENT_END", "*/");
+    replaceVarWith("LINE_COMMENT", "//");
+
+    Logger::log << "Preprocessed snippet: " << toinsert << Logger::End;
+
+    // TODO: Implement tabstops
+    // TODO: Implement placeholders
+    // TODO: Implement choices
+
+    moveCursorToLineCol(applyInsertion({m_cursorLine, m_cursorCol}, utf8To32(toinsert)));
+}
+
+static void snippetDialogCb(int, Dialog* d, void* b)
+{
+    //Buffer* buff = (Buffer*)b;
+    //AskerDialog* dlg = dynamic_cast<AskerDialog*>(d);
+    //buff->insertSnippet(utf32To8(dlg->getValue()));
+}
+
+void Buffer::insertCustomSnippet()
+{
+    //AskerDialog::create(snippetDialogCb, (void*)this, "Snippet:");
+    insertSnippet("The clipboard content is: >${CLIPBOARD:it was empty}< end of line");
+}
+
 void Buffer::regenAutocompList()
 {
     Logger::dbg << "Regenerating autocomplete list for buffer " << this << Logger::End;

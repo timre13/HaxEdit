@@ -1100,6 +1100,14 @@ void bufferRenameSymbol()
     g_activeBuff->renameSymbolAtCursor();
 }
 
+void bufferInsertCustomSnippet()
+{
+    if (!g_activeBuff)
+        return;
+
+    g_activeBuff->insertCustomSnippet();
+}
+
 } // Namespace Callbacks
 
 BindingMapSet nmap = {};

@@ -332,6 +332,7 @@ public:
     virtual bool isAutocompPopupShown() const { return m_autocompPopup->isEnabled(); }
     virtual void autocompPopupInsert();
     virtual void regenAutocompList();
+    virtual void insertSnippet(const std::string& snippet);
 
     virtual void startSelection(Selection::Mode mode);
     virtual void closeSelection();
@@ -367,6 +368,8 @@ public:
     virtual void applyEdit(const lsAnnotatedTextEdit& edit);
     virtual void applyEdits(const std::vector<lsTextEdit>& edits);
     virtual void renameSymbolAtCursor();
+
+    virtual void insertCustomSnippet();
 
     virtual ~Buffer();
 

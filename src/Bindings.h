@@ -151,6 +151,8 @@ void bufferGotoImp();
 void bufferApplyCodeAct();
 void bufferRenameSymbol();
 
+void bufferInsertCustomSnippet();
+
 }
 
 extern BindingMapSet nmap; // Normal mode mapping
