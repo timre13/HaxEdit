@@ -138,6 +138,7 @@ protected:
     struct TabStop
     {
         int col{};
+        size_t length{};
         int index{};
         std::string placeholder;
     };

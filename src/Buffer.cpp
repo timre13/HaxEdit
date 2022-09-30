@@ -2419,6 +2419,7 @@ void Buffer::insertSnippet(const std::string& snippet)
                 assert(m_lineInfoList.size() == m_document->getLineCount());
                 m_lineInfoList[m_cursorLine+snippLineI].tabstops.emplace_back(TabStop{
                         .col=int(tabstopCol),
+                        .length=(size_t)iter->length(),
                         .index=tabstopI,
                         .placeholder="TABSTOP"}); // TODO
                 ++count;
@@ -2473,6 +2474,8 @@ void Buffer::goToNextSnippetTabstop()
         return;
     }
 
+    closeSelection();
+
     Logger::dbg << "Going to tabstop " << m_tabstopIndex << Logger::End;
     Logger::dbg << "Tabstop list: ";
     for (size_t i{}; i < m_lineInfoList.size(); ++i)
@@ -2508,7 +2511,9 @@ void Buffer::goToNextSnippetTabstop()
                 Logger::dbg << "Going to tabstop at (" << linei << ", "
                     << ts.col << ")" << Logger::End;
                 moveCursorToLineCol(linei, ts.col);
-                g_editorMode.set(EditorMode::_EditorMode::Insert);
+                // Select the placeholder
+                startSelection(Selection::Mode::Normal);
+                moveCursorToLineCol(linei, ts.col+ts.length-1);
                 found = true;
                 goto jump_loop_end; // Out
             }
