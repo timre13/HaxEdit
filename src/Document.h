@@ -146,9 +146,9 @@ public:
 
 private:
     // To allow calling `delete()`
-    friend size_t Buffer::applyDeletion(const range_t& range);
+    friend size_t Buffer::applyDeletion(const range_t&);
     // To allow calling `insert()`
-    friend pos_t Buffer::applyInsertion(const pos_t& pos, const String& text);
+    friend pos_t Buffer::applyInsertion(const pos_t&, const String&);
     // To allow calling `clearContent()`, `setContent()` and `clearHistory()`
     friend void Buffer::open(const std::string& filePath, bool isReload/*=false*/);
      // To allow calling `undo()`

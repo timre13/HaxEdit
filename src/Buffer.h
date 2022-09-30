@@ -135,6 +135,21 @@ protected:
     // Sent to the LSP server.
     int m_version{};
 
+    struct TabStop
+    {
+        int col{};
+        int index{};
+        std::string placeholder;
+    };
+    int m_tabstopIndex{};
+    size_t m_tabstopCount{};
+
+    struct LineInfo
+    {
+        std::vector<TabStop> tabstops;
+    };
+    std::vector<LineInfo> m_lineInfoList;
+
     virtual void renderAutocompPopup();
 
     /*
@@ -182,6 +197,8 @@ protected:
      * Do not call this. Use `App::openFileInNewBuffer`.
      */
     virtual void open(const std::string& filePath, bool isReload=false);
+
+    virtual size_t lineColToPos(const lsPosition& pos) const;
 
 public:
     Buffer();
@@ -370,6 +387,7 @@ public:
     virtual void renameSymbolAtCursor();
 
     virtual void insertCustomSnippet();
+    virtual void goToNextSnippetTabstop();
 
     virtual ~Buffer();
 

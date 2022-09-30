@@ -77,6 +77,7 @@ void Buffer::open(const std::string& filePath, bool isReload/*=false*/)
     m_document->clearHistory();
     m_gitRepo.reset();
     m_signs.clear();
+    m_lineInfoList.clear();
     m_lastFileUpdateTime = 0;
     m_version = 0;
     if (isReload)
@@ -88,6 +89,7 @@ void Buffer::open(const std::string& filePath, bool isReload/*=false*/)
     {
         m_filePath = std::filesystem::canonical(filePath);
         m_document->setContent(loadUnicodeFile(filePath));
+        m_lineInfoList.resize(m_document->getLineCount());
         m_highlightBuffer = std::u8string(m_document->calcCharCount(), Syntax::MARK_NONE);
         m_isHighlightUpdateNeeded = true;
         m_gitRepo = std::make_unique<Git::Repo>(filePath);
@@ -119,6 +121,7 @@ void Buffer::open(const std::string& filePath, bool isReload/*=false*/)
         m_isHighlightUpdateNeeded = true;
         m_gitRepo.reset();
         m_signs.clear();
+        m_lineInfoList.clear();
 
         if (isReload)
         {
@@ -995,21 +998,26 @@ void Buffer::moveCursorToLineCol(int line, int col)
         m_cursorCol = m_document->getLineLen(m_cursorLine)-1;
 
     // Calculate `m_cursorCharPos`
-    m_cursorCharPos = 0;
-    {
-        // Add up the whole line lengths
-        for (size_t lineI{}; (int)lineI < m_cursorLine; ++lineI)
-            m_cursorCharPos += m_document->getLineLen(lineI);
-
-        // Add the remaining
-        m_cursorCharPos += m_cursorCol;
-    }
-
+    m_cursorCharPos = lineColToPos({m_cursorLine, m_cursorCol});
     m_isCursorShown = true;
     m_cursorHoldTime = 0;
 #ifndef TESTING
     g_hoverPopup->hideAndClear();
 #endif
+}
+
+size_t Buffer::lineColToPos(const lsPosition& pos) const
+{
+    size_t out = 0;
+    {
+        // Add up the whole line lengths
+        for (size_t lineI{}; lineI < pos.line; ++lineI)
+            out += m_document->getLineLen(lineI);
+
+        // Add the remaining
+        out += pos.character;
+    }
+    return out;
 }
 
 void Buffer::moveCursorToLineCol(const lsPosition& pos)
@@ -2390,11 +2398,52 @@ void Buffer::insertSnippet(const std::string& snippet)
 
     Logger::log << "Preprocessed snippet: " << toinsert << Logger::End;
 
-    // TODO: Implement tabstops
+    beginHistoryEntry();
+    // Note: Don't move the cursor just yet
+    const auto newCursPos = applyInsertion({m_cursorLine, m_cursorCol}, utf8To32(toinsert));
+
+    size_t count{};
+    for (int tabstopI{}; ; ++tabstopI)
+    {
+        bool found{};
+        size_t snippLineI{};
+        for (const auto& line : splitStrToLines(snippet))
+        {
+            const size_t tabstopCol = line.find("$"+std::to_string(tabstopI));
+            if (tabstopCol != toinsert.npos)
+            {
+                Logger::dbg << "Found a tabstop at (" << (m_cursorLine+snippLineI) << ", " << tabstopCol << ")" << Logger::End;
+                assert(m_lineInfoList.size() == m_document->getLineCount());
+                m_lineInfoList[m_cursorLine+snippLineI].tabstops.emplace_back(TabStop{
+                        .col=int(tabstopCol),
+                        .index=tabstopI,
+                        .placeholder="TABSTOP"}); // TODO
+                ++count;
+                found = true;
+                break;
+            }
+            // Look for tabstop in the next line
+            ++snippLineI;
+        }
+        if (!found)
+        {
+            break;
+        }
+    }
+
+    Logger::log << "Found " << count << " tabstops in the snippet" << Logger::End;
+
+    //std::sort(m_snippetStatus.tabstops.begin(), m_snippetStatus.tabstops.end(),
+    //        [](const auto& x, const auto& y){ return x.pos < y.pos; });
+    //m_snippetStatus.tabstopIndex = 1;
+    m_tabstopIndex = 1;
+    m_tabstopCount = count;
+
+    moveCursorToLineCol(newCursPos);
+    endHistoryEntry();
+
     // TODO: Implement placeholders
     // TODO: Implement choices
-
-    moveCursorToLineCol(applyInsertion({m_cursorLine, m_cursorCol}, utf8To32(toinsert)));
 }
 
 static void snippetDialogCb(int, Dialog* d, void* b)
@@ -2407,7 +2456,78 @@ static void snippetDialogCb(int, Dialog* d, void* b)
 void Buffer::insertCustomSnippet()
 {
     //AskerDialog::create(snippetDialogCb, (void*)this, "Snippet:");
-    insertSnippet("The clipboard content is: >${CLIPBOARD:it was empty}< end of line");
+    //insertSnippet("The clipboard content is: >${CLIPBOARD:it was empty}< end of line");
+    //insertSnippet("for (int $1; $1 < $2; ++$1)\n{\n    $3\n}\n");
+    insertSnippet("void $1($2)\n{\n    $0\n}");
+    //insertSnippet("int $0\n");
+}
+
+void Buffer::goToNextSnippetTabstop()
+{
+    if (m_tabstopCount == 0)
+    {
+        Logger::dbg << "No tabstops" << Logger::End;
+        return;
+    }
+
+    Logger::dbg << "Going to tabstop " << m_tabstopIndex << Logger::End;
+    Logger::dbg << "Tabstop list: ";
+    for (size_t i{}; i < m_lineInfoList.size(); ++i)
+    {
+        const auto& line = m_lineInfoList[i];
+        if (!line.tabstops.empty())
+        {
+            for (const auto& ts : line.tabstops)
+            {
+                Logger::dbg << "\n\tIndex: " << ts.index << ", line: "
+                    << i << ", col: " << ts.col << Logger::End;
+            }
+        }
+    }
+    Logger::dbg << Logger::End;
+
+    // Tabstop number 0 is the last one
+    if (m_tabstopIndex >= (int)m_tabstopCount)
+    {
+        Logger::dbg << "This will be the last tabstop" << Logger::End;
+        m_tabstopIndex = 0;
+    }
+
+    assert(m_lineInfoList.size() == m_document->getLineCount());
+    bool found = false;
+    for (size_t linei{}; linei < m_lineInfoList.size(); ++linei)
+    {
+        const auto& line = m_lineInfoList[linei];
+        for (const auto& ts : line.tabstops)
+        {
+            if (ts.index == m_tabstopIndex)
+            {
+                Logger::dbg << "Going to tabstop at (" << linei << ", "
+                    << ts.col << ")" << Logger::End;
+                moveCursorToLineCol(linei, ts.col);
+                g_editorMode.set(EditorMode::_EditorMode::Insert);
+                found = true;
+                goto jump_loop_end; // Out
+            }
+        }
+    }
+jump_loop_end:
+    if (!found)
+    {
+        Logger::warn << "No tabstop with index " << m_tabstopIndex << Logger::End;
+    }
+
+    if (m_tabstopIndex == 0)
+    {
+        // This was the last tabstop, exit snippet
+        for (auto& line : m_lineInfoList)
+            line.tabstops.clear();
+        m_tabstopCount = 0;
+    }
+    else
+    {
+        ++m_tabstopIndex;
+    }
 }
 
 void Buffer::regenAutocompList()
@@ -3096,6 +3216,12 @@ size_t Buffer::applyDeletion(const lsRange& range)
 
     const size_t deleted = m_document->delete_(range);
 
+    // Update `m_lineInfoList`
+    // TODO: Update line info entry columns
+    for (int i{}; i < (int)range.end.line-(int)range.end.line; ++i)
+        m_lineInfoList.erase(m_lineInfoList.begin()+i);
+    assert(m_lineInfoList.size() == m_document->getLineCount());
+
     m_isModified = true;
     m_isCursorShown = true;
     m_cursorHoldTime = 0;
@@ -3111,9 +3237,16 @@ size_t Buffer::applyDeletion(const lsRange& range)
 lsPosition Buffer::applyInsertion(const lsPosition& pos, const String& text)
 {
     if (m_isReadOnly)
-        return {m_cursorLine, m_cursorCol};
+        return pos;
 
     const lsPosition endPos = m_document->insert(pos, text);
+
+    // Update `m_lineInfoList`
+    // TODO: Update line info entry columns
+    const int textLineCnt = strCountLines(text);
+    for (int i{}; i < textLineCnt; ++i)
+        m_lineInfoList.emplace(m_lineInfoList.begin()+pos.line);
+    assert(m_lineInfoList.size() == m_document->getLineCount());
 
     m_isModified = true;
     m_isCursorShown = true;

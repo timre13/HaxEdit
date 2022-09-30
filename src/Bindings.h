@@ -152,6 +152,7 @@ void bufferApplyCodeAct();
 void bufferRenameSymbol();
 
 void bufferInsertCustomSnippet();
+void bufferGoToNextSnippetTabstop();
 
 }
 

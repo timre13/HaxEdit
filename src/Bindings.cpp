@@ -1108,6 +1108,14 @@ void bufferInsertCustomSnippet()
     g_activeBuff->insertCustomSnippet();
 }
 
+void bufferGoToNextSnippetTabstop()
+{
+    if (!g_activeBuff)
+        return;
+
+    g_activeBuff->goToNextSnippetTabstop();
+}
+
 } // Namespace Callbacks
 
 BindingMapSet nmap = {};
