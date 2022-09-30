@@ -362,7 +362,7 @@ LspProvider::LspProvider()
     caps.textDocument->synchronization.didSave.emplace(true);
     caps.textDocument->completion.emplace();
     caps.textDocument->completion->completionItem.emplace();
-    //caps.textDocument->completion->completionItem->snippetSupport -- TODO
+    caps.textDocument->completion->completionItem->snippetSupport.emplace(true);
     caps.textDocument->completion->completionItem->commitCharactersSupport.emplace(false);
     caps.textDocument->completion->completionItem->documentationFormat.emplace();
     caps.textDocument->completion->completionItem->documentationFormat->push_back("markdown");

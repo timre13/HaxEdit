@@ -2258,28 +2258,43 @@ void Buffer::autocompPopupHide()
 void Buffer::autocompPopupInsert()
 {
     // Hide the popup and insert the current item
+    
+    // TODO: Support CompletionList default values
 
     beginHistoryEntry();
     if (m_autocompPopup->isRendered())
     {
         const auto* item = m_autocompPopup->getSelectedItem();
+        const bool isSnippet = ((item->kind && item->kind.get() == lsCompletionItemKind::Snippet)
+                             || (item->insertTextFormat.get_value_or(lsInsertTextFormat::PlainText) == lsInsertTextFormat::Snippet));
+
         // Use `textEdit` if available
-        if (item->textEdit)
-        {
-            // TODO: Jump to end
-            applyEdit(item->textEdit.get());
-        }
-        else
+        // Note: Disabled while we don't support snippets here
+        //if (item->textEdit)
+        //{
+        //    // TODO: Jump to end
+        //    // TODO: Support snippets here
+        //    applyEdit(item->textEdit.get());
+        //}
+        //else
         {
             // If there is `insertText`, use it. Otherwise use `label`.
             const std::string toInsert = item->insertText.get_value_or(item->label);
             //    .substr(m_autocompPopup->getFilterLen());
-            const lsPosition moveTo = applyInsertion({m_cursorLine, m_cursorCol}, utf8To32(toInsert));
-            moveCursorToLineCol(moveTo);
+            if (isSnippet)
+            {
+                insertSnippet(toInsert);
+            }
+            else
+            {
+                const lsPosition moveTo = applyInsertion({m_cursorLine, m_cursorCol}, utf8To32(toInsert));
+                moveCursorToLineCol(moveTo);
+            }
         }
 
         if (item->additionalTextEdits)
         {
+            // TODO: Support snippets here
             applyEdits(item->additionalTextEdits.get());
         }
     }
