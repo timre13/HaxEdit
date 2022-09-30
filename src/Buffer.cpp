@@ -17,6 +17,7 @@
 #include <chrono>
 #include <filesystem>
 #include <cctype>
+#include <regex>
 using namespace std::chrono_literals;
 
 bufid_t Buffer::s_lastUsedId = 0;
@@ -2405,13 +2406,15 @@ void Buffer::insertSnippet(const std::string& snippet)
     size_t count{};
     for (int tabstopI{}; ; ++tabstopI)
     {
+        const auto expr = std::regex{"\\$\\{?"+std::to_string(tabstopI)+":?[a-zA-Z\\-]*\\}?"};
         bool found{};
         size_t snippLineI{};
         for (const auto& line : splitStrToLines(snippet))
         {
-            const size_t tabstopCol = line.find("$"+std::to_string(tabstopI));
-            if (tabstopCol != toinsert.npos)
+            const std::regex_iterator iter{line.begin(), line.end(), expr};
+            if (!iter->empty())
             {
+                const size_t tabstopCol = iter->position();
                 Logger::dbg << "Found a tabstop at (" << (m_cursorLine+snippLineI) << ", " << tabstopCol << ")" << Logger::End;
                 assert(m_lineInfoList.size() == m_document->getLineCount());
                 m_lineInfoList[m_cursorLine+snippLineI].tabstops.emplace_back(TabStop{
