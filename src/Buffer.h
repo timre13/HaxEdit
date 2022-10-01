@@ -102,6 +102,7 @@ protected:
     int m_charUnderMouseCol{};
     int m_charUnderMouseRow{};
     int m_charUnderMouseI{};
+    bool m_isMouseOverText{};
 
     struct StatusLineStr
     {

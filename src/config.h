@@ -102,6 +102,8 @@
 #define CURSOR_HOLD_TIME_CODE_ACTION    1000
 #define CURSOR_HOLD_TIME_LOCATION_UPD   100
 
+#define MOUSE_HOLD_TIME_HOVERINFO       300
+
 //-------------------- Dialogs --------------------
 
 #define FILE_DIALOG_ICON_SIZE_PX        32
@@ -117,5 +119,3 @@
 
 // Max. number of paths to store in the last files list
 #define RECENT_LIST_MAX_SIZE            20
-
-#define MOUSE_HOLD_TIME_HOVERINFO       500

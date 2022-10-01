@@ -1714,6 +1714,7 @@ void Buffer::render()
     m_charUnderMouseCol = -1;
     m_charUnderMouseRow = -1;
     m_charUnderMouseI = -1;
+    m_isMouseOverText = false;
 
     bool isLineBeginning = true;
     bool isLeadingSpace = true;
@@ -1912,6 +1913,7 @@ void Buffer::render()
                 m_charUnderMouseRow = lineI;
                 m_charUnderMouseCol = colI;
                 m_charUnderMouseI = charI;
+                m_isMouseOverText = (c != U'\n');
             }
 
             if (c == '\t') // Tab
@@ -3036,7 +3038,7 @@ void Buffer::showSymbolHover(bool atMouse/*=false*/)
     if (atMouse)
     {
         // Return if there is nothing under the cursor
-        if (m_charUnderMouseI == -1)
+        if (!m_isMouseOverText)
             return;
 
         hoverInfo = Autocomp::lspProvider->getHover(
