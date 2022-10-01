@@ -8,7 +8,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-void Face::load(
+void Face::_load(
         FT_Library library,
         const std::string& path,
         int size)
@@ -28,6 +28,8 @@ void Face::load(
     }
 
     Logger::dbg << "Caching glyphs..." << Logger::End;
+    assert(m_contextWin);
+    glfwMakeContextCurrent(m_contextWin);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     for (FT_Long i{}; i < m_face->num_glyphs; ++i)
     {
@@ -51,6 +53,7 @@ void Face::load(
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+        assert(texId);
         m_glyphs.push_back(Face::Glyph{
                 texId,
                 {m_face->glyph->bitmap.width, m_face->glyph->bitmap.rows}, // Size
@@ -67,6 +70,24 @@ void Face::load(
         << "\n\tSize: " << g_fontSizePx
         << "\n\tWidth: " << width
         << Logger::End;
+}
+
+void Face::load(
+        FT_Library library,
+        const std::string& path,
+        int size,
+        bool isRegularFont)
+{
+    m_isLoading = true;
+    m_loaderThread = std::thread{[this, library, &path, size, isRegularFont](){
+        _load(library, path, size);
+        if (isRegularFont)
+        {
+            g_fontSizePx = size;
+            g_fontWidthPx = getGlyphByIndex(getGlyphIndex('A'))->advance/64.0f;
+        }
+        m_isLoading = false;
+    }};
 }
 
 void Face::cleanUp()
@@ -148,13 +169,11 @@ TextRenderer::TextRenderer(
 
 void TextRenderer::setFontSize(int size)
 {
-    m_regularFace->load(m_library, m_regularFontPath, size);
-    m_boldFace->load(m_library, m_boldFontPath, size);
-    m_italicFace->load(m_library, m_italicFontPath, size);
-    m_boldItalicFace->load(m_library, m_boldItalicFontPath, size);
-    m_fallbackFace->load(m_library, m_fbFontPath, size);
-    g_fontSizePx = size;
-    g_fontWidthPx = getGlyph(m_regularFace.get(), 'A')->advance/64.0f;
+    m_regularFace->load(m_library, m_regularFontPath, size, true);
+    m_boldFace->load(m_library, m_boldFontPath, size, false);
+    m_italicFace->load(m_library, m_italicFontPath, size, false);
+    m_boldItalicFace->load(m_library, m_boldItalicFontPath, size, false);
+    m_fallbackFace->load(m_library, m_fbFontPath, size, false);
 }
 
 void TextRenderer::prepareForDrawing()
@@ -240,6 +259,11 @@ Face::GlyphDimensions TextRenderer::renderChar(
     )
 {
     auto face = getFaceFromStyle(style);
+    if (face->isLoading())
+    {
+        g_isRedrawNeeded = true; // Try again later
+        return {};
+    }
     return renderGlyph(
             *getGlyph(face, c),
             position.x, position.y, 1.0f, m_fontVbo);
@@ -443,10 +467,17 @@ std::pair<glm::ivec2, glm::ivec2> TextRenderer::renderString(
             return area;
         }
 
-        if (!onlyMeasure)
-            renderGlyph(*getGlyph(face, c), textX, textY, scale, m_fontVbo);
-        textX += (getGlyph(face, c)->advance/64.0f) * scale;
-        area.second.x = std::max(area.second.x, (int)std::ceil(textX));
+        if (face->isLoading())
+        {
+            g_isRedrawNeeded = true; // Try again later
+        }
+        else
+        {
+            if (!onlyMeasure)
+                renderGlyph(*getGlyph(face, c), textX, textY, scale, m_fontVbo);
+            textX += (getGlyph(face, c)->advance/64.0f) * scale;
+            area.second.x = std::max(area.second.x, (int)std::ceil(textX));
+        }
     }
 
     area.second.y = std::ceil(textY+g_fontSizePx*scale);

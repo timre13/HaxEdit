@@ -34,25 +34,35 @@ class Face
 public:
     struct Glyph
     {
-        uint textureId;
+        uint textureId{};
         glm::ivec2 size;
         glm::ivec2 bearing;
-        uint advance;
+        uint advance{};
     };
 
     struct GlyphDimensions
     {
-        uint advance;
+        uint advance{};
     };
 
 private:
     FT_Face m_face{};
     std::vector<Glyph> m_glyphs;
+    bool m_isLoading{};
+    std::thread m_loaderThread;
+    GLFWwindow* m_contextWin;
+
+    void _load(FT_Library library, const std::string& path, int size);
 
 public:
-    Face() {}
+    Face()
+    {
+        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+        m_contextWin = glfwCreateWindow(100, 100, "", nullptr, g_window);
+    }
 
-    void load(FT_Library library, const std::string& path, int size);
+    void load(FT_Library library, const std::string& path, int size, bool isRegularFont);
+    inline bool isLoading() const { return m_isLoading; }
 
     void cleanUp();
 
