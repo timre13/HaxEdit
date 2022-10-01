@@ -1088,11 +1088,33 @@ void Buffer::scrollBy(int val)
     + 4 /* Cursor character decimal value */\
     + 1 /* Separator */\
     + 4 /* Cursor character hex value */\
+    + 10 /* Warning and error count */\
 
 void Buffer::updateRStatusLineStr()
 {
     if (m_selection.mode == Selection::Mode::None)
     {
+        int errDiagCount{};
+        int warnDiagCount{};
+        auto fileDiagsIt = Autocomp::LspProvider::s_diags.find(m_filePath);
+        if (fileDiagsIt != Autocomp::LspProvider::s_diags.end())
+        {
+            // Count the errors and warnings
+            for (const auto& diag : fileDiagsIt->second)
+            {
+                // Note: We default to Information, maybe this needs to be changed later
+                const auto sev = diag.severity.get_value_or(lsDiagnosticSeverity::Information);
+                if (sev == lsDiagnosticSeverity::Error)
+                {
+                    ++errDiagCount;
+                }
+                else if (sev == lsDiagnosticSeverity::Warning)
+                {
+                    ++warnDiagCount;
+                }
+            }
+        }
+
         m_statusLineStr.str
             = g_editorMode.asStatLineStr()
             + " | \033[32m" + std::to_string(m_cursorLine + 1) + "\033[0m"
@@ -1100,6 +1122,8 @@ void Buffer::updateRStatusLineStr()
             + " | \033[31m" + std::to_string(m_cursorCharPos) + "\033[0m"
             + " | \033[95m" + std::to_string(getCharAt(m_cursorCharPos)) + "\033[0m"
             + "/\033[95m" + intToHexStr((int32_t)getCharAt(m_cursorCharPos)) + "\033[0m"
+            + " | \033[31m\u2b59" + std::to_string(errDiagCount) + "\033[0m"
+            + " \033[33m\u26a0" + std::to_string(warnDiagCount) + "\033[0m"
             ;
         m_statusLineStr.maxLen = std::max((size_t)STATUS_LINE_STR_LEN_MAX, strPLen(m_statusLineStr.str));
     }
