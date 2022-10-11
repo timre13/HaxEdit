@@ -97,6 +97,8 @@ void Face::cleanUp()
 
     Logger::dbg << "Freeing glyphs.." << Logger::End;
 
+    m_loaderThread.join();
+
     const size_t count = m_glyphs.size();
     for (auto& glyph : m_glyphs)
     {
@@ -104,8 +106,9 @@ void Face::cleanUp()
     }
     m_glyphs.clear();
     FT_Done_Face(m_face);
+    glfwDestroyWindow(m_contextWin);
+
     Logger::dbg << "Freed " << count << " glyphs" << Logger::End;
-    m_loaderThread.join();
 }
 
 FT_UInt Face::getGlyphIndex(FT_ULong charcode)
