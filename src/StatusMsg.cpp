@@ -8,6 +8,8 @@ RGBColor StatusMsg::getTypeColor()
     case Type::Info:  return {0.3f, 1.0f, 0.6f};
     case Type::Error: return {0.9f, 0.3f, 0.3f};
     }
+    assert(false);
+    return {1.0f, 1.0f, 1.0f};
 }
 
 void StatusMsg::tick(float frameTime)

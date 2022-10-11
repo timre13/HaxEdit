@@ -36,6 +36,8 @@ char EditorMode::asChar()
     case _EditorMode::Insert: return 'I';
     case _EditorMode::Replace: return 'R';
     }
+    assert(false);
+    return ' ';
 }
 
 std::string EditorMode::asString()
@@ -46,6 +48,8 @@ std::string EditorMode::asString()
     case _EditorMode::Insert: return "Insert";
     case _EditorMode::Replace: return "Replace";
     }
+    assert(false);
+    return " ";
 }
 
 std::string EditorMode::asStatLineStr()
@@ -58,4 +62,6 @@ std::string EditorMode::asStatLineStr()
     case _EditorMode::Insert:  return "\033[32mINSERT \033[0m";
     case _EditorMode::Replace: return "\033[31mREPLACE\033[0m";
     }
+    assert(false);
+    return " ";
 }

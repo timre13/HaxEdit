@@ -30,7 +30,8 @@ int getSignColumn(Sign sign)
             return 0;
 
         case Sign::_Count:
-            assert(false);
-            return -1;
+            ;
     }
+    assert(false);
+    return 0;
 }

@@ -23,6 +23,8 @@ static std::string textTypeToStr(MD_TEXTTYPE type)
     case MD_TEXT_HTML:      return "html";
     case MD_TEXT_LATEXMATH: return "latexmath";
     }
+    assert(false);
+    return "";
 }
 
 static std::string spanTypeToStr(MD_SPANTYPE type)
@@ -40,6 +42,8 @@ static std::string spanTypeToStr(MD_SPANTYPE type)
     case MD_SPAN_WIKILINK:          return "wikilink";
     case MD_SPAN_U:                 return "u";
     }
+    assert(false);
+    return "";
 }
 
 static std::string blockTypeToStr(MD_BLOCKTYPE type)
@@ -63,6 +67,8 @@ static std::string blockTypeToStr(MD_BLOCKTYPE type)
     case MD_BLOCK_TH:     return "th";
     case MD_BLOCK_TD:     return "td";
     }
+    assert(false);
+    return "";
 }
 
 static int enterBlockCb(MD_BLOCKTYPE block, void* detail, void* output_)
