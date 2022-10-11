@@ -105,6 +105,7 @@ void Face::cleanUp()
     m_glyphs.clear();
     FT_Done_Face(m_face);
     Logger::dbg << "Freed " << count << " glyphs" << Logger::End;
+    m_loaderThread.join();
 }
 
 FT_UInt Face::getGlyphIndex(FT_ULong charcode)
