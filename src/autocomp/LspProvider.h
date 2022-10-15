@@ -304,11 +304,19 @@ public:
     docSymbolResult_t getDocSymbols(const std::string& filePath);
 
     std::vector<lsTextEdit> getFormattingEdits(const std::string& filePath);
+    std::vector<lsTextEdit> getOnTypeFormattingEdits(
+            const std::string& filePath, const lsPosition& pos, Char typedChar);
 
     std::shared_ptr<Image> getStatusIcon();
 
     // $/progress notification callback
     static bool progressCallback(std::unique_ptr<LspMessage> msg);
+
+    inline const lsServerCapabilities& getCaps() const
+    {
+        return m_servCaps;
+    }
+
 
     ~LspProvider();
 };

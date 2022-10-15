@@ -30,6 +30,7 @@
 #include "LibLsp/lsp/textDocument/rename.h"
 #include "LibLsp/lsp/textDocument/completion.h"
 #include "LibLsp/lsp/textDocument/formatting.h"
+#include "LibLsp/lsp/textDocument/onTypeFormatting.h"
 #include "LibLsp/lsp/workspace/execute_command.h"
 #include "LibLsp/lsp/workspace/applyEdit.h"
 #include "LibLsp/lsp/general/progress.h"
@@ -404,7 +405,7 @@ LspProvider::LspProvider()
     //caps.textDocument->colorProvider -- TODO
     caps.textDocument->formatting.emplace();
     //caps.textDocument->rangeFormatting -- TODO
-    //caps.textDocument->onTypeFormatting -- TODO
+    caps.textDocument->onTypeFormatting.emplace();
     caps.textDocument->rename.emplace();
     caps.textDocument->rename->prepareSupport.emplace(true);
     caps.textDocument->publishDiagnostics.emplace();
@@ -1077,6 +1078,43 @@ std::vector<lsTextEdit> LspProvider::getFormattingEdits(const std::string& fileP
     req.params.options.trimFinalNewlines.emplace(true);
 
     Logger::dbg << "LSP: Sending textDocument/formatting request: " << req.ToJson() << Logger::End;
+
+    auto resp = m_client->getEndpoint()->waitResponse(req, LSP_TIMEOUT_MILLI);
+    if (!resp)
+    {
+        Logger::err << "LSP: Server responded with NULL" <<  Logger::End;
+        busyEnd();
+        return {};
+    }
+    if (resp->IsError())
+    {
+        Logger::err << "LSP: Server responded with error: " << respGetErrMsg(resp) << Logger::End;
+        busyEnd();
+        return {};
+    }
+    Logger::dbg << "LSP server response: " << resp->ToJson() << Logger::End;
+
+    busyEnd();
+    return resp->response.result;
+}
+
+std::vector<lsTextEdit> LspProvider::getOnTypeFormattingEdits(
+        const std::string& filePath, const lsPosition& pos, Char typedChar)
+{
+    if (didServerCrash) return {};
+    busyBegin();
+
+    td_onTypeFormatting::request req;
+    req.params.textDocument.uri.SetPath(filePath);
+    req.params.position = pos;
+    req.params.ch = utf32To8(charToStr(typedChar));
+    req.params.options.tabSize = 4;
+    req.params.options.insertSpaces = true;
+    req.params.options.trimTrailingWhitespace.emplace(true);
+    req.params.options.insertFinalNewline.emplace(true);
+    req.params.options.trimFinalNewlines.emplace(true);
+
+    Logger::dbg << "LSP: Sending textDocument/onTypeFormatting request: " << req.ToJson() << Logger::End;
 
     auto resp = m_client->getEndpoint()->waitResponse(req, LSP_TIMEOUT_MILLI);
     if (!resp)

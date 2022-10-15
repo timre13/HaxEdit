@@ -104,6 +104,8 @@
 
 #define MOUSE_HOLD_TIME_HOVERINFO       300
 
+#define FORMAT_ON_TYPING                false
+
 //-------------------- Dialogs --------------------
 
 #define FILE_DIALOG_ICON_SIZE_PX        32

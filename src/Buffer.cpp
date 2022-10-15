@@ -2064,6 +2064,12 @@ void Buffer::render()
     TIMER_END_FUNC();
 }
 
+template <typename T1, typename T2>
+static bool contains(const T1& container, const T2& value)
+{
+    return std::find(container.begin(), container.end(), value) != container.end();
+}
+
 void Buffer::insertCharAtCursor(Char character)
 {
     const int oldCol = m_cursorCol;
@@ -2090,7 +2096,6 @@ void Buffer::insertCharAtCursor(Char character)
     {
         m_autocompPopup->setVisibility(false);
     }
-    endHistoryEntry();
 
     // If this is the end of a word
     if (u_isspace(character))
@@ -2108,6 +2113,19 @@ void Buffer::insertCharAtCursor(Char character)
             Autocomp::buffWordProvid->add(m_id, word);
         }
     }
+
+#if FORMAT_ON_TYPING
+    const auto& formattingCaps = Autocomp::lspProvider->getCaps().documentOnTypeFormattingProvider;
+    if (formattingCaps
+     && (utf32To8(charToStr(character)) == formattingCaps->firstTriggerCharacter
+     || contains(formattingCaps->moreTriggerCharacter, utf32To8(charToStr(character)))))
+    {
+        Logger::log << "Formatting document..." << Logger::End;
+        applyEdits(Autocomp::lspProvider->getOnTypeFormattingEdits(m_filePath, {m_cursorLine, m_cursorCol}, character));
+    }
+#endif
+
+    endHistoryEntry();
 
     scrollViewportToCursor();
 }
