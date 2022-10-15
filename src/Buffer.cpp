@@ -3386,6 +3386,15 @@ void Buffer::renameSymbolAtCursor()
     AskerDialog::create(cb, nullptr, "New name for \033[3m"+symName+"\033[0m:");
 }
 
+void Buffer::formatDocument()
+{
+    beginHistoryEntry();
+
+    applyEdits(Autocomp::lspProvider->getFormattingEdits(m_filePath));
+
+    endHistoryEntry();
+}
+
 Buffer::~Buffer()
 {
 #ifndef TESTING

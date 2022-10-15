@@ -391,6 +391,8 @@ public:
     virtual void insertCustomSnippet();
     virtual void goToNextSnippetTabstop();
 
+    virtual void formatDocument();
+
     virtual ~Buffer();
 
     friend class TestRunner;

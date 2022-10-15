@@ -1116,6 +1116,14 @@ void bufferGoToNextSnippetTabstop()
     g_activeBuff->goToNextSnippetTabstop();
 }
 
+void bufferFormatDocument()
+{
+    if (!g_activeBuff)
+        return;
+
+    g_activeBuff->formatDocument();
+}
+
 } // Namespace Callbacks
 
 BindingMapSet nmap = {};

@@ -154,6 +154,8 @@ void bufferRenameSymbol();
 void bufferInsertCustomSnippet();
 void bufferGoToNextSnippetTabstop();
 
+void bufferFormatDocument();
+
 }
 
 extern BindingMapSet nmap; // Normal mode mapping

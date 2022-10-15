@@ -210,6 +210,7 @@ void App::setupKeyBindings()
         bindNonprimChar(U'ő',                  Callbacks::bufferGotoDef);
         bindNonprimChar(U'ú',                  Callbacks::bufferGotoDecl);
         //bindNonprimChar(U'ű',                  Callbacks::bufferGotoImp);
+        bindNonprimChar(U'ű',                  Callbacks::bufferFormatDocument);
         bindNonprimChar(U'ű',                  Callbacks::bufferInsertCustomSnippet);
         bindNonprimChar(U'ö',                  Callbacks::bufferApplyCodeAct);
         bindNonprimChar(U'ü',                  Callbacks::bufferRenameSymbol);

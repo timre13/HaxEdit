@@ -29,6 +29,7 @@
 #include "LibLsp/lsp/textDocument/prepareRename.h"
 #include "LibLsp/lsp/textDocument/rename.h"
 #include "LibLsp/lsp/textDocument/completion.h"
+#include "LibLsp/lsp/textDocument/formatting.h"
 #include "LibLsp/lsp/workspace/execute_command.h"
 #include "LibLsp/lsp/workspace/applyEdit.h"
 #include "LibLsp/lsp/general/progress.h"
@@ -401,7 +402,7 @@ LspProvider::LspProvider()
     //caps.textDocument->codeLens -- TODO: Support code lens
     //caps.textDocument->documentLink -- TODO
     //caps.textDocument->colorProvider -- TODO
-    //caps.textDocument->formatting -- TODO
+    caps.textDocument->formatting.emplace();
     //caps.textDocument->rangeFormatting -- TODO
     //caps.textDocument->onTypeFormatting -- TODO
     caps.textDocument->rename.emplace();
@@ -1050,6 +1051,40 @@ LspProvider::docSymbolResult_t LspProvider::getDocSymbols(const std::string& fil
 
     auto resp = m_client->getEndpoint()->waitResponse(req, LSP_TIMEOUT_MILLI);
     assert(resp);
+    if (resp->IsError())
+    {
+        Logger::err << "LSP: Server responded with error: " << respGetErrMsg(resp) << Logger::End;
+        busyEnd();
+        return {};
+    }
+    Logger::dbg << "LSP server response: " << resp->ToJson() << Logger::End;
+
+    busyEnd();
+    return resp->response.result;
+}
+
+std::vector<lsTextEdit> LspProvider::getFormattingEdits(const std::string& filePath)
+{
+    if (didServerCrash) return {};
+    busyBegin();
+
+    td_formatting::request req;
+    req.params.textDocument.uri.SetPath(filePath);
+    req.params.options.tabSize = 4;
+    req.params.options.insertSpaces = true;
+    req.params.options.trimTrailingWhitespace.emplace(true);
+    req.params.options.insertFinalNewline.emplace(true);
+    req.params.options.trimFinalNewlines.emplace(true);
+
+    Logger::dbg << "LSP: Sending textDocument/formatting request: " << req.ToJson() << Logger::End;
+
+    auto resp = m_client->getEndpoint()->waitResponse(req, LSP_TIMEOUT_MILLI);
+    if (!resp)
+    {
+        Logger::err << "LSP: Server responded with NULL" <<  Logger::End;
+        busyEnd();
+        return {};
+    }
     if (resp->IsError())
     {
         Logger::err << "LSP: Server responded with error: " << respGetErrMsg(resp) << Logger::End;

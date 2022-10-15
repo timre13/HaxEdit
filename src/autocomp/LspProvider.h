@@ -303,6 +303,8 @@ public:
     using docSymbolResult_t = decltype(td_symbol::response::result);
     docSymbolResult_t getDocSymbols(const std::string& filePath);
 
+    std::vector<lsTextEdit> getFormattingEdits(const std::string& filePath);
+
     std::shared_ptr<Image> getStatusIcon();
 
     // $/progress notification callback
