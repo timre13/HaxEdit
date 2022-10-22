@@ -1124,6 +1124,11 @@ void bufferFormatDocument()
     g_activeBuff->formatDocument();
 }
 
+void showWorkspaceFindDlg()
+{
+    App::showFindDlg(App::FindType::WorkspaceSymbol);
+}
+
 } // Namespace Callbacks
 
 BindingMapSet nmap = {};

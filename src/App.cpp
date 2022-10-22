@@ -3,6 +3,7 @@
 #include "autocomp/BufferWordProvider.h"
 #include "autocomp/PathProvider.h"
 #include "autocomp/LspProvider.h"
+#include "dialogs/FindListDialog.h"
 #include "Bindings.h"
 #include "../external/stb/stb_image.h"
 #include "common/file.h"
@@ -210,7 +211,8 @@ void App::setupKeyBindings()
         bindNonprimChar(U'ő',                  Callbacks::bufferGotoDef);
         bindNonprimChar(U'ú',                  Callbacks::bufferGotoDecl);
         //bindNonprimChar(U'ű',                  Callbacks::bufferGotoImp);
-        bindNonprimChar(U'ű',                  Callbacks::bufferFormatDocument);
+        //bindNonprimChar(U'ű',                  Callbacks::bufferFormatDocument);
+        bindNonprimChar(U'ű',                  Callbacks::showWorkspaceFindDlg);
         bindNonprimChar(U'ű',                  Callbacks::bufferInsertCustomSnippet);
         bindNonprimChar(U'ö',                  Callbacks::bufferApplyCodeAct);
         bindNonprimChar(U'ü',                  Callbacks::bufferRenameSymbol);
@@ -1083,3 +1085,76 @@ void App::tickMouseHold(uint frameTime)
 
     g_mouseHoldTime += frameTime;
 }
+
+static std::string symbolKindToShortName(lsSymbolKind kind)
+{
+    const size_t kind_ = size_t(kind)-1;
+    static constexpr const char* const names[] = {
+        "File",
+        "Module",
+        "Namespace",
+        "Package",
+        "Class",
+        "Method",
+        "Property",
+        "Field",
+        "Ctor",
+        "Enum",
+        "Interface",
+        "Func",
+        "Var",
+        "Const",
+        "Str",
+        "Number",
+        "Bool",
+        "Array",
+        "Object",
+        "Key",
+        "Null",
+        "EnumMember",
+        "Struct",
+        "Event",
+        "Operator",
+        "TypeParam",
+    };
+    assert((size_t)kind_ < sizeof(names)/sizeof(names[0]));
+    return names[kind_];
+}
+
+static void findWorkspaceSymbolDlgCb(int, Dialog* dlg, void*)
+{
+    auto dlg_ = dynamic_cast<FindListDialog*>(dlg);
+}
+
+static void findWorkspaceSymbolDlgTypeCb(
+        FindListDialog*, String buffer, FindListDialog::entryList_t* outEntries, void*)
+{
+    const auto result = Autocomp::lspProvider->getWpSymbols(utf32To8(buffer));
+    outEntries->clear();
+    for (const auto& res : result)
+    {
+        //Logger::log
+        //    << ((res.containerName.has_value() && !res.containerName.get().empty()) ? "["+res.containerName.get()+"] " : "")
+        //    << "<" << res.location.uri.GetRawPath() << "> "
+        //    << res.name
+        //    << " " << symbolKindToShortName(res.kind)
+        //    << Logger::End;
+        FindListDialog::ListEntry entry;
+        entry.label = utf8To32(res.name);
+        outEntries->push_back(std::move(entry));
+    }
+}
+
+void App::showFindDlg(FindType ftype)
+{
+    switch (ftype)
+    {
+    case FindType::WorkspaceSymbol:
+        FindListDialog::create(
+                findWorkspaceSymbolDlgCb, nullptr,
+                findWorkspaceSymbolDlgTypeCb, nullptr,
+                U"Find Workspace Symbol");
+        break;
+    }
+}
+

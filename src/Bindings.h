@@ -156,6 +156,8 @@ void bufferGoToNextSnippetTabstop();
 
 void bufferFormatDocument();
 
+void showWorkspaceFindDlg();
+
 }
 
 extern BindingMapSet nmap; // Normal mode mapping

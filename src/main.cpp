@@ -6,6 +6,7 @@
 #include "SessionHandler.h"
 #include <filesystem>
 #include "dialogs/FindDialog.h"
+#include "dialogs/FindListDialog.h"
 
 int main(int argc, char** argv)
 {
@@ -152,6 +153,13 @@ int main(int argc, char** argv)
             g_activeBuff->tickCursorHold(frameTimeSec*1000);
             g_activeBuff->tickAutoReload(frameTimeSec*1000);
             g_activeBuff->tickGitBranchUpdate(frameTimeSec*1000);
+        }
+        if (!g_dialogs.empty())
+        {
+            if (auto fldlg = dynamic_cast<FindListDialog*>(g_dialogs.back().get()))
+            {
+                fldlg->tick(frameTimeSec*1000);
+            }
         }
         App::tickMouseHold(frameTimeSec*1000);
     }

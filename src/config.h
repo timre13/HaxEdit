@@ -111,6 +111,7 @@
 #define FILE_DIALOG_ICON_SIZE_PX        32
 #define DIALOG_FLASH_TIME_MS            1000
 #define DIALOG_FLASH_FREQ_MS            200
+#define FIND_LIST_DLG_TYPE_HOLD_TIME_MS 500
 
 //-------------------- Misc. --------------------
 

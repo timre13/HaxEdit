@@ -31,6 +31,7 @@ using namespace std::chrono_literals;
 #include "LibLsp/lsp/textDocument/code_action.h"
 #include "LibLsp/lsp/textDocument/document_symbol.h"
 #include "LibLsp/lsp/textDocument/willSave.h"
+#include "LibLsp/lsp/workspace/symbol.h"
 #ifdef __clang__
 
 #pragma clang diagnostic pop
@@ -300,8 +301,11 @@ public:
     CanRenameSymbolResult canRenameSymbolAt(const std::string& filePath, const lsPosition& pos);
     void renameSymbol(const std::string& filePath, const lsPosition& pos, const std::string& newName);
 
-    using docSymbolResult_t = decltype(td_symbol::response::result);
+    using docSymbolResult_t = std::vector<lsDocumentSymbol>;
     docSymbolResult_t getDocSymbols(const std::string& filePath);
+
+    using wpSymbolResult_t = std::vector<lsSymbolInformation>;
+    wpSymbolResult_t getWpSymbols(const std::string& query="");
 
     std::vector<lsTextEdit> getFormattingEdits(const std::string& filePath);
     std::vector<lsTextEdit> getOnTypeFormattingEdits(

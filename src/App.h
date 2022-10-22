@@ -150,4 +150,14 @@ private:
     static void toggleDebugDraw();
 public:
     static void tickMouseHold(uint frameTime);
+
+    enum class FindType
+    {
+        //File,
+        //Text,
+        //DocumentSymbol,
+        WorkspaceSymbol,
+    };
+
+    static void showFindDlg(FindType ftype);
 };

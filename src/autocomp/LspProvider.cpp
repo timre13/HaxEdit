@@ -355,7 +355,11 @@ LspProvider::LspProvider()
     //caps.workspace->workspaceEdit->resourceOperations -- Not supported yet
     caps.workspace->workspaceEdit->failureHandling.emplace("abort"); // Probably
     caps.workspace->workspaceEdit->normalizesLineEndings.emplace(false); // TODO: We should support it
-    //caps.workspace->symbol -- TODO: Support searching workspace symbols
+    caps.workspace->symbol.emplace();
+    caps.workspace->symbol->symbolKind.emplace();
+    caps.workspace->symbol->symbolKind->valueSet.emplace();
+    for (int val{1}; val <= (int)lsSymbolKind::TypeParameter; ++val)
+        caps.workspace->symbol->symbolKind->valueSet->emplace_back((lsSymbolKind)val);
     caps.workspace->executeCommand.emplace();
     caps.workspace->workspaceFolders.emplace(true); // TODO: Actually support workspace folders
     //caps.workspace->fileOperations -- TODO: Support file operations
@@ -1051,7 +1055,40 @@ LspProvider::docSymbolResult_t LspProvider::getDocSymbols(const std::string& fil
     Logger::dbg << "LSP: Sending textDocument/documentSymbol request: " << req.ToJson() << Logger::End;
 
     auto resp = m_client->getEndpoint()->waitResponse(req, LSP_TIMEOUT_MILLI);
-    assert(resp);
+    if (!resp)
+    {
+        Logger::err << "LSP: Server responded with NULL" <<  Logger::End;
+        busyEnd();
+        return {};
+    }
+    if (resp->IsError())
+    {
+        Logger::err << "LSP: Server responded with error: " << respGetErrMsg(resp) << Logger::End;
+        busyEnd();
+        return {};
+    }
+    Logger::dbg << "LSP server response: " << resp->ToJson() << Logger::End;
+
+    busyEnd();
+    return resp->response.result;
+}
+
+LspProvider::wpSymbolResult_t LspProvider::getWpSymbols(const std::string& query/*=""*/)
+{
+    if (didServerCrash) return {};
+    busyBegin();
+
+    wp_symbol::request req;
+    req.params.query = query;
+    Logger::dbg << "LSP: Sending workspace/documentSymbol request: " << req.ToJson() << Logger::End;
+
+    auto resp = m_client->getEndpoint()->waitResponse(req, LSP_TIMEOUT_MILLI);
+    if (!resp)
+    {
+        Logger::err << "LSP: Server responded with NULL" <<  Logger::End;
+        busyEnd();
+        return {};
+    }
     if (resp->IsError())
     {
         Logger::err << "LSP: Server responded with error: " << respGetErrMsg(resp) << Logger::End;
