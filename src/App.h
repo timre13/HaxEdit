@@ -93,6 +93,8 @@ public:
     }
 };
 
+void _findWorkspaceSymbolDlgCb(int, Dialog*, void*);
+
 class App final
 {
 public:

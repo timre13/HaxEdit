@@ -10,7 +10,7 @@ class FindListDialog final : public Dialog
 public:
     struct ListEntry
     {
-        String label;
+        lsSymbolInformation info;
     };
     using entryList_t = std::vector<ListEntry>;
 
@@ -38,6 +38,23 @@ private:
 
     virtual void recalculateDimensions() override;
 
+    inline void selectNextEntry()
+    {
+        if (!m_entries.empty() && (size_t)m_selectedEntryI < m_entries.size()-1)
+        {
+            ++m_selectedEntryI;
+            g_isRedrawNeeded = true;
+        }
+    }
+    inline void selectPrevEntry()
+    {
+        if (m_selectedEntryI > 0)
+        {
+            --m_selectedEntryI;
+            g_isRedrawNeeded = true;
+        }
+    }
+
 public:
     static inline void create(
             callback_t enterCb,
@@ -58,4 +75,15 @@ public:
     virtual void handleChar(uint c) override;
 
     virtual void tick(int elapsedMs);
+
+    virtual std::optional<ListEntry> getSelectedEntry()
+    {
+        std::optional<ListEntry> out;
+        if (m_entries.empty())
+            return out;
+
+        assert(m_selectedEntryI < m_entries.size());
+        out.emplace(m_entries[m_selectedEntryI]);
+        return out;
+    }
 };

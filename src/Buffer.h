@@ -393,6 +393,8 @@ public:
 
     virtual void formatDocument();
 
+    friend void _findWorkspaceSymbolDlgCb(int, Dialog*, void*);
+
     virtual ~Buffer();
 
     friend class TestRunner;

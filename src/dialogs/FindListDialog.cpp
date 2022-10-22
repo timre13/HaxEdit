@@ -91,7 +91,7 @@ void FindListDialog::render()
 
         // TODO: Color label / display icon based on kind
         // Render label
-        g_textRenderer->renderString(entry.label,
+        g_textRenderer->renderString(utf8To32(entry.info.name),
                 {rect.xPos+FILE_DIALOG_ICON_SIZE_PX+10, rect.yPos+rect.height/2-g_fontSizePx/2-2},
                 FONT_STYLE_REGULAR);
 
@@ -115,6 +115,10 @@ void FindListDialog::tick(int elapsedMs)
     if (oldVal > 0 && m_timeUntilFetch <= 0)
     {
         m_typeCb(this, m_buffer, &m_entries, m_typeCbUserData);
+        if (m_entries.empty())
+            m_selectedEntryI = 0;
+        else
+            m_selectedEntryI = std::min(m_selectedEntryI, m_entries.size()-1);
         g_isRedrawNeeded = true;
     }
 }
@@ -142,14 +146,32 @@ void FindListDialog::handleKey(int key, int mods)
             if (m_callback)
                 m_callback(0, this, m_cbUserData);
             break;
+
+        case GLFW_KEY_UP:
+            selectPrevEntry();
+            break;
+
+        case GLFW_KEY_DOWN:
+            selectNextEntry();
+            break;
         }
     }
     else if (mods == GLFW_MOD_CONTROL)
     {
-        if (key == GLFW_KEY_BACKSPACE)
+        switch (key)
         {
+        case GLFW_KEY_BACKSPACE:
             m_buffer.clear();
             m_timeUntilFetch = FIND_LIST_DLG_TYPE_HOLD_TIME_MS;
+            break;
+
+        case GLFW_KEY_K:
+            selectPrevEntry();
+            break;
+
+        case GLFW_KEY_J:
+            selectNextEntry();
+            break;
         }
     }
 }

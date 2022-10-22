@@ -6,6 +6,7 @@
 #include "dialogs/FindListDialog.h"
 #include "Bindings.h"
 #include "../external/stb/stb_image.h"
+#include "LibLsp/lsp/AbsolutePath.h"
 #include "common/file.h"
 #include "os.h"
 #include "Git.h"
@@ -1121,9 +1122,32 @@ static std::string symbolKindToShortName(lsSymbolKind kind)
     return names[kind_];
 }
 
-static void findWorkspaceSymbolDlgCb(int, Dialog* dlg, void*)
+void _findWorkspaceSymbolDlgCb(int, Dialog* dlg, void*)
 {
     auto dlg_ = dynamic_cast<FindListDialog*>(dlg);
+    if (auto selEntry = dlg_->getSelectedEntry())
+    {
+        Logger::log << "Jumping to symbol '" << selEntry->info.name << '\''
+            << " in file '" << selEntry->info.location.uri.GetRawPath() << '\''
+            << " at " << selEntry->info.location.range.ToString() << Logger::End;
+
+        // Note: Copied from Buffer::_goToDeclOrDefOrImp()
+        {
+            Buffer* buff = App::openFileInNewBuffer(selEntry->info.location.uri.GetAbsolutePath().path);
+
+            buff->moveCursorToLineCol(selEntry->info.location.range.start);
+            buff->centerCursor();
+            buff->m_isCursorShown = true;
+            buff->m_cursorHoldTime = 0;
+            g_hoverPopup->hideAndClear();
+
+            // Insert the buffer next to the current one
+            g_tabs.emplace(g_tabs.begin()+g_currTabI+1, std::make_unique<Split>(buff));
+            ++g_currTabI; // Go to the current buffer
+            g_activeBuff = buff;
+            g_isRedrawNeeded = true;
+        }
+    }
 }
 
 static void findWorkspaceSymbolDlgTypeCb(
@@ -1140,7 +1164,7 @@ static void findWorkspaceSymbolDlgTypeCb(
         //    << " " << symbolKindToShortName(res.kind)
         //    << Logger::End;
         FindListDialog::ListEntry entry;
-        entry.label = utf8To32(res.name);
+        entry.info = res;
         outEntries->push_back(std::move(entry));
     }
 }
@@ -1151,7 +1175,7 @@ void App::showFindDlg(FindType ftype)
     {
     case FindType::WorkspaceSymbol:
         FindListDialog::create(
-                findWorkspaceSymbolDlgCb, nullptr,
+                _findWorkspaceSymbolDlgCb, nullptr,
                 findWorkspaceSymbolDlgTypeCb, nullptr,
                 U"Find Workspace Symbol");
         break;
