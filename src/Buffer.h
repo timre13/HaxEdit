@@ -169,8 +169,6 @@ protected:
     virtual void updateGitDiff();
     virtual std::string getCheckedOutObjName(int hashLen=-1) const;
 
-    virtual Char getCharAt(size_t pos) const;
-
     // -------------------- Rendering functions -----------------------------
     void _renderDrawCursor(const glm::ivec2& textPos, int initTextY, int width);
     void _renderDrawSelBg(const glm::ivec2& textPos, int initTextY, int width) const;

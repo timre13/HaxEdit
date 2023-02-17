@@ -948,28 +948,6 @@ int Buffer::getNumOfLines() const
     return m_document->getLineCount();
 }
 
-Char Buffer::getCharAt(size_t pos) const
-{
-    if (m_document->isEmpty())
-        return '\0';
-
-    size_t i{};
-    for (const String& line : *m_document)
-    {
-        if (i + line.size() - 1 < pos)
-        {
-            i += line.size();
-        }
-        else
-        {
-            return line[pos-i];
-        }
-    }
-    Logger::fatal << "Tried to get character at invalid position: "
-        << pos << " / " << std::to_string((int)pos) << Logger::End;
-    return '\0';
-}
-
 String Buffer::getCursorWord() const
 {
     if (isspace(m_document->getChar({m_cursorLine, m_cursorCol})))
@@ -1120,8 +1098,8 @@ void Buffer::updateRStatusLineStr()
             + " | \033[32m" + std::to_string(m_cursorLine + 1) + "\033[0m"
             + ":\033[33m" + std::to_string(m_cursorCol + 1) + "\033[0m"
             + " | \033[31m" + std::to_string(m_cursorCharPos) + "\033[0m"
-            + " | \033[95m" + std::to_string(getCharAt(m_cursorCharPos)) + "\033[0m"
-            + "/\033[95m" + intToHexStr((int32_t)getCharAt(m_cursorCharPos)) + "\033[0m"
+            + " | \033[95m" + std::to_string(m_document->getChar(m_cursorCharPos)) + "\033[0m"
+            + "/\033[95m" + intToHexStr((int32_t)m_document->getChar(m_cursorCharPos)) + "\033[0m"
             + " | \033[31m\u2b59" + std::to_string(errDiagCount) + "\033[0m"
             + " \033[33m\u26a0" + std::to_string(warnDiagCount) + "\033[0m"
             ;

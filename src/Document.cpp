@@ -207,12 +207,34 @@ const std::vector<String>& Document::getAll() const
     return m_content;
 }
 
-Char Document::getChar(const pos_t& pos)
+Char Document::getChar(const pos_t& pos) const
 {
     assert(pos.line < m_content.size());
     const String& line = m_content[pos.line];
     assert(pos.character < line.length());
     return line[pos.character];
+}
+
+Char Document::getChar(size_t pos) const
+{
+    if (isEmpty())
+        return '\0';
+
+    size_t i{};
+    for (const String& line : m_content)
+    {
+        if (i + line.size() - 1 < pos)
+        {
+            i += line.size();
+        }
+        else
+        {
+            return line[pos-i];
+        }
+    }
+    Logger::fatal << "Tried to get character at invalid position: "
+        << pos << " / " << std::to_string((int)pos) << Logger::End;
+    return '\0';
 }
 
 String Document::getLine(size_t i) const

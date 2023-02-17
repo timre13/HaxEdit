@@ -206,7 +206,8 @@ private:
 public:
     String get(lsRange range) const;
     const std::vector<String>& getAll() const;
-    Char getChar(const pos_t& pos);
+    Char getChar(const pos_t& pos) const;
+    Char getChar(size_t pos) const;
     String getLine(size_t i) const;
     inline String getConcated() const { return lineVecConcat(m_content); }
 
