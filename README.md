@@ -39,9 +39,14 @@ Modern code editor for 1337 H4X0Rs.
   - Breadcrumb bar (using `textDocument/documentSymbol`)
   - Progress support
   - Execute command request support
+  - Snippet autocompletion (with tabstops)
+  - Document formatting
+  - On type formatting
+  - Find workspace symbol
+  - Run-time configuration (using `workspace/configuration`)
 - Basic Doxygen highlighting
 - Autocompletion
-  - LSP (already mentioned)
+  - LSP (as already mentioned)
   - Buffer words
   - Dictionary words
   - File paths
@@ -50,9 +55,9 @@ Modern code editor for 1337 H4X0Rs.
   - Line change signs
 
 ### Internals:
-- Fast, GPU-accelerated Unicode text renderer supporting ANSI escape sequences
+- Fast, GPU-accelerated Unicode text renderer with support for ANSI escape sequences and fallback fonts
 - GPU-accelerated UI and image renderer
-- Lightweight logger
+- Lightweight Unicode-aware logger
 
 ## Building
 ### Dependencies
