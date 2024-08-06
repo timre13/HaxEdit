@@ -33,6 +33,7 @@
 #include "LibLsp/lsp/textDocument/onTypeFormatting.h"
 #include "LibLsp/lsp/workspace/execute_command.h"
 #include "LibLsp/lsp/workspace/applyEdit.h"
+#include "LibLsp/lsp/workspace/configuration.h"
 #include "LibLsp/lsp/general/progress.h"
 #include "LibLsp/lsp/lsAny.h"
 #ifdef __clang__
@@ -44,6 +45,27 @@
 #include <mutex>
 
 #define LSP_TIMEOUT_MILLI 10000
+
+// See: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_configuration
+// This stores server-specific configuration. A key should be the name of a server to be configured.
+// Inside there should be a map with sections (see the spec.) as keys.
+// Data inside sections should be JSON, which is sent as-is to the server.
+// This is the GLOBAL server configuration. Scoped configuration is not yet implemented.
+std::map<std::string, std::map<std::string, std::string>> serverConfig{
+    {"server-name-one", {
+        {"section1", "['my json data', 123]"},
+        {"section2", "['my json data', 123]"},
+    }},
+    {"server-name-two", {
+        {"section1", "['my json data', 123]"},
+        {"section2", "['my json data', 123]"},
+    }},
+    {"vscode-html-language-server", {
+        {"html", "['my json data', 1]"},
+        {"css", "['my json data', 2]"},
+        {"javascript", "['my json data', 3]"},
+    }},
+};
 
 template <typename T>
 static std::string respGetErrMsg(const std::unique_ptr<lsp::ResponseOrError<T>>& resp)
@@ -152,6 +174,18 @@ static bool workspaceApplyEditCallback(std::unique_ptr<LspMessage> msg)
 
     // Tell the server that we applied the edits
     Autocomp::lspProvider->_replyToWsApplyEdit("");
+
+    return true; // TODO: What's this?
+}
+
+static bool workspaceConfigurationCallback(std::unique_ptr<LspMessage> msg)
+{
+    Logger::dbg << "LSP: Received a workspace/configuration request: "
+        << msg->ToJson() << Logger::End;
+
+    const auto ptr = dynamic_cast<const WorkspaceConfiguration::request*>(msg.get());
+    assert(ptr);
+    Autocomp::lspProvider->_replyToWsConfig(ptr);
 
     return true; // TODO: What's this?
 }
@@ -307,7 +341,7 @@ LspProvider::LspProvider()
 
     try
     {
-        m_client = std::make_unique<LspClient>(exe, args);
+        m_client = std::make_unique<LspClient>(m_serverPath, args);
     }
     catch (const std::exception& e)
     {
@@ -326,6 +360,11 @@ LspProvider::LspProvider()
         m_client->getClientEndpoint()->registerRequestHandler(
                 "workspace/applyEdit",
                 workspaceApplyEditCallback
+        );
+
+        m_client->getClientEndpoint()->registerRequestHandler(
+                "workspace/configuration",
+                workspaceConfigurationCallback
         );
 
         m_client->getClientEndpoint()->registerNotifyHandler(
@@ -363,6 +402,7 @@ LspProvider::LspProvider()
     caps.workspace->executeCommand.emplace();
     caps.workspace->workspaceFolders.emplace(true); // TODO: Actually support workspace folders
     //caps.workspace->fileOperations -- TODO: Support file operations
+    caps.workspace->configuration.emplace(true);
     caps.textDocument.emplace();
     caps.textDocument->synchronization.willSave.emplace(true);
     caps.textDocument->synchronization.didSave.emplace(true);
@@ -449,14 +489,15 @@ LspProvider::LspProvider()
         g_isRedrawNeeded = true;
         return;
     }
-    if (initRes->response.result.serverInfo)
+    m_servInfo = initRes->response.result.serverInfo;
+    if (m_servInfo)
     {
-        Logger::dbg << "Server name: " << initRes->response.result.serverInfo->name << Logger::End;
-        Logger::dbg << "Server version: " << initRes->response.result.serverInfo->version.get_value_or("???") << Logger::End;
+        Logger::dbg << "Server name: " << m_servInfo->name << Logger::End;
+        Logger::dbg << "Server version: " << m_servInfo->version.get_value_or("???") << Logger::End;
         g_lspInfoPopup->setTitle(U"LSP Server");
         g_lspInfoPopup->setContent(
-                U"Name: "+utf8To32(initRes->response.result.serverInfo->name)+U"\n"
-                U"Version: "+utf8To32(initRes->response.result.serverInfo->version.get_value_or("???")));
+                U"Name: "+utf8To32(m_servInfo->name)+U"\n"
+                U"Version: "+utf8To32(m_servInfo->version.get_value_or("???")));
         g_lspInfoPopup->show();
     }
     const auto& cap = initRes->response.result.capabilities;
@@ -546,6 +587,45 @@ void LspProvider::_replyToWsApplyEdit(const std::string& msgIfErr)
     }
 
     Logger::dbg << "LSP: Sending reply to workspace/applyEdit: " << resp.ToJson() << Logger::End;
+    m_client->getEndpoint()->sendResponse(resp);
+}
+
+void LspProvider::_replyToWsConfig(const WorkspaceConfiguration::request* msg)
+{
+    if (didServerCrash) return;
+
+    WorkspaceConfiguration::response resp;
+    resp.id = msg->id;
+
+    const auto servName = m_servInfo.has_value() ? m_servInfo->name : std::filesystem::path{m_serverPath}.filename().string();
+    if (serverConfig.contains(servName))
+    {
+        Logger::dbg << "Found configuration for the server: " << servName << Logger::End;
+        const auto& confForServer = serverConfig.at(servName);
+        for (const auto& item : msg->params.items)
+        {
+            if (confForServer.contains(item.section))
+            {
+                Logger::dbg << "Found configuration section: " << item.section << Logger::End;
+                // TODO: Implement scope (item.scopeUri)
+                Logger::dbg << "Configuration scope: " << item.scopeUri.GetRawPath() << Logger::End;
+                lsp::Any val;
+                val.SetJsonString(confForServer.at(item.section), lsp::Any::kUnKnown);
+                resp.result.push_back(val);
+            }
+            else
+            {
+                Logger::dbg << "No such configuration section: " << item.section << Logger::End;
+            }
+        }
+    }
+    else
+    {
+        Logger::dbg << "There is no configuration for the server: " << servName << Logger::End;
+    }
+
+    Logger::dbg << "LSP: Sending reply to workspace/configuration: " << resp.ToJson() << Logger::End;
+    m_client->getEndpoint()->sendResponse(resp);
 }
 
 void LspProvider::onFileOpen(const std::string& path, Langs::LangId language, const std::string& fileContent)

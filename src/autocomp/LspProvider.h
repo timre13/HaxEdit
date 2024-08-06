@@ -26,12 +26,14 @@ using namespace std::chrono_literals;
 #include "LibLsp/JsonRpc/RemoteEndPoint.h"
 #include "LibLsp/JsonRpc/MessageIssue.h"
 #include "LibLsp/JsonRpc/stream.h"
+#include "LibLsp/lsp/general/initialize.h"
 #include "LibLsp/lsp/lsp_diagnostic.h"
 #include "LibLsp/lsp/textDocument/signature_help.h"
 #include "LibLsp/lsp/textDocument/code_action.h"
 #include "LibLsp/lsp/textDocument/document_symbol.h"
 #include "LibLsp/lsp/textDocument/willSave.h"
 #include "LibLsp/lsp/workspace/symbol.h"
+#include "LibLsp/lsp/workspace/configuration.h"
 #ifdef __clang__
 
 #pragma clang diagnostic pop
@@ -161,6 +163,7 @@ public:
                             << exitCode << ", error: " << err.message() << Logger::End;
                         didServerCrash = true; // Crashed
                         g_isRedrawNeeded = true; // Update status icon
+                        assert(false);
                     }
                 })
         );
@@ -180,6 +183,7 @@ public:
 
             didServerCrash = true; // Failed to start
             g_isRedrawNeeded = true; // Update status icon
+            assert(false);
             throw std::runtime_error{"Failed to start LSP server: ["s
                 + errCode.category().name() + "]: " + errCode.message()};
         }
@@ -223,6 +227,8 @@ public:
 
 private:
     std::unique_ptr<LspClient> m_client;
+    std::string m_serverPath;
+    boost::optional<ServerInfo> m_servInfo;
     lsServerCapabilities m_servCaps;
 
     // Don't rely on this. This is only used to display the status icon and its
@@ -287,6 +293,9 @@ public:
     void executeCommand(const std::string& cmd, const boost::optional<std::vector<lsp::Any>>& args);
     // Used by the workspace/applyEdit callback
     void _replyToWsApplyEdit(const std::string& msgIfErr);
+
+    // Used by the workspace/configuration callback
+    void _replyToWsConfig(const WorkspaceConfiguration::request* msg);
 
     struct CanRenameSymbolResult
     {
