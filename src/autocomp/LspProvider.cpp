@@ -305,6 +305,31 @@ bool LspProvider::progressCallback(std::unique_ptr<LspMessage> msg)
     return true; // TODO: What's this?
 }
 
+
+static bool windowLogMessageCallback(std::unique_ptr<LspMessage> msg)
+{
+    const auto msg_ = dynamic_cast<const Notify_LogMessage::notify*>(msg.get());
+    assert(msg_);
+
+    switch (msg_->params.type)
+    {
+    default:
+    case lsMessageType::Log:
+        Logger::dbg << "[LSP LOG]: " << msg_->params.message << Logger::End;
+        break;
+    case lsMessageType::Info:
+        Logger::log << "[LSP LOG]: " << msg_->params.message << Logger::End;
+        break;
+    case lsMessageType::Warning:
+        Logger::warn << "[LSP LOG]: " << msg_->params.message << Logger::End;
+        break;
+    case lsMessageType::Error:
+        Logger::err << "[LSP LOG]: " << msg_->params.message << Logger::End;
+        break;
+    }
+
+    return true; // TODO: What's this?
+}
 LspProvider::LspProvider()
 {
     {
@@ -370,6 +395,11 @@ LspProvider::LspProvider()
         m_client->getClientEndpoint()->registerNotifyHandler(
                 "$/progress",
                 progressCallback
+        );
+
+        m_client->getClientEndpoint()->registerNotifyHandler(
+                "window/logMessage",
+                windowLogMessageCallback
         );
     }
 
