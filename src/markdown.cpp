@@ -155,6 +155,7 @@ static int leaveBlockCb(MD_BLOCKTYPE block, void* detail, void* output_)
         break;
 
     case MD_BLOCK_LI:
+        *output += U'\n';
         break;
 
     case MD_BLOCK_HR:
