@@ -8,3 +8,7 @@ dictionary.txt
 testfiles/
 .vimspector.json
 external/themes/
+*.orig
+misc/
+Session.haxedsess
+src/dev_config.h

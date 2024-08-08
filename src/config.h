@@ -1,5 +1,11 @@
 #pragma once
 
+#if __has_include("dev_config.h")
+
+#include "dev_config.h"
+
+#else
+
 #define DEBUG_ENABLE_FUNC_TIMER         0
 
 //-------------------- Window size --------------------
@@ -122,3 +128,5 @@
 
 // Max. number of paths to store in the last files list
 #define RECENT_LIST_MAX_SIZE            20
+
+#endif // __has_include("dev_config.h")
