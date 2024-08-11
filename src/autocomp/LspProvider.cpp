@@ -34,6 +34,7 @@
 #include "LibLsp/lsp/workspace/execute_command.h"
 #include "LibLsp/lsp/workspace/applyEdit.h"
 #include "LibLsp/lsp/workspace/configuration.h"
+#include "LibLsp/lsp/windows/MessageNotify.h"
 #include "LibLsp/lsp/general/progress.h"
 #include "LibLsp/lsp/lsAny.h"
 #ifdef __clang__
@@ -196,9 +197,9 @@ namespace
 struct ProgressValue
 {
     std::string kind;
-    std::string title;
-    std::string message;
-    uint percentage{};
+    boost::optional<std::string> title;
+    boost::optional<std::string> message;
+    boost::optional<uint> percentage{};
 };
 REFLECT_MAP_TO_STRUCT(ProgressValue, kind, title, message, percentage);
 
@@ -230,9 +231,9 @@ bool LspProvider::progressCallback(std::unique_ptr<LspMessage> msg)
     Logger::dbg << "Received a $/progress notification: "
         << "token: " << token
         << ", kind: " << progress.kind
-        << ", title: \"" << progress.title << '"'
-        << ", message: \"" << progress.message << '"'
-        << ", percentage: " << progress.percentage
+        << ", title: \"" << (progress.title ? progress.title.value() : "<NULL>")  << '"'
+        << ", message: \"" << progress.message.value_or("<NULL>") << '"'
+        << ", percentage: " << (progress.percentage ? std::to_string(progress.percentage.value()) : "<NULL>")
         << Logger::End;
     /*
      * A progress notification of kind "begin" should begin an already existing progress
@@ -244,12 +245,15 @@ bool LspProvider::progressCallback(std::unique_ptr<LspMessage> msg)
     {
         // Fail if this token already exists
         assert(Autocomp::lspProvider->m_progresses.find(token) == Autocomp::lspProvider->m_progresses.end());
+        assert(progress.title.has_value());
         // Create the new token
         auto& insertedRef = Autocomp::lspProvider->m_progresses.emplace(token, WorkProgress{}).first->second;
 
-        insertedRef.title = progress.title;
+        insertedRef.title = progress.title.value();
         insertedRef.message = progress.message;
         insertedRef.percentage = progress.percentage;
+        assert(!insertedRef.percentage.has_value()
+                || (insertedRef.percentage.value() >= 0 && insertedRef.percentage.value() <= 100));
     }
     else if (progress.kind == "report") // Update progress
     {
@@ -257,13 +261,14 @@ bool LspProvider::progressCallback(std::unique_ptr<LspMessage> msg)
         assert(progIt != Autocomp::lspProvider->m_progresses.end()); // Fail if this is an invalid token
         auto& progRef = progIt->second;
 
-        assert(progress.title.empty()); // The title can't be changed in the report notification
+        assert(!progress.title.has_value()); // The title can't be changed in the report notification
 
         // Update values if given
-        if (!progress.message.empty())
+        if (progress.message.has_value())
             progRef.message = progress.message;
-        if (progress.percentage)
-            progRef.percentage = progress.percentage;
+        progRef.percentage = progress.percentage;
+        assert(!progRef.percentage.has_value()
+                || (progRef.percentage.value() >= 0 && progRef.percentage.value() <= 100));
     }
     else if (progress.kind == "end") // Delete token
     {
@@ -272,14 +277,15 @@ bool LspProvider::progressCallback(std::unique_ptr<LspMessage> msg)
         assert(tokenIt != Autocomp::lspProvider->m_progresses.end());
         Autocomp::lspProvider->m_progresses.erase(tokenIt);
 
-        assert(progress.title.empty()); // The title can't be changed in the end notification
-        assert(progress.percentage == 0); // The percentage can't be changed in the end notification
+        assert(!progress.title.has_value()); // The title can't be changed in the end notification
+        assert(!progress.percentage.has_value()); // The percentage can't be changed in the end notification
 
         // TODO: Show a notification or something with the final message?
     }
     else
     {
         Logger::err << "Invalid $/progress notification kind (ignoring): \"" << progress.kind << '"' << Logger::End;
+        assert(false);
         return true;
     }
 
@@ -288,8 +294,8 @@ bool LspProvider::progressCallback(std::unique_ptr<LspMessage> msg)
         // TODO: Render all of the progresses (FloatingWindows in a vector?)
         const auto& prog = Autocomp::lspProvider->m_progresses.begin()->second;
         g_progressPopup->setTitle(utf8To32(strCapitalize(prog.title)));
-        g_progressPopup->setContent(utf8To32(strCapitalize(prog.message)));
-        g_progressPopup->setPercentage(prog.percentage);
+        g_progressPopup->setContent(utf8To32(strCapitalize(prog.message.value_or(""))));
+        g_progressPopup->setPercentage(prog.percentage.value_or(0)); // TODO: Support infinite progress
         g_progressPopup->setPos({
                 std::max(g_windowWidth-(int)g_progressPopup->calcWidth()-10, 0),
                 std::max(g_windowHeight-(int)g_progressPopup->calcHeight()-g_fontSizePx*2-10, 0),

@@ -221,8 +221,8 @@ public:
     struct WorkProgress
     {
         std::string title;
-        std::string message;
-        uint percentage{};
+        boost::optional<std::string> message;
+        boost::optional<uint> percentage{};
     };
 
 private:
