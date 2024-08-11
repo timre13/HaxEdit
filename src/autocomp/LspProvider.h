@@ -34,6 +34,8 @@ using namespace std::chrono_literals;
 #include "LibLsp/lsp/textDocument/willSave.h"
 #include "LibLsp/lsp/workspace/symbol.h"
 #include "LibLsp/lsp/workspace/configuration.h"
+#include "LibLsp/lsp/window/workDoneProgressCreate.h"
+#include "LibLsp/lsp/extention/clangd/fileStatus.h"
 #ifdef __clang__
 
 #pragma clang diagnostic pop
@@ -237,6 +239,8 @@ private:
     std::array<std::shared_ptr<Image>, (int)LspServerStatus::_Count> m_statusIcons;
 
     std::map<std::string, WorkProgress> m_progresses;
+    // Used for `textDocument/clangd.fileStatus`
+    std::map<std::string, std::string> m_fileStatuses;
 
     void busyBegin();
     void busyEnd();
@@ -298,6 +302,11 @@ public:
     void _replyToWsConfig(const WorkspaceConfiguration::request* msg);
 
     void _replyToWorkDoneProgressCreate(const window_workDoneProgressCreate::request* req);
+
+    // Used by textDocument/clangd.fileStatus
+    void _processClangdFileStatus(const Notify_ClangdFileStatus::notify* msg);
+
+    std::optional<std::string> getStatusForFile(const std::string& path);
 
     struct CanRenameSymbolResult
     {

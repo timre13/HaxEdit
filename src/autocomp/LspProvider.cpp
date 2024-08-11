@@ -358,6 +358,38 @@ static bool windowLogMessageCallback(std::unique_ptr<LspMessage> msg)
 
     return true; // TODO: What's this?
 }
+
+static bool clangdFileStatusCallback(std::unique_ptr<LspMessage> msg)
+{
+    Logger::dbg << "LSP: Received a textDocument/clangd.fileStatus notification: " << msg->ToJson() << Logger::End;
+
+    // See:
+    //  - https://clangd.llvm.org/extensions#file-status
+    //  - https://github.com/llvm/llvm-project/blob/f0df4fbd0c7b6bb369ceaa1fd6f9e0c88d781ae5/clang-tools-extra/clangd/TUScheduler.cpp#L1576
+    //  - https://github.com/llvm/llvm-project/blob/1d0d1f20e7733e3a230f30282c7339f2d3be19c0/clang-tools-extra/clangd/Protocol.h#L1790
+
+    auto msg_ = dynamic_cast<const Notify_ClangdFileStatus::notify*>(msg.get());
+    assert(msg_);
+    Autocomp::lspProvider->_processClangdFileStatus(msg_);
+
+    return true; // TODO: What's this?
+}
+
+void LspProvider::_processClangdFileStatus(const Notify_ClangdFileStatus::notify* msg)
+{
+    m_fileStatuses.insert_or_assign(msg->params.uri.GetAbsolutePath(), msg->params.state);
+    if (g_activeBuff && g_activeBuff->getFilePath() == msg->params.uri.GetAbsolutePath().path)
+        g_isRedrawNeeded = true;
+}
+
+std::optional<std::string> LspProvider::getStatusForFile(const std::string& path)
+{
+    const auto& it = m_fileStatuses.find(path);
+    if (it == m_fileStatuses.end())
+        return {};
+    return it->second;
+}
+
 LspProvider::LspProvider()
 {
     {
@@ -434,6 +466,12 @@ LspProvider::LspProvider()
                 "window/logMessage",
                 windowLogMessageCallback
         );
+
+        // Note: This is a clangd extension
+        m_client->getClientEndpoint()->registerNotifyHandler(
+                "textDocument/clangd.fileStatus",
+                clangdFileStatusCallback
+        );
     }
 
     td_initialize::request initreq;
@@ -449,6 +487,8 @@ LspProvider::LspProvider()
     initreq.params.workspaceFolders->emplace_back();
     initreq.params.workspaceFolders->back().uri.SetPath({root});
     initreq.params.workspaceFolders->back().name = "root";
+    initreq.params.initializationOptions.emplace();
+    initreq.params.initializationOptions->SetJsonString("{\"clangdFileStatus\": true}", lsp::Any::kObjectType);
     auto& caps = initreq.params.capabilities;
     caps.workspace.emplace();
     caps.workspace->applyEdit.emplace(true);

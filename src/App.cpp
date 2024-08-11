@@ -340,7 +340,11 @@ void App::renderStatusLine()
         const std::string checkedOutObjName = g_activeBuff->getCheckedOutObjName(7);
         const std::string basePath = fs::path(g_activeBuff->m_filePath).remove_filename().string();
         const std::string fileName = fs::path(g_activeBuff->m_filePath).filename().string();
-        leftStr = (checkedOutObjName.empty() ? "" : "["+checkedOutObjName+"] ")+basePath+"\033[1m"+fileName+(g_activeBuff->m_isReadOnly ? "\033[0m\033[91m [RO]" : "");
+        const std::optional<std::string> fileStatus = Autocomp::lspProvider->getStatusForFile(g_activeBuff->m_filePath);
+        leftStr = (checkedOutObjName.empty() ? "" : "["+checkedOutObjName+"] ")
+            +basePath+"\033[1m"+fileName
+            +(g_activeBuff->m_isReadOnly ? "\033[0m\033[91m [RO]" : "")
+            +(fileStatus ? " \033[0m\033[3m("+fileStatus.value()+")" : "");
     }
 
     g_textRenderer->renderString(
