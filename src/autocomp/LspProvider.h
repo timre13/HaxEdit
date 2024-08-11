@@ -297,6 +297,8 @@ public:
     // Used by the workspace/configuration callback
     void _replyToWsConfig(const WorkspaceConfiguration::request* msg);
 
+    void _replyToWorkDoneProgressCreate(const window_workDoneProgressCreate::request* req);
+
     struct CanRenameSymbolResult
     {
         bool isError{};

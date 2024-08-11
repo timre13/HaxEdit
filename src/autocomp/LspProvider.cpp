@@ -311,6 +311,28 @@ bool LspProvider::progressCallback(std::unique_ptr<LspMessage> msg)
     return true; // TODO: What's this?
 }
 
+void LspProvider::_replyToWorkDoneProgressCreate(const window_workDoneProgressCreate::request* req)
+{
+    if (didServerCrash) return;
+
+    window_workDoneProgressCreate::response resp;
+    resp.id = req->id;
+
+    Logger::dbg << "LSP: Sending reply to window/workDoneProgress/create: " << resp.ToJson() << Logger::End;
+    m_client->getEndpoint()->sendResponse(resp);
+}
+
+static bool workDoneProgressCreateCallback(std::unique_ptr<LspMessage> msg)
+{
+    Logger::dbg << "LSP: Received a window/workDoneProgress/create request: "
+        << msg->ToJson() << Logger::End;
+
+    auto msg_ = dynamic_cast<const window_workDoneProgressCreate::request*>(msg.get());
+    assert(msg_);
+    Autocomp::lspProvider->_replyToWorkDoneProgressCreate(msg_);
+
+    return true; // TODO: What's this?
+}
 
 static bool windowLogMessageCallback(std::unique_ptr<LspMessage> msg)
 {
@@ -401,6 +423,11 @@ LspProvider::LspProvider()
         m_client->getClientEndpoint()->registerNotifyHandler(
                 "$/progress",
                 progressCallback
+        );
+
+        m_client->getClientEndpoint()->registerRequestHandler(
+                "window/workDoneProgress/create",
+                workDoneProgressCreateCallback
         );
 
         m_client->getClientEndpoint()->registerNotifyHandler(
