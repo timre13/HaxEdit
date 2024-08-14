@@ -5,13 +5,16 @@
 class ProgressFloatingWin final : public FloatingWindow
 {
 protected:
-    uint m_perc;
+    // Percentage. If has no value, this progress is "infinite".
+    boost::optional<uint> m_perc;
+    // Used for infinite progress bar.
+    uint m_tick{};
 
 public:
-    inline void setPercentage(uint value)
+    inline void setPercentage(const boost::optional<uint>& value)
     {
-        assert(value >= 0);
-        assert(value <= 100);
+        assert(!value.has_value() || value.value() >= 0);
+        assert(!value.has_value() || value.value() <= 100);
         m_perc = value;
     }
 
@@ -26,4 +29,13 @@ public:
     }
 
     virtual void render() const override;
+
+    inline void tick()
+    {
+        if (m_isShown && !m_perc.has_value())
+        {
+            ++m_tick;
+            g_isRedrawNeeded = true;
+        }
+    }
 };

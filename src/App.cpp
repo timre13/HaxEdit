@@ -1091,6 +1091,12 @@ void App::tickMouseHold(uint frameTime)
     g_mouseHoldTime += frameTime;
 }
 
+
+void App::tickPopups()
+{
+    g_progressPopup->tick();
+}
+
 static std::string symbolKindToShortName(lsSymbolKind kind)
 {
     const size_t kind_ = size_t(kind)-1;

@@ -162,6 +162,7 @@ int main(int argc, char** argv)
             }
         }
         App::tickMouseHold(frameTimeSec*1000);
+        App::tickPopups();
     }
 
     Logger::log << "Shutting down!" << Logger::End;

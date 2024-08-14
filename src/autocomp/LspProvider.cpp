@@ -295,7 +295,7 @@ bool LspProvider::progressCallback(std::unique_ptr<LspMessage> msg)
         const auto& prog = Autocomp::lspProvider->m_progresses.begin()->second;
         g_progressPopup->setTitle(utf8To32(strCapitalize(prog.title)));
         g_progressPopup->setContent(utf8To32(strCapitalize(prog.message.value_or(""))));
-        g_progressPopup->setPercentage(prog.percentage.value_or(0)); // TODO: Support infinite progress
+        g_progressPopup->setPercentage(prog.percentage);
         g_progressPopup->setPos({
                 std::max(g_windowWidth-(int)g_progressPopup->calcWidth()-10, 0),
                 std::max(g_windowHeight-(int)g_progressPopup->calcHeight()-g_fontSizePx*2-10, 0),

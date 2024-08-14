@@ -152,6 +152,7 @@ private:
     static void toggleDebugDraw();
 public:
     static void tickMouseHold(uint frameTime);
+    static void tickPopups();
 
     enum class FindType
     {
