@@ -27,39 +27,9 @@ void Face::_load(
         Logger::fatal << "Failed to set font size: " << FT_Error_String(error) << Logger::End;
     }
 
-    Logger::dbg << "Caching glyphs..." << Logger::End;
-    assert(m_contextWin);
-    glfwMakeContextCurrent(m_contextWin);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    for (FT_Long i{}; i < m_face->num_glyphs; ++i)
+    for (FT_Long i{}; i < 128; ++i)
     {
-        // Note: FT_Load_Glyph needs the gylph index, not the character code
-        // Use FT_Get_Char_Index to get the glyph index for the char code
-        if (FT_Error error = FT_Load_Glyph(m_face, i, FT_LOAD_RENDER))
-        {
-            Logger::fatal << "Failed to load glyph " << +i << ": " << FT_Error_String(error)
-                << Logger::End;
-        }
-
-        uint texId;
-        glGenTextures(1, &texId);
-        glBindTexture(GL_TEXTURE_2D, texId);
-        glTexImage2D(GL_TEXTURE_2D,
-                0, GL_RED,
-                m_face->glyph->bitmap.width, m_face->glyph->bitmap.rows,
-                0, GL_RED, GL_UNSIGNED_BYTE, m_face->glyph->bitmap.buffer);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        assert(texId);
-        m_glyphs.push_back(Face::Glyph{
-                texId,
-                {m_face->glyph->bitmap.width, m_face->glyph->bitmap.rows}, // Size
-                {m_face->glyph->bitmap_left, m_face->glyph->bitmap_top}, // Bearing
-                (uint)m_face->glyph->advance.x // Advance
-        });
+        _cacheGlyph(getGlyphIndex(i));
     }
 
     const float width = m_glyphs[FT_Get_Char_Index(m_face, 'A')].advance/64.0f;
@@ -78,16 +48,44 @@ void Face::load(
         int size,
         bool isRegularFont)
 {
-    m_isLoading = true;
-    m_loaderThread = std::thread{[this, library, &path, size, isRegularFont](){
-        _load(library, path, size);
-        if (isRegularFont)
-        {
-            g_fontSizePx = size;
-            g_fontWidthPx = getGlyphByIndex(getGlyphIndex('A'))->advance/64.0f;
-        }
-        m_isLoading = false;
-    }};
+    _load(library, path, size);
+    if (isRegularFont)
+    {
+        g_fontSizePx = size;
+        g_fontWidthPx = getGlyphByIndex(getGlyphIndex('A'))->advance/64.0f;
+    }
+}
+
+void Face::_cacheGlyph(uint glyph)
+{
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    // Note: FT_Load_Glyph needs the gylph index, not the character code
+    // Use FT_Get_Char_Index to get the glyph index for the char code
+    if (FT_Error error = FT_Load_Glyph(m_face, glyph, FT_LOAD_RENDER))
+    {
+        Logger::fatal << "Failed to load glyph " << +glyph << ": " << FT_Error_String(error)
+            << Logger::End;
+    }
+
+    uint texId;
+    glGenTextures(1, &texId);
+    glBindTexture(GL_TEXTURE_2D, texId);
+    glTexImage2D(GL_TEXTURE_2D,
+            0, GL_RED,
+            m_face->glyph->bitmap.width, m_face->glyph->bitmap.rows,
+            0, GL_RED, GL_UNSIGNED_BYTE, m_face->glyph->bitmap.buffer);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    assert(texId);
+    m_glyphs.insert({glyph, Face::Glyph{
+            texId,
+            {m_face->glyph->bitmap.width, m_face->glyph->bitmap.rows}, // Size
+            {m_face->glyph->bitmap_left, m_face->glyph->bitmap_top}, // Bearing
+            (uint)m_face->glyph->advance.x // Advance
+    }});
 }
 
 void Face::cleanUp()
@@ -97,16 +95,13 @@ void Face::cleanUp()
 
     Logger::dbg << "Freeing glyphs.." << Logger::End;
 
-    m_loaderThread.join();
-
     const size_t count = m_glyphs.size();
     for (auto& glyph : m_glyphs)
     {
-        glDeleteTextures(1, &glyph.textureId);
+        glDeleteTextures(1, &glyph.second.textureId);
     }
     m_glyphs.clear();
     FT_Done_Face(m_face);
-    glfwDestroyWindow(m_contextWin);
 
     Logger::dbg << "Freed " << count << " glyphs" << Logger::End;
 }
@@ -118,17 +113,20 @@ FT_UInt Face::getGlyphIndex(FT_ULong charcode)
 
 Face::Glyph* Face::getGlyphByIndex(FT_UInt index)
 {
+    if (!m_glyphs.contains(index))
+        _cacheGlyph(index);
     return &m_glyphs[index];
 }
 
 Face::Glyph* TextRenderer::getGlyph(Face* face, FT_ULong charcode)
 {
     const FT_UInt index = face->getGlyphIndex(charcode);
-    if (index == 0) // If not found, use the fallback font
+    if (index != 0)
     {
-        return m_fallbackFace->getGlyphByIndex(m_fallbackFace->getGlyphIndex(charcode));
+        return face->getGlyphByIndex(index);
     }
-    return face->getGlyphByIndex(index);
+    // If not found, use the fallback font
+    return m_fallbackFace->getGlyphByIndex(m_fallbackFace->getGlyphIndex(charcode));
 }
 
 TextRenderer::TextRenderer(
@@ -263,11 +261,6 @@ Face::GlyphDimensions TextRenderer::renderChar(
     )
 {
     auto face = getFaceFromStyle(style);
-    if (face->isLoading())
-    {
-        g_isRedrawNeeded = true; // Try again later
-        return {};
-    }
     return renderGlyph(
             *getGlyph(face, c),
             position.x, position.y, 1.0f, m_fontVbo);
@@ -471,17 +464,10 @@ std::pair<glm::ivec2, glm::ivec2> TextRenderer::renderString(
             return area;
         }
 
-        if (face->isLoading())
-        {
-            g_isRedrawNeeded = true; // Try again later
-        }
-        else
-        {
-            if (!onlyMeasure)
-                renderGlyph(*getGlyph(face, c), textX, textY, scale, m_fontVbo);
-            textX += (getGlyph(face, c)->advance/64.0f) * scale;
-            area.second.x = std::max(area.second.x, (int)std::ceil(textX));
-        }
+        if (!onlyMeasure)
+            renderGlyph(*getGlyph(face, c), textX, textY, scale, m_fontVbo);
+        textX += (getGlyph(face, c)->advance/64.0f) * scale;
+        area.second.x = std::max(area.second.x, (int)std::ceil(textX));
     }
 
     area.second.y = std::ceil(textY+g_fontSizePx*scale);

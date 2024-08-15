@@ -47,22 +47,15 @@ public:
 
 private:
     FT_Face m_face{};
-    std::vector<Glyph> m_glyphs;
-    bool m_isLoading{};
-    std::thread m_loaderThread;
-    GLFWwindow* m_contextWin;
+    std::map<uint, Glyph> m_glyphs;
 
     void _load(FT_Library library, const std::string& path, int size);
+    void _cacheGlyph(uint glyph);
 
 public:
-    Face()
-    {
-        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-        m_contextWin = glfwCreateWindow(100, 100, "", nullptr, g_window);
-    }
+    Face() {}
 
     void load(FT_Library library, const std::string& path, int size, bool isRegularFont);
-    inline bool isLoading() const { return m_isLoading; }
 
     void cleanUp();
 
