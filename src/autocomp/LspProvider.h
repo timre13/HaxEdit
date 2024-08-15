@@ -226,6 +226,30 @@ public:
         boost::optional<std::string> message;
         boost::optional<uint> percentage{};
     };
+    
+    /*
+     * Helper class for a nice way of calling `busyBegin()`
+     * and `busyEnd()` during LSP server requests.
+     *
+     * Instantiate at the beginning of an LspProvider method.
+     */
+    class BusynessHandler final
+    {
+    private:
+        LspProvider* m_t;
+
+    public:
+        inline BusynessHandler(LspProvider* thisP)
+        {
+            m_t = thisP;
+            m_t->_busyBegin();
+        }
+
+        inline ~BusynessHandler()
+        {
+            m_t->_busyEnd();
+        }
+    };
 
 private:
     std::unique_ptr<LspClient> m_client;
@@ -242,8 +266,10 @@ private:
     // Used for `textDocument/clangd.fileStatus`
     std::map<std::string, std::string> m_fileStatuses;
 
-    void busyBegin();
-    void busyEnd();
+    // Use `BusynessHandler`
+    void _busyBegin();
+    // Use `BusynessHandler`
+    void _busyEnd();
 
 public:
     LspProvider();

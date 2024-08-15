@@ -392,6 +392,8 @@ std::optional<std::string> LspProvider::getStatusForFile(const std::string& path
 
 LspProvider::LspProvider()
 {
+    BusynessHandler bh{this};
+
     {
         Logger::log << "Loading LSP status icons" << Logger::End;
         static constexpr const char* statusIconPaths[] = {
@@ -407,8 +409,6 @@ LspProvider::LspProvider()
     }
 
     Logger::log << "Starting LSP server" << Logger::End;
-
-    busyBegin();
 
     //const std::string root = "/home/mike/programming/cpp/opengl_text_editor/build";
     const std::string root = g_exeDirPath;
@@ -614,8 +614,6 @@ LspProvider::LspProvider()
     Logger::dbg << "LSP: Sending initialized notification: " << initednotif.ToJson() << Logger::End;
 
     m_servCaps = std::move(cap);
-
-    busyEnd();
 }
 
 void LspProvider::get(bufid_t bufid, Popup* popupP)
@@ -639,7 +637,6 @@ void LspProvider::get(bufid_t bufid, Popup* popupP)
     if (resp->IsError())
     {
         Logger::err << "LSP server responded with error: " << respGetErrMsg(resp) << Logger::End;
-        busyEnd();
         return;
     }
     Logger::dbg << "LSP: Response: " << resp->ToJson() << Logger::End;
@@ -652,7 +649,7 @@ void LspProvider::get(bufid_t bufid, Popup* popupP)
     //g_activeBuff->getFilePath();
 }
 
-void LspProvider::busyBegin()
+void LspProvider::_busyBegin()
 {
     assert(!didServerCrash);
 #ifndef TESTING
@@ -663,7 +660,7 @@ void LspProvider::busyBegin()
     glfwSwapBuffers(g_window);
 }
 
-void LspProvider::busyEnd()
+void LspProvider::_busyEnd()
 {
 #ifndef TESTING
     glfwSetCursor(g_window, nullptr);
@@ -822,7 +819,7 @@ void LspProvider::onFileClose(const std::string& path)
 void LspProvider::beforeFileSave(const std::string& path, LspProvider::saveReason_t reason)
 {
     if (didServerCrash) return;
-    busyBegin();
+    BusynessHandler bh{this};
 
     if (m_servCaps.textDocumentSync
      && m_servCaps.textDocumentSync->second
@@ -838,8 +835,6 @@ void LspProvider::beforeFileSave(const std::string& path, LspProvider::saveReaso
     {
         Logger::dbg << "LSP: textDocument/willSave is not supported" << Logger::End;
     }
-
-    busyEnd();
 }
 
 bool LspProvider::onFileSaveNeedsContent() const
@@ -854,7 +849,7 @@ bool LspProvider::onFileSaveNeedsContent() const
 void LspProvider::onFileSave(const std::string& path, const std::string& contentIfNeeded)
 {
     if (didServerCrash) return;
-    busyBegin();
+    BusynessHandler bh{this};
 
     if (m_servCaps.textDocumentSync
      && m_servCaps.textDocumentSync->second
@@ -872,14 +867,12 @@ void LspProvider::onFileSave(const std::string& path, const std::string& content
     {
         Logger::dbg << "LSP: textDocument/didSave is not supported" << Logger::End;
     }
-
-    busyEnd();
 }
 
 LspProvider::HoverInfo LspProvider::getHover(const std::string& path, uint line, uint col)
 {
     if (didServerCrash) return {};
-    busyBegin();
+    BusynessHandler bh(this);
 
     if (m_servCaps.hoverProvider.get_value_or(false))
     {
@@ -894,7 +887,6 @@ LspProvider::HoverInfo LspProvider::getHover(const std::string& path, uint line,
         if (resp->IsError())
         {
             Logger::err << "LSP server responded with error: " << respGetErrMsg(resp) << Logger::End;
-            busyEnd();
             return {};
         }
         Logger::dbg << "LSP: Response: " << resp->ToJson() << Logger::End;
@@ -960,13 +952,11 @@ LspProvider::HoverInfo LspProvider::getHover(const std::string& path, uint line,
             info.endCol    = resp->response.result.range->end.character;
         }
 
-        busyEnd();
         return info;
     }
     else
     {
         Logger::dbg << "LSP: textDocument/hover is not supported" << Logger::End;
-        busyEnd();
         return {};
     }
 }
@@ -974,8 +964,7 @@ LspProvider::HoverInfo LspProvider::getHover(const std::string& path, uint line,
 lsSignatureHelp LspProvider::getSignatureHelp(const std::string& path, uint line, uint col)
 {
     if (didServerCrash) return {};
-
-    busyBegin();
+    BusynessHandler bh{this};
 
     td_signatureHelp::request req;
     req.params.position.line = line;
@@ -988,12 +977,10 @@ lsSignatureHelp LspProvider::getSignatureHelp(const std::string& path, uint line
     if (resp->IsError())
     {
         Logger::err << "LSP server responded with error: " << respGetErrMsg(resp) << Logger::End;
-        busyEnd();
         return {};
     }
     Logger::dbg << "LSP: Response: " << resp->ToJson() << Logger::End;
 
-    busyEnd();
     return std::move(resp->response.result);
 }
 
@@ -1002,7 +989,7 @@ LspProvider::Location LspProvider::_getDefOrDeclOrImp(const std::string& path, u
 {
     if (didServerCrash) return {};
 
-    busyBegin();
+    BusynessHandler bn{this};
 
     constexpr bool needsDef  = std::is_same<ReqType, td_definition::request>();
     constexpr bool needsDecl = std::is_same<ReqType, td_declaration::request>();
@@ -1044,7 +1031,6 @@ LspProvider::Location LspProvider::_getDefOrDeclOrImp(const std::string& path, u
         Logger::dbg << "LSP: Response: " << resp->ToJson() << Logger::End;
         if (resp->IsError())
         {
-            busyEnd();
             return {};
         }
 
@@ -1064,7 +1050,6 @@ LspProvider::Location LspProvider::_getDefOrDeclOrImp(const std::string& path, u
             loc.col = resp->response.result.second.get()[0].targetSelectionRange.start.character;
         }
 
-        busyEnd();
         return loc;
     }
     else
@@ -1076,7 +1061,6 @@ LspProvider::Location LspProvider::_getDefOrDeclOrImp(const std::string& path, u
         else if constexpr (needsImp)
             Logger::dbg << "LSP: textDocument/implementation is not supported" << Logger::End;
 
-        busyEnd();
         return {};
     }
 }
@@ -1099,7 +1083,7 @@ LspProvider::Location LspProvider::getImplementation(const std::string& path, ui
 LspProvider::codeActionResult_t LspProvider::getCodeActionForLine(const std::string& path, uint line)
 {
     if (didServerCrash) return {};
-    busyBegin();
+    BusynessHandler bh{this};
 
     td_codeAction::request req;
     req.params.textDocument.uri.SetPath(path);
@@ -1115,20 +1099,18 @@ LspProvider::codeActionResult_t LspProvider::getCodeActionForLine(const std::str
     if (resp->IsError())
     {
         Logger::err << "LSP server responded with error: " << respGetErrMsg(resp) << Logger::End;
-        busyEnd();
         return {};
     }
 
     Logger::dbg << "LSP server response: " << resp->ToJson() << Logger::End;
 
-    busyEnd();
     return resp->response.result;
 }
 
 void LspProvider::executeCommand(const std::string& cmd, const boost::optional<std::vector<lsp::Any>>& args)
 {
     if (didServerCrash) return;
-    busyBegin();
+    BusynessHandler bh{this};
 
     wp_executeCommand::request req;
     req.params.command = cmd;
@@ -1145,20 +1127,17 @@ void LspProvider::executeCommand(const std::string& cmd, const boost::optional<s
     if (resp->IsError())
     {
         Logger::err << "LSP server responded with error: " << respGetErrMsg(resp) << Logger::End;
-        busyEnd();
         return;
     }
 
     Logger::dbg << "LSP server response: " << resp->ToJson() << Logger::End;
 #endif
-
-    busyEnd();
 }
 
 LspProvider::CanRenameSymbolResult LspProvider::canRenameSymbolAt(const std::string& filePath, const lsPosition& pos)
 {
     if (didServerCrash) return {.isError=true};
-    busyBegin();
+    BusynessHandler bh{this};
 
     td_prepareRename::request req;
     req.params.textDocument.uri.SetPath(filePath);
@@ -1172,7 +1151,6 @@ LspProvider::CanRenameSymbolResult LspProvider::canRenameSymbolAt(const std::str
     if (resp->IsError())
     {
         Logger::err << "LSP: Server responded with error: " << respGetErrMsg(resp) << Logger::End;
-        busyEnd();
         return {.isError=true, .errorOrSymName=resp->error.error.message};
     }
 
@@ -1195,14 +1173,13 @@ LspProvider::CanRenameSymbolResult LspProvider::canRenameSymbolAt(const std::str
         assert(false);
     }
 
-    busyEnd();
     return {.isError=false, .errorOrSymName=symName, .rangeIfNoName=range};
 }
 
 void LspProvider::renameSymbol(const std::string& filePath, const lsPosition& pos, const std::string& newName)
 {
     if (didServerCrash) return;
-    busyBegin();
+    BusynessHandler bh{this};
 
     td_rename::request req;
     req.params.textDocument.uri.SetPath(filePath);
@@ -1216,21 +1193,18 @@ void LspProvider::renameSymbol(const std::string& filePath, const lsPosition& po
     {
         Logger::err << "LSP: Server responded with error: " << respGetErrMsg(resp) << Logger::End;
         g_statMsg.set("Failed to rename symbol: "+respGetErrMsg(resp), StatusMsg::Type::Error);
-        busyEnd();
         return;
     }
 
     Logger::dbg << "LSP server response: " << resp->ToJson() << Logger::End;
     const auto& edit = resp->response.result;
     applyWorkspaceEdit(edit);
-
-    busyEnd();
 }
 
 LspProvider::docSymbolResult_t LspProvider::getDocSymbols(const std::string& filePath)
 {
     if (didServerCrash) return {};
-    busyBegin();
+    BusynessHandler bh{this};
 
     td_symbol::request req;
     req.params.textDocument.uri.SetPath(filePath);
@@ -1240,25 +1214,22 @@ LspProvider::docSymbolResult_t LspProvider::getDocSymbols(const std::string& fil
     if (!resp)
     {
         Logger::err << "LSP: Server responded with NULL" <<  Logger::End;
-        busyEnd();
         return {};
     }
     if (resp->IsError())
     {
         Logger::err << "LSP: Server responded with error: " << respGetErrMsg(resp) << Logger::End;
-        busyEnd();
         return {};
     }
     Logger::dbg << "LSP server response: " << resp->ToJson() << Logger::End;
 
-    busyEnd();
     return resp->response.result;
 }
 
 LspProvider::wpSymbolResult_t LspProvider::getWpSymbols(const std::string& query/*=""*/)
 {
     if (didServerCrash) return {};
-    busyBegin();
+    BusynessHandler bh{this};
 
     wp_symbol::request req;
     req.params.query = query;
@@ -1268,25 +1239,22 @@ LspProvider::wpSymbolResult_t LspProvider::getWpSymbols(const std::string& query
     if (!resp)
     {
         Logger::err << "LSP: Server responded with NULL" <<  Logger::End;
-        busyEnd();
         return {};
     }
     if (resp->IsError())
     {
         Logger::err << "LSP: Server responded with error: " << respGetErrMsg(resp) << Logger::End;
-        busyEnd();
         return {};
     }
     Logger::dbg << "LSP server response: " << resp->ToJson() << Logger::End;
 
-    busyEnd();
     return resp->response.result;
 }
 
 std::vector<lsTextEdit> LspProvider::getFormattingEdits(const std::string& filePath)
 {
     if (didServerCrash) return {};
-    busyBegin();
+    BusynessHandler bh{this};
 
     td_formatting::request req;
     req.params.textDocument.uri.SetPath(filePath);
@@ -1302,18 +1270,15 @@ std::vector<lsTextEdit> LspProvider::getFormattingEdits(const std::string& fileP
     if (!resp)
     {
         Logger::err << "LSP: Server responded with NULL" <<  Logger::End;
-        busyEnd();
         return {};
     }
     if (resp->IsError())
     {
         Logger::err << "LSP: Server responded with error: " << respGetErrMsg(resp) << Logger::End;
-        busyEnd();
         return {};
     }
     Logger::dbg << "LSP server response: " << resp->ToJson() << Logger::End;
 
-    busyEnd();
     return resp->response.result;
 }
 
@@ -1321,7 +1286,7 @@ std::vector<lsTextEdit> LspProvider::getOnTypeFormattingEdits(
         const std::string& filePath, const lsPosition& pos, Char typedChar)
 {
     if (didServerCrash) return {};
-    busyBegin();
+    BusynessHandler bh{this};
 
     td_onTypeFormatting::request req;
     req.params.textDocument.uri.SetPath(filePath);
@@ -1339,18 +1304,15 @@ std::vector<lsTextEdit> LspProvider::getOnTypeFormattingEdits(
     if (!resp)
     {
         Logger::err << "LSP: Server responded with NULL" <<  Logger::End;
-        busyEnd();
         return {};
     }
     if (resp->IsError())
     {
         Logger::err << "LSP: Server responded with error: " << respGetErrMsg(resp) << Logger::End;
-        busyEnd();
         return {};
     }
     Logger::dbg << "LSP server response: " << resp->ToJson() << Logger::End;
 
-    busyEnd();
     return resp->response.result;
 }
 
