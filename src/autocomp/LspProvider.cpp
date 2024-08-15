@@ -601,7 +601,6 @@ LspProvider::LspProvider()
         g_lspInfoPopup->setContent(
                 U"Name: "+utf8To32(m_servInfo->name)+U"\n"
                 U"Version: "+utf8To32(m_servInfo->version.get_value_or("???")));
-        g_lspInfoPopup->show();
     }
     const auto& cap = initRes->response.result.capabilities;
     Logger::dbg << "\tCompletion supported?: " << (cap.completionProvider ? "YES" : "NO") << Logger::End;
