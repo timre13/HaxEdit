@@ -1608,7 +1608,7 @@ static bool isPosInRange(const lsRange& range, const lsPosition& pos)
     return !(pos < range.start) && pos < range.end;
 }
 
-void Buffer::_renderDrawDiagnosticUnderline(
+void Buffer::_renderDrawDiagnosticDecorations(
         const Autocomp::LspProvider::diagList_t& diags, int lineI, int colI,
         const glm::ivec2& textPos, int initTextY
         ) const
@@ -1629,7 +1629,7 @@ void Buffer::_renderDrawDiagnosticUnderline(
     }
 
     const glm::ivec2 pos1 = {textPos.x, initTextY+textPos.y-m_scrollY-m_position.y};
-    auto drawSegment = [&](int index){
+    auto drawUnderlineSegment = [&](int index){
         static constexpr int segmentW = 1;
         static constexpr int segmentH = 2;
         static constexpr float maxOffs = 2;
@@ -1641,8 +1641,24 @@ void Buffer::_renderDrawDiagnosticUnderline(
                 pos1+glm::ivec2{segmentW*(index+1), yoffs1+segmentH},
                 RGB_COLOR_TO_RGBA(diagnSeverityColors[getDiagnSevIndex(foundDiagn)]));
     };
+
     for (int i{}; i < g_fontWidthPx; ++i)
-        drawSegment(i);
+        drawUnderlineSegment(i);
+
+    if (foundDiagn.tags.has_value())
+    {
+        const auto diagTags = foundDiagn.tags.value();
+        // Draw deprecation strikethrough
+        if (std::find(diagTags.begin(), diagTags.end(), DiagnosticTag::Deprecated) != diagTags.end())
+        {
+            const int yoffs = g_fontSizePx*0.65;
+            static constexpr int segmentH = 1;
+            g_uiRenderer->renderFilledRectangle(
+                    pos1+glm::ivec2{0,             yoffs},
+                    pos1+glm::ivec2{g_fontWidthPx, yoffs+segmentH},
+                    RGBAColor{1.f, 1.f, 1.f});
+        }
+    }
     g_textRenderer->prepareForDrawing();
 }
 
@@ -1864,7 +1880,7 @@ void Buffer::render()
             }};
 
             if (fileDiagsIt != Autocomp::LspProvider::s_diags.end())
-                _renderDrawDiagnosticUnderline(
+                _renderDrawDiagnosticDecorations(
                         fileDiagsIt->second, lineI, colI,
                         {textX, textY}, initTextY);
 
