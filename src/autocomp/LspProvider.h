@@ -271,6 +271,40 @@ private:
     // Use `BusynessHandler`
     void _busyEnd();
 
+    template <uint timeout, typename T>
+        requires (timeout > 0 && std::is_base_of<RequestInMessage, T>::value)
+    std::unique_ptr<lsp::ResponseOrError<typename T::Response>> sendRequest(T& req)
+    {
+        Logger::dbg << "LSP: Sending " << req.method << " request: "
+            << req.ToJson() << Logger::End;
+
+        //assert(req.id.has_value());
+        assert(!req.method.empty());
+
+        if (didServerCrash)
+        {
+            Logger::dbg << "Can't send request, server crashed" << Logger::End;
+            return {};
+        }
+
+        auto resp = m_client->getEndpoint()->waitResponse(req, timeout);
+
+        if (!resp)
+        {
+            Logger::err << "LSP: " << req.method << " request timed out" << Logger::End;
+            return {};
+        }
+        if (resp->IsError())
+        {
+            Logger::err << "LSP server responded with error: "
+                << respGetErrMsg(resp) << Logger::End;
+            return {};
+        }
+        Logger::dbg << "LSP: Response: " << resp->ToJson() << Logger::End;
+
+        return resp;
+    }
+
 public:
     LspProvider();
 
@@ -336,6 +370,7 @@ public:
 
     struct CanRenameSymbolResult
     {
+        // TODO: Use optional or something
         bool isError{};
         // If isError is true, this contains an eror message.
         // Otherwise this is the name of the symbol to rename.

@@ -571,27 +571,15 @@ LspProvider::LspProvider()
             "}",
             lsp::Any::Type::kObjectType);
 
-    Logger::dbg << "LSP: Sending initialize request: " << initreq.ToJson() << Logger::End;
-
-    if (didServerCrash) // Maybe it crashed in the meantime
-        return;
-    auto initRes = m_client->getEndpoint()->waitResponse(initreq, LSP_TIMEOUT_MILLI);
+    const auto initRes = sendRequest<LSP_TIMEOUT_MILLI>(initreq);
     if (!initRes)
     {
-        Logger::err << "LSP: Initialize timed out" << Logger::End;
+        Logger::err << "LSP: Initialize failed" << Logger::End;
         didServerCrash = true;
         g_isRedrawNeeded = true;
         return;
     }
 
-    Logger::dbg << "LSP server response: " << initRes->ToJson() << Logger::End;
-    if (initRes->IsError())
-    {
-        Logger::err << "LSP server responded with error: " << respGetErrMsg(initRes) << Logger::End;
-        didServerCrash = true;
-        g_isRedrawNeeded = true;
-        return;
-    }
     m_servInfo = initRes->response.result.serverInfo;
     if (m_servInfo)
     {
@@ -630,16 +618,8 @@ void LspProvider::get(bufid_t bufid, Popup* popupP)
     req.params.uri.emplace();
     req.params.uri->SetPath(g_activeBuff->getFilePath());
 
-    Logger::dbg << "LSP: Sending textDocument/completion request: " << req.ToJson() << Logger::End;
-
-    auto resp = m_client->getEndpoint()->waitResponse(req, LSP_TIMEOUT_MILLI);
-    assert(resp);
-    if (resp->IsError())
-    {
-        Logger::err << "LSP server responded with error: " << respGetErrMsg(resp) << Logger::End;
-        return;
-    }
-    Logger::dbg << "LSP: Response: " << resp->ToJson() << Logger::End;
+    const auto resp = sendRequest<LSP_TIMEOUT_MILLI>(req);
+    if (!resp) return;
 
     for (const auto& item : resp->response.result.items)
     {
@@ -871,7 +851,6 @@ void LspProvider::onFileSave(const std::string& path, const std::string& content
 
 LspProvider::HoverInfo LspProvider::getHover(const std::string& path, uint line, uint col)
 {
-    if (didServerCrash) return {};
     BusynessHandler bh(this);
 
     if (m_servCaps.hoverProvider.get_value_or(false))
@@ -880,16 +859,9 @@ LspProvider::HoverInfo LspProvider::getHover(const std::string& path, uint line,
         req.params.position.line = line;
         req.params.position.character = col;
         req.params.textDocument.uri.SetPath(path);
-        Logger::dbg << "LSP: Sending textDocument/hover request: " << req.ToJson() << Logger::End;
 
-        auto resp = m_client->getEndpoint()->waitResponse(req, LSP_TIMEOUT_MILLI);
-        assert(resp);
-        if (resp->IsError())
-        {
-            Logger::err << "LSP server responded with error: " << respGetErrMsg(resp) << Logger::End;
-            return {};
-        }
-        Logger::dbg << "LSP: Response: " << resp->ToJson() << Logger::End;
+        auto resp = sendRequest<500>(req);
+        if (!resp) return {};
 
         HoverInfo info;
         if (resp->response.result.contents.second)
@@ -963,32 +935,21 @@ LspProvider::HoverInfo LspProvider::getHover(const std::string& path, uint line,
 
 lsSignatureHelp LspProvider::getSignatureHelp(const std::string& path, uint line, uint col)
 {
-    if (didServerCrash) return {};
     BusynessHandler bh{this};
 
     td_signatureHelp::request req;
     req.params.position.line = line;
     req.params.position.character = col;
     req.params.textDocument.uri.SetPath(path);
-    Logger::dbg << "LSP: Sending textDocument/signatureHelp request: " << req.ToJson() << Logger::End;
 
-    auto resp = m_client->getEndpoint()->waitResponse(req, LSP_TIMEOUT_MILLI);
-    assert(resp);
-    if (resp->IsError())
-    {
-        Logger::err << "LSP server responded with error: " << respGetErrMsg(resp) << Logger::End;
-        return {};
-    }
-    Logger::dbg << "LSP: Response: " << resp->ToJson() << Logger::End;
-
+    const auto resp = sendRequest<LSP_TIMEOUT_MILLI>(req);
+    if (!resp) return {};
     return std::move(resp->response.result);
 }
 
 template <typename ReqType>
 LspProvider::Location LspProvider::_getDefOrDeclOrImp(const std::string& path, uint line, uint col)
 {
-    if (didServerCrash) return {};
-
     BusynessHandler bn{this};
 
     constexpr bool needsDef  = std::is_same<ReqType, td_definition::request>();
@@ -1020,19 +981,9 @@ LspProvider::Location LspProvider::_getDefOrDeclOrImp(const std::string& path, u
         req.params.textDocument.uri.SetPath(path);
         req.params.uri.emplace();
         req.params.uri->SetPath(path);
-        if constexpr (needsDef)
-            Logger::dbg << "LSP: Sending textDocument/definition request: " << req.ToJson() << Logger::End;
-        else if constexpr (needsDecl)
-            Logger::dbg << "LSP: Sending textDocument/declaration request: " << req.ToJson() << Logger::End;
-        else if constexpr (needsImp)
-            Logger::dbg << "LSP: Sending textDocument/implementation request: " << req.ToJson() << Logger::End;
 
-        auto resp = m_client->getEndpoint()->waitResponse(req, LSP_TIMEOUT_MILLI);
-        Logger::dbg << "LSP: Response: " << resp->ToJson() << Logger::End;
-        if (resp->IsError())
-        {
-            return {};
-        }
+        const auto resp = sendRequest<LSP_TIMEOUT_MILLI>(req);
+        if (!resp) return {};
 
         Location loc;
         if (resp->response.result.first && !resp->response.result.first->empty())
@@ -1082,7 +1033,6 @@ LspProvider::Location LspProvider::getImplementation(const std::string& path, ui
 
 LspProvider::codeActionResult_t LspProvider::getCodeActionForLine(const std::string& path, uint line)
 {
-    if (didServerCrash) return {};
     BusynessHandler bh{this};
 
     td_codeAction::request req;
@@ -1091,46 +1041,26 @@ LspProvider::codeActionResult_t LspProvider::getCodeActionForLine(const std::str
     req.params.range.start.character = 0;
     req.params.range.end.line = line+1;
     req.params.range.end.character = 0;
-    Logger::dbg << "LSP: Sending textDocument/codeAction request: " << req.ToJson() << Logger::End;
 
-    auto resp = m_client->getEndpoint()->waitResponse(req, LSP_TIMEOUT_MILLI);
-    assert(resp);
-
-    if (resp->IsError())
-    {
-        Logger::err << "LSP server responded with error: " << respGetErrMsg(resp) << Logger::End;
-        return {};
-    }
-
-    Logger::dbg << "LSP server response: " << resp->ToJson() << Logger::End;
+    const auto resp = sendRequest<LSP_TIMEOUT_MILLI>(req);
+    if (!resp) return {};
 
     return resp->response.result;
 }
 
 void LspProvider::executeCommand(const std::string& cmd, const boost::optional<std::vector<lsp::Any>>& args)
 {
-    if (didServerCrash) return;
     BusynessHandler bh{this};
 
     wp_executeCommand::request req;
     req.params.command = cmd;
     req.params.arguments = args;
 
+#if 0
     Logger::dbg << "LSP: Sending workspace/executeCommand request: " << req.ToJson() << Logger::End;
-
-#if 1
     m_client->getEndpoint()->send(req);
 #else
-    auto resp = m_client->getEndpoint()->waitResponse(req, LSP_TIMEOUT_MILLI);
-    assert(resp);
-
-    if (resp->IsError())
-    {
-        Logger::err << "LSP server responded with error: " << respGetErrMsg(resp) << Logger::End;
-        return;
-    }
-
-    Logger::dbg << "LSP server response: " << resp->ToJson() << Logger::End;
+    sendRequest<LSP_TIMEOUT_MILLI>(req);
 #endif
 }
 
@@ -1145,16 +1075,15 @@ LspProvider::CanRenameSymbolResult LspProvider::canRenameSymbolAt(const std::str
     req.params.uri->SetPath(filePath);
     req.params.position = pos;
 
-    Logger::dbg << "LSP: Sending textDocument/prepareRename request: " << req.ToJson() << Logger::End;
-    auto resp = m_client->getEndpoint()->waitResponse(req, LSP_TIMEOUT_MILLI);
-    assert(resp);
-    if (resp->IsError())
+    const auto resp = sendRequest<LSP_TIMEOUT_MILLI>(req);
+    if (!resp)
     {
-        Logger::err << "LSP: Server responded with error: " << respGetErrMsg(resp) << Logger::End;
-        return {.isError=true, .errorOrSymName=resp->error.error.message};
+        // FIXME: `resp` is NULL here
+        //if (resp->is_error)
+        //    return {.isError=true, .errorOrSymName=resp->error.error.message};
+        //return {.isError=true, .errorOrSymName="Timed out"};
+        return {.isError=true, .errorOrSymName="Error"};
     }
-
-    Logger::dbg << "LSP server response: " << resp->ToJson() << Logger::End;
 
     std::string symName;
     lsRange range;
@@ -1178,7 +1107,6 @@ LspProvider::CanRenameSymbolResult LspProvider::canRenameSymbolAt(const std::str
 
 void LspProvider::renameSymbol(const std::string& filePath, const lsPosition& pos, const std::string& newName)
 {
-    if (didServerCrash) return;
     BusynessHandler bh{this};
 
     td_rename::request req;
@@ -1186,74 +1114,51 @@ void LspProvider::renameSymbol(const std::string& filePath, const lsPosition& po
     req.params.position = pos;
     req.params.newName = newName;
 
-    Logger::dbg << "LSP: Sending textDocument/rename request: " << req.ToJson() << Logger::End;
-    auto resp = m_client->getEndpoint()->waitResponse(req, LSP_TIMEOUT_MILLI);
-    assert(resp);
-    if (resp->IsError())
+    const auto resp = sendRequest<LSP_TIMEOUT_MILLI>(req);
+    if (!resp)
     {
-        Logger::err << "LSP: Server responded with error: " << respGetErrMsg(resp) << Logger::End;
-        g_statMsg.set("Failed to rename symbol: "+respGetErrMsg(resp), StatusMsg::Type::Error);
+        // FIXME: Resp is NULL here
+        //g_statMsg.set(
+        //        "Failed to rename symbol: "+(resp->is_error ? respGetErrMsg(resp) : "Request timed out"),
+        //        StatusMsg::Type::Error);
+        g_statMsg.set(
+                "Failed to rename symbol",
+                StatusMsg::Type::Error);
         return;
     }
 
-    Logger::dbg << "LSP server response: " << resp->ToJson() << Logger::End;
     const auto& edit = resp->response.result;
     applyWorkspaceEdit(edit);
 }
 
 LspProvider::docSymbolResult_t LspProvider::getDocSymbols(const std::string& filePath)
 {
-    if (didServerCrash) return {};
     BusynessHandler bh{this};
 
     td_symbol::request req;
     req.params.textDocument.uri.SetPath(filePath);
-    Logger::dbg << "LSP: Sending textDocument/documentSymbol request: " << req.ToJson() << Logger::End;
 
-    auto resp = m_client->getEndpoint()->waitResponse(req, LSP_TIMEOUT_MILLI);
-    if (!resp)
-    {
-        Logger::err << "LSP: Server responded with NULL" <<  Logger::End;
-        return {};
-    }
-    if (resp->IsError())
-    {
-        Logger::err << "LSP: Server responded with error: " << respGetErrMsg(resp) << Logger::End;
-        return {};
-    }
-    Logger::dbg << "LSP server response: " << resp->ToJson() << Logger::End;
+    const auto resp = sendRequest<LSP_TIMEOUT_MILLI>(req);
+    if (!resp) return {};
 
     return resp->response.result;
 }
 
 LspProvider::wpSymbolResult_t LspProvider::getWpSymbols(const std::string& query/*=""*/)
 {
-    if (didServerCrash) return {};
     BusynessHandler bh{this};
 
     wp_symbol::request req;
     req.params.query = query;
-    Logger::dbg << "LSP: Sending workspace/documentSymbol request: " << req.ToJson() << Logger::End;
 
-    auto resp = m_client->getEndpoint()->waitResponse(req, LSP_TIMEOUT_MILLI);
-    if (!resp)
-    {
-        Logger::err << "LSP: Server responded with NULL" <<  Logger::End;
-        return {};
-    }
-    if (resp->IsError())
-    {
-        Logger::err << "LSP: Server responded with error: " << respGetErrMsg(resp) << Logger::End;
-        return {};
-    }
-    Logger::dbg << "LSP server response: " << resp->ToJson() << Logger::End;
+    const auto resp = sendRequest<LSP_TIMEOUT_MILLI>(req);
+    if (!resp) return {};
 
     return resp->response.result;
 }
 
 std::vector<lsTextEdit> LspProvider::getFormattingEdits(const std::string& filePath)
 {
-    if (didServerCrash) return {};
     BusynessHandler bh{this};
 
     td_formatting::request req;
@@ -1264,20 +1169,8 @@ std::vector<lsTextEdit> LspProvider::getFormattingEdits(const std::string& fileP
     req.params.options.insertFinalNewline.emplace(true);
     req.params.options.trimFinalNewlines.emplace(true);
 
-    Logger::dbg << "LSP: Sending textDocument/formatting request: " << req.ToJson() << Logger::End;
-
-    auto resp = m_client->getEndpoint()->waitResponse(req, LSP_TIMEOUT_MILLI);
-    if (!resp)
-    {
-        Logger::err << "LSP: Server responded with NULL" <<  Logger::End;
-        return {};
-    }
-    if (resp->IsError())
-    {
-        Logger::err << "LSP: Server responded with error: " << respGetErrMsg(resp) << Logger::End;
-        return {};
-    }
-    Logger::dbg << "LSP server response: " << resp->ToJson() << Logger::End;
+    const auto resp = sendRequest<LSP_TIMEOUT_MILLI>(req);
+    if (!resp) return {};
 
     return resp->response.result;
 }
@@ -1285,7 +1178,6 @@ std::vector<lsTextEdit> LspProvider::getFormattingEdits(const std::string& fileP
 std::vector<lsTextEdit> LspProvider::getOnTypeFormattingEdits(
         const std::string& filePath, const lsPosition& pos, Char typedChar)
 {
-    if (didServerCrash) return {};
     BusynessHandler bh{this};
 
     td_onTypeFormatting::request req;
@@ -1298,20 +1190,8 @@ std::vector<lsTextEdit> LspProvider::getOnTypeFormattingEdits(
     req.params.options.insertFinalNewline.emplace(true);
     req.params.options.trimFinalNewlines.emplace(true);
 
-    Logger::dbg << "LSP: Sending textDocument/onTypeFormatting request: " << req.ToJson() << Logger::End;
-
-    auto resp = m_client->getEndpoint()->waitResponse(req, LSP_TIMEOUT_MILLI);
-    if (!resp)
-    {
-        Logger::err << "LSP: Server responded with NULL" <<  Logger::End;
-        return {};
-    }
-    if (resp->IsError())
-    {
-        Logger::err << "LSP: Server responded with error: " << respGetErrMsg(resp) << Logger::End;
-        return {};
-    }
-    Logger::dbg << "LSP server response: " << resp->ToJson() << Logger::End;
+    const auto resp = sendRequest<LSP_TIMEOUT_MILLI>(req);
+    if (!resp) return {};
 
     return resp->response.result;
 }
@@ -1327,20 +1207,12 @@ std::shared_ptr<Image> LspProvider::getStatusIcon()
 
 LspProvider::~LspProvider()
 {
-    if (didServerCrash) return;
-
     Logger::log << "Shutting down LSP server" << Logger::End;
 
     // Send shutdown request
     {
         td_shutdown::request shutdownReq;
-        Logger::dbg << "LSP: Sending shutdown request: " << shutdownReq.ToJson() << Logger::End;
-        auto response = m_client->getEndpoint()->waitResponse(shutdownReq, LSP_TIMEOUT_MILLI);
-        if (response->IsError())
-        {
-            Logger::fatal << "LSP: Server responded with error: " << respGetErrMsg(response) << Logger::End;
-        }
-        Logger::dbg << "LSP: Server response: " << response->ToJson() << Logger::End;
+        sendRequest<LSP_TIMEOUT_MILLI>(shutdownReq);
     }
 
     // Send exit notification
