@@ -556,6 +556,10 @@ LspProvider::LspProvider()
     caps.textDocument->rename.emplace();
     caps.textDocument->rename->prepareSupport.emplace(true);
     caps.textDocument->publishDiagnostics.emplace();
+    caps.textDocument->publishDiagnostics->tagSupport.emplace();
+    caps.textDocument->publishDiagnostics->tagSupport->first.emplace(true);
+    caps.textDocument->publishDiagnostics->tagSupport->second.emplace();
+    caps.textDocument->publishDiagnostics->tagSupport->second->valueSet.push_back(DiagnosticTag::Deprecated);
     //caps.textDocument->publishDiagnostics->relatedInformation -- TODO
     //caps.textDocument->publishDiagnostics->dataSupport -- TODO
     //caps.textDocument->foldingRange -- TODO

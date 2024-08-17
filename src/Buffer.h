@@ -180,7 +180,7 @@ protected:
         const Autocomp::LspProvider::diagList_t& diags, int lineI, bool isCurrent,
         const glm::ivec2& textPos, int initTextY
     ) const;
-    void _renderDrawDiagnosticUnderline(
+    void _renderDrawDiagnosticDecorations(
         const Autocomp::LspProvider::diagList_t& diags, int lineI, int colI,
         const glm::ivec2& textPos, int initTextY
     ) const;
