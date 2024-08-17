@@ -260,8 +260,9 @@ void Document::assertPos(int line, int col, size_t pos) const
 DocumentHistory::Entry::ExtraInfo Document::undo()
 {
     const DocumentHistory::Entry entry = m_history.goBack();
-    for (const auto& change : entry.changes)
+    for (auto it{entry.changes.rbegin()}; it != entry.changes.rend(); ++it)
     {
+        const auto& change = *it;
         if (change.type == DocumentHistory::Entry::Change::Type::Insertion)
             _delete_impl(change.range);
         else
