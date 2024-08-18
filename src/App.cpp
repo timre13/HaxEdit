@@ -668,6 +668,7 @@ void App::windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods)
     if (Prompt::get()->isOpen())
     {
         Prompt::get()->handleKey(key, mods);
+        g_isRedrawNeeded = true;
         return;
     }
 
@@ -729,12 +730,14 @@ void App::windowCharCB(GLFWwindow*, uint codePoint)
     if (!g_dialogs.empty())
     {
         g_dialogs.back()->handleChar(codePoint);
+        g_isRedrawNeeded = true;
         return;
     }
 
     if (Prompt::get()->isOpen())
     {
         Prompt::get()->handleChar(codePoint);
+        g_isRedrawNeeded = true;
         return;
     }
 
@@ -742,6 +745,7 @@ void App::windowCharCB(GLFWwindow*, uint codePoint)
     {
         case EditorMode::_EditorMode::Normal:
             Bindings::fetchCharBinding(codePoint);
+            g_hasBindingToCall = true;
             return;
 
         case EditorMode::_EditorMode::Insert:
