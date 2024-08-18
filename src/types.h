@@ -83,6 +83,7 @@ inline T lerpColors(const T& first, const T& second, const float t)
 }
 
 #define RGB_COLOR_TO_RGBA(x) RGBAColor{x.r, x.g, x.b, 1.0f}
+#define RGBA_COLOR_TO_RGB(x) RGBColor{x.r, x.g, x.b}
 
 inline RGBColor calcCompColor(RGBColor col)
 {

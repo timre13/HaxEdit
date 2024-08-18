@@ -1645,7 +1645,7 @@ void Buffer::_renderDrawDiagnosticDecorations(
     for (int i{}; i < g_fontWidthPx; ++i)
         drawUnderlineSegment(i);
 
-    if (foundDiagn.tags.has_value())
+    if (!foundDiagn.tags.get_value_or({}).empty())
     {
         const auto diagTags = foundDiagn.tags.value();
         // Draw deprecation strikethrough
@@ -2002,6 +2002,27 @@ void Buffer::render()
                 else // Error: Something is wrong with the highlight buffer
                 {
                     assert(false && "Invalid highlight buffer value");
+                }
+
+                if (fileDiagsIt != Autocomp::LspProvider::s_diags.end())
+                {
+                    const auto& diags = fileDiagsIt->second;
+
+                    // TODO: Cache at least some of this
+
+                    // Find a containing diagnostic
+                    const auto found = std::find_if(diags.begin(), diags.end(), [&](const auto& diagn){
+                            return isPosInRange(diagn.range, {lineI, (int)colI});
+                    });
+                    if (found != diags.end() && !found->tags.get_value_or({}).empty())
+                    {
+                        if (std::find(found->tags->begin(), found->tags->end(), DiagnosticTag::Unnecessary)
+                                != found->tags->end())
+                        {
+                            // Render unused variables and functions faded out
+                            charColor = lerpColors(charColor, RGBA_COLOR_TO_RGB(g_theme->bgColor), 0.6);
+                        }
+                    }
                 }
                 g_textRenderer->setDrawingColor(charColor);
                 g_textRenderer->renderChar(c, {textX, textY}, charStyle);
