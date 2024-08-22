@@ -21,199 +21,6 @@
 namespace Bindings
 {
 
-static std::string modsToStr(int mods)
-{
-    switch (mods)
-    {
-    case 0:
-        return "";
-
-    case GLFW_MOD_CONTROL:
-        return "Ctrl-";
-
-    case GLFW_MOD_CONTROL|GLFW_MOD_SHIFT:
-        return "Ctrl-Shift-";
-
-    case GLFW_MOD_SHIFT:
-        return "Shift-";
-
-    default:
-        return "???";
-    }
-}
-
-BindingMapSet::bindingFunc_t _foundCharCB{};
-BindingMapSet::bindingFunc_t _foundKeyCB{};
-
-void fetchKeyBinding(int key, int mods)
-{
-    switch (key)
-    {
-    case GLFW_KEY_CAPS_LOCK:
-    case GLFW_KEY_SCROLL_LOCK:
-    case GLFW_KEY_NUM_LOCK:
-    case GLFW_KEY_LEFT_SHIFT:
-    case GLFW_KEY_LEFT_CONTROL:
-    case GLFW_KEY_LEFT_ALT:
-    case GLFW_KEY_LEFT_SUPER:
-    case GLFW_KEY_RIGHT_SHIFT:
-    case GLFW_KEY_RIGHT_CONTROL:
-    case GLFW_KEY_RIGHT_ALT:
-    case GLFW_KEY_RIGHT_SUPER:
-        return; // Ignore modifier presses
-    }
-
-    const char* _keyName = glfwGetKeyName(key, 0);
-    try // `std::map::at()` throws if not found
-    {
-        if (_keyName) // If normal key
-        {
-            const std::string keyName = _keyName;
-#if BINDINGS_VERBOSE
-            Logger::dbg << "Fetching binding for primary key: " << modsToStr(mods) << keyName << Logger::End;
-#endif
-
-            switch (mods)
-            {
-            case 0: /* No mod */                  _foundKeyCB = bindingsP->primNoMod.at(keyName); break;
-            case GLFW_MOD_CONTROL:                _foundKeyCB = bindingsP->primCtrl.at(keyName); break;
-            case GLFW_MOD_CONTROL|GLFW_MOD_SHIFT: _foundKeyCB = bindingsP->primCtrlShift.at(keyName); break;
-            case GLFW_MOD_SHIFT:                  _foundKeyCB = bindingsP->primShift.at(keyName); break;
-            default: break;
-            }
-        }
-        else // If function key (including space)
-        {
-#if BINDINGS_VERBOSE
-            Logger::dbg << "Fetching binding for function key: " << modsToStr(mods) << key << Logger::End;
-#endif
-
-            switch (mods)
-            {
-            case 0: /* No mod */                  _foundKeyCB = bindingsP->funcNoMod.at(key); break;
-            case GLFW_MOD_CONTROL:                _foundKeyCB = bindingsP->funcCtrl.at(key); break;
-            case GLFW_MOD_CONTROL|GLFW_MOD_SHIFT: _foundKeyCB = bindingsP->funcCtrlShift.at(key); break;
-            case GLFW_MOD_SHIFT:                  _foundKeyCB = bindingsP->funcShift.at(key); break;
-            default: break;
-            }
-        }
-    }
-    catch (...)
-    {
-    // TODO
-    //if (!((g_editorMode.get() == EditorMode::_EditorMode::Insert
-    //                || g_editorMode.get() == EditorMode::_EditorMode::Replace)
-    //            && (mods == GLFW_MOD_SHIFT || mods == 0)))
-    //{
-    //    g_statMsg.set("Not bound", StatusMsg::Type::Error);
-    //    g_isRedrawNeeded = true;
-    //}
-    }
-}
-
-void fetchCharBinding(uint codePoint)
-{
-    assert(!_foundCharCB && "_foundCharCB hasn't been cleared");
-
-#if BINDINGS_VERBOSE
-    Logger::dbg << "Fetching binding for character: ";
-    if (isascii(codePoint)) Logger::dbg << (char)codePoint;
-    else Logger::dbg << '<' << codePoint << '>';
-    Logger::dbg << Logger::End;
-#endif
-
-    try // `std::map::at()` throws if not found
-    {
-        _foundCharCB = bindingsP->nonprimNoMod.at(codePoint);
-    }
-    catch (...)
-    {
-    // TODO
-    //if (!((g_editorMode.get() == EditorMode::_EditorMode::Insert
-    //                || g_editorMode.get() == EditorMode::_EditorMode::Replace)
-    //            && (mods == GLFW_MOD_SHIFT || mods == 0)))
-    //{
-    //    g_statMsg.set("Not bound", StatusMsg::Type::Error);
-    //    g_isRedrawNeeded = true;
-    //}
-    }
-}
-
-void runFetchedBinding()
-{
-    // Char callbacks have priority
-    if (_foundCharCB)
-    {
-#if BINDINGS_VERBOSE
-        Logger::dbg << "Running char callback" << Logger::End;
-#endif
-        _foundCharCB();
-    }
-    else if (_foundKeyCB)
-    {
-#if BINDINGS_VERBOSE
-        Logger::dbg << "Running key callback" << Logger::End;
-#endif
-        _foundKeyCB();
-    }
-    else
-    {
-    }
-
-    _foundKeyCB = 0;
-    _foundCharCB = 0;
-    g_hasBindingToCall = false;
-}
-
-void bindPrimKey(const std::string& keyName, int glfwMods, BindingMapSet::rawBindingFunc_t func)
-{
-    assert(func && "Called `bindPrimKey()` with a null function");
-    assert(bindingsP && "Called `bindPrimKey()` without any editor mode set");
-
-    switch (glfwMods)
-    {
-    case 0: /* No mod */                  bindingsP->primNoMod.emplace(keyName, func); break;
-    case GLFW_MOD_CONTROL:                bindingsP->primCtrl.emplace(keyName, func); break;
-    case GLFW_MOD_CONTROL|GLFW_MOD_SHIFT: bindingsP->primCtrlShift.emplace(keyName, func); break;
-    case GLFW_MOD_SHIFT:                  bindingsP->primShift.emplace(keyName, func); break;
-    default: assert(0 && "Unimplemented/Invalid mod combination"); return;
-    }
-
-    Logger::dbg << "Primary key " << modsToStr(glfwMods) << keyName << " ==> " << reinterpret_cast<void*>(func) << Logger::End;
-}
-
-void bindFuncKey(int glfwKey, int glfwMods, BindingMapSet::rawBindingFunc_t func)
-{
-    assert(func && "Called `bindFuncKey()` with a null function");
-    assert(bindingsP && "Called `bindPrimKey()` without any editor mode set");
-
-    switch (glfwMods)
-    {
-    case 0: /* No mod */                  bindingsP->funcNoMod.emplace(glfwKey, func); break;
-    case GLFW_MOD_CONTROL:                bindingsP->funcCtrl.emplace(glfwKey, func); break;
-    case GLFW_MOD_CONTROL|GLFW_MOD_SHIFT: bindingsP->funcCtrlShift.emplace(glfwKey, func); break;
-    case GLFW_MOD_SHIFT:                  bindingsP->funcShift.emplace(glfwKey, func); break;
-    default: assert(0 && "Unimplemented/Invalid mod combination"); return;
-    }
-
-    Logger::dbg << "Function key " << modsToStr(glfwMods) << '<' << glfwKey << "> ==> "
-        << reinterpret_cast<void*>(func) << Logger::End;
-}
-
-void bindNonprimChar(uint codePoint, BindingMapSet::rawBindingFunc_t func)
-{
-    assert(func && "Called `bindNonprimChar()` with a null function");
-    assert(codePoint >= UCHAR_MIN_VALUE && codePoint <= UCHAR_MAX_VALUE && "Called `bindNonprimChar()` with invalid code point");
-    assert(bindingsP && "Called `bindPrimKey()` without any editor mode set");
-
-    bindingsP->nonprimNoMod.emplace(codePoint, func);
-
-    Logger::dbg << "Character ";
-    if (isascii(codePoint)) Logger::dbg << (char)codePoint;
-    else Logger::dbg << '<' << codePoint << '>';
-    Logger::dbg << " ==> " << reinterpret_cast<void*>(func) << Logger::End;
-}
-
 namespace Callbacks
 {
 
@@ -908,8 +715,8 @@ void bufferPutEnterOrInsertAutocomplete()
 
     if (g_activeBuff->isAutocompPopupShown())
         g_activeBuff->autocompPopupInsert();
-    else
-        App::windowCharCB(nullptr, '\n');
+//    else
+//        App::windowCharCB(nullptr, '\n');
 }
 
 void bufferCancelSelection()
@@ -1131,8 +938,8 @@ void showWorkspaceFindDlg()
 
 } // Namespace Callbacks
 
-BindingMapSet nmap = {};
-BindingMapSet imap = {};
-Bindings::BindingMapSet* bindingsP = nullptr;
+Bindings::bindingMap_t nmap = {};
+Bindings::bindingMap_t imap = {};
+Bindings::bindingMap_t* activeBindingMap = nullptr;
 
 } // Namespace Bindings

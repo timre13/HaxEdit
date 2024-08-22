@@ -80,8 +80,6 @@ std::unique_ptr<Autocomp::LspProvider>        lspProvider;
 EditorMode g_editorMode;
 StatusMsg g_statMsg;
 
-bool g_hasBindingToCall = false;
-
 #else // ----------------------------------------------------------------------
 
 extern std::string g_exePath;
@@ -134,7 +132,5 @@ extern std::unique_ptr<Autocomp::LspProvider>        lspProvider;
 
 extern EditorMode g_editorMode;
 extern StatusMsg g_statMsg;
-
-extern bool g_hasBindingToCall;
 
 #endif

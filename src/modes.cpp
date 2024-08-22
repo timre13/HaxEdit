@@ -14,15 +14,15 @@ void EditorMode::set(EditorMode::_EditorMode mode)
     switch (mode)
     {
     case _EditorMode::Normal:
-        Bindings::bindingsP = &Bindings::nmap;
+        Bindings::activeBindingMap = &Bindings::nmap;
         break;
 
     case _EditorMode::Insert:
-        Bindings::bindingsP = &Bindings::imap;
+        Bindings::activeBindingMap = &Bindings::imap;
         break;
 
     case _EditorMode::Replace:
-        Bindings::bindingsP = &Bindings::imap;
+        Bindings::activeBindingMap = &Bindings::imap;
         break;
     }
     Logger::dbg << "Switched to editor mode: " << quoteStr(asString()) << Logger::End;
