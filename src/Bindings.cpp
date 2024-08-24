@@ -10,6 +10,7 @@
 #include "common/string.h"
 #include "globals.h"
 #include "config.h"
+#include "modes.h"
 #include <vector>
 #include <memory>
 #include <cstring>
@@ -20,6 +21,173 @@
 
 namespace Bindings
 {
+
+bindingMap_t nmap = {};
+bindingMap_t imap = {};
+bindingMap_t* activeBindingMap = nullptr;
+
+BindingKey lastPressedKey{};
+long long keyEventDelay{};
+
+Bindings::bindingMap_t* getBindingsForMode(EditorMode::_EditorMode mode)
+{
+    switch (mode)
+    {
+    case EditorMode::_EditorMode::Normal:
+        return &nmap;
+
+    case EditorMode::_EditorMode::Insert:
+        return &imap;
+
+    case EditorMode::_EditorMode::Replace:
+        return &imap;
+    }
+    return nullptr;
+}
+
+void registerBinding(EditorMode::_EditorMode mode, const BindingKey::key_t& key, BindingKey::mods_t modifiers, rawBindingFunc_t func)
+{
+    assert(func);
+    assert(!key.empty());
+    auto* bindings = getBindingsForMode(mode);
+    BindingKey bkey{modifiers, key};
+    const bool overwrote = !bindings->insert_or_assign(bkey, func).second;
+    Logger::dbg << (overwrote ? "Remapping: " : "Mapping: ") << (String)bkey << " ==> " << (void*)func << Logger::End;
+}
+
+void keyCB(GLFWwindow*, int key, int scancode, int action, int mods)
+{
+    if (action == GLFW_RELEASE)
+        return;
+
+    lastPressedKey.mods = mods;
+
+    switch (key)
+    {
+    case GLFW_KEY_SPACE: lastPressedKey.key = U"<Space>"; break;
+    case GLFW_KEY_ESCAPE: lastPressedKey.key = U"<Escape>"; break;
+    case GLFW_KEY_ENTER: lastPressedKey.key = U"<Enter>"; break;
+    case GLFW_KEY_TAB: lastPressedKey.key = U"<Tab>"; break;
+    case GLFW_KEY_BACKSPACE: lastPressedKey.key = U"<Backspace>"; break;
+    case GLFW_KEY_INSERT: lastPressedKey.key = U"<Insert>"; break;
+    case GLFW_KEY_DELETE: lastPressedKey.key = U"<Delete>"; break;
+    case GLFW_KEY_RIGHT: lastPressedKey.key = U"<Right>"; break;
+    case GLFW_KEY_LEFT: lastPressedKey.key = U"<Left>"; break;
+    case GLFW_KEY_DOWN: lastPressedKey.key = U"<Down>"; break;
+    case GLFW_KEY_UP: lastPressedKey.key = U"<Up>"; break;
+    case GLFW_KEY_PAGE_UP: lastPressedKey.key = U"<Page_Up>"; break;
+    case GLFW_KEY_PAGE_DOWN: lastPressedKey.key = U"<Page_Down>"; break;
+    case GLFW_KEY_HOME: lastPressedKey.key = U"<Home>"; break;
+    case GLFW_KEY_END: lastPressedKey.key = U"<End>"; break;
+    case GLFW_KEY_CAPS_LOCK: lastPressedKey.key = U"<Caps_Lock>"; break;
+    case GLFW_KEY_SCROLL_LOCK: lastPressedKey.key = U"<Scroll_Lock>"; break;
+    case GLFW_KEY_NUM_LOCK: lastPressedKey.key = U"<Num_Lock>"; break;
+    case GLFW_KEY_PRINT_SCREEN: lastPressedKey.key = U"<Print_Screen>"; break;
+    case GLFW_KEY_PAUSE: lastPressedKey.key = U"<Pause>"; break;
+    case GLFW_KEY_F1: lastPressedKey.key = U"<F1>"; break;
+    case GLFW_KEY_F2: lastPressedKey.key = U"<F2>"; break;
+    case GLFW_KEY_F3: lastPressedKey.key = U"<F3>"; break;
+    case GLFW_KEY_F4: lastPressedKey.key = U"<F4>"; break;
+    case GLFW_KEY_F5: lastPressedKey.key = U"<F5>"; break;
+    case GLFW_KEY_F6: lastPressedKey.key = U"<F6>"; break;
+    case GLFW_KEY_F7: lastPressedKey.key = U"<F7>"; break;
+    case GLFW_KEY_F8: lastPressedKey.key = U"<F8>"; break;
+    case GLFW_KEY_F9: lastPressedKey.key = U"<F9>"; break;
+    case GLFW_KEY_F10: lastPressedKey.key = U"<F10>"; break;
+    case GLFW_KEY_F11: lastPressedKey.key = U"<F11>"; break;
+    case GLFW_KEY_F12: lastPressedKey.key = U"<F12>"; break;
+    case GLFW_KEY_F13: lastPressedKey.key = U"<F13>"; break;
+    case GLFW_KEY_F14: lastPressedKey.key = U"<F14>"; break;
+    case GLFW_KEY_F15: lastPressedKey.key = U"<F15>"; break;
+    case GLFW_KEY_F16: lastPressedKey.key = U"<F16>"; break;
+    case GLFW_KEY_F17: lastPressedKey.key = U"<F17>"; break;
+    case GLFW_KEY_F18: lastPressedKey.key = U"<F18>"; break;
+    case GLFW_KEY_F19: lastPressedKey.key = U"<F19>"; break;
+    case GLFW_KEY_F20: lastPressedKey.key = U"<F20>"; break;
+    case GLFW_KEY_F21: lastPressedKey.key = U"<F21>"; break;
+    case GLFW_KEY_F22: lastPressedKey.key = U"<F22>"; break;
+    case GLFW_KEY_F23: lastPressedKey.key = U"<F23>"; break;
+    case GLFW_KEY_F24: lastPressedKey.key = U"<F24>"; break;
+    case GLFW_KEY_F25: lastPressedKey.key = U"<F25>"; break;
+    case GLFW_KEY_KP_0: lastPressedKey.key = U"<Kp_0>"; break;
+    case GLFW_KEY_KP_1: lastPressedKey.key = U"<Kp_1>"; break;
+    case GLFW_KEY_KP_2: lastPressedKey.key = U"<Kp_2>"; break;
+    case GLFW_KEY_KP_3: lastPressedKey.key = U"<Kp_3>"; break;
+    case GLFW_KEY_KP_4: lastPressedKey.key = U"<Kp_4>"; break;
+    case GLFW_KEY_KP_5: lastPressedKey.key = U"<Kp_5>"; break;
+    case GLFW_KEY_KP_6: lastPressedKey.key = U"<Kp_6>"; break;
+    case GLFW_KEY_KP_7: lastPressedKey.key = U"<Kp_7>"; break;
+    case GLFW_KEY_KP_8: lastPressedKey.key = U"<Kp_8>"; break;
+    case GLFW_KEY_KP_9: lastPressedKey.key = U"<Kp_9>"; break;
+    case GLFW_KEY_KP_DECIMAL: lastPressedKey.key = U"<Kp_Decimal>"; break;
+    case GLFW_KEY_KP_DIVIDE: lastPressedKey.key = U"<Kp_Divide>"; break;
+    case GLFW_KEY_KP_MULTIPLY: lastPressedKey.key = U"<Kp_Multiply>"; break;
+    case GLFW_KEY_KP_SUBTRACT: lastPressedKey.key = U"<Kp_Subtract>"; break;
+    case GLFW_KEY_KP_ADD: lastPressedKey.key = U"<Kp_Add>"; break;
+    case GLFW_KEY_KP_ENTER: lastPressedKey.key = U"<Kp_Enter>"; break;
+    case GLFW_KEY_KP_EQUAL: lastPressedKey.key = U"<Kp_Equal>"; break;
+    case GLFW_KEY_MENU: lastPressedKey.key = U"<Menu>"; break;
+    case GLFW_KEY_LEFT_SHIFT: lastPressedKey.key = U"<Left_Shift>"; break;
+    case GLFW_KEY_LEFT_CONTROL: lastPressedKey.key = U"<Left_Control>"; break;
+    case GLFW_KEY_LEFT_ALT: lastPressedKey.key = U"<Left_Alt>"; break;
+    case GLFW_KEY_LEFT_SUPER: lastPressedKey.key = U"<Left_Super>"; break;
+    case GLFW_KEY_RIGHT_SHIFT: lastPressedKey.key = U"<Right_Shift>"; break;
+    case GLFW_KEY_RIGHT_CONTROL: lastPressedKey.key = U"<Right_Control>"; break;
+    case GLFW_KEY_RIGHT_ALT: lastPressedKey.key = U"<Right_Alt>"; break;
+    case GLFW_KEY_RIGHT_SUPER: lastPressedKey.key = U"<Right_Super>"; break;
+    default:
+        {
+            if (const char* keyname = glfwGetKeyName(key, scancode))
+            {
+                lastPressedKey.key = icuStrToUtf32(icu::UnicodeString{keyname});
+            }
+            else
+            {
+                lastPressedKey.key = utf8To32("<"+std::to_string(key)+">");
+            }
+            break;
+        }
+    }
+
+    /*
+     * The key callback gets an incorrect character in case the key was pressed while holding down AltGr.
+     * The char callback gets an incorrect character while holding down Ctrl.
+     * The char callback overwrites the value received by the key callback, so both quirks are handled.
+     *
+     * When using some input methods the char callback is triggered
+     * a few frames later than the key callback, so we need to wait.
+     * This has been observed to be the case when using Fcitx. It adds 2 frames of delay.
+     * If you don't want to disable the input method, add some delay here so you won't get events twice.
+     *
+     * TODO: Automatically detect delay and apply correction?
+     */
+    keyEventDelay = 0;
+}
+
+void charModsCB(GLFWwindow*, uint codepoint, int mods)
+{
+    lastPressedKey.mods = mods;
+
+    if (codepoint > ' ' && codepoint != 127)
+        lastPressedKey.key = charToStr((Char)codepoint);
+    keyEventDelay = 0; // Don't wait any longer
+}
+
+void runBindingForFrame()
+{
+    --keyEventDelay;
+    // If the waiting timed out or we received the char event and there is a key to process
+    if (keyEventDelay <= 0 && lastPressedKey)
+    {
+        //Logger::dbg << "PRESSED: " << (String)lastPressedKey << Logger::End;
+        const auto bindingIt = std::find_if(
+                activeBindingMap->begin(), activeBindingMap->end(),
+                [&](const auto& a){ return a.first == lastPressedKey; });
+        if (bindingIt != activeBindingMap->end())
+            bindingIt->second();
+        lastPressedKey.clear();
+    }
+}
 
 namespace Callbacks
 {
@@ -937,9 +1105,5 @@ void showWorkspaceFindDlg()
 }
 
 } // Namespace Callbacks
-
-Bindings::bindingMap_t nmap = {};
-Bindings::bindingMap_t imap = {};
-Bindings::bindingMap_t* activeBindingMap = nullptr;
 
 } // Namespace Bindings

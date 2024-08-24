@@ -11,20 +11,8 @@ EditorMode::_EditorMode EditorMode::get()
 void EditorMode::set(EditorMode::_EditorMode mode)
 {
     m_editorMode = mode;
-    switch (mode)
-    {
-    case _EditorMode::Normal:
-        Bindings::activeBindingMap = &Bindings::nmap;
-        break;
-
-    case _EditorMode::Insert:
-        Bindings::activeBindingMap = &Bindings::imap;
-        break;
-
-    case _EditorMode::Replace:
-        Bindings::activeBindingMap = &Bindings::imap;
-        break;
-    }
+    Bindings::activeBindingMap = Bindings::getBindingsForMode(mode);
+    assert(Bindings::activeBindingMap);
     Logger::dbg << "Switched to editor mode: " << quoteStr(asString()) << Logger::End;
 }
 

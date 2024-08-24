@@ -65,13 +65,9 @@ GLFWwindow* App::createWindow()
     glfwSetWindowSizeLimits(window, 200, 100, GLFW_DONT_CARE, GLFW_DONT_CARE);
     glfwSetWindowSizeCallback(window, App::windowResizeCB);
     glfwSetWindowRefreshCallback(window, App::windowRefreshCB);
-    //glfwSetKeyCallback(window, App::windowKeyCB);
     glfwSetScrollCallback(window, App::windowScrollCB);
-    //glfwSetCharCallback(window, App::windowCharCB);
-
-
-
-
+    glfwSetKeyCallback(window, Bindings::keyCB);
+    glfwSetCharModsCallback(window, Bindings::charModsCB);
     glfwSetWindowCloseCallback(window, App::windowCloseCB);
     glfwSetCursorPosCallback(window, App::cursorPosCB);
     glfwSetMouseButtonCallback(window, App::mouseButtonCB);
@@ -184,121 +180,122 @@ void App::setupKeyBindings()
 
     // `nmap`, 'imap' and `Callbacks` are from the `Bindings` namespace
     using namespace Bindings;
+    using Mode = EditorMode::_EditorMode;
 
     { // Normal mode mappings
         // No modifier
-        nmap[U"i"] = Callbacks::switchToInsertMode;
-        nmap[U"a"] = Callbacks::moveCursorRightAndEnterInsertMode;
-        nmap[U"l"] = Callbacks::moveCursorRight;
-        nmap[U"h"] = Callbacks::moveCursorLeft;
-        nmap[U"j"] = Callbacks::moveCursorDown;
-        nmap[U"k"] = Callbacks::moveCursorUp;
-        nmap[U"0"] = Callbacks::moveCursorToLineBeginning;
-        nmap[U"u"] = Callbacks::undoActiveBufferChange;
-        nmap[U"v"] = Callbacks::bufferStartNormalSelection;
-        nmap[U"x"] = Callbacks::deleteCharForwardOrSelection;
-        nmap[U"o"] = Callbacks::putLineBreakAfterLineAndEnterInsertMode;
-        nmap[U"p"] = Callbacks::bufferPasteClipboard;
-        nmap[U"y"] = Callbacks::bufferCopySelectionToClipboard;
-        nmap[U"n"] = Callbacks::bufferFindGotoNext;
-        nmap[U"c"] = Callbacks::bufferDelInsertSelection;
-        nmap[U"-"] = Callbacks::zoomOutBufferIfImage;
-        nmap[U"+"] = Callbacks::zoomInBufferIfImage;
-        nmap[U"$"] = Callbacks::moveCursorToLineEnd;
-        nmap[U">"] = Callbacks::indentSelectedLines;
-        nmap[U"<"] = Callbacks::unindentSelectedLines;
-        nmap[U":"] = Callbacks::togglePromptAnimated;
-        nmap[U"á"] = Callbacks::bufferShowSymbolHover;
-        nmap[U"ő"] = Callbacks::bufferGotoDef;
-        nmap[U"ú"] = Callbacks::bufferGotoDecl;
-        //bindNonprimChar(U'ű',                  Callbacks::bufferGotoImp;
-        nmap[U"ű"] = Callbacks::bufferFormatDocument;
-        //bindNonprimChar(U'ű',                  Callbacks::showWorkspaceFindDlg;
-        //bindNonprimChar(U'ű',                  Callbacks::bufferInsertCustomSnippet;
-        nmap[U"ö"] = Callbacks::bufferApplyCodeAct;
-        nmap[U"ü"] = Callbacks::bufferRenameSymbol;
-        nmap[U"ó"] = Callbacks::bufferShowSignHelp;
-        nmap[U"<Escape>"] = Callbacks::bufferCancelSelection;
-        nmap[U"<Insert>"] = Callbacks::switchToInsertMode;
-        nmap[U"<Right>"] = Callbacks::moveCursorRight;
-        nmap[U"<Left>"] = Callbacks::moveCursorLeft;
-        nmap[U"<Down>"] = Callbacks::moveCursorDown;
-        nmap[U"<Up>"] = Callbacks::moveCursorUp;
-        nmap[U"<Home>"] = Callbacks::moveCursorToLineBeginning;
-        nmap[U"<End>"] = Callbacks::moveCursorToLineEnd;
-        nmap[U"<Backspace>"] = Callbacks::deleteCharBackwards;
-        nmap[U"<Delete>"] = Callbacks::deleteCharForwardOrSelection;
-        nmap[U"<Kp_Decimal>"] = Callbacks::deleteCharForwardOrSelection;
-        nmap[U"<Page_Up>"] = Callbacks::goPageUp;
-        nmap[U"<Page_Down>"] = Callbacks::goPageDown;
-        nmap[U"<Tab>"] = Callbacks::bufferGoToNextSnippetTabstop;
+        registerBinding(Mode::Normal, U"i", 0, Callbacks::switchToInsertMode);
+        registerBinding(Mode::Normal, U"a", 0, Callbacks::moveCursorRightAndEnterInsertMode);
+        registerBinding(Mode::Normal, U"l", 0, Callbacks::moveCursorRight);
+        registerBinding(Mode::Normal, U"h", 0, Callbacks::moveCursorLeft);
+        registerBinding(Mode::Normal, U"j", 0, Callbacks::moveCursorDown);
+        registerBinding(Mode::Normal, U"k", 0, Callbacks::moveCursorUp);
+        registerBinding(Mode::Normal, U"0", 0, Callbacks::moveCursorToLineBeginning);
+        registerBinding(Mode::Normal, U"u", 0, Callbacks::undoActiveBufferChange);
+        registerBinding(Mode::Normal, U"v", 0, Callbacks::bufferStartNormalSelection);
+        registerBinding(Mode::Normal, U"x", 0, Callbacks::deleteCharForwardOrSelection);
+        registerBinding(Mode::Normal, U"o", 0, Callbacks::putLineBreakAfterLineAndEnterInsertMode);
+        registerBinding(Mode::Normal, U"p", 0, Callbacks::bufferPasteClipboard);
+        registerBinding(Mode::Normal, U"y", 0, Callbacks::bufferCopySelectionToClipboard);
+        registerBinding(Mode::Normal, U"n", 0, Callbacks::bufferFindGotoNext);
+        registerBinding(Mode::Normal, U"c", 0, Callbacks::bufferDelInsertSelection);
+        registerBinding(Mode::Normal, U"-", 0, Callbacks::zoomOutBufferIfImage);
+        registerBinding(Mode::Normal, U"+", 0, Callbacks::zoomInBufferIfImage);
+        registerBinding(Mode::Normal, U"$", 0, Callbacks::moveCursorToLineEnd);
+        registerBinding(Mode::Normal, U">", 0, Callbacks::indentSelectedLines);
+        registerBinding(Mode::Normal, U"<", 0, Callbacks::unindentSelectedLines);
+        registerBinding(Mode::Normal, U":", 0, Callbacks::togglePromptAnimated);
+        registerBinding(Mode::Normal, U"á", 0, Callbacks::bufferShowSymbolHover);
+        registerBinding(Mode::Normal, U"ő", 0, Callbacks::bufferGotoDef);
+        registerBinding(Mode::Normal, U"ú", 0, Callbacks::bufferGotoDecl);
+        //registerBinding(Mode::Normal, U"ű", 0, Callbacks::bufferGotoImp);
+        registerBinding(Mode::Normal, U"ű", 0, Callbacks::bufferFormatDocument);
+        //bindNonprimChar(Mode::Normal, U"ű", 0, Callbacks::showWorkspaceFindDlg;
+        //bindNonprimChar(Mode::Normal, U"ű", 0, Callbacks::bufferInsertCustomSnippet;
+        registerBinding(Mode::Normal, U"ö", 0, Callbacks::bufferApplyCodeAct);
+        registerBinding(Mode::Normal, U"ü", 0, Callbacks::bufferRenameSymbol);
+        registerBinding(Mode::Normal, U"ó", 0, Callbacks::bufferShowSignHelp);
+        registerBinding(Mode::Normal, U"<Escape>", 0, Callbacks::bufferCancelSelection);
+        registerBinding(Mode::Normal, U"<Insert>", 0, Callbacks::switchToInsertMode);
+        registerBinding(Mode::Normal, U"<Right>", 0, Callbacks::moveCursorRight);
+        registerBinding(Mode::Normal, U"<Left>", 0, Callbacks::moveCursorLeft);
+        registerBinding(Mode::Normal, U"<Down>", 0, Callbacks::moveCursorDown);
+        registerBinding(Mode::Normal, U"<Up>", 0, Callbacks::moveCursorUp);
+        registerBinding(Mode::Normal, U"<Home>", 0, Callbacks::moveCursorToLineBeginning);
+        registerBinding(Mode::Normal, U"<End>", 0, Callbacks::moveCursorToLineEnd);
+        registerBinding(Mode::Normal, U"<Backspace>", 0, Callbacks::deleteCharBackwards);
+        registerBinding(Mode::Normal, U"<Delete>", 0, Callbacks::deleteCharForwardOrSelection);
+        registerBinding(Mode::Normal, U"<Kp_Decimal>", 0, Callbacks::deleteCharForwardOrSelection);
+        registerBinding(Mode::Normal, U"<Page_Up>", 0, Callbacks::goPageUp);
+        registerBinding(Mode::Normal, U"<Page_Down>", 0, Callbacks::goPageDown);
+        registerBinding(Mode::Normal, U"<Tab>", 0, Callbacks::bufferGoToNextSnippetTabstop);
 
         // Ctrl held down
-        nmap[U"Ctrl-n"] = Callbacks::createBufferInNewTab;
-        nmap[U"Ctrl-s"] = Callbacks::saveCurrentBuffer;
-        nmap[U"Ctrl-o"] = Callbacks::openFile;
-        nmap[U"Ctrl-q"] = Callbacks::closeActiveBuffer;
-        nmap[U"Ctrl-v"] = Callbacks::bufferStartBlockSelection;
-        nmap[U"Ctrl-r"] = Callbacks::redoActiveBufferChange;
-        nmap[U"Ctrl-x"] = Callbacks::bufferCutSelectionToClipboard;
-        nmap[U"Ctrl-f"] = Callbacks::bufferFind;
-        nmap[U"Ctrl--"] = Callbacks::decreaseFontSize;
-        nmap[U"Ctrl-+"] = Callbacks::increaseFontSize;
-        nmap[U"Ctrl-<Page_Up>"] = Callbacks::goToPrevTab;
-        nmap[U"Ctrl-<Page_Down>"] = Callbacks::goToNextTab;
-        nmap[U"Ctrl-<Tab>"] = Callbacks::goToNextSplit;
-        nmap[U"Ctrl-<Home>"] = Callbacks::goToFirstChar;
-        nmap[U"Ctrl-<End>"] = Callbacks::goToLastChar;
-        nmap[U"Ctrl-<Enter>"] = Callbacks::openPathOrUrlAtCursor;
+        registerBinding(Mode::Normal, U"n", GLFW_MOD_CONTROL, Callbacks::createBufferInNewTab);
+        registerBinding(Mode::Normal, U"s", GLFW_MOD_CONTROL, Callbacks::saveCurrentBuffer);
+        registerBinding(Mode::Normal, U"o", GLFW_MOD_CONTROL, Callbacks::openFile);
+        registerBinding(Mode::Normal, U"q", GLFW_MOD_CONTROL, Callbacks::closeActiveBuffer);
+        registerBinding(Mode::Normal, U"v", GLFW_MOD_CONTROL, Callbacks::bufferStartBlockSelection);
+        registerBinding(Mode::Normal, U"r", GLFW_MOD_CONTROL, Callbacks::redoActiveBufferChange);
+        registerBinding(Mode::Normal, U"x", GLFW_MOD_CONTROL, Callbacks::bufferCutSelectionToClipboard);
+        registerBinding(Mode::Normal, U"f", GLFW_MOD_CONTROL, Callbacks::bufferFind);
+        registerBinding(Mode::Normal, U"-", GLFW_MOD_CONTROL, Callbacks::decreaseFontSize);
+        registerBinding(Mode::Normal, U"+", GLFW_MOD_CONTROL, Callbacks::increaseFontSize);
+        registerBinding(Mode::Normal, U"<Page_Up>", GLFW_MOD_CONTROL, Callbacks::goToPrevTab);
+        registerBinding(Mode::Normal, U"<Page_Down>", GLFW_MOD_CONTROL, Callbacks::goToNextTab);
+        registerBinding(Mode::Normal, U"<Tab>", GLFW_MOD_CONTROL, Callbacks::goToNextSplit);
+        registerBinding(Mode::Normal, U"<Home>", GLFW_MOD_CONTROL, Callbacks::goToFirstChar);
+        registerBinding(Mode::Normal, U"<End>", GLFW_MOD_CONTROL, Callbacks::goToLastChar);
+        registerBinding(Mode::Normal, U"<Enter>", GLFW_MOD_CONTROL, Callbacks::openPathOrUrlAtCursor);
 
         // Ctrl-shift held down
-        nmap[U"Ctrl-Shift-S"] = Callbacks::saveCurrentBufferAs;
-        nmap[U"Ctrl-Shift-<Tab>"] = Callbacks::goToPrevSplit;
-        nmap[U"Ctrl-Shift-<Right>"] = Callbacks::increaseActiveBufferWidth;
-        nmap[U"Ctrl-Shift-<Left>"] = Callbacks::decreaseActiveBufferWidth;
+        registerBinding(Mode::Normal, U"S", GLFW_MOD_CONTROL|GLFW_MOD_SHIFT, Callbacks::saveCurrentBufferAs);
+        registerBinding(Mode::Normal, U"<Tab>", GLFW_MOD_CONTROL|GLFW_MOD_SHIFT, Callbacks::goToPrevSplit);
+        registerBinding(Mode::Normal, U"<Right>", GLFW_MOD_CONTROL|GLFW_MOD_SHIFT, Callbacks::increaseActiveBufferWidth);
+        registerBinding(Mode::Normal, U"<Left>", GLFW_MOD_CONTROL|GLFW_MOD_SHIFT, Callbacks::decreaseActiveBufferWidth);
 
         // Shift held down
-        nmap[U"Shift-R"] = Callbacks::switchToReplaceMode;
-        nmap[U"Shift-V"] = Callbacks::bufferStartLineSelection;
-        nmap[U"Shift-I"] = Callbacks::moveCursorToLineBeginningAndEnterInsertMode;
-        nmap[U"Shift-A"] = Callbacks::moveCursorToLineEndAndEnterInsertMode;
-        nmap[U"Shift-O"] = Callbacks::putLineBreakBeforeLineAndEnterInsertMode;
-        nmap[U"Shift-N"] = Callbacks::bufferFindGotoPrev;
-        nmap[U"Shift-E"] = Callbacks::moveCursorToSWordEnd;
-        nmap[U"Shift-B"] = Callbacks::moveCursorToSWordBeginning;
-        nmap[U"Shift-W"] = Callbacks::moveCursorToNextSWord;
+        registerBinding(Mode::Normal, U"R", GLFW_MOD_SHIFT, Callbacks::switchToReplaceMode);
+        registerBinding(Mode::Normal, U"V", GLFW_MOD_SHIFT, Callbacks::bufferStartLineSelection);
+        registerBinding(Mode::Normal, U"I", GLFW_MOD_SHIFT, Callbacks::moveCursorToLineBeginningAndEnterInsertMode);
+        registerBinding(Mode::Normal, U"A", GLFW_MOD_SHIFT, Callbacks::moveCursorToLineEndAndEnterInsertMode);
+        registerBinding(Mode::Normal, U"O", GLFW_MOD_SHIFT, Callbacks::putLineBreakBeforeLineAndEnterInsertMode);
+        registerBinding(Mode::Normal, U"N", GLFW_MOD_SHIFT, Callbacks::bufferFindGotoPrev);
+        registerBinding(Mode::Normal, U"E", GLFW_MOD_SHIFT, Callbacks::moveCursorToSWordEnd);
+        registerBinding(Mode::Normal, U"B", GLFW_MOD_SHIFT, Callbacks::moveCursorToSWordBeginning);
+        registerBinding(Mode::Normal, U"W", GLFW_MOD_SHIFT, Callbacks::moveCursorToNextSWord);
     }
 
     { // Insert mode mappings
         // No modifier
-        imap[U"<Escape>"] = Callbacks::switchToNormalMode;
-        imap[U"<Right>"] = Callbacks::moveCursorRight;
-        imap[U"<Left>"] = Callbacks::moveCursorLeft;
-        imap[U"<Down>"] = Callbacks::moveCursorDown;
-        imap[U"<Up>"] = Callbacks::moveCursorUp;
-        imap[U"<Home>"] = Callbacks::moveCursorToLineBeginning;
-        imap[U"<End>"] = Callbacks::moveCursorToLineEnd;
-        imap[U"<Enter>"] = Callbacks::bufferPutEnterOrInsertAutocomplete;
-        imap[U"<Kp_Enter>"] = Callbacks::bufferPutEnterOrInsertAutocomplete;
-        imap[U"<Backspace>"] = Callbacks::deleteCharBackwards;
-        imap[U"<Delete>"] = Callbacks::deleteCharForwardOrSelection;
-        imap[U"<Kp_Decimal>"] = Callbacks::deleteCharForwardOrSelection;
-        imap[U"<Tab>"] = Callbacks::insertTabOrSpaces;
-        imap[U"<Minus>"] = Callbacks::zoomOutBufferIfImage;
-        imap[U"<Kp_Subtract>"] = Callbacks::zoomOutBufferIfImage;
-        imap[U"<Equal>"] = Callbacks::zoomInBufferIfImage;
-        imap[U"<Kp_Add>"] = Callbacks::zoomInBufferIfImage;
-        imap[U","] = Callbacks::bufferShowSignHelp;
+        registerBinding(Mode::Insert, U"<Escape>", 0, Callbacks::switchToNormalMode);
+        registerBinding(Mode::Insert, U"<Right>", 0, Callbacks::moveCursorRight);
+        registerBinding(Mode::Insert, U"<Left>", 0, Callbacks::moveCursorLeft);
+        registerBinding(Mode::Insert, U"<Down>", 0, Callbacks::moveCursorDown);
+        registerBinding(Mode::Insert, U"<Up>", 0, Callbacks::moveCursorUp);
+        registerBinding(Mode::Insert, U"<Home>", 0, Callbacks::moveCursorToLineBeginning);
+        registerBinding(Mode::Insert, U"<End>", 0, Callbacks::moveCursorToLineEnd);
+        registerBinding(Mode::Insert, U"<Enter>", 0, Callbacks::bufferPutEnterOrInsertAutocomplete);
+        registerBinding(Mode::Insert, U"<Kp_Enter>", 0, Callbacks::bufferPutEnterOrInsertAutocomplete);
+        registerBinding(Mode::Insert, U"<Backspace>", 0, Callbacks::deleteCharBackwards);
+        registerBinding(Mode::Insert, U"<Delete>", 0, Callbacks::deleteCharForwardOrSelection);
+        registerBinding(Mode::Insert, U"<Kp_Decimal>", 0, Callbacks::deleteCharForwardOrSelection);
+        registerBinding(Mode::Insert, U"<Tab>", 0, Callbacks::insertTabOrSpaces);
+        registerBinding(Mode::Insert, U"<Minus>", 0, Callbacks::zoomOutBufferIfImage);
+        registerBinding(Mode::Insert, U"<Kp_Subtract>", 0, Callbacks::zoomOutBufferIfImage);
+        registerBinding(Mode::Insert, U"<Equal>", 0, Callbacks::zoomInBufferIfImage);
+        registerBinding(Mode::Insert, U"<Kp_Add>", 0, Callbacks::zoomInBufferIfImage);
+        registerBinding(Mode::Insert, U",", 0, Callbacks::bufferShowSignHelp);
 
         // Ctrl held down
-        imap[U"Ctrl-<Space>"] = Callbacks::triggerAutocompPopupOrSelectNextItem;
+        registerBinding(Mode::Insert, U"<Space>", GLFW_MOD_CONTROL, Callbacks::triggerAutocompPopupOrSelectNextItem);
 
-        //// Ctrl-Shift held down
-        imap[U"Ctrl-Shift-<Space>"] = Callbacks::triggerAutocompPopupOrSelectPrevItem;
+        // Ctrl-Shift held down
+        registerBinding(Mode::Insert, U"<Space>", GLFW_MOD_CONTROL|GLFW_MOD_SHIFT, Callbacks::triggerAutocompPopupOrSelectPrevItem);
 
         // Shift held down
         // TODO: Use server-specified trigger characters to show signature help
-        imap[U"Shift-("] = Callbacks::bufferShowSignHelp;
+        registerBinding(Mode::Insert, U"(", GLFW_MOD_SHIFT, Callbacks::bufferShowSignHelp);
     }
 
     // Start in normal mode
