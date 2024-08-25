@@ -18,7 +18,7 @@ public:
     struct BtnInfo
     {
         std::string label; // Label
-        int key{}; // GLFW Keycode to press
+        Bindings::BindingKey key; // Key to press
     };
 
 private:
@@ -50,7 +50,7 @@ public:
         void* cbUserData,
         const std::string& msg,
         MessageDialog::Type type,
-        const std::vector<BtnInfo>& btns={{"OK", GLFW_KEY_ENTER}}
+        const std::vector<BtnInfo>& btns={{"OK", Bindings::BindingKey{0, U"<Enter>"}}}
         )
     {
         g_dialogs.push_back(std::unique_ptr<MessageDialog>(
@@ -59,8 +59,7 @@ public:
     }
 
     virtual void render() override;
-    virtual void handleKey(int key, int mods) override;
-    virtual void handleChar(uint) override {}
+    virtual void handleKey(const Bindings::BindingKey& key) override;
     virtual bool isInsideButton(const glm::ivec2& pos) const override;
     virtual void pressButtonAt(const glm::ivec2 pos) override;
 

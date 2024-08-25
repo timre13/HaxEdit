@@ -21,17 +21,13 @@ MessageDialog::MessageDialog(
     for (const auto& btn : m_btnInfo)
     {
         (void)btn; // Fix unused `btn` warning in release build
-        assert(btn.key != GLFW_KEY_UNKNOWN);
-        assert(btn.key != GLFW_KEY_ESCAPE); // Escape is a special key that cancels the dialog
+        assert(btn.key.key != U"<Escape>"); // Escape is a special key that cancels the dialog
     }
 }
 
-static std::string getBtnText(const MessageDialog::BtnInfo& btn)
+static String getBtnText(const MessageDialog::BtnInfo& btn)
 {
-    const char* keyName = glfwGetKeyName(btn.key, 0);
-    if (keyName)
-        return '['+std::string(keyName)+"] "+btn.label;
-    return btn.label;
+    return U"["+(String)btn.key+U"] "+utf8To32(btn.label);
 }
 
 void MessageDialog::recalculateDimensions()
@@ -123,18 +119,19 @@ void MessageDialog::render()
                 {dims.xPos+dims.width, dims.yPos+dims.height},
                 buttonColor);
         // Render button text
-        g_textRenderer->renderString(utf8To32(getBtnText(m_btnInfo[i])), {m_btnTxtDims[i].xPos, m_btnTxtDims[i].yPos});
+        g_textRenderer->renderString(
+                getBtnText(m_btnInfo[i]), {m_btnTxtDims[i].xPos, m_btnTxtDims[i].yPos});
     }
 
     TIMER_END_FUNC();
 }
 
-void MessageDialog::handleKey(int key, int mods)
+void MessageDialog::handleKey(const Bindings::BindingKey& key)
 {
-    if (mods != 0)
+    if (key.mods != 0)
         return;
 
-    if (key == GLFW_KEY_ESCAPE)
+    if (key.key == U"<Escape>")
     {
         Logger::dbg << "MessageDialog: Cancelled" << Logger::End;
         m_isClosed = true;

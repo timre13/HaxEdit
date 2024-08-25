@@ -2,6 +2,7 @@
 
 #include "../Logger.h"
 #include "../types.h"
+#include "../Bindings.h"
 #include <string>
 #include <glm/glm.hpp>
 #include <functional>
@@ -41,8 +42,7 @@ protected:
 
 public:
     virtual void render() = 0;
-    virtual void handleKey(int key, int mods) = 0;
-    virtual void handleChar(uint codePoint) = 0;
+    virtual void handleKey(const Bindings::BindingKey& key) = 0;
 
     bool isInsideBody(const glm::ivec2& pos) const;
     virtual inline bool isClosed() const final { return m_isClosed; }

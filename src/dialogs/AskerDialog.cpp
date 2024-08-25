@@ -64,40 +64,43 @@ void AskerDialog::render()
     TIMER_END_FUNC();
 }
 
-void AskerDialog::handleKey(int key, int mods)
+void AskerDialog::handleKey(const Bindings::BindingKey& key)
 {
-    if (mods == 0)
+    if (key.mods == 0)
     {
-        if (key == GLFW_KEY_ESCAPE)
+        if (key.key == U"<Escape>")
         {
             Logger::dbg << "AskerDialog: Cancelled" << Logger::End;
             m_isClosed = true;
-            return;
         }
-
-        switch (key)
+        else if (key.key == U"<Backspace>")
         {
-        case GLFW_KEY_BACKSPACE:
             m_buffer = m_buffer.substr(0, m_buffer.size()-1);
-            break;
-
-        case GLFW_KEY_ENTER:
+        }
+        else if (key.key == U"<Enter>")
+        {
             m_isClosed = true;
             if (m_callback)
                 m_callback(0, this, m_cbUserData);
-            break;
+        }
+        else if (!key.isFuncKey())
+        {
+            m_buffer += key.getAsChar();
         }
     }
-    else if (mods == GLFW_MOD_CONTROL)
+    else if (key.mods == GLFW_MOD_CONTROL)
     {
-        if (key == GLFW_KEY_BACKSPACE)
+        if (key.key == U"<Backspace>")
         {
             m_buffer.clear();
         }
     }
+    else if (key.mods == GLFW_MOD_SHIFT)
+    {
+        if (!key.isFuncKey())
+        {
+            m_buffer += key.getAsChar();
+        }
+    }
 }
 
-void AskerDialog::handleChar(uint c)
-{
-    m_buffer += c;
-}

@@ -34,7 +34,6 @@ public:
     }
 
     virtual void render() override;
-    virtual void handleKey(int key, int mods) override;
-    virtual void handleChar(uint c) override;
+    virtual void handleKey(const Bindings::BindingKey& key) override;
     inline const String& getValue() const { return m_buffer; }
 };

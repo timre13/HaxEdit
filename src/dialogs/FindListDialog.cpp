@@ -95,6 +95,8 @@ void FindListDialog::render()
                 {rect.xPos+FILE_DIALOG_ICON_SIZE_PX+10, rect.yPos+rect.height/2-g_fontSizePx/2-2},
                 FONT_STYLE_REGULAR);
 
+        // TODO: Render more info
+
         //// Render permissions
         //g_textRenderer->renderString(utf8To32(entry->permissionStr),
         //        {m_dialogDims.xPos+m_dialogDims.width-g_fontWidthPx*9-20, rect.yPos-2});
@@ -123,61 +125,61 @@ void FindListDialog::tick(int elapsedMs)
     }
 }
 
-void FindListDialog::handleKey(int key, int mods)
+void FindListDialog::handleKey(const Bindings::BindingKey& key)
 {
-    if (mods == 0)
+    if (key.mods == 0)
     {
-        if (key == GLFW_KEY_ESCAPE)
+        if (key.key == U"<Escape>")
         {
             Logger::dbg << "AskerDialog: Cancelled" << Logger::End;
             m_isClosed = true;
-            return;
         }
-
-        switch (key)
+        else if (key.key == U"<Backspace>")
         {
-        case GLFW_KEY_BACKSPACE:
             m_buffer = m_buffer.substr(0, m_buffer.size()-1);
             m_timeUntilFetch = FIND_LIST_DLG_TYPE_HOLD_TIME_MS;
-            break;
-
-        case GLFW_KEY_ENTER:
+        }
+        else if (key.key == U"<Enter>")
+        {
             m_isClosed = true;
             if (m_callback)
                 m_callback(0, this, m_cbUserData);
-            break;
-
-        case GLFW_KEY_UP:
+        }
+        else if (key.key == U"<Up>")
+        {
             selectPrevEntry();
-            break;
-
-        case GLFW_KEY_DOWN:
+        }
+        else if (key.key == U"<Down>")
+        {
             selectNextEntry();
-            break;
+        }
+        else if (!key.isFuncKey())
+        {
+            m_buffer += key.getAsChar();
+            m_timeUntilFetch = FIND_LIST_DLG_TYPE_HOLD_TIME_MS;
         }
     }
-    else if (mods == GLFW_MOD_CONTROL)
+    else if (key.mods == GLFW_MOD_CONTROL)
     {
-        switch (key)
+        if (key.key == U"<Backspace>")
         {
-        case GLFW_KEY_BACKSPACE:
             m_buffer.clear();
             m_timeUntilFetch = FIND_LIST_DLG_TYPE_HOLD_TIME_MS;
-            break;
-
-        case GLFW_KEY_K:
+        }
+        else if (key.key == U"k")
+        {
             selectPrevEntry();
-            break;
-
-        case GLFW_KEY_J:
+        }
+        else if (key.key == U"j")
+        {
             selectNextEntry();
-            break;
         }
     }
-}
-
-void FindListDialog::handleChar(uint c)
-{
-    m_buffer += c;
-    m_timeUntilFetch = FIND_LIST_DLG_TYPE_HOLD_TIME_MS;
+    else if (key.mods == GLFW_MOD_SHIFT)
+    {
+        if (!key.isFuncKey())
+        {
+            m_buffer += key.getAsChar();
+        }
+    }
 }

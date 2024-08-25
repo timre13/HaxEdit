@@ -71,8 +71,7 @@ public:
     }
 
     virtual void render() override;
-    virtual void handleKey(int key, int mods) override;
-    virtual void handleChar(uint c) override;
+    virtual void handleKey(const Bindings::BindingKey& key) override;
 
     virtual void tick(int elapsedMs);
 

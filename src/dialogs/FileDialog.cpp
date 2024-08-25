@@ -214,31 +214,26 @@ void FileDialog::genFileList()
     TIMER_END_FUNC();
 }
 
-void FileDialog::handleKey(int key, int mods)
+void FileDialog::handleKey(const Bindings::BindingKey& key)
 {
-    if (mods != 0)
+    if (key.mods != 0)
         return;
 
-    if (key == GLFW_KEY_ESCAPE)
+    if (key.key == U"<Escape>")
     {
         Logger::dbg << "FileDialog: Cancelled" << Logger::End;
         m_isClosed = true;
-        return;
     }
-
-    switch (key)
+    else if (key.key == U"<Up>" || key.key == U"k")
     {
-    case GLFW_KEY_UP:
-    case GLFW_KEY_K:
         selectPrevFile();
-        break;
-
-    case GLFW_KEY_DOWN:
-    case GLFW_KEY_J:
+    }
+    else if (key.key == U"<Down>" || key.key == U"j")
+    {
         selectNextFile();
-        break;
-
-    case GLFW_KEY_ENTER:
+    }
+    else if (key.key == U"<Enter>")
+    {
         if (!m_fileList.empty() && m_fileList[m_selectedFileI]->name == ".")
         {
             Logger::dbg << "FileDialog: Selected a directory" << Logger::End;
@@ -267,9 +262,9 @@ void FileDialog::handleKey(int key, int mods)
             genFileList();
             recalculateDimensions();
         }
-        break;
-
-    case GLFW_KEY_S:
+    }
+    else if (key.key == U"s")
+    {
         if (!m_fileList.empty() && m_fileList[m_selectedFileI]->name == ".")
         {
             Logger::dbg << "FileDialog: Selected a directory" << Logger::End;
@@ -287,6 +282,5 @@ void FileDialog::handleKey(int key, int mods)
             m_isClosed = true;
             s_lastDir = m_dirPath;
         }
-        break;
     }
 }

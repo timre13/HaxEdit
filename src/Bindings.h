@@ -58,6 +58,7 @@ public:
     Char getAsChar() const
     {
         assert(!key.empty());
+        assert(!isFuncKey());
         if (key == U"<Space>")
             return U' ';
         if (key == U"<Enter>")

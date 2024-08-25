@@ -76,8 +76,7 @@ public:
     }
 
     virtual void render() override;
-    virtual void handleKey(int key, int mods) override;
-    virtual void handleChar(uint) override {}
+    virtual void handleKey(const Bindings::BindingKey& key) override;
 
     inline std::string getSelectedFilePath()
     {

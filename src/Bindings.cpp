@@ -219,9 +219,7 @@ void runBindingForFrame()
     // If there are dialogs open, pass the event to the top one
     if (!g_dialogs.empty())
     {
-        // TODO
-        //g_dialogs.back()->handleKey(key, mods);
-        //g_dialogs.back()->handleChar(codePoint);
+        g_dialogs.back()->handleKey(key);
         handleDialogClose();
         g_isRedrawNeeded = true;
         return;
@@ -513,7 +511,7 @@ void closeActiveBuffer()
                 "Save?",
                 MessageDialog::Type::Information,
                 std::vector<MessageDialog::BtnInfo>{
-                {"Yes", GLFW_KEY_Y}, {"No", GLFW_KEY_N}, {"Cancel", GLFW_KEY_C}}
+                {"Yes", {0, U"y"}}, {"No", {0, U"n"}}, {"Cancel", {0, U"c"}}}
                 );
     }
     else

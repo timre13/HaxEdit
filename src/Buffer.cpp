@@ -3053,7 +3053,7 @@ void Buffer::tickAutoReload(float frameTimeMs)
                             "The file "+quoteStr(m_filePath)+"\nhas been changed from outside."
                                 "\nDo you want to reload it?",
                             MessageDialog::Type::Information,
-                            {{"Yes", GLFW_KEY_Y}, {"No", GLFW_KEY_N}});
+                            {{"Yes", {0, U"y"}}, {"No", {0, U"n"}}});
                 }
             }
             else // Reload without asking
@@ -3256,7 +3256,7 @@ static void applyLineCodeActDialogCb(int btn, Dialog* dlg, void* buff)
     assert(dlg_);
 
     // Exit if cancelled
-    if (dlg_->getBtns()[btn].key == GLFW_KEY_Q)
+    if (dlg_->getBtns()[btn].key.key == U"q")
         return;
 
     // TODO: Show preview
@@ -3279,9 +3279,10 @@ void Buffer::applyLineCodeAct()
     for (size_t i{}; i < m_lineCodeAction.actions.size(); ++i)
     {
         const auto& act = m_lineCodeAction.actions[i];
-        btns.push_back({act.title, (i < 9 ? GLFW_KEY_1+(int)i : GLFW_KEY_A+(int)i)});
+        const Char key = (i < 9 ? U'1'+i : U'a'+int(i-9));
+        btns.push_back({act.title, {0, charToStr(key)}});
     }
-    btns.push_back({"Cancel", GLFW_KEY_Q});
+    btns.push_back({"Cancel", {0, U"q"}});
 
     MessageDialog::create(
             applyLineCodeActDialogCb, this, "Choose code action to apply", MessageDialog::Type::Information, btns);
