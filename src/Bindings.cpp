@@ -173,19 +173,123 @@ void charModsCB(GLFWwindow*, uint codepoint, int mods)
     keyEventDelay = 0; // Don't wait any longer
 }
 
+static void handleDialogClose()
+{
+    if (g_dialogs.back()->isClosed())
+    {
+        g_dialogs.pop_back();
+        g_isRedrawNeeded = true;
+    }
+}
+
 void runBindingForFrame()
 {
     --keyEventDelay;
     // If the waiting timed out or we received the char event and there is a key to process
-    if (keyEventDelay <= 0 && lastPressedKey)
+    if (keyEventDelay > 0 || !lastPressedKey)
+        return;
+
+    const auto key = std::move(lastPressedKey); // TODO: Add move ctor
+    lastPressedKey.clear();
+    assert(lastPressedKey.key.empty() && lastPressedKey.mods == 0);
+
+    //Logger::dbg << "PRESSED: " << (String)lastPressedKey << Logger::End;
+
+#if HIDE_MOUSE_WHILE_TYPING
+    // Hide cursor while typing
+    glfwSetInputMode(g_window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+#endif
+
+    // Debug mode toggle should work even when a dialog is open
+    if (key.mods == 0 && key.key == U"<F3>")
     {
-        //Logger::dbg << "PRESSED: " << (String)lastPressedKey << Logger::End;
-        const auto bindingIt = std::find_if(
-                activeBindingMap->begin(), activeBindingMap->end(),
-                [&](const auto& a){ return a.first == lastPressedKey; });
-        if (bindingIt != activeBindingMap->end())
-            bindingIt->second();
-        lastPressedKey.clear();
+        App::toggleDebugDraw();
+        return;
+    }
+
+    if (Prompt::get()->isOpen())
+    {
+        // TODO
+        //Prompt::get()->handleKey(key, mods);
+        //Prompt::get()->handleChar(codePoint);
+        g_isRedrawNeeded = true;
+        return;
+    }
+
+    // If there are dialogs open, pass the event to the top one
+    if (!g_dialogs.empty())
+    {
+        // TODO
+        //g_dialogs.back()->handleKey(key, mods);
+        //g_dialogs.back()->handleChar(codePoint);
+        handleDialogClose();
+        g_isRedrawNeeded = true;
+        return;
+    }
+
+    // If j or the down key is pressed on the startup screen
+    if (g_tabs.empty() && (key.key == U"j" || key.key == U"<Down>"))
+    {
+        g_recentFilePaths->selectNextItem();
+        g_isRedrawNeeded = true;
+        return;
+    }
+
+    // If k or the up key is pressed on the startup screen
+    if (g_tabs.empty() && (key.key == U"k" || key.key == U"<Up>"))
+    {
+        g_recentFilePaths->selectPrevItem();
+        g_isRedrawNeeded = true;
+        return;
+    }
+
+    // If the Enter key is pressed on the startup screen
+    if (g_tabs.empty() && key.key == U"<Enter>")
+    {
+        if (!g_recentFilePaths->isEmpty())
+        {
+            auto path = g_recentFilePaths->getSelectedItem();
+            // Erase the selected recent file item, so it show will be at the end of the list
+            // without pushing out other entries
+            g_recentFilePaths->removeSelectedItem();
+
+            Buffer* buff = App::openFileInNewBuffer(path);
+            g_tabs.push_back(std::make_unique<Split>(buff));
+            g_activeBuff = buff;
+            g_currTabI = 0;
+            g_isRedrawNeeded = true;
+        }
+        return;
+    }
+
+    const auto bindingIt = std::find_if(
+            activeBindingMap->begin(), activeBindingMap->end(),
+            [&](const auto& a){ return a.first == key; });
+    if (bindingIt != activeBindingMap->end())
+    {
+        bindingIt->second();
+        return;
+    }
+
+    // If the key was not bound, fall back to the default actions
+    switch (g_editorMode.get())
+    {
+    case EditorMode::_EditorMode::Normal:
+        return;
+
+    case EditorMode::_EditorMode::Insert:
+        if (g_activeBuff && !key.isFuncKey() && !(key.mods & (GLFW_MOD_CONTROL|GLFW_MOD_ALT)))
+        {
+            g_activeBuff->insertCharAtCursor(key.getAsChar());
+        }
+        break;
+
+    case EditorMode::_EditorMode::Replace:
+        if (g_activeBuff && !key.isFuncKey() && !(key.mods & (GLFW_MOD_CONTROL|GLFW_MOD_ALT)))
+        {
+            g_activeBuff->replaceCharAtCursor(key.getAsChar());
+        }
+        break;
     }
 }
 
@@ -883,8 +987,8 @@ void bufferPutEnterOrInsertAutocomplete()
 
     if (g_activeBuff->isAutocompPopupShown())
         g_activeBuff->autocompPopupInsert();
-//    else
-//        App::windowCharCB(nullptr, '\n');
+    else
+        g_activeBuff->insertCharAtCursor(U'\n');
 }
 
 void bufferCancelSelection()

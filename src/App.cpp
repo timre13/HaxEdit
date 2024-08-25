@@ -264,6 +264,7 @@ void App::setupKeyBindings()
         registerBinding(Mode::Normal, U"E", GLFW_MOD_SHIFT, Callbacks::moveCursorToSWordEnd);
         registerBinding(Mode::Normal, U"B", GLFW_MOD_SHIFT, Callbacks::moveCursorToSWordBeginning);
         registerBinding(Mode::Normal, U"W", GLFW_MOD_SHIFT, Callbacks::moveCursorToNextSWord);
+        registerBinding(Mode::Normal, U":", GLFW_MOD_SHIFT, Callbacks::togglePromptAnimated);
     }
 
     { // Insert mode mappings
@@ -629,139 +630,6 @@ void App::windowResizeCB(GLFWwindow*, int width, int height)
     g_isRedrawNeeded = true;
 }
 
-static void handleDialogClose()
-{
-    if (g_dialogs.back()->isClosed())
-    {
-        g_dialogs.pop_back();
-        g_isRedrawNeeded = true;
-    }
-}
-
-/*
-void App::windowKeyCB(GLFWwindow*, int key, int scancode, int action, int mods)
-{
-    (void)scancode;
-    // We don't care about key releases
-    if (action == GLFW_RELEASE)
-        return;
-
-#if HIDE_MOUSE_WHILE_TYPING
-    // Hide cursor while typing
-    glfwSetInputMode(g_window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-#endif
-
-    // Debug mode toggle should work even when a dialog is open
-    if (mods == 0 && key == GLFW_KEY_F3)
-    {
-        toggleDebugDraw();
-        return;
-    }
-
-    if (Prompt::get()->isOpen())
-    {
-        Prompt::get()->handleKey(key, mods);
-        g_isRedrawNeeded = true;
-        return;
-    }
-
-    // If there are dialogs open, pass the event to the top one
-    if (!g_dialogs.empty())
-    {
-        g_dialogs.back()->handleKey(key, mods);
-        handleDialogClose();
-        g_isRedrawNeeded = true;
-        return;
-    }
-
-    // If j or the down key is pressed on the startup screen
-    if (g_tabs.empty() && (key == GLFW_KEY_J || key == GLFW_KEY_DOWN))
-    {
-        g_recentFilePaths->selectNextItem();
-        g_isRedrawNeeded = true;
-    }
-    // If k or the up key is pressed on the startup screen
-    else if (g_tabs.empty() && (key == GLFW_KEY_K || key == GLFW_KEY_UP))
-    {
-        g_recentFilePaths->selectPrevItem();
-        g_isRedrawNeeded = true;
-    }
-    // If the Enter key is pressed on the startup screen
-    else if (g_tabs.empty() && key == GLFW_KEY_ENTER)
-    {
-        if (!g_recentFilePaths->isEmpty())
-        {
-            auto path = g_recentFilePaths->getSelectedItem();
-            // Erase the selected recent file item, so it show will be at the end of the list
-            // without pushing out other entries
-            g_recentFilePaths->removeSelectedItem();
-
-            Buffer* buff = App::openFileInNewBuffer(path);
-            g_tabs.push_back(std::make_unique<Split>(buff));
-            g_activeBuff = buff;
-            g_currTabI = 0;
-            g_isRedrawNeeded = true;
-        }
-    }
-    else
-    {
-        Bindings::fetchKeyBinding(key, mods);
-        // Key callback is always called, but char callback is not
-        // Make sure to run the fetched binding from outside, after the char callback (if called)
-        g_hasBindingToCall = true;
-    }
-}
-*/
-
-/*
-void App::windowCharCB(GLFWwindow*, uint codePoint)
-{
-#if HIDE_MOUSE_WHILE_TYPING
-    // Hide cursor while typing
-    glfwSetInputMode(g_window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-#endif
-
-    // If there are dialogs open, don't react to keypresses
-    if (!g_dialogs.empty())
-    {
-        g_dialogs.back()->handleChar(codePoint);
-        g_isRedrawNeeded = true;
-        return;
-    }
-
-    if (Prompt::get()->isOpen())
-    {
-        Prompt::get()->handleChar(codePoint);
-        g_isRedrawNeeded = true;
-        return;
-    }
-
-    switch (g_editorMode.get())
-    {
-        case EditorMode::_EditorMode::Normal:
-            Bindings::fetchCharBinding(codePoint);
-            g_hasBindingToCall = true;
-            return;
-
-        case EditorMode::_EditorMode::Insert:
-            if (g_activeBuff)
-            {
-                g_activeBuff->insertCharAtCursor(codePoint);
-            }
-            break;
-
-        case EditorMode::_EditorMode::Replace:
-            if (g_activeBuff)
-            {
-                g_activeBuff->replaceCharAtCursor(codePoint);
-            }
-            break;
-    }
-
-    g_isRedrawNeeded = true;
-}
-*/
-
 void App::windowScrollCB(GLFWwindow*, double, double yOffset)
 {
     if (!g_dialogs.empty())
@@ -922,6 +790,15 @@ void App::cursorPosCB(GLFWwindow* window, double x, double y)
         {
             glfwSetCursor(window, NULL);
         }
+    }
+}
+
+static void handleDialogClose()
+{
+    if (g_dialogs.back()->isClosed())
+    {
+        g_dialogs.pop_back();
+        g_isRedrawNeeded = true;
     }
 }
 

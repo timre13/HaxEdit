@@ -149,8 +149,8 @@ private:
     static void mouseButtonCB(GLFWwindow*, int btn, int act, int mods);
     static void pathDropCB(GLFWwindow*, int count, const char** paths);
 
-    static void toggleDebugDraw();
 public:
+    static void toggleDebugDraw();
     static void tickMouseHold(uint frameTime);
     static void tickPopups();
 

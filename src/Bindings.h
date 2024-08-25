@@ -54,6 +54,27 @@ public:
     {
         return utf32To8(modsToStr(mods)+key);
     }
+
+    Char getAsChar() const
+    {
+        assert(!key.empty());
+        if (key == U"<Space>")
+            return U' ';
+        if (key == U"<Enter>")
+            return U'\n';
+        assert(key.length() == 1);
+        return key[0];
+    }
+
+    bool isFuncKey() const
+    {
+        assert(!key.empty());
+        if (key == U"<Space>")
+            return false;
+        if (key == U"<Enter>")
+            return false;
+        return key.length() > 1;
+    }
 };
 
 using rawBindingFunc_t = void();
