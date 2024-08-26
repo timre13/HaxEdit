@@ -1826,12 +1826,12 @@ void Buffer::render()
                     bool isError = false;
                     if (lineI != m_cursorLine)
                     {
-                        Logger::fatal << "BUG: Mismatching cursor line\n";
+                        Logger::fatal << "BUG: Mismatching cursor line. Expected " << lineI << ", got " << m_cursorLine << Logger::End;
                         isError = true;
                     }
                     if (colI != (size_t)m_cursorCol)
                     {
-                        Logger::fatal << "BUG: Mismatching cursor column\n";
+                        Logger::fatal << "BUG: Mismatching cursor column. Expected " << colI << ", got " << m_cursorCol << Logger::End;
                         isError = true;
                     }
 
@@ -2167,11 +2167,12 @@ void Buffer::deleteCharBackwards()
     // If deleting at the beginning of the line and we have stuff to delete
     if (m_cursorCol == 0 && m_cursorCharPos > 0)
     {
+        const int aboveLineLastPos = m_document->getLineLen(m_cursorLine-1)-1;
         applyDeletion({
-                {m_cursorLine-1, (int)m_document->getLineLen(m_cursorLine-1)-1},
+                {m_cursorLine-1, aboveLineLastPos},
                 {m_cursorLine, 0}});
         --m_cursorLine;
-        m_cursorCol = m_document->getLineLen(m_cursorLine);
+        m_cursorCol = aboveLineLastPos;
         --m_cursorCharPos;
     }
     // If deleting in the middle/end of the line and we have stuff to delete
