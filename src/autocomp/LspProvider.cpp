@@ -605,6 +605,7 @@ LspProvider::LspProvider()
     if (didServerCrash) // Maybe it crashed in the meantime
         return;
     Logger::dbg << "LSP: Sending initialized notification: " << initednotif.ToJson() << Logger::End;
+    m_client->getEndpoint()->sendNotification(initednotif);
 
     m_servCaps = std::move(cap);
 }
