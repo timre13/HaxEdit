@@ -532,7 +532,7 @@ LspProvider::LspProvider()
     caps.textDocument->signatureHelp->signatureInformation.emplace();
     //caps.textDocument->signatureHelp->signatureInformation->documentationFormat.push_back("markdown"); -- TODO
     caps.textDocument->signatureHelp->signatureInformation->documentationFormat.push_back("plaintext");
-    caps.textDocument->signatureHelp->signatureInformation->parameterInformation.labelOffsetSupport.emplace(false); // I don't know if LspCpp supports it
+    caps.textDocument->signatureHelp->signatureInformation->parameterInformation.labelOffsetSupport.emplace(true);
     caps.textDocument->declaration.emplace();
     caps.textDocument->declaration->linkSupport.emplace(true);
     caps.textDocument->definition.emplace();

@@ -3173,14 +3173,28 @@ void Buffer::showSignatureHelp()
                 const lsParameterInformation& actParam = sign.parameters[
                     (actParamI < sign.parameters.size()) ? actParamI : 0]; // Default to 0 when out of range
 
-                // The parameters are substrings of the signature
-                // Find the bounds
-                const size_t paramStart = signLabel.find(actParam.label);
-                assert(paramStart != std::string::npos);
-                assert(paramStart + actParam.label.length() <= signLabel.length());
+                if (actParam.label.first.has_value()) // If we got the parameter as string
+                {
+                    // The parameters are substrings of the signature
+                    // Find the bounds
+                    const size_t paramStart = signLabel.find(actParam.label.first.value());
+                    assert(paramStart != std::string::npos);
+                    assert(paramStart + actParam.label.first->length() <= signLabel.length());
 
-                signLabel.insert(paramStart+actParam.label.length(), "\033[0m\033[97m");
-                signLabel.insert(paramStart, "\033[1m\033[93m");
+                    signLabel.insert(paramStart+actParam.label.first->length(), "\033[0m\033[97m");
+                    signLabel.insert(paramStart, "\033[1m\033[93m");
+                }
+                else if (actParam.label.second.has_value()) // If we got the parameter as indices
+                {
+                    assert(actParam.label.second->size() == 2);
+                    const size_t paramStart = actParam.label.second.value()[0];
+                    const size_t paramLength = actParam.label.second.value()[1]-paramStart;
+                    assert(paramStart + paramLength <= signLabel.length());
+
+                    signLabel.insert(paramStart+paramLength, "\033[0m\033[97m");
+                    signLabel.insert(paramStart, "\033[1m\033[93m");
+                }
+
 
             }
             content += "\033[97m"+signLabel+"\033[0m";
