@@ -210,11 +210,12 @@ void Popup::render()
 
 void Popup::updateDocWin()
 {
+    String itemTitle;
     String itemDoc;
     // Show detail in the first line
     if (m_selectedItemI != -1 && m_filteredItems[m_selectedItemI]->detail)
     {
-        itemDoc = utf8To32(m_filteredItems[m_selectedItemI]->detail.get());
+        itemTitle = utf8To32(m_filteredItems[m_selectedItemI]->detail.get());
     }
 
     // Show documentation in the other lines
@@ -223,20 +224,20 @@ void Popup::updateDocWin()
         const auto doc = m_filteredItems[m_selectedItemI]->documentation;
         if (doc->first)
         {
-            itemDoc += U'\n'+utf8To32(doc->first.get());
+            itemDoc = utf8To32(doc->first.get());
         }
         else if (doc->second)
         {
             if (doc->second->kind == "markdown")
             {
-                itemDoc += U'\n'+Markdown::markdownToAnsiEscaped(doc->second->value);
+                itemDoc = Markdown::markdownToAnsiEscaped(doc->second->value);
             }
             else
             {
                 if (doc->second->kind != "plaintext")
                     Logger::warn << "MarkupContent with kind " << doc->second->kind
                         << " is not supported" << Logger::End;
-                itemDoc += U'\n'+utf8To32(doc->second->value);
+                itemDoc = utf8To32(doc->second->value);
             }
         }
         else
@@ -245,9 +246,10 @@ void Popup::updateDocWin()
         }
     }
 
-    if (!itemDoc.empty())
+    if (!itemDoc.empty() || !itemTitle.empty())
     {
         m_docWin.setContent(itemDoc);
+        m_docWin.setTitle(itemTitle);
         m_docWin.show();
     }
     else
