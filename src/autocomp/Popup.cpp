@@ -191,13 +191,15 @@ void Popup::render()
             m_docWin.setPos({m_position.x+m_size.x, y1-2});
         }
 
-        const bool isSnippet = m_filteredItems[i]->kind.get_value_or(
+        const auto& item = m_filteredItems[i];
+
+        const bool isSnippet = item->kind.get_value_or(
                 lsCompletionItemKind::Text) == lsCompletionItemKind::Snippet;
         g_textRenderer->renderString(
-                utf8To32(m_filteredItems[i]->label),
+                utf8To32(item->label),
                 {m_position.x, m_position.y+m_scrollByItems*g_fontSizePx+i*g_fontSizePx},
                 (isSnippet ? FONT_STYLE_ITALIC : FONT_STYLE_REGULAR),
-                getItemColorFromKind(m_filteredItems[i]->kind.get_value_or(
+                getItemColorFromKind(item->kind.get_value_or(
                             lsCompletionItemKind::Text)));
     }
 
@@ -210,13 +212,13 @@ void Popup::updateDocWin()
 {
     String itemDoc;
     // Show detail in the first line
-    if (m_filteredItems[m_selectedItemI]->detail)
+    if (m_selectedItemI != -1 && m_filteredItems[m_selectedItemI]->detail)
     {
         itemDoc = utf8To32(m_filteredItems[m_selectedItemI]->detail.get());
     }
 
     // Show documentation in the other lines
-    if (m_filteredItems[m_selectedItemI]->documentation)
+    if (m_selectedItemI != -1 && m_filteredItems[m_selectedItemI]->documentation)
     {
         const auto doc = m_filteredItems[m_selectedItemI]->documentation;
         if (doc->first)
