@@ -520,6 +520,7 @@ LspProvider::LspProvider()
     //caps.textDocument->completion->completionItem->preselectSupport -- TODO
     //caps.textDocument->completion->completionItem->tagSupport -- TODO (also implement in LspCpp)
     //caps.textDocument->completion->completionItem->insertReplaceSupport -- TODO (also implement in LspCpp)
+    caps.textDocument->completion->completionItem->labelDetailsSupport.emplace(true);
     caps.textDocument->completion->completionItemKind.emplace();
     caps.textDocument->completion->completionItemKind->valueSet.emplace();
     for (int kind{1}; kind <= (int)lsCompletionItemKind::TypeParameter; ++kind)

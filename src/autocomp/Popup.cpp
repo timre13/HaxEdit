@@ -195,8 +195,18 @@ void Popup::render()
 
         const bool isSnippet = item->kind.get_value_or(
                 lsCompletionItemKind::Text) == lsCompletionItemKind::Snippet;
+        // FIXME: Take into account when calculating popup width (or just truncate)
+        std::string fullLabel = item->label;
+        if (item->labelDetails && (item->labelDetails->detail || item->labelDetails->description))
+        {
+            fullLabel += "\033[90m";
+            if (item->labelDetails->detail)
+                fullLabel += item->labelDetails->detail.value();
+            if (item->labelDetails->description)
+                fullLabel += " | "+item->labelDetails->description.value();
+        }
         g_textRenderer->renderString(
-                utf8To32(item->label),
+                utf8To32(fullLabel),
                 {m_position.x, m_position.y+m_scrollByItems*g_fontSizePx+i*g_fontSizePx},
                 (isSnippet ? FONT_STYLE_ITALIC : FONT_STYLE_REGULAR),
                 getItemColorFromKind(item->kind.get_value_or(
