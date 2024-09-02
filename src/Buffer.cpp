@@ -154,6 +154,7 @@ void Buffer::open(const std::string& filePath, bool isReload/*=false*/)
         m_isReadOnly = true;
     }
 
+    /*
     { // Regenerate the initial autocomplete list for `buffWordProvid`
         Autocomp::buffWordProvid->clear();
 
@@ -181,6 +182,7 @@ void Buffer::open(const std::string& filePath, bool isReload/*=false*/)
         }
     }
     regenAutocompList();
+    */
 
     if (isReload)
     {
@@ -629,6 +631,11 @@ void Buffer::updateCursor()
         return m_document->getLineLen(m_cursorLine);
     }};
 
+    if (m_cursorMovCmd != CursorMovCmd::None)
+    {
+        m_autocompPopup->hide();
+    }
+
     switch (m_cursorMovCmd)
     {
     case CursorMovCmd::Left:
@@ -966,6 +973,23 @@ String Buffer::getCursorWord() const
     return m_document->getLine(m_cursorLine).substr(beginCol, endCol-beginCol);
 }
 
+String Buffer::getWordToComplete() const
+{
+    if (m_cursorCol == 0)
+        return {};
+
+    const String& cursorLine{m_document->getLine(m_cursorLine)};
+    if (!u_isalnum(cursorLine[m_cursorCol-1]))
+        return {};
+
+    String word{};
+    int col = m_cursorCol-1;
+    while (col >= 0 && isIdentifierChar(cursorLine[col]))
+        word += cursorLine[col--];
+    std::reverse(word.begin(), word.end());
+    return word;
+}
+
 void Buffer::moveCursorToLineCol(int line, int col)
 {
     m_cursorLine = line;
@@ -982,6 +1006,7 @@ void Buffer::moveCursorToLineCol(int line, int col)
     m_cursorHoldTime = 0;
 #ifndef TESTING
     g_hoverPopup->hideAndClear();
+    m_autocompPopup->hide();
 #endif
 }
 
@@ -2103,15 +2128,6 @@ void Buffer::insertCharAtCursor(Char character)
     }
     ++m_cursorCharPos;
 
-    if (m_autocompPopup->isRendered())
-    {
-        m_autocompPopup->appendToFilter(character);
-    }
-    else
-    {
-        m_autocompPopup->setVisibility(false);
-    }
-
     // If this is the end of a word
     if (u_isspace(character))
     {
@@ -2143,6 +2159,8 @@ void Buffer::insertCharAtCursor(Char character)
     endHistoryEntry();
 
     scrollViewportToCursor();
+
+    triggerAutocompPopup(Bindings::BindingKey{0, charToStr(character)});
 }
 
 void Buffer::replaceCharAtCursor(Char character)
@@ -2185,8 +2203,10 @@ void Buffer::deleteCharBackwards()
     endHistoryEntry();
     scrollViewportToCursor();
 
-    if (m_autocompPopup->isRendered())
-        m_autocompPopup->removeLastCharFromFilter();
+    if (m_autocompPopup->isEnabled() && !getWordToComplete().empty())
+        triggerAutocompPopup({});
+    else
+        m_autocompPopup->hide();
 }
 
 void Buffer::deleteCharForwardOrSelected()
@@ -2280,12 +2300,11 @@ static std::string getPathFromLine(const String& line)
     return output;
 }
 
-void Buffer::triggerAutocompPopup()
+void Buffer::triggerAutocompPopup(const std::optional<Bindings::BindingKey>& triggerKey)
 {
-    regenAutocompList();
     Autocomp::pathProvid->setPrefix(m_id, getPathFromLine(
                 m_document->getLine(m_cursorLine).substr(0, m_cursorCol)));
-    m_autocompPopup->setVisibility(true);
+    m_autocompPopup->show(triggerKey);
     m_isCursorShown = true;
     m_cursorHoldTime = 0;
     g_isRedrawNeeded = true;
@@ -2309,7 +2328,7 @@ void Buffer::autocompPopupSelectPrevItem()
 
 void Buffer::autocompPopupHide()
 {
-    m_autocompPopup->setVisibility(false);
+    m_autocompPopup->hide();
     m_isCursorShown = true;
     m_cursorHoldTime = 0;
     g_isRedrawNeeded = true;
@@ -2340,7 +2359,6 @@ void Buffer::autocompPopupInsert()
         {
             // If there is `insertText`, use it. Otherwise use `label`.
             const std::string toInsert = item->insertText.get_value_or(item->label);
-            //    .substr(m_autocompPopup->getFilterLen());
             if (isSnippet)
             {
                 insertSnippet(toInsert);
@@ -2359,7 +2377,7 @@ void Buffer::autocompPopupInsert()
         }
     }
     endHistoryEntry();
-    m_autocompPopup->setVisibility(false);
+    m_autocompPopup->hide();
 }
 
 void Buffer::insertSnippet(const std::string& snippet)
@@ -2613,7 +2631,7 @@ jump_loop_end:
     }
 }
 
-void Buffer::regenAutocompList()
+void Buffer::regenAutocompList(lsCompletionTriggerKind trigger)
 {
     Logger::dbg << "Regenerating autocomplete list for buffer " << this << Logger::End;
     m_autocompPopup->clear();
@@ -2622,7 +2640,7 @@ void Buffer::regenAutocompList()
     Autocomp::buffWordProvid->get(m_id, m_autocompPopup.get());
     Autocomp::pathProvid->get(m_id, m_autocompPopup.get());
 #endif
-    Autocomp::lspProvider->get(m_id, m_autocompPopup.get());
+    Autocomp::lspProvider->get(m_autocompPopup.get(), trigger);
 }
 
 void Buffer::startSelection(Selection::Mode mode)

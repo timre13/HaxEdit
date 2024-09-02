@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../types.h"
+#include <unicode/uchar.h>
 #include <unicode/unistr.h>
 #include <iomanip>
 #include <sstream>
@@ -280,3 +281,8 @@ inline T repeatChar(typename T::value_type character, size_t count)
 
 size_t countLineListLen(const std::vector<String>& lines);
 String lineVecConcat(const std::vector<String>& lines);
+
+inline bool isIdentifierChar(Char c)
+{
+    return (u_isalnum(c) || c == '_');
+}

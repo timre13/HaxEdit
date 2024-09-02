@@ -3,10 +3,16 @@
 #include "../types.h"
 #include "../globals.h"
 #include "../FloatingWin.h"
+#include "../Bindings.h"
 #include <vector>
 #include <memory>
 #include <algorithm>
 #include <glm/glm.hpp>
+
+// Sort on client side?
+#define AUTOCOMP_SORT_ITEMS 0
+// Filter on client side?
+#define AUTOCOMP_FILTER_ITEMS 0
 
 namespace Autocomp
 {
@@ -26,54 +32,49 @@ private:
     int m_scrollByItems{};
 
     std::vector<std::unique_ptr<Item>> m_items;
-    bool m_isItemSortingNeeded{};
+    bool m_isSortingNeeded{};
     int m_selectedItemI{};
 
-    String m_filterBuffer;
+    String m_filter;
     std::vector<Item*> m_filteredItems;
     bool m_isFilteringNeeded{};
 
     FloatingWindow m_docWin;
 
     void recalcSize();
-    void sortItems();
-    void filterItems();
+    void sortItemsIfNeeded();
+    void filterItemsIfNeeded();
     void updateDocWin();
 
 public:
     void render();
 
-    inline void setVisibility(bool val)
+    inline void hide()
     {
-        m_isEnabled = val;
+        m_isEnabled = false;
         m_selectedItemI = 0; // Reset selected item
-        m_filterBuffer.clear();
+        m_filter.clear();
+        m_filteredItems.clear();
+        m_items.clear();
         m_isFilteringNeeded = true;
-
-        if (val)
-        {
-            if (m_isItemSortingNeeded)
-                sortItems();
-            if (m_isFilteringNeeded)
-                filterItems();
-        }
     }
+
+    void show(std::optional<Bindings::BindingKey> triggerKey);
+
     inline bool isEnabled() const { return m_isEnabled; }
     inline bool isRendered() const { return m_isEnabled && !m_filteredItems.empty(); }
 
     inline void addItem(Item item)
     {
         m_items.push_back(std::make_unique<Item>(item));
-        m_isItemSortingNeeded = true;
+        m_isSortingNeeded = true;
         m_isFilteringNeeded = true;
     }
 
     inline void selectNextItem()
     {
-        if (m_isItemSortingNeeded)
-            sortItems();
-        if (m_isFilteringNeeded)
-            filterItems();
+        sortItemsIfNeeded();
+        filterItemsIfNeeded();
 
         ++m_selectedItemI;
         if (m_selectedItemI >= (int)m_filteredItems.size())
@@ -98,10 +99,8 @@ public:
 
     inline void selectPrevItem()
     {
-        if (m_isItemSortingNeeded)
-            sortItems();
-        if (m_isFilteringNeeded)
-            filterItems();
+        sortItemsIfNeeded();
+        filterItemsIfNeeded();
 
         --m_selectedItemI;
         if (m_selectedItemI < 0)
@@ -136,24 +135,6 @@ public:
     inline void setPos(const glm::vec2& pos)
     {
         m_position = pos;
-    }
-
-    inline void appendToFilter(Char c)
-    {
-        m_selectedItemI = 0;
-        m_filterBuffer += c;
-        m_isFilteringNeeded = true;
-    }
-    inline void removeLastCharFromFilter()
-    {
-        if (!m_filterBuffer.empty())
-            m_filterBuffer.pop_back();
-        m_selectedItemI = 0;
-        m_isFilteringNeeded = true;
-    }
-    inline size_t getFilterLen()
-    {
-        return m_filterBuffer.length();
     }
 
     void clear();

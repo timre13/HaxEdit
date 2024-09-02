@@ -28,7 +28,6 @@
 #include "LibLsp/lsp/textDocument/implementation.h"
 #include "LibLsp/lsp/textDocument/prepareRename.h"
 #include "LibLsp/lsp/textDocument/rename.h"
-#include "LibLsp/lsp/textDocument/completion.h"
 #include "LibLsp/lsp/textDocument/formatting.h"
 #include "LibLsp/lsp/textDocument/onTypeFormatting.h"
 #include "LibLsp/lsp/workspace/execute_command.h"
@@ -608,17 +607,35 @@ LspProvider::LspProvider()
     Logger::dbg << "LSP: Sending initialized notification: " << initednotif.ToJson() << Logger::End;
     m_client->getEndpoint()->sendNotification(initednotif);
 
+    if (cap.completionProvider && cap.completionProvider->triggerCharacters)
+    {
+        for (const auto& triggerChar : cap.completionProvider->triggerCharacters.value())
+        {
+            const auto lambda = [=](){
+                if (g_activeBuff)
+                {
+                    g_activeBuff->insertCharAtCursor(triggerChar[0]);
+                    g_activeBuff->triggerAutocompPopup(Bindings::BindingKey{0, utf8To32(triggerChar)});
+                }
+            };
+            Bindings::registerBinding(EditorMode::_EditorMode::Insert, utf8To32(triggerChar), 0, lambda);
+            Bindings::registerBinding(EditorMode::_EditorMode::Insert, utf8To32(triggerChar), GLFW_MOD_SHIFT, lambda);
+        }
+    }
+
     m_servCaps = std::move(cap);
 }
 
-void LspProvider::get(bufid_t bufid, Popup* popupP)
+void LspProvider::get(Popup* popupP, lsCompletionTriggerKind trigger)
 {
     //Logger::dbg << "LspProvider: " << "TODO" << Logger::End;
     if (!g_activeBuff) return;
 
+    Logger::log << "Gettting completion" << Logger::End;
+
     td_completion::request req;
     req.params.context.emplace();
-    req.params.context->triggerKind = lsCompletionTriggerKind::Invoked;
+    req.params.context->triggerKind = trigger;
     req.params.position.line = g_activeBuff->getCursorLine();
     req.params.position.character = g_activeBuff->getCursorCol();
     req.params.textDocument.uri.SetPath(g_activeBuff->getFilePath());

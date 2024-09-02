@@ -301,7 +301,6 @@ void switchToNormalMode()
     {
         g_activeBuff->closeSelection();
         g_activeBuff->autocompPopupHide();
-        g_activeBuff->regenAutocompList();
         g_activeBuff->setCursorVisibility(true);
         g_isRedrawNeeded = true;
     }
@@ -946,6 +945,15 @@ void zoomOutBufferIfImage()
     g_isRedrawNeeded = true;
 }
 
+void triggerAutocompPopup()
+{
+    if (!g_activeBuff)
+        return;
+
+    g_activeBuff->triggerAutocompPopup({});
+    g_isRedrawNeeded = true;
+}
+
 void triggerAutocompPopupOrSelectNextItem()
 {
     if (!g_activeBuff)
@@ -957,7 +965,7 @@ void triggerAutocompPopupOrSelectNextItem()
     }
     else
     {
-        g_activeBuff->triggerAutocompPopup();
+        g_activeBuff->triggerAutocompPopup({});
     }
     g_isRedrawNeeded = true;
 }
@@ -973,7 +981,7 @@ void triggerAutocompPopupOrSelectPrevItem()
     }
     else
     {
-        g_activeBuff->triggerAutocompPopup();
+        g_activeBuff->triggerAutocompPopup({});
     }
     g_isRedrawNeeded = true;
 }

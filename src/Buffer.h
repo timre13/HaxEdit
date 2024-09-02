@@ -266,6 +266,8 @@ public:
     }
     virtual String getCursorWord() const;
 
+    virtual String getWordToComplete() const;
+
     virtual inline void setCursorVisibility(bool isVisible) {
         m_isCursorShown = isVisible; }
     virtual inline void toggleCursorVisibility() {
@@ -342,13 +344,13 @@ public:
     virtual void undo();
     virtual void redo();
 
-    virtual void triggerAutocompPopup();
+    virtual void triggerAutocompPopup(const std::optional<Bindings::BindingKey>& triggerKey);
     virtual void autocompPopupSelectNextItem();
     virtual void autocompPopupSelectPrevItem();
     virtual void autocompPopupHide();
     virtual bool isAutocompPopupShown() const { return m_autocompPopup->isEnabled(); }
     virtual void autocompPopupInsert();
-    virtual void regenAutocompList();
+    virtual void regenAutocompList(lsCompletionTriggerKind trigger);
     virtual void insertSnippet(const std::string& snippet);
 
     virtual void startSelection(Selection::Mode mode);

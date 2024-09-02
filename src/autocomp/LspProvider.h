@@ -32,6 +32,7 @@ using namespace std::chrono_literals;
 #include "LibLsp/lsp/textDocument/code_action.h"
 #include "LibLsp/lsp/textDocument/document_symbol.h"
 #include "LibLsp/lsp/textDocument/willSave.h"
+#include "LibLsp/lsp/textDocument/completion.h"
 #include "LibLsp/lsp/workspace/symbol.h"
 #include "LibLsp/lsp/workspace/configuration.h"
 #include "LibLsp/lsp/window/workDoneProgressCreate.h"
@@ -209,7 +210,7 @@ public:
     }
 };
 
-class LspProvider final : public IProvider
+class LspProvider final
 {
 public:
     enum class LspServerStatus
@@ -312,7 +313,7 @@ public:
     using diagListMap_t = std::unordered_map<std::string, diagList_t>;
     static diagListMap_t s_diags;
 
-    virtual void get(bufid_t bufid, Popup* popupP) override;
+    void get(Popup* popupP, lsCompletionTriggerKind trigger);
 
     void onFileOpen(const std::string& path, Langs::LangId language, const std::string& fileContent);
     void onFileChange(const std::string& path, int version, const std::string& newContent);

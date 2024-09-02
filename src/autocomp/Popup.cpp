@@ -7,6 +7,7 @@
 #include "../common/string.h"
 #include "../markdown.h"
 #include "../ThemeLoader.h"
+#include "../Buffer.h"
 #include <algorithm>
 
 namespace Autocomp
@@ -24,8 +25,12 @@ void Popup::recalcSize()
     m_size.y = std::min(m_filteredItems.size()*g_fontSizePx, 800_st);
 }
 
-void Popup::sortItems()
+void Popup::sortItemsIfNeeded()
 {
+#if AUTOCOMP_SORT_ITEMS
+    if (!m_isSortingNeeded)
+        return;
+
     std::sort(m_items.begin(), m_items.end(),
             [](const std::unique_ptr<Item>& a, const std::unique_ptr<Item>& b) {
                 // Sort by `sortText` if exists, otherwise use `label`
@@ -42,19 +47,28 @@ void Popup::sortItems()
     //            }),
     //        m_items.end());
 
-    m_isItemSortingNeeded = false;
+    m_isSortingNeeded = false;
+#endif
 }
 
-void Popup::filterItems()
+void Popup::filterItemsIfNeeded()
 {
-    m_filteredItems.clear();
+    if (!m_isFilteringNeeded)
+        return;
+
+#if AUTOCOMP_FILTER_ITEMS
     for (size_t i{}; i < m_items.size(); ++i)
     {
-        if (m_items[i]->label.rfind(utf32To8(m_filterBuffer), 0) == 0)
+        if (m_filter.empty() || utf8To32(m_items[i]->filterText.value_or(m_items[i]->label)).starts_with(m_filter))
         {
             m_filteredItems.push_back(m_items[i].get());
         }
     }
+#else
+    m_filteredItems.clear();
+    std::transform(m_items.cbegin(), m_items.cend(), std::back_inserter(m_filteredItems), [](const auto& v){ return v.get(); });
+#endif
+
     m_isFilteringNeeded = false;
 }
 
@@ -150,10 +164,8 @@ void Popup::render()
 
     TIMER_BEGIN_FUNC();
 
-    if (m_isItemSortingNeeded)
-        sortItems();
-    if (m_isFilteringNeeded)
-        filterItems();
+    sortItemsIfNeeded();
+    filterItemsIfNeeded();
 
     if (m_filteredItems.empty())
         return;
@@ -268,13 +280,58 @@ void Popup::updateDocWin()
     }
 }
 
+
+void Popup::show(std::optional<Bindings::BindingKey> triggerKey)
+{
+    clear();
+    m_isEnabled = false;
+
+    if (triggerKey.has_value() && !triggerKey->isFuncKey() && triggerKey->getAsChar() == U';')
+        return;
+
+    lsCompletionTriggerKind triggerKind{};
+    if (triggerKey.has_value() && !triggerKey->isFuncKey())
+    {
+        const auto& chars = Autocomp::lspProvider->getCaps().completionProvider->triggerCharacters.get_value_or({});
+        if (std::find_if(chars.begin(), chars.end(), [&](const std::string& c){ 
+            return utf8To32(c)[0] == triggerKey->getAsChar(); }) != chars.end())
+        {
+            // Triggered by trigger character
+            triggerKind = lsCompletionTriggerKind::TriggerCharacter;
+        }
+        else if (!u_isspace(triggerKey->getAsChar()))
+        {
+            // Triggered by typing identifier
+            triggerKind = lsCompletionTriggerKind::Invoked;
+        }
+        else
+        {
+            return;
+        }
+    }
+    else
+    {
+        // Triggered manually (with keybinding)
+        triggerKind = lsCompletionTriggerKind::Invoked;
+    }
+
+    m_isEnabled = true;
+    m_filter = g_activeBuff->getWordToComplete();
+    Autocomp::lspProvider->get(this, triggerKind);
+    filterItemsIfNeeded();
+    sortItemsIfNeeded();
+
+    Logger::dbg << "FILTER: " << m_filter << Logger::End;
+}
+
 void Popup::clear()
 {
     m_items.clear();
+    m_selectedItemI = 0;
+    m_filter.clear();
     m_filteredItems.clear();
-    m_filterBuffer.clear();
     m_scrollByItems = 0;
-    m_isItemSortingNeeded = true;
+    m_isSortingNeeded = true;
     m_isFilteringNeeded = true;
 }
 

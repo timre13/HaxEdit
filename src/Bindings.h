@@ -156,6 +156,7 @@ void decreaseFontSize();
 void zoomInBufferIfImage();
 void zoomOutBufferIfImage();
 
+void triggerAutocompPopup();
 void triggerAutocompPopupOrSelectNextItem();
 void triggerAutocompPopupOrSelectPrevItem();
 void bufferPutEnterOrInsertAutocomplete();
