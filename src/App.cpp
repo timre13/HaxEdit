@@ -286,7 +286,7 @@ void App::setupKeyBindings()
         registerBinding(Mode::Insert, U"<Kp_Subtract>", 0, Callbacks::zoomOutBufferIfImage);
         registerBinding(Mode::Insert, U"<Equal>", 0, Callbacks::zoomInBufferIfImage);
         registerBinding(Mode::Insert, U"<Kp_Add>", 0, Callbacks::zoomInBufferIfImage);
-        registerBinding(Mode::Insert, U",", 0, Callbacks::bufferShowSignHelp);
+        registerBinding(Mode::Insert, U",", 0, [](){ g_activeBuff->insertCharAtCursor(u','); Callbacks::bufferShowSignHelp();});
 
         // Ctrl held down
         registerBinding(Mode::Insert, U"<Space>", GLFW_MOD_CONTROL, Callbacks::triggerAutocompPopupOrSelectNextItem);
@@ -296,7 +296,7 @@ void App::setupKeyBindings()
 
         // Shift held down
         // TODO: Use server-specified trigger characters to show signature help
-        registerBinding(Mode::Insert, U"(", GLFW_MOD_SHIFT, Callbacks::bufferShowSignHelp);
+        registerBinding(Mode::Insert, U"(", GLFW_MOD_SHIFT, [](){ g_activeBuff->insertCharAtCursor(u'('); Callbacks::bufferShowSignHelp();});
     }
 
     // Start in normal mode
