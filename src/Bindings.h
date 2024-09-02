@@ -91,7 +91,7 @@ extern long long keyEventDelay;
 
 Bindings::bindingMap_t* getBindingsForMode(EditorMode::_EditorMode mode);
 
-void registerBinding(EditorMode::_EditorMode mode, const BindingKey::key_t& key, BindingKey::mods_t modifiers, rawBindingFunc_t func);
+void registerBinding(EditorMode::_EditorMode mode, const BindingKey::key_t& key, BindingKey::mods_t modifiers, bindingFunc_t func);
 
 void keyCB(GLFWwindow*, int key, int scancode, int action, int mods);
 void charModsCB(GLFWwindow*, uint codepoint, int mods);

@@ -45,14 +45,14 @@ Bindings::bindingMap_t* getBindingsForMode(EditorMode::_EditorMode mode)
     return nullptr;
 }
 
-void registerBinding(EditorMode::_EditorMode mode, const BindingKey::key_t& key, BindingKey::mods_t modifiers, rawBindingFunc_t func)
+void registerBinding(EditorMode::_EditorMode mode, const BindingKey::key_t& key, BindingKey::mods_t modifiers, bindingFunc_t func)
 {
     assert(func);
     assert(!key.empty());
     auto* bindings = getBindingsForMode(mode);
     BindingKey bkey{modifiers, key};
     const bool overwrote = !bindings->insert_or_assign(bkey, func).second;
-    Logger::dbg << (overwrote ? "Remapping: " : "Mapping: ") << (String)bkey << " ==> " << (void*)func << Logger::End;
+    Logger::dbg << (overwrote ? "Remapping: " : "Mapping: ") << (String)bkey << " ==> " << func.target<rawBindingFunc_t*>() << Logger::End;
 }
 
 void keyCB(GLFWwindow*, int key, int scancode, int action, int mods)
