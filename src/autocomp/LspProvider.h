@@ -314,6 +314,7 @@ public:
     static diagListMap_t s_diags;
 
     void get(Popup* popupP, lsCompletionTriggerKind trigger);
+    std::optional<lsCompletionItem> compItemResolve(const lsCompletionItem& item);
 
     void onFileOpen(const std::string& path, Langs::LangId language, const std::string& fileContent);
     void onFileChange(const std::string& path, int version, const std::string& newContent);

@@ -2334,6 +2334,12 @@ void Buffer::autocompPopupHide()
     g_isRedrawNeeded = true;
 }
 
+static Autocomp::Popup::Item updateCompItem(Autocomp::Popup::Item item)
+{
+    const auto resolved = Autocomp::lspProvider->compItemResolve(item);
+    return resolved.has_value() ? resolved.value() : item;
+}
+
 void Buffer::autocompPopupInsert()
 {
     // Hide the popup and insert the current item
@@ -2343,22 +2349,22 @@ void Buffer::autocompPopupInsert()
     beginHistoryEntry();
     if (m_autocompPopup->isRendered())
     {
-        const auto* item = m_autocompPopup->getSelectedItem();
-        const bool isSnippet = ((item->kind && item->kind.get() == lsCompletionItemKind::Snippet)
-                             || (item->insertTextFormat.get_value_or(lsInsertTextFormat::PlainText) == lsInsertTextFormat::Snippet));
+        const auto item = updateCompItem(*m_autocompPopup->getSelectedItem());
+        const bool isSnippet = ((item.kind && item.kind.get() == lsCompletionItemKind::Snippet)
+                             || (item.insertTextFormat.get_value_or(lsInsertTextFormat::PlainText) == lsInsertTextFormat::Snippet));
 
         // Use `textEdit` if available
         // Note: Disabled while we don't support snippets here
-        //if (item->textEdit)
+        //if (item.textEdit)
         //{
         //    // TODO: Jump to end
         //    // TODO: Support snippets here
-        //    applyEdit(item->textEdit.get());
+        //    applyEdit(item.textEdit.get());
         //}
         //else
         {
             // If there is `insertText`, use it. Otherwise use `label`.
-            const std::string toInsert = item->insertText.get_value_or(item->label);
+            const std::string toInsert = item.insertText.get_value_or(item.label);
             if (isSnippet)
             {
                 insertSnippet(toInsert);
@@ -2370,10 +2376,10 @@ void Buffer::autocompPopupInsert()
             }
         }
 
-        if (item->additionalTextEdits)
+        if (item.additionalTextEdits)
         {
             // TODO: Support snippets here
-            applyEdits(item->additionalTextEdits.get());
+            applyEdits(item.additionalTextEdits.get());
         }
     }
     endHistoryEntry();

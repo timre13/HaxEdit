@@ -20,9 +20,7 @@ namespace Autocomp
 class Popup final
 {
 public:
-    struct Item : lsCompletionItem
-    {
-    };
+    using Item = lsCompletionItem;
 
 private:
     bool m_isEnabled = false;

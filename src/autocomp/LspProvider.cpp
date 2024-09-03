@@ -30,6 +30,7 @@
 #include "LibLsp/lsp/textDocument/rename.h"
 #include "LibLsp/lsp/textDocument/formatting.h"
 #include "LibLsp/lsp/textDocument/onTypeFormatting.h"
+#include "LibLsp/lsp/textDocument/resolveCompletionItem.h"
 #include "LibLsp/lsp/workspace/execute_command.h"
 #include "LibLsp/lsp/workspace/applyEdit.h"
 #include "LibLsp/lsp/workspace/configuration.h"
@@ -651,6 +652,19 @@ void LspProvider::get(Popup* popupP, lsCompletionTriggerKind trigger)
     }
 
     //g_activeBuff->getFilePath();
+}
+
+std::optional<lsCompletionItem> LspProvider::compItemResolve(const lsCompletionItem& item)
+{
+    if (didServerCrash) return {};
+    BusynessHandler bh{this};
+
+    completionItem_resolve::request req;
+    req.params = item;
+    auto resp = sendRequest<500>(req);
+    if (resp)
+        return resp->response.result;
+    return {};
 }
 
 void LspProvider::_busyBegin()
